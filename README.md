@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <strong>A FOSS Android music player built with Kotlin, Jetpack Compose, and Material 3.</strong>
+  <strong>A local-first, FOSS Android music player built with Kotlin, Jetpack Compose, and Material 3.</strong>
 </p>
 
 <p align="center">
@@ -15,72 +15,79 @@
   <a href="https://github.com/lostf1sh/PixelPlayerOSS/releases">
     <img src="https://img.shields.io/github/downloads/lostf1sh/PixelPlayerOSS/total?logo=github&style=for-the-badge" alt="Total downloads">
   </a>
-  <img src="https://img.shields.io/badge/Android-11%2B-green?style=for-the-badge&logo=android" alt="Android 11+">
+  <img src="https://img.shields.io/badge/Android-11%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android 11+">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT license">
 </p>
 
 <p align="center">
-  <img src="assets/screenshot1.jpg" alt="Screenshot 1" width="200"/>
-  <img src="assets/screenshot2.jpg" alt="Screenshot 2" width="200"/>
-  <img src="assets/screenshot3.jpg" alt="Screenshot 3" width="200"/>
-  <img src="assets/screenshot4.jpg" alt="Screenshot 4" width="200"/>
+  <img src="assets/screenshot1.jpeg" alt="PixelPlayerOSS home screen" width="205"/>
+  <img src="assets/screenshot2.jpeg" alt="PixelPlayerOSS now playing screen" width="205"/>
+  <img src="assets/screenshot3.jpeg" alt="PixelPlayerOSS library screen" width="205"/>
+  <img src="assets/screenshot4.jpeg" alt="PixelPlayerOSS lyrics screen" width="205"/>
 </p>
 
-## About
+## What It Is
 
-PixelPlayerOSS is a local-first Android music player maintained by [@lostf1sh](https://github.com/lostf1sh).
+PixelPlayerOSS is an Android music player maintained by [@lostf1sh](https://github.com/lostf1sh). It focuses on local playback, self-hosted music libraries, expressive Material 3 UI, and user-controlled online lookups.
 
-The project is intentionally kept FOSS-oriented. Removed integrations include Telegram, NetEase, QQ Music, Google Drive, Cast, Wear OS, Play Store billing, Firebase, Crashlytics, and Google Play Services runtime dependencies.
+The app works offline by default. Optional online services are disabled until you enable them in setup or settings.
 
 Package name: `com.lostf1sh.pixelplayeross`
 
+## Why This Exists
+
+PixelPlayerOSS keeps the player FOSS-oriented and removes integrations that are not part of that direction.
+
+Removed integrations include Telegram, NetEase, QQ Music, Google Drive, Gemini, Cast, Wear OS, Play Store billing, Firebase, Crashlytics, and Google Play Services runtime dependencies.
+
+Cloud playback is limited to self-hosted sources: Navidrome/Subsonic and Jellyfin.
+
 ## Features
 
-### Playback
+| Area | Highlights |
+| --- | --- |
+| Playback | Media3 playback engine, FFmpeg support, gapless playback, crossfade, custom transitions, queue controls, shuffle, repeat, sleep timer, external file playback |
+| Library | Local scanning for MP3, FLAC, AAC, OGG, WAV, M4A, albums, artists, genres, folders, favorites, playlists, stats, metadata editing |
+| Self-hosted | Navidrome/Subsonic login, sync, streaming, artwork, Jellyfin login, sync, streaming, artwork |
+| Lyrics | Embedded lyrics, local `.lrc` files, lyrics import/editing, optional LRCLIB lookup |
+| Artwork | Local artwork, album-art palette extraction, optional Deezer artist image lookup |
+| UI | Jetpack Compose, Material 3, dynamic color, light/dark themes, Glance widgets, animated player surfaces |
+| Backup | Preferences, playlists, favorites, lyrics, stats, and app state backup/restore |
 
-- Media3 playback engine with FFmpeg support.
-- Gapless playback and configurable crossfade/custom transitions.
-- Queue management, shuffle, repeat, sleep timer, and background playback.
-- External file playback through Android intents.
+## Online Services
 
-### Library
+PixelPlayerOSS separates offline playback from network lookups.
 
-- Local library scanning for common audio formats including MP3, FLAC, AAC, OGG, WAV, and M4A.
-- Songs, albums, artists, genres, folders, favorites, playlists, and listening stats.
-- Smart multi-artist parsing with configurable delimiters.
-- Metadata editing through TagLib.
+| Service | Purpose | Default |
+| --- | --- | --- |
+| Navidrome/Subsonic | Self-hosted library sync and streaming | User login required |
+| Jellyfin | Self-hosted library sync and streaming | User login required |
+| LRCLIB | Search online lyrics when local or embedded lyrics are missing | Off |
+| Deezer | Fetch missing artist artwork and cache it locally | Off |
 
-### Self-hosted Sources
+LRCLIB and Deezer can be enabled during first-run setup or later from `Settings > Music Management > Optional online services`.
 
-- Navidrome/Subsonic login, sync, streaming, and artwork support.
-- Jellyfin login, sync, streaming, and artwork support.
-- Cloud playback is limited to self-hosted sources.
+## Screenshots
 
-### UI
+<p align="center">
+  <img src="assets/screenshot1.jpeg" alt="Home and mini player" width="230"/>
+  <img src="assets/screenshot2.jpeg" alt="Now playing" width="230"/>
+</p>
 
-- Jetpack Compose and Material 3.
-- Dynamic color, light/dark themes, and album-art color extraction.
-- Glance home screen widgets.
-- Smooth navigation transitions and expressive player surfaces.
-
-### Lyrics And Artwork
-
-- Synced lyrics through LRCLIB.
-- Local lyrics import and editing.
-- Artist artwork lookup through Deezer.
-- Local cache for artwork and extracted color schemes.
-
-### Backup
-
-- App data backup and restore for preferences, playlists, favorites, lyrics, stats, and related app state.
+<p align="center">
+  <img src="assets/screenshot3.jpeg" alt="Library" width="230"/>
+  <img src="assets/screenshot4.jpeg" alt="Synced lyrics" width="230"/>
+</p>
 
 ## Requirements
 
-- Android 11 or newer, API 30+.
-- JDK 21 for local builds.
-- Android SDK compile/target 37.
+| Requirement | Version |
+| --- | --- |
+| Android | 11 or newer, API 30+ |
+| JDK | 21 |
+| Android SDK | compile/target 37 |
 
-## Build
+## Build From Source
 
 Clone the repository:
 
@@ -89,13 +96,13 @@ git clone https://github.com/lostf1sh/PixelPlayerOSS.git
 cd PixelPlayerOSS
 ```
 
-Build a debug APK:
+Build the debug APK:
 
 ```sh
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :app:assembleDebug
 ```
 
-Build one universal debug APK for local install:
+Build one universal debug APK for local installation:
 
 ```sh
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :app:assembleDebug -Ppixelplayer.enableAbiSplits=false
@@ -115,7 +122,7 @@ JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :baselineprofile:generateBaseli
 
 ## Download
 
-GitHub releases will be published at:
+GitHub releases are available at:
 
 ```text
 https://github.com/lostf1sh/PixelPlayerOSS/releases
@@ -149,7 +156,7 @@ baselineprofile/      Macrobenchmark and baseline profile generation
 | Design | Material 3 |
 | Playback | AndroidX Media3, ExoPlayer, FFmpeg |
 | Database | Room |
-| DI | Hilt |
+| Dependency Injection | Hilt |
 | Preferences | DataStore |
 | Background Work | WorkManager |
 | Networking | Retrofit, OkHttp |
@@ -160,7 +167,7 @@ baselineprofile/      Macrobenchmark and baseline profile generation
 
 Contributions are welcome. Open an issue or pull request with a focused change and include test/build results when possible.
 
-Useful checks:
+Useful local checks:
 
 ```sh
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :app:compileDebugKotlin
