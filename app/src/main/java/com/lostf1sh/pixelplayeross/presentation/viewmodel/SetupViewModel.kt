@@ -300,7 +300,7 @@ class SetupViewModel @Inject constructor(
      */
     fun retrySync() {
         viewModelScope.launch {
-            syncManager.fullSync()
+            syncManager.fullSync(deepScan = false)
         }
     }
 
@@ -421,7 +421,7 @@ class SetupViewModel @Inject constructor(
     private suspend fun completeSetup(syncAfter: Boolean) {
         userPreferencesRepository.setInitialSetupDone(true)
         if (syncAfter) {
-            syncManager.fullSync()
+            syncManager.fullSync(deepScan = false)
         }
     }
 }

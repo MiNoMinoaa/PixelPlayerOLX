@@ -235,7 +235,7 @@
     <string name="dialog_cannot_undo">This action cannot be undone.</string>
     <string name="confirm">Confirm</string>
     <string name="dialog_rebuild_database_title">Rebuild database?</string>
-    <string name="dialog_rebuild_database_message">This will completely rebuild your music library from scratch. All imported lyrics, favorites, and custom metadata will be lost. This action cannot be undone.</string>
+    <string name="dialog_rebuild_database_message">This will rebuild local files from MediaStore and remove local imported lyrics, favorites, and custom metadata for those songs. Navidrome and Jellyfin songs are preserved. This action cannot be undone.</string>
     <string name="rebuild">Rebuild</string>
     <string name="sync_indicator_rebuilding">Rebuilding database</string>
     <string name="toast_rebuilding_database">Rebuilding database…</string>

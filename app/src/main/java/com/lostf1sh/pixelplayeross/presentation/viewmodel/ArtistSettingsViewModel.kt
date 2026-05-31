@@ -151,7 +151,7 @@ class ArtistSettingsViewModel @Inject constructor(
 
     fun rescanLibrary() {
         viewModelScope.launch {
-            syncManager.fullSync()
+            syncManager.fullSync(deepScan = false)
         }
     }
 }

@@ -25,7 +25,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         JellyfinSongEntity::class,
         JellyfinPlaylistEntity::class
     ],
-    version = 43,
+    version = 44,
     exportSchema = true
 )
 abstract class PixelPlayerDatabase : RoomDatabase() {
@@ -528,6 +528,27 @@ abstract class PixelPlayerDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_43_44 = object : Migration(43, 44) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                addColumnIfMissing(db, "songs", "media_store_date_added", "INTEGER NOT NULL DEFAULT 0")
+                addColumnIfMissing(db, "songs", "media_store_date_modified", "INTEGER NOT NULL DEFAULT 0")
+                addColumnIfMissing(db, "songs", "title_user_edited", "INTEGER NOT NULL DEFAULT 0")
+                addColumnIfMissing(db, "songs", "artist_user_edited", "INTEGER NOT NULL DEFAULT 0")
+                addColumnIfMissing(db, "songs", "album_user_edited", "INTEGER NOT NULL DEFAULT 0")
+                addColumnIfMissing(db, "songs", "genre_user_edited", "INTEGER NOT NULL DEFAULT 0")
+
+                db.execSQL(
+                    "UPDATE songs SET media_store_date_modified = CASE " +
+                        "WHEN date_added > 0 THEN date_added / 1000 ELSE 0 END " +
+                        "WHERE media_store_date_modified = 0"
+                )
+                db.execSQL(
+                    "UPDATE songs SET media_store_date_added = media_store_date_modified " +
+                        "WHERE media_store_date_added = 0"
+                )
+            }
+        }
+
         private fun ensureSongsTableHasDateAdded(db: SupportSQLiteDatabase) {
             if (!tableExists(db, "songs")) {
                 recreateSongsTable(db)
@@ -582,6 +603,12 @@ abstract class PixelPlayerDatabase : RoomDatabase() {
                         sample_rate INTEGER,
                         artists_json TEXT DEFAULT NULL,
                         source_type INTEGER NOT NULL DEFAULT 0,
+                        media_store_date_added INTEGER NOT NULL DEFAULT 0,
+                        media_store_date_modified INTEGER NOT NULL DEFAULT 0,
+                        title_user_edited INTEGER NOT NULL DEFAULT 0,
+                        artist_user_edited INTEGER NOT NULL DEFAULT 0,
+                        album_user_edited INTEGER NOT NULL DEFAULT 0,
+                        genre_user_edited INTEGER NOT NULL DEFAULT 0,
                         PRIMARY KEY(id),
                         FOREIGN KEY(album_id) REFERENCES albums(id) ON UPDATE NO ACTION ON DELETE CASCADE,
                         FOREIGN KEY(artist_id) REFERENCES artists(id) ON UPDATE NO ACTION ON DELETE SET NULL
@@ -617,6 +644,11 @@ abstract class PixelPlayerDatabase : RoomDatabase() {
                 val mimeTypeExpr = columnExpr(columns, "mime_type", "NULL")
                 val bitrateExpr = columnExpr(columns, "bitrate", "NULL")
                 val sampleRateExpr = columnExpr(columns, "sample_rate", "NULL")
+                val mediaStoreDateModifiedExpr = columnExpr(
+                    columns,
+                    "media_store_date_modified",
+                    "CASE WHEN $dateAddedExpr > 0 THEN $dateAddedExpr / 1000 ELSE 0 END"
+                )
 
                 db.execSQL(
                     """
@@ -644,7 +676,13 @@ abstract class PixelPlayerDatabase : RoomDatabase() {
                             bitrate,
                             sample_rate,
                             artists_json,
-                            source_type
+                            source_type,
+                            media_store_date_added,
+                            media_store_date_modified,
+                            title_user_edited,
+                            artist_user_edited,
+                            album_user_edited,
+                            genre_user_edited
                         )
                         SELECT
                             id,
@@ -670,7 +708,13 @@ abstract class PixelPlayerDatabase : RoomDatabase() {
                             $bitrateExpr,
                             $sampleRateExpr,
                             ${columnExpr(columns, "artists_json", "NULL")},
-                            ${columnExpr(columns, "source_type", "0")}
+                            ${columnExpr(columns, "source_type", "0")},
+                            ${columnExpr(columns, "media_store_date_added", mediaStoreDateModifiedExpr)},
+                            $mediaStoreDateModifiedExpr,
+                            ${columnExpr(columns, "title_user_edited", "0")},
+                            ${columnExpr(columns, "artist_user_edited", "0")},
+                            ${columnExpr(columns, "album_user_edited", "0")},
+                            ${columnExpr(columns, "genre_user_edited", "0")}
                         FROM songs
                         WHERE id IS NOT NULL
                           AND title IS NOT NULL
@@ -877,6 +921,18 @@ abstract class PixelPlayerDatabase : RoomDatabase() {
                 }
             }
             return columns
+        }
+
+        private fun addColumnIfMissing(
+            db: SupportSQLiteDatabase,
+            tableName: String,
+            columnName: String,
+            definition: String
+        ) {
+            if (!tableExists(db, tableName)) return
+            if (columnName !in getTableColumns(db, tableName)) {
+                db.execSQL("ALTER TABLE $tableName ADD COLUMN $columnName $definition")
+            }
         }
 
         private fun getTableColumnDefaultValue(

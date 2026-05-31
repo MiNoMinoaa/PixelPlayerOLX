@@ -277,22 +277,28 @@ class FileExplorerStateHolder(
         val currentBlocked = _blockedDirectories.value.toMutableSet()
         val path = normalizePath(file)
 
+        val isEffectivelyBlocked = DirectoryRuleResolver(currentAllowed, currentBlocked).isBlocked(path)
+
         // Check if explicitly blocked in the set (ignoring resolver logic for a moment)
         val isExplicitlyBlocked = currentBlocked.contains(path)
 
-        if (isExplicitlyBlocked) {
+        if (isEffectivelyBlocked) {
             // Unblock operation
             currentBlocked.remove(path)
-            
-            // Clean up: Remove any explicit "Allow" rules that are children of this path
-            // (since we are unblocking the parent, children are now implicitly allowed)
-            currentAllowed.removeAll { it.startsWith("$path/") }
-            
+
+            if (isExplicitlyBlocked) {
+                // Clean up: Remove any explicit "Allow" rules that are children of this path
+                // (since we are unblocking the parent, children are now implicitly allowed)
+                currentAllowed.removeAll { it.startsWith("$path/") }
+            }
+
             // Crucial: Only add to "Allowed" if it is STILL blocked by a parent.
             // If it's not blocked by any parent, we don't need to add it to allowed (Global Allow).
             val resolver = DirectoryRuleResolver(currentAllowed, currentBlocked)
             if (resolver.isBlocked(path)) {
                currentAllowed.add(path)
+            } else {
+               currentAllowed.remove(path)
             }
 
             // Optimistic Update directly to flows to prevent race conditions on rapid toggles

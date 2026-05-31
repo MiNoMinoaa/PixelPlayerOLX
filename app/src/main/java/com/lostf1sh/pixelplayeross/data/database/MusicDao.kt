@@ -65,7 +65,13 @@ private const val SONG_DETAIL_PROJECTION = """
     songs.bitrate AS bitrate,
     songs.sample_rate AS sample_rate,
     songs.artists_json AS artists_json,
-    songs.source_type AS source_type
+    songs.source_type AS source_type,
+    songs.media_store_date_added AS media_store_date_added,
+    songs.media_store_date_modified AS media_store_date_modified,
+    songs.title_user_edited AS title_user_edited,
+    songs.artist_user_edited AS artist_user_edited,
+    songs.album_user_edited AS album_user_edited,
+    songs.genre_user_edited AS genre_user_edited
 """
 
 // Projection for list queries: excludes lyrics to prevent CursorWindow overflow (2MB limit)
@@ -74,7 +80,9 @@ private const val SONG_LIST_PROJECTION = """
     id, title, artist_name, artist_id, album_artist, album_name, album_id,
     content_uri_string, album_art_uri_string, duration, genre, file_path,
     parent_directory_path, is_favorite, NULL AS lyrics, track_number, disc_number,
-    year, date_added, mime_type, bitrate, sample_rate, artists_json, source_type
+    year, date_added, mime_type, bitrate, sample_rate, artists_json, source_type,
+    media_store_date_added, media_store_date_modified, title_user_edited,
+    artist_user_edited, album_user_edited, genre_user_edited
 """
 
 data class DeviceCapabilitySongRow(
@@ -183,6 +191,9 @@ interface MusicDao {
     @Query("DELETE FROM songs")
     suspend fun clearAllSongs()
 
+    @Query("DELETE FROM songs WHERE source_type = 0")
+    suspend fun clearLocalSongs()
+
     @Query("DELETE FROM albums")
     suspend fun clearAllAlbums()
 
@@ -202,11 +213,40 @@ interface MusicDao {
     @Query("DELETE FROM song_artist_cross_ref WHERE song_id IN (:songIds)")
     suspend fun deleteCrossRefsBySongIds(songIds: List<Long>)
 
+    @Query("DELETE FROM song_artist_cross_ref WHERE song_id IN (SELECT id FROM songs WHERE source_type = 0)")
+    suspend fun deleteLocalSongArtistCrossRefs()
+
     @Query("DELETE FROM favorites WHERE songId IN (:songIds)")
     suspend fun deleteFavoritesBySongIds(songIds: List<Long>)
 
+    @Query("DELETE FROM favorites WHERE songId IN (SELECT id FROM songs WHERE source_type = 0)")
+    suspend fun deleteLocalFavorites()
+
     @Query("DELETE FROM lyrics WHERE songId IN (:songIds)")
     suspend fun deleteLyricsBySongIds(songIds: List<Long>)
+
+    @Query("DELETE FROM lyrics WHERE songId IN (SELECT id FROM songs WHERE source_type = 0)")
+    suspend fun deleteLocalLyrics()
+
+    @Query("""
+        UPDATE artists
+        SET track_count = (
+            SELECT COUNT(DISTINCT song_artist_cross_ref.song_id)
+            FROM song_artist_cross_ref
+            WHERE song_artist_cross_ref.artist_id = artists.id
+        )
+    """)
+    suspend fun refreshArtistTrackCounts()
+
+    @Query("""
+        UPDATE albums
+        SET song_count = (
+            SELECT COUNT(*)
+            FROM songs
+            WHERE songs.album_id = albums.id
+        )
+    """)
+    suspend fun refreshAlbumSongCounts()
 
     @Query("SELECT id FROM songs WHERE source_type = 5")
     suspend fun getAllNavidromeSongIds(): List<Long>
@@ -225,6 +265,8 @@ interface MusicDao {
         }
         deleteOrphanedAlbums()
         deleteOrphanedArtists()
+        refreshAlbumSongCounts()
+        refreshArtistTrackCounts()
     }
 
     @Transaction
@@ -286,6 +328,8 @@ interface MusicDao {
         // Clean up orphaned albums and artists
         deleteOrphanedAlbums()
         deleteOrphanedArtists()
+        refreshAlbumSongCounts()
+        refreshArtistTrackCounts()
     }
 
     // --- Directory Helper ---
@@ -1481,7 +1525,11 @@ interface MusicDao {
             album_name = :album,
             genre = :genre,
             track_number = :trackNumber,
-            disc_number = :discNumber
+            disc_number = :discNumber,
+            title_user_edited = 1,
+            artist_user_edited = 1,
+            album_user_edited = 1,
+            genre_user_edited = 1
         WHERE id = :songId
     """)
     suspend fun updateSongMetadata(
@@ -1534,6 +1582,7 @@ interface MusicDao {
         }
 
         deleteOrphanedArtists()
+        refreshArtistTrackCounts()
     }
 
     @Query("UPDATE songs SET album_art_uri_string = :albumArtUri WHERE id = :songId")
@@ -1732,20 +1781,18 @@ interface MusicDao {
     }
 
     @Transaction
-    suspend fun rebuildMusicDataWithCrossRefs(
+    suspend fun rebuildLocalMusicDataWithCrossRefs(
         songs: List<SongEntity>,
         albums: List<AlbumEntity>,
         artists: List<ArtistEntity>,
         crossRefs: List<SongArtistCrossRef>
     ) {
-        // Save current cloud songs before clearing to prevent accidental data loss
-        // Only clear if we have new songs to insert, or we are explicitly asked to REBUILD everything.
-        // We handle this logic at the worker/repository level to be more precise.
-
-        clearAllSongArtistCrossRefs()
-        clearAllSongs()
-        clearAllAlbums()
-        clearAllArtists()
+        deleteLocalSongArtistCrossRefs()
+        deleteLocalFavorites()
+        deleteLocalLyrics()
+        clearLocalSongs()
+        deleteOrphanedAlbums()
+        deleteOrphanedArtists()
 
         insertArtists(artists)
         insertAlbums(albums)
@@ -1753,6 +1800,8 @@ interface MusicDao {
         crossRefs.chunked(CROSS_REF_BATCH_SIZE).forEach { chunk ->
             insertSongArtistCrossRefs(chunk)
         }
+        refreshAlbumSongCounts()
+        refreshArtistTrackCounts()
     }
 
     companion object {

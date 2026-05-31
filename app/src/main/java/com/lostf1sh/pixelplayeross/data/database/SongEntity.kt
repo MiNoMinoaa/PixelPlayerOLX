@@ -85,7 +85,13 @@ data class SongEntity(
     @ColumnInfo(name = "bitrate") val bitrate: Int? = null, // bits per second
     @ColumnInfo(name = "sample_rate") val sampleRate: Int? = null, // Hz
     @ColumnInfo(name = "artists_json") val artistsJson: String? = null,
-    @ColumnInfo(name = "source_type", defaultValue = "0") val sourceType: Int = SourceType.LOCAL
+    @ColumnInfo(name = "source_type", defaultValue = "0") val sourceType: Int = SourceType.LOCAL,
+    @ColumnInfo(name = "media_store_date_added", defaultValue = "0") val mediaStoreDateAdded: Long = 0L,
+    @ColumnInfo(name = "media_store_date_modified", defaultValue = "0") val mediaStoreDateModified: Long = 0L,
+    @ColumnInfo(name = "title_user_edited", defaultValue = "0") val titleUserEdited: Boolean = false,
+    @ColumnInfo(name = "artist_user_edited", defaultValue = "0") val artistUserEdited: Boolean = false,
+    @ColumnInfo(name = "album_user_edited", defaultValue = "0") val albumUserEdited: Boolean = false,
+    @ColumnInfo(name = "genre_user_edited", defaultValue = "0") val genreUserEdited: Boolean = false
 )
 
 private fun SongEntity.toSongInternal(artists: List<ArtistRef>): Song {

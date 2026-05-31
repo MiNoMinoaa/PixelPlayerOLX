@@ -132,7 +132,7 @@ class SyncManager @Inject constructor(
                         )
                     }
                     succeededWork != null -> {
-                        val total = succeededWork.outputData.getInt(SyncWorker.OUTPUT_TOTAL_SONGS, 0)
+                        val total = readCompletedSongCount(succeededWork)
                         SyncProgress(
                             isRunning = false,
                             currentCount = total,
@@ -227,18 +227,18 @@ class SyncManager @Inject constructor(
      * Performs a full library rescan, ignoring the last sync timestamp.
      * Use this when the user explicitly wants to force a complete rescan.
      */
-    fun fullSync() {
+    fun fullSync(deepScan: Boolean = true) {
         Log.i(TAG, "Full sync requested - Scheduling full sync worker")
         enqueueSyncWork(
-            request = SyncWorker.fullSyncWork(),
+            request = SyncWorker.fullSyncWork(deepScan = deepScan),
             policy = ExistingWorkPolicy.REPLACE
         )
     }
 
     /**
-     * Completely rebuilds the database from scratch.
-     * Clears all existing data including user edits (lyrics, etc.) and rescans.
-     * Use when database is corrupted or songs are missing.
+     * Rebuilds local MediaStore-backed songs from scratch while preserving cloud sources.
+     * Local imported lyrics, favorites, and user metadata edits are removed for the rebuilt songs.
+     * Use when local library data is corrupted or songs are missing.
      */
     fun rebuildDatabase() {
         Log.i(TAG, "Rebuild database requested - Scheduling rebuild worker")
@@ -249,15 +249,26 @@ class SyncManager @Inject constructor(
     }
 
     /**
-     * Fuerza una nueva sincronización, reemplazando cualquier trabajo de sincronización
-     * existente. Ideal para el botón de "Refrescar Biblioteca".
+     * Schedules a fresh local incremental sync, replacing any pending foreground sync work.
+     * The worker detects directory-rule version changes, so this still becomes a full local pass
+     * when the caller just changed the selected folders.
      */
     fun forceRefresh() {
-        Log.i(TAG, "Force refresh requested - Scheduling incremental worker")
+        Log.i(TAG, "Manual local refresh requested - Scheduling incremental worker")
         enqueueSyncWork(
             request = SyncWorker.incrementalSyncWork(runMaintenance = false),
             policy = ExistingWorkPolicy.REPLACE
         )
+    }
+
+    private fun readCompletedSongCount(workInfo: WorkInfo): Int {
+        val intValue = workInfo.outputData.getInt(SyncWorker.OUTPUT_TOTAL_SONGS, -1)
+        if (intValue >= 0) return intValue
+
+        return workInfo.outputData
+            .getLong(SyncWorker.OUTPUT_TOTAL_SONGS, 0L)
+            .coerceAtMost(Int.MAX_VALUE.toLong())
+            .toInt()
     }
 
     private fun observeStorageChanges() {

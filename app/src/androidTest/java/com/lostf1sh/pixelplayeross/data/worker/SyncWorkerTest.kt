@@ -55,7 +55,7 @@ class SyncWorkerTest {
                     musicDao = dao,
                     userPreferencesRepository = mockk(relaxed = true),
                     lyricsRepository = mockk(relaxed = true),
-                    navidromeRepository = mockk(relaxed = true)
+                    cloudSyncCoordinator = mockk(relaxed = true)
                 )
             } else {
                 null
@@ -85,11 +85,13 @@ class SyncWorkerTest {
         val cursor = MatrixCursor(arrayOf(
             MediaStore.Audio.Media._ID, MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.ARTIST,
             MediaStore.Audio.Media.ARTIST_ID, MediaStore.Audio.Media.ALBUM, MediaStore.Audio.Media.ALBUM_ID,
-            MediaStore.Audio.Media.DURATION, MediaStore.Audio.Media.DATA
+            MediaStore.Audio.Media.ALBUM_ARTIST, MediaStore.Audio.Media.DURATION, MediaStore.Audio.Media.DATA,
+            MediaStore.Audio.Media.MIME_TYPE, MediaStore.Audio.Media.TRACK, MediaStore.Audio.Media.YEAR,
+            MediaStore.Audio.Media.DATE_ADDED, MediaStore.Audio.Media.DATE_MODIFIED
         ))
         // Añadir filas de ejemplo
-        cursor.addRow(arrayOf<Any>(1L, "Test Song 1", "Test Artist 1", 101L, "Test Album 1", 201L, 180000L, "/sdcard/Music/song1.mp3"))
-        cursor.addRow(arrayOf<Any>(2L, "Test Song 2", "Test Artist 2", 102L, "Test Album 2", 202L, 240000L, "/sdcard/Music/song2.mp3"))
+        cursor.addRow(arrayOf<Any?>(1L, "Test Song 1", "Test Artist 1", 101L, "Test Album 1", 201L, null, 180000L, "/sdcard/Music/song1.mp3", "audio/mpeg", 1, 2024, 100L, 101L))
+        cursor.addRow(arrayOf<Any?>(2L, "Test Song 2", "Test Artist 2", 102L, "Test Album 2", 202L, null, 240000L, "/sdcard/Music/song2.mp3", "audio/mpeg", 2, 2024, 100L, 101L))
         return cursor
     }
 

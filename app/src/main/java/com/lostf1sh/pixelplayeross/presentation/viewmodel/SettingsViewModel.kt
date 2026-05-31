@@ -783,7 +783,7 @@ class SettingsViewModel @Inject constructor(
             if (durationMs == _uiState.value.minSongDuration) return@launch
             userPreferencesRepository.setMinSongDuration(durationMs)
             // Trigger a library rescan so the change takes effect in the database
-            syncManager.fullSync()
+            syncManager.fullSync(deepScan = false)
         }
     }
 
@@ -818,9 +818,9 @@ class SettingsViewModel @Inject constructor(
     }
 
     /**
-     * Completely rebuilds the database from scratch.
-     * Clears all data including user edits (lyrics, favorites) and rescans.
-     * Use when database is corrupted or as a last resort.
+     * Rebuilds local MediaStore-backed songs from scratch while preserving cloud sources.
+     * Local imported lyrics, favorites, and user metadata edits are removed for rebuilt songs.
+     * Use when local library data is corrupted or as a last resort.
      */
     fun rebuildDatabase() {
         viewModelScope.launch {

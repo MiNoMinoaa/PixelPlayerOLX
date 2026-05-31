@@ -221,7 +221,7 @@ Backslash (\) can be used to escape character delimiters.</string>
     <string name="presentation_batch_g_file_explorer_cd_refresh">Refresh</string>
     <string name="presentation_batch_g_file_explorer_cd_done">Done</string>
     <string name="presentation_batch_g_file_explorer_done">Done</string>
-    <string name="presentation_batch_g_file_explorer_hint">Everything is allowed by default. Tap a folder to mark it as excluded from scans.</string>
+    <string name="presentation_batch_g_file_explorer_hint">Everything is included by default. Exclude a folder to skip it, or open an excluded folder and include a child folder as an override.</string>
     <string name="presentation_batch_g_file_explorer_empty_folders">No subfolders here</string>
     <string name="presentation_batch_g_file_explorer_cd_navigate_up">Navigate up</string>
     <string name="presentation_batch_g_file_explorer_cd_go_root">Go to root</string>
