@@ -28,7 +28,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
     version = 43,
     exportSchema = true
 )
-abstract class PixelPlayDatabase : RoomDatabase() {
+abstract class PixelPlayerDatabase : RoomDatabase() {
     abstract fun albumArtThemeDao(): AlbumArtThemeDao
     abstract fun searchHistoryDao(): SearchHistoryDao
     abstract fun musicDao(): MusicDao

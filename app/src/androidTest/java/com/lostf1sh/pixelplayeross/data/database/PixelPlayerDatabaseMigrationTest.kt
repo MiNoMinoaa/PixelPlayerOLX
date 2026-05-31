@@ -12,7 +12,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class PixelPlayDatabaseMigrationTest {
+class PixelPlayerDatabaseMigrationTest {
 
     @After
     fun tearDown() {
@@ -26,7 +26,7 @@ class PixelPlayDatabaseMigrationTest {
         val db = openHelper.writableDatabase
 
         try {
-            PixelPlayDatabase.MIGRATION_23_24.migrate(db)
+            PixelPlayerDatabase.MIGRATION_23_24.migrate(db)
 
             val columns = db.tableColumns("songs")
             assertTrue("date_added" in columns)

@@ -53,7 +53,7 @@ import com.lostf1sh.pixelplayeross.data.model.QueueItem
 import com.lostf1sh.pixelplayeross.utils.createScalableBackgroundBitmap
 import timber.log.Timber
 
-class PixelPlayGlanceWidget : GlanceAppWidget() {
+class PixelPlayerGlanceWidget : GlanceAppWidget() {
 
     companion object {
         // Tamaños definidos para diferentes configuraciones del widget
@@ -79,7 +79,7 @@ class PixelPlayGlanceWidget : GlanceAppWidget() {
             val playerInfo = currentState<PlayerInfo>()
             val currentSize = LocalSize.current
 
-            Timber.tag("PixelPlayGlanceWidget")
+            Timber.tag("PixelPlayerGlanceWidget")
                 .d("Providing Glance. PlayerInfo: title='${playerInfo.songTitle}', artist='${playerInfo.artistName}', isPlaying=${playerInfo.isPlaying}, hasBitmap=${playerInfo.albumArtBitmapData != null}, progress=${playerInfo.currentPositionMs}/${playerInfo.totalDurationMs}")
 
             GlanceTheme {
@@ -101,7 +101,7 @@ class PixelPlayGlanceWidget : GlanceAppWidget() {
         val albumArtBitmapData = playerInfo.albumArtBitmapData
         val albumArtUri = playerInfo.albumArtUri
 
-        Timber.tag("PixelPlayGlanceWidget")
+        Timber.tag("PixelPlayerGlanceWidget")
             .d("WidgetUi: PlayerInfo received. Title: $title, Artist: $artist, HasBitmapData: ${albumArtBitmapData != null}, BitmapDataSize: ${albumArtBitmapData?.size ?: "N/A"}")
 
         val actualBackgroundColor = GlanceTheme.colors.surface

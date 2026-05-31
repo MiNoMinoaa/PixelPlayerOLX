@@ -32,7 +32,7 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltAndroidApp
-class PixelPlayApplication : Application(), ImageLoaderFactory, Configuration.Provider {
+class PixelPlayerApplication : Application(), ImageLoaderFactory, Configuration.Provider {
 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
@@ -65,7 +65,7 @@ class PixelPlayApplication : Application(), ImageLoaderFactory, Configuration.Pr
 
     // AÑADE EL COMPANION OBJECT
     companion object {
-        const val NOTIFICATION_CHANNEL_ID = "pixelplay_music_channel"
+        const val NOTIFICATION_CHANNEL_ID = "pixelplayer_music_channel"
     }
 
     private val appLifecycleObserver = object : DefaultLifecycleObserver {
@@ -107,7 +107,7 @@ class PixelPlayApplication : Application(), ImageLoaderFactory, Configuration.Pr
         ProcessLifecycleOwner.get().lifecycle.addObserver(appLifecycleObserver)
 
         startupScope.launch {
-            AlbumArtUtils.migrateLegacyCacheLocation(this@PixelPlayApplication)
+            AlbumArtUtils.migrateLegacyCacheLocation(this@PixelPlayerApplication)
             val savedLimit = runCatching {
                 userPreferencesRepository.get().albumArtCacheLimitMbFlow.first()
             }.getOrNull()
