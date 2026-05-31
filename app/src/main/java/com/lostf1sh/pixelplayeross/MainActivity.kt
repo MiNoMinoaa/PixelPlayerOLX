@@ -8,9 +8,6 @@ import android.Manifest
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Build
-import android.graphics.RenderEffect as AndroidRenderEffect
-import android.graphics.Shader as AndroidShader
-import androidx.compose.ui.graphics.asComposeRenderEffect
 import android.os.Bundle
 import android.os.Trace
 import android.provider.Settings
@@ -132,7 +129,6 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.math.roundToInt
 
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import com.lostf1sh.pixelplayeross.presentation.utils.AppHapticsConfig
@@ -849,24 +845,8 @@ class MainActivity : ComponentActivity() {
                             bottomSpacerPx = spacerPx
                         )
 
-                        val expansionFractionProvider = remember(playerViewModel.playerContentExpansionFraction) {
-                            { playerViewModel.playerContentExpansionFraction.value }
-                        }
-                        val blurEffectCache = remember { BlurEffectCache() }
-
                         Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .graphicsLayer {
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                        val fraction = expansionFractionProvider()
-                                        // Quantize to 4px steps: rebuild the RenderEffect only
-                                        // when the blur crosses a step, reuse the cached object
-                                        // every other frame.
-                                        val quantizedBlurPx = (fraction * 100f / 4f).roundToInt() * 4f
-                                        renderEffect = blurEffectCache.get(quantizedBlurPx)
-                                    }
-                                }
+                            modifier = Modifier.fillMaxSize()
                         ) {
                             AppNavigation(
                                 playerViewModel = playerViewModel,
@@ -1038,31 +1018,6 @@ class MainActivity : ComponentActivity() {
     }
 
 
-}
-
-/**
- * Caches the (expensive) RenderEffect Java object so we don't allocate a new
- * blur every animation frame. The radius is quantized at the call site, so this
- * only rebuilds ~25 times across the whole expand animation instead of 60+/sec.
- */
-private class BlurEffectCache {
-    private var lastRadiusPx: Float = Float.NaN
-    private var cached: androidx.compose.ui.graphics.RenderEffect? = null
-
-    fun get(radiusPx: Float): androidx.compose.ui.graphics.RenderEffect? {
-        if (radiusPx <= 0f || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-            lastRadiusPx = 0f
-            cached = null
-            return null
-        }
-        if (radiusPx != lastRadiusPx) {
-            lastRadiusPx = radiusPx
-            cached = AndroidRenderEffect
-                .createBlurEffect(radiusPx, radiusPx, AndroidShader.TileMode.CLAMP)
-                .asComposeRenderEffect()
-        }
-        return cached
-    }
 }
 
 /**
