@@ -1,3 +1,5 @@
+@file:android.annotation.SuppressLint("RestrictedApi")
+
 package com.lostf1sh.pixelplayeross.ui.theme
 
 import android.graphics.Bitmap

@@ -10,7 +10,6 @@ import androidx.compose.ui.draw.rotate
 
 import android.content.Context
 import android.content.Intent
-import android.app.Activity
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -66,7 +65,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ClearAll
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.PlayCircle
@@ -154,7 +152,6 @@ import com.lostf1sh.pixelplayeross.data.backup.model.BackupSection
 import com.lostf1sh.pixelplayeross.data.backup.model.BackupTransferProgressUpdate
 import com.lostf1sh.pixelplayeross.data.backup.model.ModuleRestoreDetail
 import com.lostf1sh.pixelplayeross.data.backup.model.RestorePlan
-import com.lostf1sh.pixelplayeross.data.preferences.AppLanguage
 import com.lostf1sh.pixelplayeross.data.preferences.AppThemeMode
 import com.lostf1sh.pixelplayeross.data.preferences.CollagePattern
 import com.lostf1sh.pixelplayeross.data.preferences.CarouselStyle
@@ -525,17 +522,6 @@ fun SettingsCategoryScreen(
                             val useSmoothCorners by settingsViewModel.useSmoothCorners.collectAsStateWithLifecycle()
 
                             SettingsSubsection(title = stringResource(R.string.setcat_global_theme)) {
-                                ThemeSelectorItem(
-                                    label = stringResource(R.string.setcat_language_label),
-                                    description = stringResource(R.string.setcat_language_desc),
-                                    options = AppLanguage.getLanguageOptions(context),
-                                    selectedKey = uiState.appLanguageTag,
-                                    onSelectionChanged = {
-                                        settingsViewModel.setAppLanguage(it)
-                                        (context as? Activity)?.recreate()
-                                    },
-                                    leadingIcon = { Icon(Icons.Outlined.Language, null, tint = MaterialTheme.colorScheme.secondary) }
-                                )
                                 ThemeSelectorItem(
                                     label = stringResource(R.string.setcat_app_theme_label),
                                     description = stringResource(R.string.setcat_app_theme_desc),

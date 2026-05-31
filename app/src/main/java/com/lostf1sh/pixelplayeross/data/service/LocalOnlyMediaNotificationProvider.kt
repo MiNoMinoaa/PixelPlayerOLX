@@ -13,7 +13,7 @@ import com.google.common.collect.ImmutableList
 /**
  * Wraps Media3's default provider and marks playback notifications as local-only.
  */
-@UnstableApi
+@androidx.annotation.OptIn(UnstableApi::class)
 class LocalOnlyMediaNotificationProvider(
     private val context: Context,
     private val delegate: DefaultMediaNotificationProvider =
@@ -55,4 +55,3 @@ class LocalOnlyMediaNotificationProvider(
     override fun getNotificationChannelInfo(): MediaNotification.Provider.NotificationChannelInfo =
         delegate.getNotificationChannelInfo()
 }
-

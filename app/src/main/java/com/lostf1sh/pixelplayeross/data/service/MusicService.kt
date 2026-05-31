@@ -136,7 +136,7 @@ suspend fun loadArtworkBytesViaCoil(context: Context, uri: Uri): ByteArray? {
 }
 
 
-@UnstableApi
+@androidx.annotation.OptIn(UnstableApi::class)
 @AndroidEntryPoint
 class MusicService : MediaLibraryService() {
 

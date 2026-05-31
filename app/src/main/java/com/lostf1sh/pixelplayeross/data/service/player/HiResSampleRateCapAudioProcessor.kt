@@ -15,7 +15,7 @@ import kotlin.math.ceil
  * Reducing 352.8/384 kHz streams before they reach the sink avoids the "loading audio" hang while
  * preserving normal playback for standard and regular hi-res files.
  */
-@UnstableApi
+@androidx.annotation.OptIn(UnstableApi::class)
 class HiResSampleRateCapAudioProcessor(
     private val maxOutputSampleRateHz: Int = 192_000
 ) : AudioProcessor {

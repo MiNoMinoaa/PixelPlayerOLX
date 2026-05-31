@@ -22,7 +22,7 @@ import com.lostf1sh.pixelplayeross.data.preferences.AppThemeMode
 import com.lostf1sh.pixelplayeross.data.preferences.ThemePreferencesRepository
 import javax.inject.Inject
 
-@UnstableApi
+@androidx.annotation.OptIn(UnstableApi::class)
 @AndroidEntryPoint
 class ExternalPlayerActivity : ComponentActivity() {
 
@@ -121,7 +121,17 @@ class ExternalPlayerActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             val hasPersistablePermission = intent.flags and Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION != 0
             if (hasPersistablePermission) {
-                val takeFlags = intent.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                val takeFlags =
+                    (if (intent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0) {
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    } else {
+                        0
+                    }) or
+                        (if (intent.flags and Intent.FLAG_GRANT_WRITE_URI_PERMISSION != 0) {
+                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        } else {
+                            0
+                        })
                 if (takeFlags != 0) {
                     runCatching { contentResolver.takePersistableUriPermission(uri, takeFlags) }
                 }

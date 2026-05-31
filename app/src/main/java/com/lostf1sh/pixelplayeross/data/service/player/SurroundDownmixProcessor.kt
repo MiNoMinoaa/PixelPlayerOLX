@@ -25,7 +25,7 @@ import java.nio.ByteOrder
  * This processor is only active for 6-channel or 8-channel 16-bit PCM input.
  * All other formats are passed through without modification.
  */
-@UnstableApi
+@androidx.annotation.OptIn(UnstableApi::class)
 class SurroundDownmixProcessor : AudioProcessor {
 
     companion object {

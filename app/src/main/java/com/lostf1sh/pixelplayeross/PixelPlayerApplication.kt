@@ -4,7 +4,6 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.ComponentCallbacks2
-import android.content.Context
 import android.os.Build
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -20,7 +19,6 @@ import com.lostf1sh.pixelplayeross.presentation.viewmodel.ThemeStateHolder
 import com.lostf1sh.pixelplayeross.utils.AlbumArtCacheManager
 import com.lostf1sh.pixelplayeross.utils.AlbumArtUtils
 import com.lostf1sh.pixelplayeross.utils.CrashHandler
-import com.lostf1sh.pixelplayeross.utils.AppLocaleManager
 import com.lostf1sh.pixelplayeross.utils.MediaMetadataRetrieverPool
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -72,10 +70,6 @@ class PixelPlayerApplication : Application(), ImageLoaderFactory, Configuration.
         override fun onStart(owner: LifecycleOwner) {
             libraryStateHolder.get().restoreAfterTrimIfNeeded()
         }
-    }
-
-    override fun attachBaseContext(base: Context) {
-        super.attachBaseContext(AppLocaleManager.wrapContext(base))
     }
 
     override fun onCreate() {

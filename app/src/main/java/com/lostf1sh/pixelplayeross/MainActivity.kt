@@ -5,7 +5,6 @@ import com.lostf1sh.pixelplayeross.presentation.navigation.navigateSafely
 // import androidx.compose.ui.platform.LocalView // No longer needed for this
 // import androidx.core.view.WindowInsetsCompat // No longer needed for this
 import android.Manifest
-import android.content.Context
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Build
@@ -23,7 +22,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.DrawableRes
-import androidx.annotation.CallSuper
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -128,7 +126,6 @@ import com.lostf1sh.pixelplayeross.presentation.viewmodel.MainViewModel
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.PlayerViewModel
 import com.lostf1sh.pixelplayeross.ui.theme.PixelPlayerTheme
 import com.lostf1sh.pixelplayeross.utils.CrashHandler
-import com.lostf1sh.pixelplayeross.utils.AppLocaleManager
 import com.lostf1sh.pixelplayeross.utils.LogUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.collections.immutable.persistentListOf
@@ -160,7 +157,7 @@ private data class DismissUndoBarSlice(
     val durationMillis: Long = 4000L
 )
 
-@UnstableApi
+@androidx.annotation.OptIn(UnstableApi::class)
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
@@ -180,11 +177,6 @@ class MainActivity : ComponentActivity() {
 
     private val requestAllFilesAccessLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { _ ->
         // Handle the result in onResume
-    }
-
-    @CallSuper
-    override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(AppLocaleManager.wrapContext(newBase))
     }
 
     @OptIn(ExperimentalPermissionsApi::class)
@@ -1058,7 +1050,7 @@ private class BlurEffectCache {
     private var cached: androidx.compose.ui.graphics.RenderEffect? = null
 
     fun get(radiusPx: Float): androidx.compose.ui.graphics.RenderEffect? {
-        if (radiusPx <= 0f) {
+        if (radiusPx <= 0f || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
             lastRadiusPx = 0f
             cached = null
             return null

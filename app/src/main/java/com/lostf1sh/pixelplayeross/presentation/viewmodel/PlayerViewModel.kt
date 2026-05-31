@@ -238,7 +238,7 @@ private data class ResolvedAlbumSelection(
     val wasTrimmed: Boolean
 )
 
-@UnstableApi
+@androidx.annotation.OptIn(UnstableApi::class)
 @SuppressLint("LogNotTimber")
 @OptIn(coil.annotation.ExperimentalCoilApi::class, ExperimentalCoroutinesApi::class)
 @HiltViewModel

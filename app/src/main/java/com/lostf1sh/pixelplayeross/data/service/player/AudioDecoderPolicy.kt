@@ -4,7 +4,7 @@ import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
 import java.util.Locale
 
-@UnstableApi
+@androidx.annotation.OptIn(UnstableApi::class)
 internal object AudioDecoderPolicy {
     private const val AUDIO_MIDI = "audio/midi"
     private val extensionOnlyMimeTypes = setOf(
