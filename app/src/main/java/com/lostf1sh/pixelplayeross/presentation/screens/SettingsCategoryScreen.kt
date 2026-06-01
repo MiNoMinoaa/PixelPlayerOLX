@@ -9,12 +9,10 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.ui.draw.rotate
 
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.os.SystemClock
-import android.provider.Settings
 import android.text.format.Formatter
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -700,31 +698,6 @@ fun SettingsCategoryScreen(
                                     selectedKey = if (uiState.keepPlayingInBackground) "true" else "false",
                                     onSelectionChanged = { settingsViewModel.setKeepPlayingInBackground(it.toBoolean()) },
                                     leadingIcon = { Icon(Icons.Rounded.MusicNote, null, tint = MaterialTheme.colorScheme.secondary) }
-                                )
-                                SettingsItem(
-                                    title = stringResource(R.string.setcat_battery_optimization_title),
-                                    subtitle = stringResource(R.string.setcat_battery_optimization_subtitle),
-                                    onClick = {
-                                        val powerManager = context.getSystemService(android.content.Context.POWER_SERVICE) as android.os.PowerManager
-                                        if (powerManager.isIgnoringBatteryOptimizations(context.packageName)) {
-                                            Toast.makeText(context, context.getString(R.string.toast_battery_already_disabled), Toast.LENGTH_SHORT).show()
-                                            return@SettingsItem
-                                        }
-                                        try {
-                                            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                                                data = "package:${context.packageName}".toUri()
-                                            }
-                                            context.startActivity(intent)
-                                        } catch (e: Exception) {
-                                            try {
-                                                val fallbackIntent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-                                                context.startActivity(fallbackIntent)
-                                            } catch (e2: Exception) {
-                                                Toast.makeText(context, context.getString(R.string.toast_battery_settings_unavailable), Toast.LENGTH_SHORT).show()
-                                            }
-                                        }
-                                    },
-                                    leadingIcon = { Icon(painterResource(R.drawable.rounded_all_inclusive_24), null, tint = MaterialTheme.colorScheme.secondary) }
                                 )
                             }
 

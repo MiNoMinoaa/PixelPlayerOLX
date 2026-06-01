@@ -86,7 +86,6 @@
     <string name="toast_grant_permission_first">Please grant the required permission first.</string>
     <string name="toast_grant_all_permissions">Please grant all required permissions.</string>
     <string name="toast_grant_storage_first">Grant storage permissions first</string>
-    <string name="toast_battery_settings_unavailable">Could not open battery settings</string>
 
     <!-- Content descriptions -->
     <string name="cd_expand_menu">Expand menu</string>
@@ -125,9 +124,6 @@
     <string name="setup_compact_mode_pill_hint">Using minimal pill navigation</string>
     <string name="setup_compact_mode_tab_hint">Using standard tab row</string>
     <string name="setup_preview_songs_label">Songs</string>
-    <string name="setup_battery_optimization_title">Battery Optimization</string>
-    <string name="setup_battery_optimization_description">Some Android devices aggressively kill background apps. Disable battery optimization for PixelPlayerOSS to prevent unexpected playback interruptions.</string>
-    <string name="setup_disable_battery_optimization">Disable Optimization</string>
     <string name="setup_nav_floating_pill_description">Floating pill with rounded corners</string>
     <string name="setup_nav_full_width_description">Standard full-width bar</string>
 

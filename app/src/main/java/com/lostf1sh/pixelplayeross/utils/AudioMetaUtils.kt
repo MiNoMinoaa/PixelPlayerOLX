@@ -3,6 +3,7 @@ package com.lostf1sh.pixelplayeross.utils
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMetadataRetriever
+import android.os.Build
 import android.util.Log
 import com.lostf1sh.pixelplayeross.data.database.MusicDao
 import java.io.File
@@ -42,7 +43,11 @@ object AudioMetaUtils {
                 retriever.setDataSource(filePath)
                 mimeType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
                 bitrate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)?.toIntOrNull()
-                sampleRate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE)?.toIntOrNull()
+                sampleRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE)?.toIntOrNull()
+                } else {
+                    null
+                }
             } catch (e: Exception) {
                 Log.w("AudioMetaUtils", "Retriever failed for $filePath: ${e.message}")
             }

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Removed bundled translations and the in-app language selector; the first public release ships with English resources only.
+- Removed full-player expand background blur to reduce transition overhead.
+- Release builds now stay unsigned when no local `keystore.properties` is present instead of relying on dummy signing values.
+
+### Fixed
+- Fixed debug lint blockers and several release-readiness warnings around locale-stable formatting and manifest labels.
+
+### Documentation
+- Added release, privacy, and security documentation for the public repository.
+
 ## [0.7.0-beta] - 2026-05-25
 
 ### Added

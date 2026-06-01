@@ -51,6 +51,7 @@ import androidx.core.graphics.scale
 import androidx.glance.unit.ColorProvider
 import com.lostf1sh.pixelplayeross.data.model.QueueItem
 import com.lostf1sh.pixelplayeross.utils.createScalableBackgroundBitmap
+import java.util.Locale
 import timber.log.Timber
 
 class PixelPlayerGlanceWidget : GlanceAppWidget() {
@@ -1396,5 +1397,5 @@ private fun formatDurationGlance(millis: Long): String {
     val totalSeconds = millis / 1000
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
-    return String.format("%02d:%02d", minutes, seconds)
+    return String.format(Locale.US, "%02d:%02d", minutes, seconds)
 }

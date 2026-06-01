@@ -3,6 +3,7 @@
 package com.lostf1sh.pixelplayeross.presentation.screens
 
 import android.net.Uri
+import java.util.Locale
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -1519,9 +1520,9 @@ private fun PlaylistFormContent(
                          ) {
                              Text(stringResource(R.string.presentation_batch_f_shape_parameters), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                              ShapeParameterCard(stringResource(R.string.presentation_batch_f_sides), starSides.toFloat(), 3f..20f, { onStarSidesChange(it.toInt()) }, { it.toInt().toString() }, steps = 17)
-                             ShapeParameterCard(stringResource(R.string.presentation_batch_f_curve), starCurve.toFloat(), 0f..0.5f, { onStarCurveChange(it.toDouble()) }, { String.format("%.2f", it) })
+                             ShapeParameterCard(stringResource(R.string.presentation_batch_f_curve), starCurve.toFloat(), 0f..0.5f, { onStarCurveChange(it.toDouble()) }, { String.format(Locale.US, "%.2f", it) })
                              ShapeParameterCard(stringResource(R.string.presentation_batch_f_rotation), starRotation, 0f..360f, onStarRotationChange, { "${it.toInt()}°" })
-                             ShapeParameterCard(stringResource(R.string.presentation_batch_f_scale), starScale, 0.5f..1.5f, onStarScaleChange, { String.format("%.1fx", it) })
+                             ShapeParameterCard(stringResource(R.string.presentation_batch_f_scale), starScale, 0.5f..1.5f, onStarScaleChange, { String.format(Locale.US, "%.1fx", it) })
                          }
                      }
                  }

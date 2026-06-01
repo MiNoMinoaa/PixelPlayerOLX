@@ -18,6 +18,14 @@ val keystoreProperties = Properties().apply {
     }
 }
 
+val releaseSigningStoreFile = rootProject.file(
+    keystoreProperties.getProperty("storeFile") ?: "vz-pixelplay.jks"
+)
+val hasReleaseSigningConfig = releaseSigningStoreFile.isFile &&
+    keystoreProperties.getProperty("storePassword") != null &&
+    keystoreProperties.getProperty("keyAlias") != null &&
+    keystoreProperties.getProperty("keyPassword") != null
+
 val enableAbiSplits = providers.gradleProperty("pixelplayer.enableAbiSplits")
     .getOrElse("true")
     .toBoolean()
@@ -70,11 +78,13 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            storeFile = rootProject.file(keystoreProperties.getProperty("storeFile") ?: "pixelplayeross-ci.jks")
-            storePassword = keystoreProperties.getProperty("storePassword") ?: "dummyPassword"
-            keyAlias = keystoreProperties.getProperty("keyAlias") ?: "dummyAlias"
-            keyPassword = keystoreProperties.getProperty("keyPassword") ?: "dummyPassword"
+        if (hasReleaseSigningConfig) {
+            create("release") {
+                storeFile = releaseSigningStoreFile
+                storePassword = checkNotNull(keystoreProperties.getProperty("storePassword"))
+                keyAlias = checkNotNull(keystoreProperties.getProperty("keyAlias"))
+                keyPassword = checkNotNull(keystoreProperties.getProperty("keyPassword"))
+            }
         }
     }
 
@@ -84,7 +94,9 @@ android {
         }
 
         release {
-            signingConfig = signingConfigs.getByName("release")
+            if (hasReleaseSigningConfig) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

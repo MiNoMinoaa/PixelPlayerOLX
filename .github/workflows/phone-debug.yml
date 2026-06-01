@@ -29,8 +29,11 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
 
+      - name: Run debug verification
+        run: ./gradlew :app:compileDebugKotlin :app:lintDebug :app:testDebugUnitTest
+
       - name: Build Phone debug APK
-        run: gradle :app:assembleDebug -Ppixelplayer.enableAbiSplits=true
+        run: ./gradlew :app:assembleDebug -Ppixelplayer.enableAbiSplits=true
 
       - name: Verify Phone split APKs
         run: |

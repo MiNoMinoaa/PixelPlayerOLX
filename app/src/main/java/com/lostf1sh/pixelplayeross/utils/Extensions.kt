@@ -4,11 +4,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import java.nio.charset.Charset
 import java.text.Normalizer
+import java.util.Locale
 
 private val WINDOWS_1252: Charset = Charset.forName("windows-1252")
 
 fun Color.toHexString(): String {
-    return String.format("#%08X", this.toArgb())
+    return String.format(Locale.US, "#%08X", this.toArgb())
 }
 
 /**

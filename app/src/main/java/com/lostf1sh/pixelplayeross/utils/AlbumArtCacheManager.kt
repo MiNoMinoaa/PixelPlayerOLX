@@ -7,6 +7,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.Locale
 
 /**
  * Manages album art cache with LRU eviction policy.
@@ -192,7 +193,7 @@ object AlbumArtCacheManager {
     suspend fun getCacheSizeFormatted(context: Context): String {
         val bytes = getCacheSizeBytes(context)
         val mb = bytes.toDouble() / (1024 * 1024)
-        return String.format("%.1f MB", mb)
+        return String.format(Locale.US, "%.1f MB", mb)
     }
     
     /**

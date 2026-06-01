@@ -1,6 +1,7 @@
 package com.lostf1sh.pixelplayeross.utils
 
 import java.io.StringReader
+import java.util.Locale
 import javax.xml.XMLConstants
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.math.roundToInt
@@ -199,6 +200,6 @@ internal object TtmlLyricsParser {
         val minutes = totalSeconds / 60
         val seconds = totalSeconds % 60
         val hundredths = (timeMs % 1_000) / 10
-        return String.format("%02d:%02d.%02d", minutes, seconds, hundredths)
+        return String.format(Locale.US, "%02d:%02d.%02d", minutes, seconds, hundredths)
     }
 }

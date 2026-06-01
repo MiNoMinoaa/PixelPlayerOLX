@@ -222,7 +222,6 @@ fun SetupScreen(
     }
 
     val directorySelectionPageIndex = remember(pages) { pages.indexOf(SetupPage.DirectorySelection) }
-    val batteryOptimizationPageIndex = remember(pages) { pages.indexOf(SetupPage.BatteryOptimization) }
     val finishPageIndex = remember(pages) { pages.indexOf(SetupPage.Finish) }
 
     LaunchedEffect(Unit) {
@@ -233,12 +232,7 @@ fun SetupScreen(
                 }
                 is SetupEvent.RestoreCompleted -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
-                    val targetPageIndex = when {
-                        batteryOptimizationPageIndex >= 0 && !isIgnoringBatteryOptimizationsNow(context) ->
-                            batteryOptimizationPageIndex
-                        finishPageIndex >= 0 -> finishPageIndex
-                        else -> null
-                    }
+                    val targetPageIndex = finishPageIndex.takeIf { it >= 0 }
 
                     if (targetPageIndex != null) {
                         pagerState.animateScrollToPage(targetPageIndex)
@@ -371,11 +365,6 @@ fun SetupScreen(
                     )
                     SetupPage.AlarmsPermission -> AlarmsPermissionPage(
                         uiState = uiState,
-                        onSkip = {
-                            navigateToPage(pagerState.currentPage + 1)
-                        }
-                    )
-                    SetupPage.BatteryOptimization -> BatteryOptimizationPage(
                         onSkip = {
                             navigateToPage(pagerState.currentPage + 1)
                         }
@@ -552,7 +541,6 @@ sealed class SetupPage {
     object AlarmsPermission : SetupPage()
     object LibraryLayout : SetupPage()
     object NavBarLayout : SetupPage()
-    object BatteryOptimization : SetupPage()
     object Finish : SetupPage()
 }
 
@@ -577,7 +565,6 @@ private fun buildSetupPages(sdkInt: Int): List<SetupPage> {
         pages += SetupPage.AlarmsPermission
     }
 
-    pages += SetupPage.BatteryOptimization
     pages += SetupPage.Finish
     return pages
 }
@@ -640,11 +627,6 @@ private fun hasExactAlarmPermissionNow(context: Context): Boolean {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return true
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
     return alarmManager.canScheduleExactAlarms()
-}
-
-private fun isIgnoringBatteryOptimizationsNow(context: Context): Boolean {
-    val powerManager = context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
-    return powerManager.isIgnoringBatteryOptimizations(context.packageName)
 }
 
 @Composable
@@ -1579,74 +1561,6 @@ fun LibraryHeaderPreview(isCompact: Boolean) {
     }
 }
 
-
-@Composable
-fun BatteryOptimizationPage(
-    onSkip: () -> Unit
-) {
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val powerManager = remember { context.getSystemService(android.content.Context.POWER_SERVICE) as android.os.PowerManager }
-    
-    // Track whether battery optimization is ignored
-    var isIgnoringBatteryOptimizations by remember { 
-        mutableStateOf(powerManager.isIgnoringBatteryOptimizations(context.packageName)) 
-    }
-    
-    // Re-check when resuming (user comes back from settings)
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                isIgnoringBatteryOptimizations = powerManager.isIgnoringBatteryOptimizations(context.packageName)
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-    
-    val batteryIcons = persistentListOf(
-        R.drawable.rounded_music_note_24,
-        R.drawable.rounded_play_arrow_24,
-        R.drawable.rounded_all_inclusive_24,
-        R.drawable.rounded_pause_24,
-        R.drawable.rounded_check_circle_24
-    )
-
-    PermissionPageLayout(
-        title = stringResource(R.string.setup_battery_optimization_title),
-        granted = isIgnoringBatteryOptimizations,
-        description = stringResource(R.string.setup_battery_optimization_description),
-        buttonText = if (isIgnoringBatteryOptimizations) stringResource(R.string.setup_permission_granted) else stringResource(R.string.setup_disable_battery_optimization),
-        buttonEnabled = !isIgnoringBatteryOptimizations,
-        icons = batteryIcons,
-        onGrantClicked = {
-            if (!isIgnoringBatteryOptimizations) {
-                try {
-                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                        data = "package:${context.packageName}".toUri()
-                    }
-                    context.startActivity(intent)
-                } catch (e: Exception) {
-                    // Fallback to general battery settings if direct intent fails
-                    try {
-                        val fallbackIntent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-                        context.startActivity(fallbackIntent)
-                    } catch (e2: Exception) {
-                        Toast.makeText(context, context.getString(R.string.toast_battery_settings_unavailable), Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-        }
-    ) {
-        if (!isIgnoringBatteryOptimizations) {
-            TextButton(onClick = onSkip) {
-                Text(stringResource(R.string.skip_for_now), maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-        }
-    }
-}
 
 @Composable
 fun FinishPage() {

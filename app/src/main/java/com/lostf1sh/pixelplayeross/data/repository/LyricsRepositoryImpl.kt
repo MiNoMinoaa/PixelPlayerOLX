@@ -958,7 +958,7 @@ class LyricsRepositoryImpl @Inject constructor(
         val minutes = totalSeconds / 60
         val seconds = totalSeconds % 60
         val hundredths = (timeMs % 1000) / 10
-        return String.format("%02d:%02d.%02d", minutes, seconds, hundredths)
+        return String.format(Locale.US, "%02d:%02d.%02d", minutes, seconds, hundredths)
     }
 
     private fun toWordByWordLrc(lines: List<SyncedLine>): String {

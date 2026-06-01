@@ -134,6 +134,8 @@ Obtainium app id:
 com.lostf1sh.pixelplayeross
 ```
 
+Public releases are planned on a regular weekly cadence when `main` passes the release checklist.
+
 ## Project Structure
 
 ```text
@@ -171,8 +173,15 @@ Useful local checks:
 
 ```sh
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :app:compileDebugKotlin
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :app:lintDebug
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :app:testDebugUnitTest
 ```
+
+Release process: [docs/RELEASE.md](docs/RELEASE.md)
+
+Privacy policy: [PRIVACY.md](PRIVACY.md)
+
+Security policy: [SECURITY.md](SECURITY.md)
 
 ## License
 
