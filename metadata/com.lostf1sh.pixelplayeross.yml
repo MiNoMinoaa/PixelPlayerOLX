@@ -1,0 +1,27 @@
+Categories:
+  - Multimedia
+License: MIT
+AuthorName: lostf1sh
+SourceCode: https://github.com/lostf1sh/PixelPlayerOSS
+IssueTracker: https://github.com/lostf1sh/PixelPlayerOSS/issues
+Changelog: https://github.com/lostf1sh/PixelPlayerOSS/blob/main/CHANGELOG.md
+
+AutoName: PixelPlayerOSS
+
+RepoType: git
+Repo: https://github.com/lostf1sh/PixelPlayerOSS.git
+
+Builds:
+  - versionName: 0.7.0-beta
+    versionCode: 8
+    commit: v0.7.0-beta
+    gradle:
+      - yes
+    gradleprops:
+      - pixelplayer.enableAbiSplits=false
+      - pixelplayer.disableReleaseSigning=true
+
+AutoUpdateMode: Version v%v
+UpdateCheckMode: Tags
+CurrentVersion: 0.7.0-beta
+CurrentVersionCode: 8

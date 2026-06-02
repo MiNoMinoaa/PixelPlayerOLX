@@ -21,7 +21,11 @@ val keystoreProperties = Properties().apply {
 val releaseSigningStoreFile = rootProject.file(
     keystoreProperties.getProperty("storeFile") ?: "vz-pixelplay.jks"
 )
-val hasReleaseSigningConfig = releaseSigningStoreFile.isFile &&
+val disableReleaseSigning = providers.gradleProperty("pixelplayer.disableReleaseSigning")
+    .getOrElse("false")
+    .toBoolean()
+val hasReleaseSigningConfig = !disableReleaseSigning &&
+    releaseSigningStoreFile.isFile &&
     keystoreProperties.getProperty("storePassword") != null &&
     keystoreProperties.getProperty("keyAlias") != null &&
     keystoreProperties.getProperty("keyPassword") != null

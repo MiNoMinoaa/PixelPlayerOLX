@@ -26,7 +26,7 @@ Run these before tagging:
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :app:compileDebugKotlin
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :app:lintDebug
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :app:testDebugUnitTest
-JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :app:assembleRelease -Ppixelplayer.enableAbiSplits=false
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :app:assembleRelease -Ppixelplayer.enableAbiSplits=false -Ppixelplayer.disableReleaseSigning=true
 ```
 
 For split APK artifacts, use:
@@ -50,6 +50,8 @@ keyPassword=...
 
 `storeFile` is optional when the release keystore is available as `vz-pixelplay.jks` at the repository root. `storePassword`, `keyAlias`, and `keyPassword` are required for signing. If signing properties or the keystore file are missing, release builds are unsigned. CI workflows create temporary CI signing keys for artifacts; those are not official release keys.
 
+For F-Droid-compatible unsigned verification builds, pass `-Ppixelplayer.disableReleaseSigning=true` even when local signing files exist.
+
 ## Device Smoke Test
 
 Install the release candidate and verify:
@@ -69,3 +71,12 @@ Install the release candidate and verify:
 3. Push the tag: `git push origin v<APP_VERSION_NAME>`.
 4. Create a GitHub release from the tag.
 5. Attach APK artifacts and paste the changelog section.
+
+## F-Droid Metadata
+
+Before submitting a tagged release to F-Droid-compatible app stores:
+
+1. Update `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`.
+2. Verify the unsigned universal release build from [FDROID.md](FDROID.md).
+3. Check `PRIVACY.md` still matches the optional network services present in the app.
+4. Create source archives from git, not from the working tree, so ignored local artifacts are excluded.
