@@ -19,7 +19,9 @@ Builds:
       - apt-get update
       - apt-get install -y -t trixie openjdk-21-jdk-headless
     output: app/build/outputs/apk/release/app-release-unsigned.apk
-    prebuild: sed -i "/org.gradle.toolchains.foojay-resolver-convention/d" settings.gradle.kts
+    prebuild:
+      - sed -i "/org.gradle.toolchains.foojay-resolver-convention/d" settings.gradle.kts
+      - sed -i "s/ -XX:+ParallelRefParsingEnabled//" gradle.properties
     build:
       - gradle_version=9.5.1
       - gradle_zip=/tmp/gradle-${gradle_version}-bin.zip
@@ -31,7 +33,7 @@ Builds:
       - 'export PATH="$JAVA_HOME/bin:$PATH"'
       - '"/tmp/gradle-${gradle_version}/bin/gradle" :app:assembleRelease -Ppixelplayer.enableAbiSplits=false -Ppixelplayer.disableReleaseSigning=true'
 
-AutoUpdateMode: Version v%v
+AutoUpdateMode: Version
 UpdateCheckMode: Tags
 CurrentVersion: 0.7.0-foss
 CurrentVersionCode: 8
