@@ -4,7 +4,7 @@ License: MIT
 AuthorName: lostf1sh
 SourceCode: https://github.com/lostf1sh/PixelPlayerOSS
 IssueTracker: https://github.com/lostf1sh/PixelPlayerOSS/issues
-Changelog: https://github.com/lostf1sh/PixelPlayerOSS/blob/main/CHANGELOG.md
+Changelog: https://github.com/lostf1sh/PixelPlayerOSS/blob/HEAD/CHANGELOG.md
 
 AutoName: PixelPlayerOSS
 
@@ -15,11 +15,21 @@ Builds:
   - versionName: 0.7.0-foss
     versionCode: 8
     commit: v0.7.0-foss
-    gradle:
-      - yes
-    gradleprops:
-      - pixelplayer.enableAbiSplits=false
-      - pixelplayer.disableReleaseSigning=true
+    sudo:
+      - apt-get update
+      - apt-get install -y -t trixie openjdk-21-jdk-headless
+    output: app/build/outputs/apk/release/app-release-unsigned.apk
+    prebuild: sed -i "/org.gradle.toolchains.foojay-resolver-convention/d" settings.gradle.kts
+    build:
+      - gradle_version=9.5.1
+      - gradle_zip=/tmp/gradle-${gradle_version}-bin.zip
+      - 'curl --fail --location --retry 3 --output "$gradle_zip" "https://services.gradle.org/distributions/gradle-${gradle_version}-bin.zip"'
+      - 'echo "bafc141b619ad6350fd975fc903156dd5c151998cc8b058e8c1044ab5f7b031f  $gradle_zip" | sha256sum -c -'
+      - 'rm -rf "/tmp/gradle-${gradle_version}"'
+      - 'unzip -q "$gradle_zip" -d /tmp'
+      - 'if [ -d /usr/lib/jvm/java-21-openjdk-amd64 ]; then export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64; else export JAVA_HOME=/usr/lib/jvm/java-21-openjdk; fi'
+      - 'export PATH="$JAVA_HOME/bin:$PATH"'
+      - '"/tmp/gradle-${gradle_version}/bin/gradle" :app:assembleRelease -Ppixelplayer.enableAbiSplits=false -Ppixelplayer.disableReleaseSigning=true'
 
 AutoUpdateMode: Version v%v
 UpdateCheckMode: Tags
