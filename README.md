@@ -108,6 +108,12 @@ Build one universal debug APK for local installation:
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :app:assembleDebug -Ppixelplayer.enableAbiSplits=false
 ```
 
+Build a universal unsigned release APK suitable for F-Droid verification:
+
+```sh
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :app:assembleRelease -Ppixelplayer.enableAbiSplits=false -Ppixelplayer.disableReleaseSigning=true
+```
+
 Run unit tests:
 
 ```sh
@@ -135,6 +141,8 @@ com.lostf1sh.pixelplayeross
 ```
 
 Public releases are planned on a regular weekly cadence when `main` passes the release checklist.
+
+F-Droid metadata is included in `fastlane/metadata/android/en-US`; official listing work is tracked in [docs/FDROID.md](docs/FDROID.md).
 
 ## Project Structure
 
@@ -179,6 +187,8 @@ JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :app:testDebugUnitTest
 
 Release process: [docs/RELEASE.md](docs/RELEASE.md)
 
+F-Droid readiness: [docs/FDROID.md](docs/FDROID.md)
+
 Privacy policy: [PRIVACY.md](PRIVACY.md)
 
 Security policy: [SECURITY.md](SECURITY.md)
@@ -186,6 +196,8 @@ Security policy: [SECURITY.md](SECURITY.md)
 ## License
 
 PixelPlayerOSS is licensed under the [MIT License](LICENSE).
+
+Distributed APKs include third-party components under their own licenses. In particular, the optional FFmpeg decoder dependency `org.jellyfin.media3:media3-ffmpeg-decoder` is GPL-3.0; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 <p align="center">
   Maintained by <a href="https://github.com/lostf1sh">lostf1sh</a>
