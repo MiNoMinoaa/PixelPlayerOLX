@@ -36,11 +36,14 @@ class AlbumDetailViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(AlbumDetailUiState())
     val uiState: StateFlow<AlbumDetailUiState> = _uiState.asStateFlow()
 
+    private var loadedAlbumId: Long? = null
+
     init {
         val albumIdString: String? = savedStateHandle.get("albumId")
         if (albumIdString != null) {
             val albumId = albumIdString.toLongOrNull()
             if (albumId != null) {
+                loadedAlbumId = albumId
                 loadAlbumData(albumId)
             } else {
                 _uiState.update { it.copy(error = context.getString(R.string.invalid_album_id), isLoading = false) }
@@ -96,6 +99,11 @@ class AlbumDetailViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    /** Re-attempts loading the album after a failure (wired to the error-state retry button). */
+    fun retry() {
+        loadedAlbumId?.let { loadAlbumData(it) }
     }
 
     fun update(songs: List<Song>) {

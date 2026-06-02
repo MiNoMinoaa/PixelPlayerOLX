@@ -28,8 +28,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.lostf1sh.pixelplayeross.R
 import com.lostf1sh.pixelplayeross.presentation.components.LocalMaterialTheme
 
 @Composable
@@ -196,12 +200,16 @@ private fun ToggleSegmentButtonContainer(
         label = ""
     )
 
+    val stateOn = stringResource(R.string.a11y_toggle_on)
+    val stateOff = stringResource(R.string.a11y_toggle_off)
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .clip(RoundedCornerShape(cornerRadius))
             .background(bgColor)
-            .clickable(enabled = enabled, onClick = onClick),
+            .clickable(enabled = enabled, onClick = onClick)
+            .semantics { stateDescription = if (active) stateOn else stateOff },
         contentAlignment = Alignment.Center
     ) {
         Box(modifier = Modifier.graphicsLayer(alpha = if (enabled) 1f else 0.38f)) {

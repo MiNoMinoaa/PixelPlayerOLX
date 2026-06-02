@@ -2,7 +2,6 @@ package com.lostf1sh.pixelplayeross.presentation.viewmodel
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -24,6 +23,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 /**
@@ -92,18 +92,20 @@ class ArtistDetailViewModel @Inject constructor(
     }
 
     private var currentLoadJob: Job? = null
+    private var loadedArtistId: Long? = null
 
     private fun loadArtistData(id: Long) {
+        loadedArtistId = id
         currentLoadJob?.cancel()
         currentLoadJob = viewModelScope.launch {
-            Log.d("ArtistDebug", "loadArtistData: id=$id")
+            Timber.tag("ArtistDebug").d("loadArtistData: id=$id")
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
                 val artistDetailsFlow = musicRepository.getArtistById(id)
                 val artistSongsFlow = musicRepository.getSongsForArtist(id)
 
                 combine(artistDetailsFlow, artistSongsFlow) { artist, songs ->
-                    Log.d("ArtistDebug", "loadArtistData: id=$id found=${artist != null} songs=${songs.size}")
+                    Timber.tag("ArtistDebug").d("loadArtistData: id=$id found=${artist != null} songs=${songs.size}")
                     artist to songs
                 }
                     .catch { e ->
@@ -132,7 +134,7 @@ class ArtistDetailViewModel @Inject constructor(
                                 artistName = artist.name
                             )
                         } catch (e: Exception) {
-                            Log.w("ArtistDebug", "Failed to resolve effective artist image: ${e.message}")
+                            Timber.tag("ArtistDebug").w("Failed to resolve effective artist image: ${e.message}")
                             artist.effectiveImageUrl
                         }
 
@@ -144,7 +146,7 @@ class ArtistDetailViewModel @Inject constructor(
                             try {
                                 themeStateHolder.getOrGenerateColorScheme(effectiveUrl)
                             } catch (e: Exception) {
-                                Log.w("ArtistDebug", "Color scheme pre-warm failed: ${e.message}")
+                                Timber.tag("ArtistDebug").w("Color scheme pre-warm failed: ${e.message}")
                                 null
                             }
                         } else null
@@ -178,6 +180,11 @@ class ArtistDetailViewModel @Inject constructor(
      * Called from the UI when the user selects a custom image from the system photo picker.
      * Copies the image to internal storage, persists the path to DB, and triggers palette regeneration.
      */
+    /** Re-attempts loading the artist after a failure (wired to the error-state retry button). */
+    fun retry() {
+        loadedArtistId?.let { loadArtistData(it) }
+    }
+
     fun setCustomImage(sourceUri: Uri) {
         val artistId = _uiState.value.artist?.id ?: return
         viewModelScope.launch {
@@ -194,7 +201,7 @@ class ArtistDetailViewModel @Inject constructor(
                         themeStateHolder.forceRegenerateColorScheme(internalPath)
                         themeStateHolder.getOrGenerateColorScheme(internalPath)
                     } catch (e: Exception) {
-                        Log.w("ArtistDebug", "Failed to regenerate color scheme for custom image: ${e.message}")
+                        Timber.tag("ArtistDebug").w("Failed to regenerate color scheme for custom image: ${e.message}")
                         null
                     }
 
@@ -209,7 +216,7 @@ class ArtistDetailViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                Log.e("ArtistDebug", "Failed to set custom image: ${e.message}")
+                Timber.tag("ArtistDebug").e("Failed to set custom image: ${e.message}")
             }
         }
     }
@@ -237,7 +244,7 @@ class ArtistDetailViewModel @Inject constructor(
                     try {
                         themeStateHolder.getOrGenerateColorScheme(newEffectiveUrl)
                     } catch (e: Exception) {
-                        Log.w("ArtistDebug", "Failed to regenerate palette after clear: ${e.message}")
+                        Timber.tag("ArtistDebug").w("Failed to regenerate palette after clear: ${e.message}")
                         null
                     }
                 } else null
@@ -251,7 +258,7 @@ class ArtistDetailViewModel @Inject constructor(
                 }
 
             } catch (e: Exception) {
-                Log.e("ArtistDebug", "Failed to clear custom image: ${e.message}")
+                Timber.tag("ArtistDebug").e("Failed to clear custom image: ${e.message}")
             }
         }
     }

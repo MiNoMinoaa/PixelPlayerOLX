@@ -156,7 +156,7 @@ fun ArtistDetailScreen(
         playerViewModel.collapsePlayerSheet()
     }
 
-    // --- Lógica del Header Colapsable ---
+    // --- Collapsible Header Logic ---
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val minTopBarHeight = 64.dp + statusBarHeight
     val maxTopBarHeight = 300.dp
@@ -187,8 +187,8 @@ fun ArtistDetailScreen(
                 val delta = available.y
                 val isScrollingDown = delta < 0
 
-                // Si estamos scrolleando hacia arriba y no estamos en el tope de la lista,
-                // el scroll es para la lista, no para la TopBar.
+                // If we are scrolling up and we are not at the top of the list,
+                // the scroll is for the list, not for the TopBar.
                 if (!isScrollingDown && (lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 0)) {
                     return Offset.Zero
                 }
@@ -203,7 +203,7 @@ fun ArtistDetailScreen(
                     }
                 }
 
-                // Si estamos en el tope y scrolleamos hacia arriba, la lista no debe moverse.
+                // If we are at the top and scroll up, the list should not move.
                 val canConsumeScroll = !(isScrollingDown && newHeight == minTopBarHeightPx)
                 return if (canConsumeScroll) Offset(0f, consumed) else Offset.Zero
             }
@@ -232,7 +232,7 @@ fun ArtistDetailScreen(
             }
         }
     }
-    // --- Fin de la lógica del Header ---
+    // --- End of Header logic ---
 
     // Wrap in dynamic theme derived from the artist's image
     MaterialTheme(
@@ -256,11 +256,19 @@ fun ArtistDetailScreen(
                         modifier = Modifier.fillMaxSize().padding(16.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = uiState.error!!,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = uiState.error!!,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            FilledTonalButton(onClick = { viewModel.retry() }) {
+                                Text(stringResource(R.string.library_retry))
+                            }
+                        }
                     }
                 }
                 uiState.artist != null -> {
@@ -910,7 +918,7 @@ private fun CustomCollapsingTopBar(
     effectiveImageUrl: String?,
     hasCustomImage: Boolean,
     songsCount: Int,
-    collapseFraction: Float, // 0.0 = expandido, 1.0 = colapsado
+    collapseFraction: Float, // 0.0 = expanded, 1.0 = collapsed
     headerHeight: Dp,
     headerImageRequestSize: Size,
     onBackPressed: () -> Unit,
@@ -1066,7 +1074,7 @@ private fun CustomCollapsingTopBar(
                     }
                 }
 
-                // Box contenedor para el título
+                // Container box for the title
                 Box(
                     modifier = Modifier
                         .align(animatedTitleAlignment)
@@ -1106,7 +1114,7 @@ private fun CustomCollapsingTopBar(
                     }
                 }
 
-                // Botón de Play
+                // Play button
                 LargeExtendedFloatingActionButton(
                     onClick = onPlayClick,
                     shape = RoundedStarShape(sides = 8, curve = 0.05, rotation = 0f),

@@ -41,6 +41,11 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp as lerpColor
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalDensity
@@ -254,14 +259,29 @@ fun EnhancedSongListItem(
                         Modifier
                     }
                 )
+                // Expose a button + click/long-click actions to TalkBack (the raw
+                // pointerInput gestures below are invisible to the a11y tree). Merge the
+                // title/artist text into one node so it's announced as a single item.
+                .semantics(mergeDescendants = true) {
+                    role = Role.Button
+                    onClick {
+                        if (isSelectionMode) {
+                            onLongPress()
+                        } else {
+                            onClick()
+                        }
+                        true
+                    }
+                    onLongClick { onLongPress(); true }
+                }
                 .pointerInput(isSelectionMode) {
                     detectTapGestures(
-                        onTap = { 
+                        onTap = {
                             if (isSelectionMode) {
                                 // In selection mode, tap toggles selection
                                 onLongPress()
                             } else {
-                                onClick() 
+                                onClick()
                             }
                         },
                         onLongPress = {
@@ -287,7 +307,8 @@ fun EnhancedSongListItem(
                     ) {
                         SmartImage(
                             model = song.albumArtUriString,
-                            contentDescription = song.title,
+                            // Decorative here: the title is already announced via the row's merged semantics.
+                            contentDescription = null,
                             shape = albumShape,
                             targetSize = Size(albumArtTargetSizePx, albumArtTargetSizePx),
                             modifier = Modifier.fillMaxSize()
