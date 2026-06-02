@@ -7,7 +7,7 @@ PixelPlayerOSS releases are shipped from `main` after the release candidate pass
 Version values live in `gradle.properties`:
 
 ```properties
-APP_VERSION_NAME=0.7.0-beta
+APP_VERSION_NAME=0.7.0-foss
 APP_VERSION_CODE=8
 ```
 
@@ -16,7 +16,7 @@ For every public release:
 1. Update `APP_VERSION_NAME`.
 2. Increment `APP_VERSION_CODE`.
 3. Move the relevant `CHANGELOG.md` entries from `Unreleased` to the release version.
-4. Tag the release as `v<APP_VERSION_NAME>`, for example `v0.7.0-beta`.
+4. Tag the release as `v<APP_VERSION_NAME>`, for example `v0.7.0-foss`.
 
 ## Required Local Checks
 

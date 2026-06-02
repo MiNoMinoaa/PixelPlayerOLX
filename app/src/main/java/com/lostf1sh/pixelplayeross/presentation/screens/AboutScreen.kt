@@ -118,20 +118,32 @@ private data class Contributor(
     val avatarUrl: String? = null,
     @DrawableRes val iconRes: Int? = null,
     val githubUrl: String? = null,
+    val telegramUrl: String? = null,
     val contributions: Int? = null,
 )
 
 private val CoreMaintainer = Contributor(
     id = "lostf1sh",
     displayName = "@lostf1sh",
-    role = "Maintainer",
-    detail = "Maintaining PixelPlayerOSS as an independent open-source app.",
+    role = "PixelPlayerOSS maintainer",
+    detail = "Maintains the OSS edition. GitHub and Telegram: @lostf1sh.",
     avatarUrl = "https://github.com/lostf1sh.png",
     iconRes = R.drawable.round_developer_board_24,
     githubUrl = "https://github.com/lostf1sh",
+    telegramUrl = "https://t.me/lostf1sh",
 )
 
 private val PinnedCommunityMembers = listOf(
+    Contributor(
+        id = "theovilardo",
+        displayName = "@theovilardo",
+        role = "Non-FOSS / Google Play maintainer",
+        detail = "Maintains the original Google Play / non-FOSS PixelPlayer release.",
+        badge = "Original app",
+        avatarUrl = "https://github.com/theovilardo.png",
+        iconRes = R.drawable.round_developer_board_24,
+        githubUrl = "https://github.com/theovilardo",
+    ),
     Contributor(
         id = "cromaguy",
         displayName = "@cromaguy",
@@ -736,6 +748,11 @@ private fun ContributorCard(
                 painterRes = R.drawable.github,
                 contentDescription = stringResource(R.string.cd_open_github_profile),
                 url = contributor.githubUrl,
+            )
+            SocialIconButton(
+                painterRes = R.drawable.telegram,
+                contentDescription = stringResource(R.string.cd_open_telegram_profile),
+                url = contributor.telegramUrl,
             )
         }
     }

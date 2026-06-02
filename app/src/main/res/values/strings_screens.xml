@@ -182,20 +182,21 @@
     <!-- About -->
     <string name="about_no_contributors">No contributors found right now. Please try again later.</string>
     <string name="about_app_name">PixelPlayerOSS</string>
-    <string name="about_tagline">Open source music player built with its community.</string>
+    <string name="about_tagline">OSS edition tracking the 0.7.0-foss PixelPlayer line.</string>
     <string name="about_version_format">Version v%1$s</string>
     <string name="about_contributions_format">%1$d contrib.</string>
     <string name="screen_about">About</string>
     <string name="about_maintainer_title">Maintainer</string>
-    <string name="about_maintainer_subtitle">The person behind PixelPlayerOSS.</string>
+    <string name="about_maintainer_subtitle">Maintained separately from the Google Play / non-FOSS edition.</string>
     <string name="about_spotlight_title">Community spotlight</string>
-    <string name="about_spotlight_subtitle">Recognition for collaborators with major impact.</string>
+    <string name="about_spotlight_subtitle">Recognition for original app maintainers and major collaborators.</string>
     <string name="about_contributors_section_title">Open source contributors</string>
     <string name="about_contributors_section_subtitle">Live contributor list from GitHub.</string>
     <string name="about_signal_open_source">Open source</string>
     <string name="about_signal_community_first">Community-first</string>
     <string name="about_signal_material3">Material 3 expressive</string>
     <string name="cd_open_github_profile">Open GitHub profile</string>
+    <string name="cd_open_telegram_profile">Open Telegram profile</string>
     <string name="cd_contributor_avatar">Avatar of %1$s</string>
     <string name="cd_contributor_icon">Icon of %1$s</string>
 

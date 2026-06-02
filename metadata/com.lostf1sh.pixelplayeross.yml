@@ -12,9 +12,9 @@ RepoType: git
 Repo: https://github.com/lostf1sh/PixelPlayerOSS.git
 
 Builds:
-  - versionName: 0.7.0-beta
+  - versionName: 0.7.0-foss
     versionCode: 8
-    commit: v0.7.0-beta
+    commit: v0.7.0-foss
     gradle:
       - yes
     gradleprops:
@@ -23,5 +23,5 @@ Builds:
 
 AutoUpdateMode: Version v%v
 UpdateCheckMode: Tags
-CurrentVersion: 0.7.0-beta
+CurrentVersion: 0.7.0-foss
 CurrentVersionCode: 8

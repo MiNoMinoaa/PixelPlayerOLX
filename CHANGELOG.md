@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added release, privacy, and security documentation for the public repository.
 - Added `CONTRIBUTING.md` and a Dependabot config.
 
-## [0.7.0-beta] - 2026-05-25
+## [0.7.0-foss] - 2026-05-25
 
 ### Added
 - **Cloud & Streaming:** Jellyfin support.

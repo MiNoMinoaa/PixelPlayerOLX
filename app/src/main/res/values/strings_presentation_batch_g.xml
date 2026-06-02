@@ -273,8 +273,8 @@ Backslash (\) can be used to escape character delimiters.</string>
     <string name="presentation_batch_g_presets_cd_pin">Pin</string>
     <string name="presentation_batch_g_presets_cd_rename">Rename</string>
     <string name="presentation_batch_g_presets_cd_delete">Delete</string>
-    <string name="presentation_batch_g_beta_sheet_version">Beta 0.7.0</string>
-    <string name="presentation_batch_g_beta_sheet_welcome_title">Welcome to PixelPlayerOSS 0.7.0-beta</string>
+    <string name="presentation_batch_g_beta_sheet_version">0.7.0-foss</string>
+    <string name="presentation_batch_g_beta_sheet_welcome_title">Welcome to PixelPlayerOSS 0.7.0-foss</string>
     <string name="presentation_batch_g_beta_sheet_welcome_body">You\'re using a beta build that may contain bugs, crashes, or experimental features. Help us improve by reporting issues.</string>
     <string name="presentation_batch_g_beta_sheet_expect_title">What to expect</string>
     <string name="presentation_batch_g_beta_sheet_expect_1">Bugs, crashes, or incomplete features may occur unexpectedly.</string>

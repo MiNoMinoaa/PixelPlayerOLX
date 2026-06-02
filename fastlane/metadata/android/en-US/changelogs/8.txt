@@ -1,4 +1,4 @@
-PixelPlayerOSS 0.7.0-beta:
+PixelPlayerOSS 0.7.0-foss:
 
 * Prepared the OSS edition for public source builds with release, privacy, and security documentation.
 * Removed non-OSS-oriented integrations and Google Play Services runtime dependencies.
