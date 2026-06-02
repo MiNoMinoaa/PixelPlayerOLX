@@ -93,7 +93,7 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideJson(): Json { // Proveer Json
+    fun provideJson(): Json { // Provide Json
         return Json {
             isLenient = true
             ignoreUnknownKeys = true
@@ -185,13 +185,13 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideSearchHistoryDao(database: PixelPlayerDatabase): SearchHistoryDao { // NUEVO MÉTODO
+    fun provideSearchHistoryDao(database: PixelPlayerDatabase): SearchHistoryDao { // NEW METHOD
         return database.searchHistoryDao()
     }
 
     @Singleton
     @Provides
-    fun provideMusicDao(database: PixelPlayerDatabase): MusicDao { // Proveer MusicDao
+    fun provideMusicDao(database: PixelPlayerDatabase): MusicDao { // Provide MusicDao
         return database.musicDao()
     }
 
@@ -240,10 +240,13 @@ object AppModule {
     @Provides
     @Singleton
     fun provideImageLoader(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+        okHttpClient: OkHttpClient
     ): ImageLoader {
         return ImageLoader.Builder(context)
-            .okHttpClient(OkHttpClient.Builder().build())
+            // Reuse the app's shared client so image loads share its connection pool
+            // and dispatcher instead of spinning up a second, independent OkHttp stack.
+            .okHttpClient(okHttpClient)
             .dispatcher(Dispatchers.Default) // Use CPU-bound dispatcher for decoding
             .allowHardware(true) // Re-enable hardware bitmaps for better performance
             .memoryCache {
@@ -360,7 +363,7 @@ object AppModule {
     }
 
     /**
-     * Provee una instancia singleton de OkHttpClient con logging e interceptor de User-Agent.
+     * Provides a singleton OkHttpClient instance with logging and a User-Agent interceptor.
      * Retry logic with backoff is handled in coroutine-based callers.
      */
     @Provides
@@ -411,15 +414,22 @@ object AppModule {
     }
 
     /**
-     * Provee una instancia de OkHttpClient con timeouts para búsquedas de lyrics.
+     * Provides an OkHttpClient instance with timeouts for lyrics searches.
      * Includes DNS resolver, modern TLS, connection pool, and connection retry.
      */
     @Provides
     @Singleton
     @FastOkHttpClient
     fun provideFastOkHttpClient(): OkHttpClient {
-        val loggingInterceptor = HttpLoggingInterceptor()
-        loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.HEADERS)
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            // Only log request/response headers in debug builds. In release this
+            // would leak LRCLIB search URLs (which carry the query terms) to logcat.
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.HEADERS
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
+        }
         
         // Connection pool to reuse connections for better performance
         val connectionPool = okhttp3.ConnectionPool(
@@ -468,7 +478,7 @@ object AppModule {
     }
 
     /**
-     * Provee una instancia singleton de Retrofit para la API de LRCLIB.
+     * Provides a singleton Retrofit instance for the LRCLIB API.
      */
     @Provides
     @Singleton
@@ -481,7 +491,7 @@ object AppModule {
     }
 
     /**
-     * Provee una instancia singleton del servicio de la API de LRCLIB.
+     * Provides a singleton instance of the LRCLIB API service.
      */
     @Provides
     @Singleton
@@ -490,7 +500,7 @@ object AppModule {
     }
 
     /**
-     * Provee una instancia de Retrofit para la API de Deezer.
+     * Provides a Retrofit instance for the Deezer API.
      */
     @Provides
     @Singleton
@@ -504,7 +514,7 @@ object AppModule {
     }
 
     /**
-     * Provee el servicio de la API de Deezer.
+     * Provides the Deezer API service.
      */
     @Provides
     @Singleton
@@ -513,7 +523,7 @@ object AppModule {
     }
 
     /**
-     * Provee el repositorio de imágenes de artistas.
+     * Provides the artist image repository.
      */
     @Provides
     @Singleton

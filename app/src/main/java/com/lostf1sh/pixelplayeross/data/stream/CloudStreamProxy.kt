@@ -27,6 +27,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import timber.log.Timber
 import java.net.ServerSocket
+import java.security.MessageDigest
+import java.security.SecureRandom
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -72,6 +74,12 @@ abstract class CloudStreamProxy<K : Any>(
     private val proxyScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var startJob: Job? = null
 
+    // Per-session secret embedded in proxy URLs. Without it, any other app on the
+    // device could stream the user's cloud library just by hitting the loopback
+    // port with a valid song ID. Regenerated on every server (re)start.
+    @Volatile
+    private var sessionToken: String = ""
+
     private val urlCache = ConcurrentHashMap<K, CachedUrl>()
 
     private data class CachedUrl(val url: String, val timestamp: Long, val expirationMs: Long) {
@@ -107,7 +115,7 @@ abstract class CloudStreamProxy<K : Any>(
     fun getProxyUrl(id: K): String {
         if (actualPort == 0) return ""
         if (!validateId(id)) return ""
-        return "http://127.0.0.1:$actualPort$routePrefix/${formatIdForUrl(id)}"
+        return "http://127.0.0.1:$actualPort$routePrefix/${formatIdForUrl(id)}?t=$sessionToken"
     }
 
     /**
@@ -128,6 +136,7 @@ abstract class CloudStreamProxy<K : Any>(
         startJob = proxyScope.launch {
             try {
                 val freePort = ServerSocket(0).use { it.localPort }
+                sessionToken = generateSessionToken()
                 val createdServer = createServer(freePort)
                 createdServer.start(wait = false)
                 server = createdServer
@@ -148,6 +157,7 @@ abstract class CloudStreamProxy<K : Any>(
         server?.stop(1000, 2000)
         server = null
         actualPort = 0
+        sessionToken = ""
         urlCache.clear()
         Timber.d("$proxyTag stopped")
     }
@@ -158,6 +168,28 @@ abstract class CloudStreamProxy<K : Any>(
     protected open fun extractIdFromUri(uri: Uri): String? = uri.host
 
     // ─── Internal ──────────────────────────────────────────────────────
+
+    private fun generateSessionToken(): String {
+        val bytes = ByteArray(16)
+        SecureRandom().nextBytes(bytes)
+        val hex = "0123456789abcdef"
+        val sb = StringBuilder(bytes.size * 2)
+        for (b in bytes) {
+            val v = b.toInt() and 0xFF
+            sb.append(hex[v ushr 4]).append(hex[v and 0x0F])
+        }
+        return sb.toString()
+    }
+
+    /** Constant-time check of the per-session token supplied in the request. */
+    private fun isAuthorized(provided: String?): Boolean {
+        val expected = sessionToken
+        if (expected.isEmpty() || provided.isNullOrEmpty()) return false
+        return MessageDigest.isEqual(
+            provided.toByteArray(Charsets.UTF_8),
+            expected.toByteArray(Charsets.UTF_8)
+        )
+    }
 
     protected suspend fun getOrFetchStreamUrl(id: K): String? {
         urlCache[id]?.let { cached ->
@@ -172,6 +204,10 @@ abstract class CloudStreamProxy<K : Any>(
         return embeddedServer(CIO, port = port, host = "127.0.0.1") {
             routing {
                 get(routePath) {
+                    if (!isAuthorized(call.request.queryParameters["t"])) {
+                        call.respond(HttpStatusCode.NotFound, "Not found")
+                        return@get
+                    }
                     val rawParam = call.parameters[routeParamName]
                     val id = rawParam?.let { parseRouteParam(it) }
                     if (id == null || !validateId(id)) {
