@@ -105,7 +105,7 @@ fun EditTransitionScreen(
     val hasCustomRule = uiState.rule != null && !uiState.useGlobalDefaults
     val isCrossfadeEnabled = displayedSettings.mode != TransitionMode.NONE
 
-    // Configuración para el comportamiento de la TopBar colapsable (Material 3)
+    // Configuration for the collapsible TopBar behavior (Material 3)
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     LaunchedEffect(uiState.isSaved, isPlaylistScope, uiState.useGlobalDefaults) {
@@ -225,7 +225,7 @@ fun EditTransitionScreen(
                     )
                 }
 
-                // Animación de visibilidad: Oculta controles complejos si no hay transición
+                // Visibility animation: hides complex controls if there is no transition
                 item {
                     AnimatedVisibility(
                         visible = isCrossfadeEnabled,
@@ -362,7 +362,7 @@ private fun TransitionModeSection(
             }
         }
 
-        // Componente Toggle rediseñado: Plano, simétrico, sin sombras raras
+        // Redesigned Toggle component: flat, symmetric, no weird shadows
         ExpressiveMorphingToggle(
             options = listOf(TransitionMode.NONE, TransitionMode.OVERLAP),
             selectedOption = selected,
@@ -378,11 +378,11 @@ private fun ExpressiveMorphingToggle(
     onOptionSelected: (TransitionMode) -> Unit
 ) {
     val selectedIndex = if (selectedOption == TransitionMode.OVERLAP) 1 else 0
-    val shape = CircleShape //RoundedCornerShape(16.dp) // Menos redondeado para más estructura, o 50 para capsula
+    val shape = CircleShape //RoundedCornerShape(16.dp) // Less rounded for more structure, or 50 for a capsule
     val crossfadeLabel = stringResource(R.string.presentation_batch_d_transition_mode_crossfade)
     val noneLabel = stringResource(R.string.presentation_batch_d_transition_mode_none)
 
-    // Contenedor Plano con borde sutil
+    // Flat container with a subtle border
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
@@ -401,13 +401,13 @@ private fun ExpressiveMorphingToggle(
             label = "offset"
         )
 
-        // El indicador se mueve detrás del texto
+        // The indicator moves behind the text
         Box(
             modifier = Modifier
                 .width(indicatorWidth)
                 .fillMaxSize()
                 .offset(x = indicatorOffset)
-                .clip(CircleShape) // Un poco más pequeño que el contenedor
+                .clip(CircleShape) // A bit smaller than the container
                 .background(MaterialTheme.colorScheme.secondaryContainer)
         )
 
@@ -448,7 +448,7 @@ private fun TransitionDurationSection(
 ) {
     val durationInSeconds = TimeUnit.MILLISECONDS.toSeconds(settings.durationMs.toLong()).toInt()
 
-    // Tarjeta limpia, sin bordes innecesarios, usando el fondo para agrupar
+    // Clean card, no unnecessary borders, using the background to group
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -480,7 +480,7 @@ private fun TransitionDurationSection(
             }
         }
 
-        // Visualizador contextual de canciones
+        // Contextual song visualizer
         CrossfadeVisualizer(durationMs = settings.durationMs)
 
         Slider(
@@ -509,11 +509,11 @@ private fun TransitionDurationSection(
 private fun CrossfadeVisualizer(durationMs: Int) {
     val maxDuration = 12000f
     val normalized = durationMs.coerceIn(0, 12000)
-    // Porcentaje de la superposición respecto al máximo
+    // Percentage of the overlap relative to the maximum
     val overlapFactor by animateFloatAsState(targetValue = normalized / maxDuration, label = "width")
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        // Labels de canciones
+        // Song labels
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -540,8 +540,8 @@ private fun CrossfadeVisualizer(durationMs: Int) {
                 modifier = Modifier.fillMaxSize(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Barra Canción 1 (Izquierda -> Derecha)
-                // Se extiende hasta la mitad + la mitad del overlap
+                // Song 1 Bar (Left -> Right)
+                // Extends up to the midpoint + half of the overlap
                 Box(
                     modifier = Modifier
                         .weight(1f) // Base width
@@ -552,11 +552,11 @@ private fun CrossfadeVisualizer(durationMs: Int) {
                             shape = RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp)
                         )
                 ) {
-                    // Extensión visual de la barra superior (Song 1 Ending)
-                    // Esta lógica es visual para representar el "overlap"
+                    // Visual extension of the top bar (Song 1 Ending)
+                    // This logic is visual, to represent the "overlap"
                 }
 
-                // Barra Canción 2 (Derecha -> Izquierda)
+                // Song 2 Bar (Right -> Left)
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -569,11 +569,11 @@ private fun CrossfadeVisualizer(durationMs: Int) {
                 )
             }
 
-            // Área de superposición dinámica (El "Crossfade")
-            // Representa el tiempo compartido
+            // Dynamic overlap area (the "Crossfade")
+            // Represents the shared time
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(0.1f + (overlapFactor * 0.4f)) // Mínimo visual + factor
+                    .fillMaxWidth(0.1f + (overlapFactor * 0.4f)) // Visual minimum + factor
                     .background(
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.surfaceContainerLow//.copy(alpha = 0.8f) // Masking effect
@@ -585,7 +585,7 @@ private fun CrossfadeVisualizer(durationMs: Int) {
 //                        RoundedCornerShape(8.dp)
 //                    )
             ) {
-                // Representación interna del cruce
+                // Internal representation of the crossover
                 Row(modifier = Modifier.fillMaxSize()) {
                     Box(
                         modifier = Modifier
@@ -625,7 +625,7 @@ private fun CrossfadeVisualizer(durationMs: Int) {
                             )
                     )
                 }
-                // Icono central
+                // Center icon
                 Icon(
                     Icons.Rounded.AutoAwesomeMotion,
                     contentDescription = null,
@@ -637,7 +637,7 @@ private fun CrossfadeVisualizer(durationMs: Int) {
             }
         }
 
-        // Explicación textual dinámica
+        // Dynamic text explanation
         Text(
             text = stringResource(
                 R.string.presentation_batch_d_transition_overlap_explanation_format,
@@ -671,7 +671,7 @@ private fun TransitionCurvesSection(
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-            // Usamos colores terciarios para la salida (Fade Out)
+            // Use tertiary colors for the outgoing track (Fade Out)
             CurveSelectionColumn(
                 modifier = Modifier.weight(1f),
                 title = stringResource(R.string.presentation_batch_d_transition_fade_out),
@@ -680,7 +680,7 @@ private fun TransitionCurvesSection(
                 activeColor = MaterialTheme.colorScheme.tertiaryContainer,
                 onActiveColor = MaterialTheme.colorScheme.onTertiaryContainer
             )
-            // Usamos colores secundarios para la entrada (Fade In)
+            // Use secondary colors for the incoming track (Fade In)
             CurveSelectionColumn(
                 modifier = Modifier.weight(1f),
                 title = stringResource(R.string.presentation_batch_d_transition_fade_in),
@@ -719,7 +719,7 @@ private fun CurveSelectionColumn(
                 Curve.entries.forEach { curve ->
                     val isSelected = selected == curve
 
-                    // Diseño Expressive: La selección es una forma, no solo un check
+                    // Expressive design: the selection is a shape, not just a check
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()

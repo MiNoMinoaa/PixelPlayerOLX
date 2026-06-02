@@ -3,7 +3,6 @@ package com.lostf1sh.pixelplayeross.ui.glancewidget
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -57,7 +56,7 @@ import timber.log.Timber
 class PixelPlayerGlanceWidget : GlanceAppWidget() {
 
     companion object {
-        // Tamaños definidos para diferentes configuraciones del widget
+        // Sizes defined for different widget configurations
         private val VERY_THIN_LAYOUT_SIZE = DpSize(width = 200.dp, height = 60.dp)
         private val THIN_LAYOUT_SIZE = DpSize(width = 250.dp, height = 80.dp)
         private val SMALL_HORIZONTAL_LAYOUT_SIZE = DpSize(width = 110.dp, height = 60.dp)
@@ -1001,7 +1000,7 @@ class PixelPlayerGlanceWidget : GlanceAppWidget() {
                     )
                 }
 
-                Spacer(GlanceModifier.defaultWeight()) // Empuja el contenido hacia abajo
+                Spacer(GlanceModifier.defaultWeight()) // Pushes the content down
                 //Spacer(GlanceModifier.height(16.dp))
 
 //                Text(
@@ -1391,7 +1390,7 @@ class PixelPlayerGlanceWidget : GlanceAppWidget() {
     }
 }
 
-// Helper para formatear duración en Glance (no puede usar TimeUnit directamente)
+// Helper to format duration in Glance (cannot use TimeUnit directly)
 private fun formatDurationGlance(millis: Long): String {
     if (millis < 0) return "00:00"
     val totalSeconds = millis / 1000

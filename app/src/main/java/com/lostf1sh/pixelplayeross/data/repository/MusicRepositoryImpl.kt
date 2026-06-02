@@ -8,7 +8,6 @@ import android.content.Context
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
-import android.util.Log
 
 import com.lostf1sh.pixelplayeross.data.model.Song
 import com.lostf1sh.pixelplayeross.data.repository.ArtistImageRepository
@@ -77,6 +76,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.CoroutineScope
+import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
@@ -486,7 +486,7 @@ class MusicRepositoryImpl @Inject constructor(
         }.flowOn(Dispatchers.IO)
     }
 
-    // --- Métodos de Búsqueda ---
+    // --- Search Methods ---
 
     override fun searchSongs(query: String, titleOnly: Boolean): Flow<List<Song>> {
         if (query.isBlank()) return flowOf(emptyList())
@@ -645,10 +645,10 @@ class MusicRepositoryImpl @Inject constructor(
     }
 
     override suspend fun invalidateCachesDependentOnAllowedDirectories() {
-        Log.i("MusicRepo", "invalidateCachesDependentOnAllowedDirectories called. Reactive flows will update automatically.")
+        Timber.tag("MusicRepo").i("invalidateCachesDependentOnAllowedDirectories called. Reactive flows will update automatically.")
     }
 
-    // Implementación de las nuevas funciones suspend para carga única
+    // Implementation of the new suspend functions for one-shot loading
     override suspend fun getAllSongsOnce(): List<Song> = withContext(Dispatchers.IO) {
         val allowedDirs = userPreferencesRepository.allowedDirectoriesFlow.first()
         val blockedDirs = userPreferencesRepository.blockedDirectoriesFlow.first()
@@ -847,11 +847,11 @@ class MusicRepositoryImpl @Inject constructor(
     }
 
     /**
-     * Obtiene la letra de una canción desde la API de LRCLIB, la persiste en la base de datos
-     * y la devuelve como un objeto Lyrics parseado.
+     * Fetches a song's lyrics from the LRCLIB API, persists them in the database
+     * and returns them as a parsed Lyrics object.
      *
-     * @param song La canción para la cual se buscará la letra.
-     * @return Un objeto Result que contiene el objeto Lyrics si se encontró, o un error.
+     * @param song The song to look up lyrics for.
+     * @return A Result object containing the Lyrics object if found, or an error.
      */
     override suspend fun getLyricsFromRemote(song: Song): Result<Pair<Lyrics, String>> {
         return lyricsRepository.fetchFromRemote(song)

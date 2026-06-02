@@ -1,6 +1,5 @@
 package com.lostf1sh.pixelplayeross.presentation.components
 
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.animation.core.Animatable
@@ -37,6 +36,7 @@ import com.lostf1sh.pixelplayeross.presentation.viewmodel.PlaylistViewModel
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.StablePlayerState
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.map
+import timber.log.Timber
 import kotlin.math.roundToInt
 
 internal data class SaveQueueOverlayData(
@@ -360,7 +360,7 @@ internal fun UnifiedPlayerQueueAndSongInfoHost(
                 { enable: Boolean -> playerViewModel.setEndOfTrackTimer(enable) }
             }
             val onOpenCustomTimePicker: () -> Unit = remember {
-                { Log.d("TimerOptions", "OpenCustomTimePicker clicked") }
+                { Timber.tag("TimerOptions").d("OpenCustomTimePicker clicked") }
             }
             val onCancelTimer = remember(playerViewModel) { { playerViewModel.cancelSleepTimer() } }
             val onCancelCountedPlay = remember(playerViewModel) { playerViewModel::cancelCountedPlay }

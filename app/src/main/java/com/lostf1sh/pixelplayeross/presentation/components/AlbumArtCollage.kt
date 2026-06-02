@@ -34,11 +34,11 @@ import kotlinx.coroutines.withContext
 data class Config(val size: Dp, val width: Dp, val height: Dp, val align: Alignment, val rot: Float, val shape: Shape, val offsetX: Dp, val offsetY: Dp)
 
 /**
- * Muestra hasta 6 portadas en un layout de collage con formas simplificadas y redondeadas.
- * Las formas se dividen en dos grupos (superior e inferior) para evitar superposición.
- * Incluye una píldora central, círculo, squircle y estrella, con disposición ajustada.
- * Ajusta tamaños, rotaciones y posiciones para crear un look dinámico.
- * Utiliza BoxWithConstraints para adaptar las dimensiones al contenedor.
+ * Displays up to 6 covers in a collage layout with simplified, rounded shapes.
+ * The shapes are split into two groups (top and bottom) to avoid overlap.
+ * Includes a central pill, circle, squircle, and star, with adjusted arrangement.
+ * Tweaks sizes, rotations, and positions to create a dynamic look.
+ * Uses BoxWithConstraints to adapt the dimensions to the container.
  */
 @Composable
 fun AlbumArtCollage(

@@ -4,17 +4,17 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 /**
- * Interfaz de Retrofit para interactuar con la API de LRCLIB.
+ * Retrofit interface for interacting with the LRCLIB API.
  */
 interface LrcLibApiService {
 
     /**
-     * Busca la letra de una canción utilizando sus metadatos.
-     * @param trackName El nombre de la canción.
-     * @param artistName El nombre del artista.
-     * @param albumName El nombre del álbum.
-     * @param duration La duración de la canción en segundos.
-     * @return Una instancia de LrcLibResponse si se encuentra, o null.
+     * Searches for a song's lyrics using its metadata.
+     * @param trackName The name of the song.
+     * @param artistName The name of the artist.
+     * @param albumName The name of the album.
+     * @param duration The duration of the song in seconds.
+     * @return An LrcLibResponse instance if found, or null.
      */
     @GET("api/get")
     suspend fun getLyrics(

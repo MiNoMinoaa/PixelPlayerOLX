@@ -3,7 +3,6 @@ package com.lostf1sh.pixelplayeross.data.media
 import android.content.Context
 import android.net.Uri
 import android.os.ParcelFileDescriptor
-import android.util.Log
 import com.kyant.taglib.TagLib
 import org.jaudiotagger.audio.AudioFileIO
 import org.jaudiotagger.tag.FieldKey
@@ -69,7 +68,7 @@ object AudioMetadataReader {
                 val propertyMap = metadata?.propertyMap ?: emptyMap()
 
                 // Log ALL keys TagLib returned so we can diagnose mapping issues
-                Log.w(TAG, "TagLib propertyMap keys for ${file.name}: ${propertyMap.keys}")
+                Timber.tag(TAG).w("TagLib propertyMap keys for ${file.name}: ${propertyMap.keys}")
 
                 val title = propertyMap["TITLE"]?.firstOrNull()?.takeIf { it.isNotBlank() }
                 val artist = propertyMap["ARTIST"]?.firstOrNull()?.takeIf { it.isNotBlank() }
@@ -99,7 +98,7 @@ object AudioMetadataReader {
                     keys = listOf("REPLAYGAIN_ALBUM_GAIN", "REPLAYGAIN_ALBUM_GAIN_DB", "R128_ALBUM_GAIN")
                 )
 
-                Log.w(TAG, "TagLib result for ${file.name}: title=$title, artist=$artist, album=$album, genre=$genre")
+                Timber.tag(TAG).w("TagLib result for ${file.name}: title=$title, artist=$artist, album=$album, genre=$genre")
 
                 // Get artwork only when requested to avoid allocating large ByteArrays unnecessarily
                 val artwork = if (readArtwork) {
@@ -120,7 +119,7 @@ object AudioMetadataReader {
                 // on some MP3s. If essential fields or requested artwork are missing, try
                 // JAudioTagger before giving up so we preserve full metadata when possible.
                 val fallback = if (title == null || artist == null || (readArtwork && artwork == null)) {
-                    Log.w(TAG, "TagLib incomplete for ${file.name}, trying JAudioTagger fallback...")
+                    Timber.tag(TAG).w("TagLib incomplete for ${file.name}, trying JAudioTagger fallback...")
                     readWithJAudioTagger(file)
                 } else null
 
@@ -162,7 +161,7 @@ object AudioMetadataReader {
             val tag = audioFile.tag
             val header = audioFile.audioHeader
 
-            Log.w(TAG, "JAudioTagger: tag class=${tag?.javaClass?.simpleName}, " +
+            Timber.tag(TAG).w("JAudioTagger: tag class=${tag?.javaClass?.simpleName}, " +
                     "header=${header?.format}, sampleRate=${header?.sampleRateAsNumber}")
 
             val title = tag?.getFirst(FieldKey.TITLE)?.takeIf { it.isNotBlank() }
@@ -193,7 +192,7 @@ object AudioMetadataReader {
                 }
             }
 
-            Log.w(TAG, "JAudioTagger result for ${file.name}: title=$title, artist=$artist, " +
+            Timber.tag(TAG).w("JAudioTagger result for ${file.name}: title=$title, artist=$artist, " +
                     "album=$album, genre=$genre, artwork=${artwork != null}")
 
             AudioMetadata(
@@ -213,7 +212,7 @@ object AudioMetadataReader {
                 artwork = artwork
             )
         } catch (e: Exception) {
-            Log.e(TAG, "JAudioTagger fallback FAILED for: ${file.name}", e)
+            Timber.tag(TAG).e(e, "JAudioTagger fallback FAILED for: ${file.name}")
             null
         }
     }

@@ -5,12 +5,12 @@ import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.net.Uri
-import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.ByteBuffer
+import timber.log.Timber
 
 object AudioFileProvider {
 
@@ -35,7 +35,7 @@ object AudioFileProvider {
 
             val tempWavFile = File.createTempFile("input_mono", ".wav", context.cacheDir)
             val fileOutputStream = FileOutputStream(tempWavFile)
-            // Escribimos una cabecera WAV vacía (para 1 canal, mono)
+            // Write an empty WAV header (for 1 channel, mono)
             val wavHeader = WavHeader(0, 0, 0, 0, 1)
             fileOutputStream.write(wavHeader.asByteArray())
 
@@ -48,7 +48,7 @@ object AudioFileProvider {
                 if (inputBufferIndex >= 0) {
                     val inputBuffer = decoder.getInputBuffer(inputBufferIndex)
                     if (inputBuffer == null) {
-                        Log.w("AudioFileProvider", "Decoder input buffer was null, ending decode early")
+                        Timber.tag("AudioFileProvider").w("Decoder input buffer was null, ending decode early")
                         decoder.queueInputBuffer(inputBufferIndex, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
                         isEndOfStream = true
                         continue
@@ -67,7 +67,7 @@ object AudioFileProvider {
                 while (outputBufferIndex >= 0) {
                     val outputBuffer = decoder.getOutputBuffer(outputBufferIndex)
                     if (outputBuffer == null) {
-                        Log.w("AudioFileProvider", "Decoder output buffer was null, skipping chunk")
+                        Timber.tag("AudioFileProvider").w("Decoder output buffer was null, skipping chunk")
                         decoder.releaseOutputBuffer(outputBufferIndex, false)
                         outputBufferIndex = decoder.dequeueOutputBuffer(bufferInfo, TIMEOUT_US)
                         continue
@@ -75,7 +75,7 @@ object AudioFileProvider {
                     val chunk = ByteArray(bufferInfo.size)
                     outputBuffer.get(chunk)
 
-                    // --- CONVERSIÓN A MONO ---
+                    // --- CONVERSION TO MONO ---
                     val monoChunk = stereoToMono(chunk)
                     fileOutputStream.write(monoChunk)
                     totalBytesWritten += monoChunk.size
@@ -100,7 +100,7 @@ object AudioFileProvider {
             )
             finalHeader.updateHeader(tempWavFile)
 
-            Log.d("AudioFileProvider", "Mono WAV file created at: ${tempWavFile.absolutePath}")
+            Timber.tag("AudioFileProvider").d("Mono WAV file created at: ${tempWavFile.absolutePath}")
             tempWavFile
         }
     }
@@ -115,20 +115,20 @@ object AudioFileProvider {
         return -1
     }
 
-    // Mezcla un buffer de audio PCM 16-bit estéreo a mono promediando los canales
+    // Mixes a 16-bit stereo PCM audio buffer down to mono by averaging the channels
     private fun stereoToMono(stereoPcm: ByteArray): ByteArray {
         val monoPcm = ByteArray(stereoPcm.size / 2)
         var monoIndex = 0
         var stereoIndex = 0
         while (stereoIndex < stereoPcm.size) {
-            // Leemos las muestras de 16-bit para los canales izquierdo y derecho
+            // Read the 16-bit samples for the left and right channels
             val left = (stereoPcm[stereoIndex].toInt() and 0xFF) or (stereoPcm[stereoIndex + 1].toInt() shl 8)
             val right = (stereoPcm[stereoIndex + 2].toInt() and 0xFF) or (stereoPcm[stereoIndex + 3].toInt() shl 8)
 
-            // Promediamos las muestras
+            // Average the samples
             val avg = (left + right) / 2
 
-            // Escribimos la muestra promediada de 16-bit
+            // Write the averaged 16-bit sample
             monoPcm[monoIndex] = (avg and 0xFF).toByte()
             monoPcm[monoIndex + 1] = (avg shr 8 and 0xFF).toByte()
 

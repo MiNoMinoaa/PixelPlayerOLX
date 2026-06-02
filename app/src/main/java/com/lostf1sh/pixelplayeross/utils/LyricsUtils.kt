@@ -47,6 +47,7 @@ import com.lostf1sh.pixelplayeross.data.model.Lyrics
 import com.lostf1sh.pixelplayeross.data.model.SyncedLine
 import com.lostf1sh.pixelplayeross.data.model.SyncedWord
 import kotlinx.coroutines.flow.Flow
+import timber.log.Timber
 
 import java.util.Locale
 import java.util.regex.Pattern
@@ -61,7 +62,7 @@ object MultiLangRomanizer {
             Thread.currentThread().contextClassLoader = MultiLangRomanizer::class.java.classLoader
             Tokenizer()
         } catch (e: Throwable) {
-            e.printStackTrace()
+            Timber.e(e)
             null
         }
     }
@@ -226,7 +227,7 @@ object MultiLangRomanizer {
                 .trim()
 
         } catch (e: Throwable) {
-            e.printStackTrace()
+            Timber.e(e)
             null
         }
     }
@@ -422,7 +423,7 @@ object MultiLangRomanizer {
 
             sb.toString().replace(Regex("""\s+"""), " ").trim()
         } catch (e: Throwable) {
-            e.printStackTrace()
+            Timber.e(e)
             null
         }
     }
@@ -1233,7 +1234,7 @@ fun BubblesLine(
     val isCurrent = position in time until nextTime
     val transition = rememberInfiniteTransition(label = "bubbles_transition")
 
-    // Animación ralentizada para apreciar mejor el efecto.
+    // Slowed-down animation to better appreciate the effect.
     val animatedValue by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,

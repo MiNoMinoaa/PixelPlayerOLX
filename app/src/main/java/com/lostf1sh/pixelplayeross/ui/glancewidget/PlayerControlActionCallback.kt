@@ -36,7 +36,7 @@ class PlayerControlActionCallback : ActionCallback {
                     putExtra("song_id", songId)
                 } else {
                     Timber.tag(TAG).w("PLAY_FROM_QUEUE action received but no songId found.")
-                    return // No hacer nada si no hay ID de canción
+                    return // Do nothing if there is no song ID
                 }
             }
         }

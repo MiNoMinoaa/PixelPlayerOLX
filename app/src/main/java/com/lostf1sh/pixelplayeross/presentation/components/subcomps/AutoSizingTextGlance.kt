@@ -25,22 +25,22 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 
 /**
- * Un Composable de Glance que ajusta automáticamente el tamaño de la fuente del texto
- * para llenar las dimensiones especificadas.
+ * A Glance Composable that automatically adjusts the text font size
+ * to fill the specified dimensions.
  *
- * NOTA: A diferencia de Jetpack Compose, Glance requiere que se especifiquen explícitamente
- * el ancho y el alto (`width` y `height`) para que el cálculo funcione.
+ * NOTE: Unlike Jetpack Compose, Glance requires the width and height
+ * (`width` and `height`) to be specified explicitly for the calculation to work.
  *
- * @param text El texto a mostrar.
- * @param modifier El GlanceModifier a aplicar al contenedor.
- * @param style El estilo base del texto. El tamaño de la fuente se sobrescribirá, pero se respetarán
- * propiedades como fontWeight.
- * @param color El color del texto.
- * @param width El ancho exacto del área disponible para el texto.
- * @param height La altura exacta del área disponible para el texto.
- * @param textAlign La alineación del texto.
- * @param minFontSize El tamaño de fuente más pequeño permitido.
- * @param maxFontSize El tamaño de fuente más grande permitido.
+ * @param text The text to display.
+ * @param modifier The GlanceModifier to apply to the container.
+ * @param style The base text style. The font size will be overridden, but properties
+ * such as fontWeight will be respected.
+ * @param color The text color.
+ * @param width The exact width of the area available for the text.
+ * @param height The exact height of the area available for the text.
+ * @param textAlign The text alignment.
+ * @param minFontSize The smallest allowed font size.
+ * @param maxFontSize The largest allowed font size.
  */
 @Composable
 fun AutoSizingTextGlance(
@@ -58,26 +58,26 @@ fun AutoSizingTextGlance(
     val textColor = color.getColor(context).toArgb()
     val density = context.resources.displayMetrics.density
 
-    // Convertir dimensiones Dp a Píxeles
+    // Convert Dp dimensions to Pixels
     val widthPx = (width.value * density).toInt()
     val heightPx = (height.value * density).toInt()
 
-    // Crear el bitmap que contendrá el texto renderizado
+    // Create the bitmap that will hold the rendered text
     val bitmap = Bitmap.createBitmap(widthPx.coerceAtLeast(1), heightPx.coerceAtLeast(1), Bitmap.Config.ARGB_8888)
     val canvas = android.graphics.Canvas(bitmap)
 
-    // Configurar TextPaint para medir y dibujar el texto
+    // Configure TextPaint to measure and draw the text
     val textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         this.color = textColor
-        // Aplicar fontWeight del estilo
+        // Apply the style's fontWeight
         this.typeface = when (style.fontWeight) {
             FontWeight.Bold -> Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-            FontWeight.Medium -> Typeface.create("sans-serif-medium", Typeface.NORMAL) // Requiere API 21+
+            FontWeight.Medium -> Typeface.create("sans-serif-medium", Typeface.NORMAL) // Requires API 21+
             else -> Typeface.DEFAULT
         }
     }
 
-    // Mapear TextAlign de Glance a Layout.Alignment de Android
+    // Map Glance's TextAlign to Android's Layout.Alignment
     val alignment = when (textAlign) {
         TextAlign.Center -> Layout.Alignment.ALIGN_CENTER
         TextAlign.End -> Layout.Alignment.ALIGN_OPPOSITE
@@ -85,39 +85,39 @@ fun AutoSizingTextGlance(
     }
 
 
-    // --- Búsqueda binaria para el tamaño de fuente óptimo ---
+    // --- Binary search for the optimal font size ---
     var lowerBound = minFontSize.value
     var upperBound = maxFontSize.value
     var bestSize = lowerBound
 
-    // Realizar la búsqueda solo si el área es válida
+    // Run the search only if the area is valid
     if (widthPx > 0 && heightPx > 0) {
         while (lowerBound <= upperBound) {
             val mid = (lowerBound + upperBound) / 2
-            if (mid <= 0) break // Evitar tamaños de fuente no válidos
+            if (mid <= 0) break // Avoid invalid font sizes
 
             textPaint.textSize = mid * density
 
-            // StaticLayout es la herramienta de Android para manejar texto multilínea y con saltos de línea.
+            // StaticLayout is Android's tool for handling multiline text and line breaks.
             val staticLayout = StaticLayout.Builder.obtain(text, 0, text.length, textPaint, widthPx)
                 .setAlignment(alignment)
                 .setLineSpacing(0f, 1f)
                 .setIncludePad(false)
                 .build()
 
-            // Si el texto cabe en la altura, es un candidato válido. Intentamos un tamaño mayor.
+            // If the text fits within the height, it's a valid candidate. Try a larger size.
             if (staticLayout.height <= heightPx) {
                 bestSize = mid
                 lowerBound = mid + 0.1f
             } else {
-                // Si no cabe, necesitamos un tamaño más pequeño.
+                // If it doesn't fit, we need a smaller size.
                 upperBound = mid - 0.1f
             }
         }
     }
-    // --- Fin de la búsqueda binaria ---
+    // --- End of binary search ---
 
-    // Dibujar el texto final en el canvas con el mejor tamaño de fuente encontrado
+    // Draw the final text on the canvas with the best font size found
     textPaint.textSize = bestSize * density
     val finalLayout = StaticLayout.Builder.obtain(text, 0, text.length, textPaint, widthPx)
         .setAlignment(alignment)
@@ -127,14 +127,14 @@ fun AutoSizingTextGlance(
 
     finalLayout.draw(canvas)
 
-    // Mostrar el bitmap renderizado en un Composable Image
+    // Show the rendered bitmap in an Image Composable
     Box(
         modifier = modifier.size(width, height),
         contentAlignment = Alignment.CenterStart
     ) {
         Image(
             provider = ImageProvider(bitmap),
-            contentDescription = text, // Usar el texto como descripción de contenido
+            contentDescription = text, // Use the text as the content description
             modifier = GlanceModifier
                 .fillMaxSize()
                 //.size(width, height)

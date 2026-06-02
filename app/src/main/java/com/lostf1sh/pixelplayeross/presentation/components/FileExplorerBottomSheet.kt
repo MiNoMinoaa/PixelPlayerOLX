@@ -648,7 +648,7 @@ private fun FileExplorerHeader(
     onNavigateTo: (File) -> Unit,
     navigationEnabled: Boolean
 ) {
-    // 1. Cambiamos ScrollState por LazyListState para manejar mejor los ítems y el scroll automático
+    // 1. Switch ScrollState for LazyListState to better handle the items and automatic scrolling
     val listState = rememberLazyListState()
 
     val breadcrumbs by remember(currentPath, rootDirectory) {
@@ -671,7 +671,7 @@ private fun FileExplorerHeader(
         }
     }
 
-    // 2. Lógica para detectar si hay contenido oculto a los lados
+    // 2. Logic to detect whether there is content hidden on the sides
     val showStartFade by remember { derivedStateOf { listState.canScrollBackward } }
     val showEndFade by remember { derivedStateOf { listState.canScrollForward } }
 
@@ -684,7 +684,7 @@ private fun FileExplorerHeader(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Botón de "Atrás" (Back Arrow) - Se mantiene igual fuera del scroll
+            // "Back" button (Back Arrow) - Stays the same outside the scroll
             if (!isAtRoot && navigationEnabled) {
                 IconButton(
                     onClick = onNavigateUp,
@@ -701,26 +701,26 @@ private fun FileExplorerHeader(
             }
 
             if (!isAtRoot) {
-                // 3. Auto-scroll al final cuando cambia el path
+                // 3. Auto-scroll to the end when the path changes
                 LaunchedEffect(breadcrumbs.size) {
                     if (breadcrumbs.isNotEmpty()) {
                         listState.animateScrollToItem(breadcrumbs.lastIndex)
                     }
                 }
 
-                // 4. Reemplazamos el Row + horizontalScroll por LazyRow con el efecto gráfico
+                // 4. Replace the Row + horizontalScroll with LazyRow plus the graphic effect
                 LazyRow(
                     state = listState,
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .weight(1f)
-                        // APLICACIÓN DEL EFECTO DE GRADIENTE
+                        // APPLYING THE GRADIENT EFFECT
                         .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
                         .drawWithContent {
                             drawContent()
                             val gradientWidth = 24.dp.toPx()
 
-                            // Fade Izquierdo
+                            // Left Fade
                             if (showStartFade) {
                                 drawRect(
                                     brush = Brush.horizontalGradient(
@@ -731,7 +731,7 @@ private fun FileExplorerHeader(
                                 )
                             }
 
-                            // Fade Derecho
+                            // Right Fade
                             if (showEndFade) {
                                 drawRect(
                                     brush = Brush.horizontalGradient(
@@ -743,7 +743,7 @@ private fun FileExplorerHeader(
                             }
                         }
                 ) {
-                    // Spacer inicial para que el primer ítem no quede pegado al borde o debajo del fade
+                    // Initial spacer so the first item isn't stuck to the edge or under the fade
                     item { Spacer(modifier = Modifier.width(4.dp)) }
 
                     items(breadcrumbs.size, key = { breadcrumbs[it].path }) { index ->
@@ -756,7 +756,7 @@ private fun FileExplorerHeader(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            // Diseño del Chip (Mantenemos tu estilo visual original)
+                            // Chip design (Keep your original visual style)
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
@@ -799,7 +799,7 @@ private fun FileExplorerHeader(
                                 )
                             }
 
-                            // Separador (Chevron)
+                            // Separator (Chevron)
                             if (!isLast) {
                                 Icon(
                                     imageVector = Icons.Rounded.ChevronRight,
@@ -811,7 +811,7 @@ private fun FileExplorerHeader(
                         }
                     }
 
-                    // Spacer final para dar aire al último elemento
+                    // Final spacer to give the last element some breathing room
                     item { Spacer(modifier = Modifier.width(12.dp)) }
                 }
             }

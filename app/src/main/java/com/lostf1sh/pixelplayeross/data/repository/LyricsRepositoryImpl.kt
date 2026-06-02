@@ -5,7 +5,6 @@ import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import android.provider.OpenableColumns
-import android.util.Log
 import android.util.LruCache
 import androidx.core.net.toUri
 import com.google.gson.Gson
@@ -47,6 +46,7 @@ import javax.inject.Singleton
 import kotlin.math.abs
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import timber.log.Timber
 
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.async
@@ -203,8 +203,7 @@ class LyricsRepositoryImpl @Inject constructor(
                         strategy.request()
                     }
                 }.getOrElse { error ->
-                    Log.d(
-                        TAG,
+                    Timber.tag(TAG).d(
                         "Strategy ${strategy.name} failed after retries: ${error.message}"
                     )
                     null
@@ -223,7 +222,7 @@ class LyricsRepositoryImpl @Inject constructor(
         repeat(strategies.size) {
             val batch = channel.receive()
             if (batch.responses.isNotEmpty()) {
-                Log.d(TAG, "Fast search hit from strategy: ${batch.strategyName} (${batch.responses.size} results)")
+                Timber.tag(TAG).d("Fast search hit from strategy: ${batch.strategyName} (${batch.responses.size} results)")
                 jobs.forEach { it.cancel() }
                 channel.close()
                 return@coroutineScope batch.responses.distinctBy { it.id }
@@ -247,8 +246,7 @@ class LyricsRepositoryImpl @Inject constructor(
             initialDelayMs = initialDelayMs,
             shouldRetry = shouldRetry,
             onRetry = { attempt, attempts, throwable ->
-                Log.d(
-                    TAG,
+                Timber.tag(TAG).d(
                     "Retrying $operationName after failure ($attempt/$attempts): ${throwable.message}"
                 )
             },
@@ -314,23 +312,23 @@ class LyricsRepositoryImpl @Inject constructor(
     ): Lyrics? = withContext(Dispatchers.IO) {
         val cacheKey = generateCacheKey(song.id)
         
-        Log.d(TAG, "===== FETCH LYRICS START: ${song.displayArtist} - ${song.title} (forceRefresh=$forceRefresh, source=$sourcePreference) =====")
+        Timber.tag(TAG).d("===== FETCH LYRICS START: ${song.displayArtist} - ${song.title} (forceRefresh=$forceRefresh, source=$sourcePreference) =====")
 
         // Check in-memory cache unless force refresh (early return - matching Rhythm)
         if (!forceRefresh) {
             lyricsCache.get(cacheKey)?.let { cached ->
-                Log.d(TAG, "===== RETURNING IN-MEMORY CACHED LYRICS =====")
+                Timber.tag(TAG).d("===== RETURNING IN-MEMORY CACHED LYRICS =====")
                 return@withContext cached
             }
-            Log.d(TAG, "===== NO IN-MEMORY CACHE HIT, proceeding to fetch =====")
+            Timber.tag(TAG).d("===== NO IN-MEMORY CACHE HIT, proceeding to fetch =====")
         } else {
-            Log.d(TAG, "===== FORCE REFRESH - BYPASSING IN-MEMORY CACHE =====")
+            Timber.tag(TAG).d("===== FORCE REFRESH - BYPASSING IN-MEMORY CACHE =====")
         }
 
         if (!forceRefresh) {
             loadStoredLyrics(song, cacheKey, includeMemoryCache = false)?.let { stored ->
                 lyricsCache.put(cacheKey, stored.first)
-                Log.d(TAG, "===== RETURNING STORED LYRICS WITHOUT REMOTE FETCH =====")
+                Timber.tag(TAG).d("===== RETURNING STORED LYRICS WITHOUT REMOTE FETCH =====")
                 return@withContext stored.first
             }
         }
@@ -364,7 +362,7 @@ class LyricsRepositoryImpl @Inject constructor(
             try {
                 val lyrics = fetcher()
                 if (lyrics != null && lyrics.isValid()) {
-                    Log.d(TAG, "Found lyrics from $sourceName for: ${song.displayArtist} - ${song.title}")
+                    Timber.tag(TAG).d("Found lyrics from $sourceName for: ${song.displayArtist} - ${song.title}")
                     
                     // Cache the result
                     lyricsCache.put(cacheKey, lyrics)
@@ -377,13 +375,13 @@ class LyricsRepositoryImpl @Inject constructor(
                     return@withContext lyrics
                 }
             } catch (e: Exception) {
-                Log.w(TAG, "Error fetching from source $sourceName: ${e.message}")
+                Timber.tag(TAG).w("Error fetching from source $sourceName: ${e.message}")
                 // Continue to next source
             }
         }
 
         // No lyrics found from any source
-        Log.d(TAG, "No lyrics found from any source for: ${song.displayArtist} - ${song.title}")
+        Timber.tag(TAG).d("No lyrics found from any source for: ${song.displayArtist} - ${song.title}")
         return@withContext null
     }
 
@@ -401,7 +399,7 @@ class LyricsRepositoryImpl @Inject constructor(
         // Check JSON disk cache first (matching Rhythm)
         val cachedJson = loadLocalLyricsJson(song)
         if (cachedJson != null) {
-            Log.d(TAG, "===== LOADED LYRICS FROM JSON DISK CACHE =====")
+            Timber.tag(TAG).d("===== LOADED LYRICS FROM JSON DISK CACHE =====")
             return@withContext cachedJson
         }
 
@@ -409,7 +407,7 @@ class LyricsRepositoryImpl @Inject constructor(
         val currentTime = System.currentTimeMillis()
         val delayNeeded = calculateApiDelay("lrclib", currentTime)
         if (delayNeeded > 0) {
-            Log.d(TAG, "Rate limiting: waiting ${delayNeeded}ms before API call")
+            Timber.tag(TAG).d("Rate limiting: waiting ${delayNeeded}ms before API call")
             delay(delayNeeded)
         }
         updateLastApiCall("lrclib", System.currentTimeMillis())
@@ -444,7 +442,7 @@ class LyricsRepositoryImpl @Inject constructor(
                 // Smart title cleanup strategy (removes leading digits/spaces and truncates at -, (, ))
                 val smartTitle = cleanTitleSmart(cleanTitle)
                 if (smartTitle != cleanTitle && smartTitle.isNotBlank()) {
-                    Log.d(TAG, "Adding smart search strategy for: '$smartTitle' (orig: '$cleanTitle')")
+                    Timber.tag(TAG).d("Adding smart search strategy for: '$smartTitle' (orig: '$cleanTitle')")
                     add(RemoteSearchStrategy("smart_track_only") {
                         lrcLibApiService.searchLyrics(trackName = smartTitle)
                     })
@@ -460,7 +458,7 @@ class LyricsRepositoryImpl @Inject constructor(
                  if (index != -1) {
                      val superCleanTitle = cleanTitle.substring(0, index).trim()
                      if (superCleanTitle.isNotEmpty()) {
-                          Log.d(TAG, "Strategy 4: Searching with super simplified title: '$superCleanTitle' (no artist)")
+                          Timber.tag(TAG).d("Strategy 4: Searching with super simplified title: '$superCleanTitle' (no artist)")
                           val fallbackResults = runCatching {
                                 withNetworkRetry(operationName = "lrclib_super_clean_search") {
                                     lrcLibApiService.searchLyrics(trackName = superCleanTitle)
@@ -474,7 +472,7 @@ class LyricsRepositoryImpl @Inject constructor(
             }
 
             if (results.isEmpty()) {
-                Log.d(TAG, "No results from LRCLIB API")
+                Timber.tag(TAG).d("No results from LRCLIB API")
                 return@withContext null
             }
 
@@ -489,7 +487,7 @@ class LyricsRepositoryImpl @Inject constructor(
                 if (!rawLyrics.isNullOrBlank()) {
                     val parsedLyrics = LyricsUtils.parseLyrics(rawLyrics).copy(areFromRemote = true)
                     if (parsedLyrics.isValid()) {
-                        Log.d(TAG, "LRCLIB lyrics found - Synced: ${!bestMatch.syncedLyrics.isNullOrBlank()}, Plain: ${!bestMatch.plainLyrics.isNullOrBlank()}")
+                        Timber.tag(TAG).d("LRCLIB lyrics found - Synced: ${!bestMatch.syncedLyrics.isNullOrBlank()}, Plain: ${!bestMatch.plainLyrics.isNullOrBlank()}")
                         
                         // Save to database
                         try {
@@ -502,7 +500,7 @@ class LyricsRepositoryImpl @Inject constructor(
                                 )
                             )
                         } catch (e: NumberFormatException) {
-                            Log.w(TAG, "Skipping database save for non-numeric song ID: ${song.id}. Lyrics will be cached in JSON.")
+                            Timber.tag(TAG).w("Skipping database save for non-numeric song ID: ${song.id}. Lyrics will be cached in JSON.")
                         }
                         
                         return@withContext parsedLyrics
@@ -512,7 +510,7 @@ class LyricsRepositoryImpl @Inject constructor(
 
             return@withContext null
         } catch (e: Exception) {
-            Log.e(TAG, "LRCLIB lyrics fetch failed: ${e.message}", e)
+            Timber.tag(TAG).e(e, "LRCLIB lyrics fetch failed: ${e.message}")
             return@withContext null
         }
     }
@@ -853,7 +851,7 @@ class LyricsRepositoryImpl @Inject constructor(
 
                     val validated = readValidatedLocalLyrics(lyricsFile)
                     if (validated != null) {
-                        Log.d(TAG, "===== FOUND LOCAL LYRICS FILE: ${lyricsFile.name} =====")
+                        Timber.tag(TAG).d("===== FOUND LOCAL LYRICS FILE: ${lyricsFile.name} =====")
                         return@withContext validated.parsedLyrics
                     }
                 }
@@ -867,13 +865,13 @@ class LyricsRepositoryImpl @Inject constructor(
 
                     val validated = readValidatedLocalLyrics(alternativeLyricsFile)
                     if (validated != null) {
-                        Log.d(TAG, "===== FOUND LOCAL LYRICS FILE (alt pattern): ${alternativeLyricsFile.name} =====")
+                        Timber.tag(TAG).d("===== FOUND LOCAL LYRICS FILE (alt pattern): ${alternativeLyricsFile.name} =====")
                         return@withContext validated.parsedLyrics
                     }
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error searching for local lyrics file", e)
+            Timber.tag(TAG).e(e, "Error searching for local lyrics file")
         }
         return@withContext null
     }
@@ -907,9 +905,9 @@ class LyricsRepositoryImpl @Inject constructor(
             val file = File(lyricsDir, fileName)
             val json = gson.toJson(lyricsData)
             file.writeText(json)
-            Log.d(TAG, "Saved lyrics to JSON cache: ${file.absolutePath}")
+            Timber.tag(TAG).d("Saved lyrics to JSON cache: ${file.absolutePath}")
         } catch (e: Exception) {
-            Log.e(TAG, "Error saving lyrics to JSON cache: ${e.message}", e)
+            Timber.tag(TAG).e(e, "Error saving lyrics to JSON cache: ${e.message}")
         }
     }
 
@@ -948,7 +946,7 @@ class LyricsRepositoryImpl @Inject constructor(
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error reading JSON cache: ${e.message}", e)
+            Timber.tag(TAG).e(e, "Error reading JSON cache: ${e.message}")
         }
         return null
     }
@@ -1023,7 +1021,7 @@ class LyricsRepositoryImpl @Inject constructor(
                     if (!lyricsField.isNullOrBlank()) {
                         val parsedLyrics = LyricsUtils.parseLyrics(lyricsField)
                         if (parsedLyrics.isValid()) {
-                            Log.d(TAG, "===== FOUND EMBEDDED LYRICS =====")
+                            Timber.tag(TAG).d("===== FOUND EMBEDDED LYRICS =====")
                             parsedLyrics.copy(areFromRemote = false)
                         } else {
                             null
@@ -1155,7 +1153,7 @@ class LyricsRepositoryImpl @Inject constructor(
                              )
                         )
                     } catch (e: NumberFormatException) {
-                        Log.w(TAG, "Skipping DB update for non-numeric ID: ${song.id}")
+                        Timber.tag(TAG).w("Skipping DB update for non-numeric ID: ${song.id}")
                     }
 
                     lyricsCache.put(cacheKey, best.lyrics)
@@ -1198,7 +1196,7 @@ class LyricsRepositoryImpl @Inject constructor(
                         )
                     )
                 } catch (e: NumberFormatException) {
-                    Log.w(TAG, "Skipping DB update for non-numeric ID in fallback: ${song.id}")
+                    Timber.tag(TAG).w("Skipping DB update for non-numeric ID in fallback: ${song.id}")
                 }
 
                 lyricsCache.put(cacheKey, parsedLyrics)
@@ -1390,7 +1388,7 @@ class LyricsRepositoryImpl @Inject constructor(
         try {
             lyricsDao.deleteLyrics(songId)
         } catch (e: Exception) {
-            Log.w(TAG, "Error removing lyrics from DB for ID: $songId", e)
+            Timber.tag(TAG).w(e, "Error removing lyrics from DB for ID: $songId")
         }
         
         // Also remove JSON cache
@@ -1398,7 +1396,7 @@ class LyricsRepositoryImpl @Inject constructor(
             val file = File(context.filesDir, "lyrics/${songId}.json")
             if (file.exists()) file.delete()
         } catch (e: Exception) {
-            Log.w(TAG, "Error deleting JSON cache: ${e.message}")
+            Timber.tag(TAG).w("Error deleting JSON cache: ${e.message}")
         }
     }
 
@@ -1414,7 +1412,7 @@ class LyricsRepositoryImpl @Inject constructor(
                 lyricsDir.listFiles()?.forEach { it.delete() }
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Error clearing JSON cache: ${e.message}")
+            Timber.tag(TAG).w("Error clearing JSON cache: ${e.message}")
         }
     }
 
@@ -1500,13 +1498,13 @@ class LyricsRepositoryImpl @Inject constructor(
                                             updatedCount.incrementAndGet()
                                             LogUtils.d(this@LyricsRepositoryImpl, "Auto-assigned lyrics from ${foundFile.name}")
                                         } catch (e: Exception) {
-                                            Log.w(TAG, "Skipping DB update for ID in scanner: ${song.id}", e)
+                                            Timber.tag(TAG).w(e, "Skipping DB update for ID in scanner: ${song.id}")
                                         }
                                     }
                                 }
                             }
                         } catch (e: Exception) {
-                            Log.w(TAG, "Error scanning lyrics for ${song.title}: ${e.message}")
+                            Timber.tag(TAG).w("Error scanning lyrics for ${song.title}: ${e.message}")
                         }
                         
                         val current = processedCount.incrementAndGet()

@@ -44,6 +44,7 @@ import com.lostf1sh.pixelplayeross.R
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.media3.common.util.UnstableApi
 import com.lostf1sh.pixelplayeross.data.model.Song
+import com.lostf1sh.pixelplayeross.data.model.isSmartPlaylist
 import com.lostf1sh.pixelplayeross.presentation.components.subcomps.LibraryActionRow
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.PlayerViewModel
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.PlaylistUiState
@@ -70,9 +71,12 @@ fun PlaylistBottomSheet(
     )
 
     var searchQuery by remember { mutableStateOf("") }
-    val filteredPlaylists = remember(searchQuery, playlistUiState.playlists) {
-        if (searchQuery.isBlank()) playlistUiState.playlists
-        else playlistUiState.playlists.filter { it.name.contains(searchQuery, true) }
+    val editablePlaylists = remember(playlistUiState.playlists) {
+        playlistUiState.playlists.filterNot { it.isSmartPlaylist }
+    }
+    val filteredPlaylists = remember(searchQuery, editablePlaylists) {
+        if (searchQuery.isBlank()) editablePlaylists
+        else editablePlaylists.filter { it.name.contains(searchQuery, true) }
     }
     val selectedPlaylists = remember {
         mutableStateMapOf<String, Boolean>().apply {
@@ -101,7 +105,7 @@ fun PlaylistBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        contentWindowInsets = { BottomSheetDefaults.modalWindowInsets } // Manejo de insets como el teclado
+        contentWindowInsets = { BottomSheetDefaults.modalWindowInsets } // Handle insets such as the keyboard
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
 

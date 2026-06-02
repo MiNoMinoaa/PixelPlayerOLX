@@ -310,12 +310,12 @@ fun LibraryScreen(
     libraryViewModel: LibraryViewModel = hiltViewModel(),
     songInfoBottomSheetViewModel: SongInfoBottomSheetViewModel = hiltViewModel()
 ) {
-    // La recolección de estados de alto nivel se mantiene mínima.
+    // High-level state collection is kept minimal.
     val context = LocalContext.current // Added context
     val haptic = LocalHapticFeedback.current
     val lastTabIndex by playerViewModel.lastLibraryTabIndexFlow.collectAsStateWithLifecycle()
-    val favoriteIds by playerViewModel.favoriteSongIds.collectAsStateWithLifecycle() // Reintroducir favoriteIds aquí
-    val scope = rememberCoroutineScope() // Mantener si se usa para acciones de UI
+    val favoriteIds by playerViewModel.favoriteSongIds.collectAsStateWithLifecycle() // Reintroduce favoriteIds here
+    val scope = rememberCoroutineScope() // Keep if used for UI actions
     val syncManager = playerViewModel.syncManager
     var isRefreshing by remember { mutableStateOf(false) }
     // The pull-to-refresh spinner is reserved for user gestures. Automatic sync
@@ -606,7 +606,7 @@ fun LibraryScreen(
         }
     }
 
-    // La lógica de carga diferida (lazy loading) se mantiene.
+    // The lazy loading logic is kept.
     LaunchedEffect(Unit) {
         Trace.beginSection("LibraryScreen.InitialTabLoad")
         playerViewModel.onLibraryTabSelected(normalizedLastTabIndex)
@@ -627,11 +627,11 @@ fun LibraryScreen(
         showAlbumMultiSelectionSheet = false
     }
 
-    val fabState by remember { derivedStateOf { currentTabIndex } } // UI sin cambios
+    val fabState by remember { derivedStateOf { currentTabIndex } } // UI unchanged
     val transition = updateTransition(
         targetState = fabState,
         label = "Action Button Icon Transition"
-    ) // UI sin cambios
+    ) // UI unchanged
 
     val systemNavBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val navBarCompactMode by playerViewModel.navBarCompactMode.collectAsStateWithLifecycle()
@@ -836,7 +836,7 @@ fun LibraryScreen(
                     // shape = AbsoluteSmoothCornerShape(cornerRadiusTL = 24.dp, smoothnessAsPercentTR = 60, /*...*/) // Your custom shape
                 ) {
                     Column(Modifier.fillMaxSize()) {
-                        // OPTIMIZACIÓN: La lógica de ordenamiento ahora es más eficiente.
+                        // OPTIMIZATION: The sorting logic is now more efficient.
                         val availableSortOptions by playerViewModel.availableSortOptions.collectAsStateWithLifecycle()
                         val sanitizedSortOptions = remember(availableSortOptions, currentTabId) {
                             val cleaned = availableSortOptions.filterIsInstance<SortOption>()
@@ -2874,14 +2874,14 @@ fun AlbumGridItemRedesigned(
     val albumColorSchemePair by albumColorSchemePairFlow.collectAsStateWithLifecycle()
     val systemIsDark = LocalPixelPlayerDarkTheme.current
 
-    // 1. Obtén el colorScheme del tema actual aquí, en el scope Composable.
+    // 1. Get the current theme's colorScheme here, in the Composable scope.
     val currentMaterialColorScheme = MaterialTheme.colorScheme
 
     val itemDesignColorScheme = remember(albumColorSchemePair, systemIsDark, currentMaterialColorScheme) {
-        // 2. Ahora, currentMaterialColorScheme es una variable estable que puedes usar.
+        // 2. Now currentMaterialColorScheme is a stable variable you can use.
         albumColorSchemePair?.let { pair ->
             if (systemIsDark) pair.dark else pair.light
-        } ?: currentMaterialColorScheme // Usa la variable capturada
+        } ?: currentMaterialColorScheme // Use the captured variable
     }
 
     val gradientBaseColor = itemDesignColorScheme.primaryContainer
@@ -2990,8 +2990,8 @@ fun AlbumGridItemRedesigned(
                             model = album.albumArtUriString,
                             contentDescription = stringResource(R.string.cd_album_art_for_title, album.title),
                             contentScale = ContentScale.Crop,
-                            // Reducido el tamaño para mejorar el rendimiento del scroll, como se sugiere en el informe.
-                            // ContentScale.Crop se encargará de ajustar la imagen al aspect ratio.
+                            // Reduced the size to improve scroll performance, as suggested in the report.
+                            // ContentScale.Crop will handle fitting the image to the aspect ratio.
                             targetSize = Size(256, 256),
                             modifier = Modifier
                                 .aspectRatio(3f / 2f)
@@ -3012,7 +3012,7 @@ fun AlbumGridItemRedesigned(
                                 .fillMaxSize()
                                 .aspectRatio(3f / 2f)
                                 .background(
-                                    remember(gradientBaseColor) { // Recordar el Brush
+                                    remember(gradientBaseColor) { // Remember the Brush
                                         Brush.verticalGradient(
                                             colors = listOf(
                                                 Color.Transparent, gradientBaseColor

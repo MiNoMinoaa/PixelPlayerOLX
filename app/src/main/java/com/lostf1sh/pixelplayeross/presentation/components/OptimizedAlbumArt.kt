@@ -271,7 +271,7 @@ internal fun albumArtMemoryCacheKey(model: Any?, targetSize: Size): String? {
 //            .crossfade(false)
 //            .placeholder(R.drawable.ic_music_placeholder)
 //            .error(R.drawable.rounded_broken_image_24)
-//            .size(targetSize) // Usar el parámetro targetSize
+//            .size(targetSize) // Use the targetSize parameter
 //            .memoryCachePolicy(CachePolicy.ENABLED)
 //            .diskCachePolicy(CachePolicy.ENABLED)
 //            .build(),

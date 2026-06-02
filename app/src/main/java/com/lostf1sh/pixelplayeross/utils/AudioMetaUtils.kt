@@ -4,10 +4,10 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMetadataRetriever
 import android.os.Build
-import android.util.Log
 import com.lostf1sh.pixelplayeross.data.database.MusicDao
 import java.io.File
 import java.util.Locale
+import timber.log.Timber
 
 data class AudioMeta(
     val mimeType: String?,
@@ -49,7 +49,7 @@ object AudioMetaUtils {
                     null
                 }
             } catch (e: Exception) {
-                Log.w("AudioMetaUtils", "Retriever failed for $filePath: ${e.message}")
+                Timber.tag("AudioMetaUtils").w("Retriever failed for $filePath: ${e.message}")
             }
         }
 
@@ -73,7 +73,7 @@ object AudioMetaUtils {
                 release()
             }
         } catch (e: Exception) {
-            Log.w("AudioMetaUtils", "Extractor failed for $filePath: ${e.message}")
+            Timber.tag("AudioMetaUtils").w("Extractor failed for $filePath: ${e.message}")
         }
 
         return AudioMeta(mimeType, bitrate, sampleRate)

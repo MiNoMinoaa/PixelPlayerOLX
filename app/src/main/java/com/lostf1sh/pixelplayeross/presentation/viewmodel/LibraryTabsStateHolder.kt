@@ -1,6 +1,5 @@
 package com.lostf1sh.pixelplayeross.presentation.viewmodel
 
-import android.util.Log
 import android.os.Trace
 import com.lostf1sh.pixelplayeross.data.model.LibraryTabId
 import com.lostf1sh.pixelplayeross.data.model.toLibraryTabIdOrNull
@@ -10,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @ViewModelScoped
 class LibraryTabsStateHolder @Inject constructor() {
@@ -44,12 +44,12 @@ class LibraryTabsStateHolder @Inject constructor() {
         currentLibraryTabId.value = tabId
 
         if (loadedTabs.value.contains(tabIdentifier)) {
-            Log.d("PlayerViewModel", "Tab '$tabIdentifier' already loaded. Skipping data load.")
+            Timber.tag("PlayerViewModel").d("Tab '$tabIdentifier' already loaded. Skipping data load.")
             Trace.endSection()
             return
         }
 
-        Log.d("PlayerViewModel", "Tab '$tabIdentifier' selected. Attempting to load data.")
+        Timber.tag("PlayerViewModel").d("Tab '$tabIdentifier' selected. Attempting to load data.")
         scope.launch {
             Trace.beginSection("PlayerViewModel.onLibraryTabSelected_coroutine_load")
             try {
@@ -61,7 +61,7 @@ class LibraryTabsStateHolder @Inject constructor() {
                     else -> Unit
                 }
                 loadedTabs.update { currentTabs -> currentTabs + tabIdentifier }
-                Log.d("PlayerViewModel", "Tab '$tabIdentifier' marked as loaded. Current loaded tabs: ${loadedTabs.value}")
+                Timber.tag("PlayerViewModel").d("Tab '$tabIdentifier' marked as loaded. Current loaded tabs: ${loadedTabs.value}")
             } finally {
                 Trace.endSection()
             }

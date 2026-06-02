@@ -3,7 +3,6 @@ package com.lostf1sh.pixelplayeross.data.repository
 import android.content.ContentUris
 import android.content.Context
 import android.provider.MediaStore
-import android.util.Log
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -41,6 +40,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
+import timber.log.Timber
 
 private data class SearchPrefs(
     val favoriteIds: Set<Long>,
@@ -270,7 +270,7 @@ class MediaStoreSongRepository @Inject constructor(
                 }
             }
         } catch (e: Exception) {
-            Log.e("MediaStoreSongRepository", "Error querying MediaStore", e)
+            Timber.tag("MediaStoreSongRepository").e(e, "Error querying MediaStore")
         }
         songs
     }
@@ -309,13 +309,13 @@ class MediaStoreSongRepository @Inject constructor(
                                 }
                             }
                         } catch (e: Exception) {
-                            Log.w("MediaStoreSongRepository", "Error querying members for genreId=$genreId", e)
+                            Timber.tag("MediaStoreSongRepository").w(e, "Error querying members for genreId=$genreId")
                         }
                     }
                 }
             }
         } catch (e: Exception) {
-            Log.e("MediaStoreSongRepository", "Error querying Genres", e)
+            Timber.tag("MediaStoreSongRepository").e(e, "Error querying Genres")
         }
         return genreMap
     }
@@ -436,7 +436,7 @@ class MediaStoreSongRepository @Inject constructor(
                 }
             }
         } catch (e: Exception) {
-            Log.e("MediaStoreSongRepository", "Error getting IDs", e)
+            Timber.tag("MediaStoreSongRepository").e(e, "Error getting IDs")
         }
         ids
     }

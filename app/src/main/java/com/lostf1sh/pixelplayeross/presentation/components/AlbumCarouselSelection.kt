@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.first
 
 import com.lostf1sh.pixelplayeross.data.preferences.AlbumArtQuality
 
-// ====== TIPOS/STATE DEL CARRUSEL (wrapper para mantener compatibilidad) ======
+// ====== CAROUSEL TYPES/STATE (wrapper to maintain compatibility) ======
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,7 +31,7 @@ fun rememberRoundedParallaxCarouselState(
     pageCount: () -> Int
 ): CarouselState = rememberCarouselState(initialItem = initialPage, itemCount = pageCount)
 
-// ====== TU SECCIÓN: ACOPLADA AL NUEVO API ======
+// ====== YOUR SECTION: COUPLED TO THE NEW API ======
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,7 +50,7 @@ fun AlbumCarouselSection(
 ) {
     if (queue.isEmpty()) return
 
-    // Mantiene compatibilidad con tu llamada actual
+    // Maintains compatibility with your current call
     val initialIndex = remember(currentSong?.id, currentMediaItemIndex, queue) {
         resolveCurrentQueueIndex(
             currentSong = currentSong,
@@ -127,7 +127,7 @@ fun AlbumCarouselSection(
     }
 
     val hapticFeedback = LocalHapticFeedback.current
-    // Carousel -> Player (cuando se detiene el scroll)
+    // Carousel -> Player (when scrolling stops)
     LaunchedEffect(carouselState, currentSongIndex, queue) {
         snapshotFlow { carouselState.pagerState.isScrollInProgress }
             .distinctUntilChanged()

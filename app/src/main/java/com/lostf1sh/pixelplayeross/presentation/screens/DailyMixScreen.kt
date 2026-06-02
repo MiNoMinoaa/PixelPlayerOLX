@@ -252,7 +252,7 @@ fun DailyMixScreen(
                             onClick = {
                                 if (dailyMixSongs.isNotEmpty()) {
                                     playerViewModel.playSongs(dailyMixSongs, dailyMixSongs.first(), dailyMixTitle)
-                                    if (isShuffleEnabled) playerViewModel.toggleShuffle() // Desactivar shuffle si estaba activo
+                                    if (isShuffleEnabled) playerViewModel.toggleShuffle() // Disable shuffle if it was active
                                 }
                             },
                             modifier = Modifier
@@ -437,7 +437,7 @@ private fun ExpressiveDailyMixHeader(
                                 }
                             }
                         ) {
-                            // Este es el contenido que se mide y se dibuja.
+                            // This is the content that gets measured and drawn.
                             Box(
                                 modifier = Modifier
                                     .graphicsLayer { rotationZ = rotation }

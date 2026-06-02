@@ -48,7 +48,7 @@ sealed class SectionData {
 }
 
 /**
- * Representa un elemento visual en la lista aplanada para mejorar el rendimiento de LazyColumn.
+ * Represents a visual element in the flattened list to improve LazyColumn performance.
  */
 sealed class GenreDetailListItem {
     abstract val key: String
@@ -88,7 +88,7 @@ sealed class GenreDetailListItem {
 data class GenreDetailUiState(
     val genre: Genre? = null,
     val songs: List<Song> = emptyList(),
-    val sortedSongs: List<Song> = emptyList(), // 为播放逻辑预留的已排序副本
+    val sortedSongs: List<Song> = emptyList(), // Sorted copy reserved for playback logic
     val displaySections: List<SectionData> = emptyList(),
     val flattenedItems: List<GenreDetailListItem> = emptyList(),
     val sortOption: SortOption = SortOption.ARTIST,

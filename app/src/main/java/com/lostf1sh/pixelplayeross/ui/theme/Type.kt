@@ -131,8 +131,8 @@ val RoundedSans = FontFamily(
     ),
 )
 
-// Tipografía - Usar fuentes amigables y modernas.
-// Considerar añadir fuentes personalizadas en res/font para un look más único.
+// Typography - Use friendly and modern fonts.
+// Consider adding custom fonts in res/font for a more unique look.
 val Typography = Typography(
     displayLarge = TextStyle(
         fontFamily = RoundedSans,

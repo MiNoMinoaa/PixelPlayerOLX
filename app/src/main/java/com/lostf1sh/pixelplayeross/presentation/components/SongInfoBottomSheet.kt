@@ -297,7 +297,7 @@ fun SongInfoBottomSheet(
         },
         sheetState = sheetState,
     ) {
-        // AQUÍ APLICAMOS EL FIX: Anulamos la fábrica de overscroll para todo lo que esté aquí adentro
+        // HERE WE APPLY THE FIX: Null out the overscroll factory for everything inside here
         CompositionLocalProvider(
             LocalOverscrollFactory provides null
         ) {
@@ -313,7 +313,7 @@ fun SongInfoBottomSheet(
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                     ) {
-                        // Fila para la carátula del álbum y el título (Always visible)
+                        // Row for the album art and the title (Always visible)
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()

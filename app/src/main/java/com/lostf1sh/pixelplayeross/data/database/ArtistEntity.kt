@@ -9,7 +9,7 @@ import com.lostf1sh.pixelplayeross.utils.normalizeMetadataTextOrEmpty
 
 @Entity(
     tableName = "artists",
-    indices = [Index(value = ["name"], unique = false)] // Índice en el nombre para búsquedas rápidas
+    indices = [Index(value = ["name"], unique = false)] // Index on the name for fast lookups
 )
 data class ArtistEntity(
     @PrimaryKey val id: Long,
@@ -23,7 +23,7 @@ fun ArtistEntity.toArtist(): Artist {
     return Artist(
         id = this.id,
         name = this.name.normalizeMetadataTextOrEmpty(),
-        songCount = this.trackCount, // El modelo Artist usa songCount, MediaStore usa NUMBER_OF_TRACKS
+        songCount = this.trackCount, // The Artist model uses songCount, MediaStore uses NUMBER_OF_TRACKS
         imageUrl = this.imageUrl,
         customImageUri = this.customImageUri
     )

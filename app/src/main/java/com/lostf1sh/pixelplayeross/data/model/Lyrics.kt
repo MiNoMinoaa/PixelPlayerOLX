@@ -3,11 +3,11 @@ package com.lostf1sh.pixelplayeross.data.model
 import kotlinx.serialization.Serializable
 
 /**
- * Modelo de datos para las letras de las canciones.
+ * Data model for song lyrics.
  *
- * @param plain Lista de líneas de texto plano (no sincronizadas).
- * @param synced Lista de pares (milisegundos, línea) para letras sincronizadas.
- * @param areFromRemote Indica si las letras se obtuvieron de una fuente remota.
+ * @param plain List of plain-text lines (unsynced).
+ * @param synced List of (milliseconds, line) pairs for synced lyrics.
+ * @param areFromRemote Indicates whether the lyrics were fetched from a remote source.
  */
 @Serializable
 data class Lyrics(

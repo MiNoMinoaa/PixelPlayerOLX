@@ -133,7 +133,7 @@ fun HomeScreen(
     onOpenSidebar: () -> Unit
 ) {
     val context = LocalContext.current
-    // DETECTAR MODO BENCHMARK
+    // DETECT BENCHMARK MODE
     val isBenchmarkMode = remember {
         (context as? android.app.Activity)?.intent?.getBooleanExtra("is_benchmark", false) ?: false
     }
@@ -225,7 +225,7 @@ fun HomeScreen(
 
     val yourMixSong: String = "Today's Mix for you"
 
-    // 2) Observar sólo el currentSong (o null) para saber si mostrar padding
+    // 2) Observe only the currentSong (or null) to know whether to show padding
     val currentSong by remember(playerViewModel.stablePlayerState) {
         playerViewModel.stablePlayerState.map { it.currentSong }
     }.collectAsStateWithLifecycle(initialValue = null)
@@ -237,7 +237,7 @@ fun HomeScreen(
             .distinctUntilChanged()
     }.collectAsStateWithLifecycle(initialValue = false)
 
-    // Padding inferior si hay canción en reproducción
+    // Bottom padding if there is a song playing
     val bottomPadding = if (currentSong != null) MiniPlayerHeight else 0.dp
     val navBarCompactMode by playerViewModel.navBarCompactMode.collectAsStateWithLifecycle()
     val bottomGradientHeight = resolveMainScreenBottomGradientHeight(navBarCompactMode)
@@ -741,7 +741,7 @@ fun YourMixHeader(
 }
 
 
-// SongListItem (modificado para aceptar parámetros individuales)
+// SongListItem (modified to accept individual parameters)
 @Composable
 fun SongListItemFavs(
     modifier: Modifier = Modifier,
@@ -806,9 +806,9 @@ fun SongListItemFavs(
                     modifier = Modifier
                         .weight(0.1f)
                         .padding(start = 8.dp)
-                        .size(width = 18.dp, height = 16.dp), // similar al tamaño del ícono
+                        .size(width = 18.dp, height = 16.dp), // similar to the icon size
                     color = colors.primary,
-                    isPlaying = isPlaying  // o conectalo a tu estado real de reproducción
+                    isPlaying = isPlaying  // or wire it to your real playback state
                 )
             }
         }

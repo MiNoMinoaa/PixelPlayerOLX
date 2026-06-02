@@ -15,19 +15,19 @@ import kotlin.math.PI
 import kotlin.math.sin
 
 /**
- * Composable que dibuja una línea horizontal con ondulación senoidal.
+ * Composable that draws a horizontal line with a sine-wave ripple.
  *
- * @param modifier Modificador para el Composable.
- * @param color Color de la línea.
- * @param alpha Opacidad (0f..1f).
- * @param strokeWidth Grosor de la línea (Dp).
- * @param amplitude Amplitud de la onda (Dp) — la altura máxima desde el centro.
- * @param waves Número de ondas completas a lo largo del ancho (ej: 1f = una onda).
- * @param phase Desplazamiento de fase estático (radianes). Se usa solo si animate = false.
- * @param animate Si es true, activa una animación de desplazamiento infinita.
- * @param animationDurationMillis Duración en milisegundos de un ciclo completo de animación.
- * @param samples Cantidad de puntos usados para dibujar la curva (más = más suave).
- * @param cap Tipo de extremo de la línea (Round, Butt, Square).
+ * @param modifier Modifier for the Composable.
+ * @param color Line color.
+ * @param alpha Opacity (0f..1f).
+ * @param strokeWidth Line thickness (Dp).
+ * @param amplitude Wave amplitude (Dp) — the maximum height from the center.
+ * @param waves Number of complete waves across the width (e.g. 1f = one wave).
+ * @param phase Static phase shift (radians). Used only if animate = false.
+ * @param animate If true, enables an infinite scrolling animation.
+ * @param animationDurationMillis Duration in milliseconds of one full animation cycle.
+ * @param samples Number of points used to draw the curve (more = smoother).
+ * @param cap Line cap type (Round, Butt, Square).
  */
 @Composable
 fun SineWaveLine(
@@ -67,20 +67,20 @@ fun SineWaveLine(
         val h = size.height
         val centerY = h / 2f
 
-        // Convertimos dp a px dentro del scope de dibujo para eficiencia
+        // Convert dp to px inside the draw scope for efficiency
         val strokePx = with(density) { strokeWidth.toPx() }
         val ampPx = with(density) { amplitude.toPx() }
 
         if (w <= 0f || samples < 2) return@Canvas
 
-        // Construimos el path senoidal usando la fase actual (animada o estática)
+        // Build the sine path using the current phase (animated or static)
         val path = Path().apply {
             val step = w / (samples - 1)
-            // Usamos currentPhase para el punto inicial
+            // Use currentPhase for the starting point
             moveTo(0f, centerY + (ampPx * sin(currentPhase)))
             for (i in 1 until samples) {
                 val x = i * step
-                // theta recorre 0..(2π * waves)
+                // theta runs 0..(2π * waves)
                 val theta = (x / w) * (2f * PI.toFloat() * waves) + currentPhase
                 val y = centerY + ampPx * sin(theta)
                 lineTo(x, y)
@@ -101,7 +101,7 @@ fun SineWaveLine(
 }
 
 /**
- * Ejemplo de uso estático:
+ * Static usage example:
  *
  * SineWaveLine(
  *     modifier = Modifier

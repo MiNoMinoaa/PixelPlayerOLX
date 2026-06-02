@@ -25,38 +25,38 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * Un LinearProgressIndicator para Glance que simula un efecto de onda generando un Bitmap.
+ * A LinearProgressIndicator for Glance that simulates a wave effect by generating a Bitmap.
  *
- * IMPORTANTE: La animación de la onda requiere un mecanismo externo (ej. CoroutineWorker)
- * que llame a `GlanceAppWidget.update` periódicamente con un `phaseShift` actualizado.
+ * IMPORTANT: The wave animation requires an external mechanism (e.g. CoroutineWorker)
+ * that calls `GlanceAppWidget.update` periodically with an updated `phaseShift`.
  *
- * @param progress El progreso actual (entre 0.0f y 1.0f).
- * @param isPlaying Si el contenido asociado se está reproduciendo (para mostrar la onda).
- * @param modifier El GlanceModifier a aplicar.
- * @param height La altura total del componente. Es importante para que ocupe el espacio correcto.
- * @param phaseShift El desplazamiento de fase para la animación de la onda (de 0 a 2*PI).
- * Debe ser actualizado externamente para crear la ilusión de movimiento.
- * @param activeTrackColor Color de la parte activa de la pista (la onda/parte recorrida).
- * @param trackBackgroundColor Color del fondo de la pista (la parte no recorrida).
- * @param thumbColor Color del círculo al final del progreso.
- * @param hideInactiveTrackPortion Si es `true`, la parte del fondo del track que ya ha sido
- * recorrida no se dibujará.
- * @param trackHeight Altura de la línea de la pista.
- * @param thumbRadius Radio del círculo.
- * @param waveAmplitude Amplitud de la onda cuando `isPlaying` es true.
- * @param waveFrequency Frecuencia de la onda (más alto = más ondulaciones).
+ * @param progress The current progress (between 0.0f and 1.0f).
+ * @param isPlaying Whether the associated content is playing (to show the wave).
+ * @param modifier The GlanceModifier to apply.
+ * @param height The total height of the component. Important so it takes up the correct space.
+ * @param phaseShift The phase shift for the wave animation (from 0 to 2*PI).
+ * Must be updated externally to create the illusion of movement.
+ * @param activeTrackColor Color of the active part of the track (the wave/covered part).
+ * @param trackBackgroundColor Color of the track background (the uncovered part).
+ * @param thumbColor Color of the circle at the end of the progress.
+ * @param hideInactiveTrackPortion If `true`, the part of the track background that has already been
+ * covered will not be drawn.
+ * @param trackHeight Height of the track line.
+ * @param thumbRadius Radius of the circle.
+ * @param waveAmplitude Amplitude of the wave when `isPlaying` is true.
+ * @param waveFrequency Frequency of the wave (higher = more ripples).
  */
 @Composable
 fun WavyLinearProgressIndicator(
     progress: Float,
     isPlaying: Boolean,
     modifier: GlanceModifier = GlanceModifier,
-    height: Dp = 24.dp, // Parámetro para controlar la altura
+    height: Dp = 24.dp, // Parameter to control the height
     phaseShift: Float = 0f,
     activeTrackColor: Color = Color(0xFF6200EE),
     trackBackgroundColor: Color = Color(0xFF6200EE).copy(alpha = 0.24f),
     thumbColor: Color = Color(0xFF6200EE),
-    hideInactiveTrackPortion: Boolean = true, // Nuevo parámetro
+    hideInactiveTrackPortion: Boolean = true, // New parameter
     trackHeight: Dp = 6.dp,
     thumbRadius: Dp = 8.dp,
     waveAmplitude: Dp = 3.dp,
@@ -64,11 +64,11 @@ fun WavyLinearProgressIndicator(
 ) {
     val context = LocalContext.current
     val progressPercent = (progress * 100f).toInt().coerceIn(0, 100)
-    // El componente en Glance es simplemente una Imagen. El Bitmap se genera bajo demanda.
+    // The Glance component is simply an Image. The Bitmap is generated on demand.
     Image(
         provider = ImageProvider(
             createWavyProgressBitmap(
-                context = context, // Se pasa el contexto para la densidad
+                context = context, // Context is passed for the density
                 progress = progress,
                 isPlaying = isPlaying,
                 phaseShift = phaseShift,
@@ -84,13 +84,13 @@ fun WavyLinearProgressIndicator(
             )
         ),
         contentDescription = context.getString(R.string.widget_wavy_progress_bar_desc, progressPercent),
-        modifier = modifier.height(height) // Se aplica la altura al modifier
+        modifier = modifier.height(height) // The height is applied to the modifier
     )
 }
 
 /**
- * Función de utilidad que genera un Bitmap con el dibujo de la barra de progreso ondulada.
- * Esta función adapta la lógica del WavyMusicSlider original para dibujar en un Canvas de Android.
+ * Utility function that generates a Bitmap with the drawing of the wavy progress bar.
+ * This function adapts the logic of the original WavyMusicSlider to draw on an Android Canvas.
  */
 private fun createWavyProgressBitmap(
     context: Context,
@@ -105,13 +105,13 @@ private fun createWavyProgressBitmap(
     thumbRadius: Dp,
     waveAmplitude: Dp,
     waveFrequency: Float,
-    bitmapWidth: Int = 1000, // Ancho fijo para la resolución del bitmap
+    bitmapWidth: Int = 1000, // Fixed width for the bitmap resolution
     bitmapHeight: Int
 ): Bitmap {
     val bmp = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bmp)
 
-    // Usar la densidad real del dispositivo para convertir Dp a Px.
+    // Use the real device density to convert Dp to Px.
     val density = context.resources.displayMetrics.density
     val trackHeightPx = trackHeight.value * density
     val thumbRadiusPx = thumbRadius.value * density
@@ -122,7 +122,7 @@ private fun createWavyProgressBitmap(
     val trackEnd = canvas.width - thumbRadiusPx
     val trackWidth = trackEnd - trackStart
 
-    // Configurar Paints
+    // Configure Paints
     val activePaint = Paint().apply {
         color = activeTrackColor.toArgb()
         style = Paint.Style.STROKE
@@ -145,16 +145,16 @@ private fun createWavyProgressBitmap(
 
     val activeTrackEndPx = trackStart + trackWidth * progress
 
-    // Dibujar pista de fondo
+    // Draw background track
     if (hideInactiveTrackPortion) {
-        // Solo dibujar la parte que queda por recorrer
+        // Only draw the part that remains to be covered
         canvas.drawLine(activeTrackEndPx, centerY, trackEnd, centerY, inactivePaint)
     } else {
-        // Dibujar toda la pista de fondo
+        // Draw the entire background track
         canvas.drawLine(trackStart, centerY, trackEnd, centerY, inactivePaint)
     }
 
-    // Dibujar pista activa (onda o línea)
+    // Draw active track (wave or line)
     if (progress > 0) {
         if (waveAmplitudePx > 0.1f) {
             val wavePath = Path()
@@ -162,7 +162,7 @@ private fun createWavyProgressBitmap(
                 trackStart,
                 centerY + waveAmplitudePx * sin(waveFrequency * trackStart + phaseShift)
             )
-            val step = 5f // Aumentar el paso para mejorar el rendimiento
+            val step = 5f // Increase the step to improve performance
             var x = trackStart + step
             while (x < activeTrackEndPx) {
                 val waveY = centerY + waveAmplitudePx * sin(waveFrequency * x + phaseShift)
@@ -179,7 +179,7 @@ private fun createWavyProgressBitmap(
         }
     }
 
-    // Dibujar Thumb
+    // Draw Thumb
     val thumbX = activeTrackEndPx
     canvas.drawCircle(thumbX, centerY, thumbRadiusPx, thumbPaint)
 

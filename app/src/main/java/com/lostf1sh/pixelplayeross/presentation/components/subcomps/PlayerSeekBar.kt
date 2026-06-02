@@ -80,9 +80,9 @@ fun PlayerSeekBar(
         modifier = modifier
             .fillMaxWidth()
             .shadow(
-                elevation = 8.dp,          // nivel de sombra
-                shape = CircleShape,       // la misma forma de clip
-                clip = false               // importante: NO recortar la sombra
+                elevation = 8.dp,          // shadow level
+                shape = CircleShape,       // the same clip shape
+                clip = false               // important: do NOT clip the shadow
             )
             .clip(CircleShape)
             .background(backgroundColor)

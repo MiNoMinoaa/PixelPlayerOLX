@@ -37,8 +37,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.lostf1sh.pixelplayeross.R
 import com.lostf1sh.pixelplayeross.presentation.components.LocalMaterialTheme
 import kotlinx.coroutines.delay
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
@@ -148,7 +150,7 @@ fun AnimatedPlaybackControls(
             ) {
                 Icon(
                     imageVector = Icons.Rounded.SkipPrevious,
-                    contentDescription = "Anterior",
+                    contentDescription = stringResource(R.string.previous_track),
                     tint = tintPreviousIcon,
                     modifier = Modifier.size(iconSize)
                 )
@@ -219,7 +221,7 @@ fun AnimatedPlaybackControls(
             ) {
                 Icon(
                     imageVector = Icons.Rounded.SkipNext,
-                    contentDescription = "Siguiente",
+                    contentDescription = stringResource(R.string.next_track),
                     tint = tintNextIcon,
                     modifier = Modifier.size(iconSize)
                 )
@@ -241,7 +243,7 @@ private fun MorphingPlayPauseIcon(
     ) { playing ->
         Icon(
             imageVector = if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-            contentDescription = if (playing) "Pausar" else "Reproducir",
+            contentDescription = if (playing) stringResource(R.string.cd_pause) else stringResource(R.string.cd_play),
             tint = tint,
             modifier = Modifier.size(size)
         )

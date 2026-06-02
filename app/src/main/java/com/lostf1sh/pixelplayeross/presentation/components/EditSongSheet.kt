@@ -247,7 +247,7 @@ private fun EditSongContent(
         )
     }
 
-    // Definición de colores para los TextFields
+    // Color definitions for the TextFields
     val textFieldColors = TextFieldDefaults.colors(
         focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -257,7 +257,7 @@ private fun EditSongContent(
         disabledIndicatorColor = Color.Transparent,
     )
 
-    // Definición de la forma para los TextFields
+    // Shape definition for the TextFields
     val textFieldShape = AbsoluteSmoothCornerShape(
         cornerRadiusTL = 10.dp,
         smoothnessAsPercentBL = 60,
@@ -273,7 +273,7 @@ private fun EditSongContent(
         exitDirection = FloatingToolbarExitDirection.Bottom
     )
 
-    // --- Diálogo de Información ---
+    // --- Info Dialog ---
     if (showInfoDialog) {
         AlertDialog(
             onDismissRequest = { showInfoDialog = false },
@@ -357,7 +357,7 @@ private fun EditSongContent(
                 )
             }
 
-            // --- Campo de Título ---
+            // --- Title Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -379,7 +379,7 @@ private fun EditSongContent(
                 }
             }
 
-            // --- Campo de Artista ---
+            // --- Artist Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -401,7 +401,7 @@ private fun EditSongContent(
                 }
             }
 
-            // --- Campo de Álbum ---
+            // --- Album Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -423,7 +423,7 @@ private fun EditSongContent(
                 }
             }
 
-            // --- Campo de Album Artist ---
+            // --- Album Artist Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -445,7 +445,7 @@ private fun EditSongContent(
                 }
             }
 
-            // --- Campo de Género ---
+            // --- Genre Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -467,7 +467,7 @@ private fun EditSongContent(
                 }
             }
 
-            // --- Campo de Compositor ---
+            // --- Composer Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -489,7 +489,7 @@ private fun EditSongContent(
                 }
             }
 
-            // --- Campo de Track Number ---
+            // --- Track Number Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -512,7 +512,7 @@ private fun EditSongContent(
                 }
             }
 
-            // --- Campo de Disc Number ---
+            // --- Disc Number Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -535,7 +535,7 @@ private fun EditSongContent(
                 }
             }
 
-            // --- Campo de ReplayGain Track ---
+            // --- ReplayGain Track Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -564,7 +564,7 @@ private fun EditSongContent(
                 }
             }
 
-            // --- Campo de ReplayGain Album ---
+            // --- ReplayGain Album Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -593,7 +593,7 @@ private fun EditSongContent(
                 }
             }
 
-            // --- Campo de Letra ---
+            // --- Lyrics Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(

@@ -43,21 +43,21 @@ fun hexToColor(hex: String?, defaultColor: Color = Color.Gray): Color {
 }
 
 /**
- * Genera un Bitmap escalable (9-patch) que imita el comportamiento de CornerBasedShape/RoundedCornerShape de Compose.
+ * Generates a scalable (9-patch) Bitmap that mimics the behavior of Compose's CornerBasedShape/RoundedCornerShape.
  *
- * Esta versión final utiliza un lienzo de referencia con el aspect ratio correcto y una lógica
- * de escalado completa para prevenir la deformación en formas rectangulares, produciendo
- * un resultado geométricamente correcto y visualmente consistente.
+ * This final version uses a reference canvas with the correct aspect ratio and full scaling
+ * logic to prevent deformation on rectangular shapes, producing a geometrically correct
+ * and visually consistent result.
  *
- * @param context El Contexto de la aplicación.
- * @param color El color de fondo.
- * @param topLeft El radio de la esquina superior izquierda en Dp.
- * @param topRight El radio de la esquina superior derecha en Dp.
- * @param bottomLeft El radio de la esquina inferior izquierda en Dp.
- * @param bottomRight El radio de la esquina inferior derecha en Dp.
- * @param width El ancho opcional para guiar la proporción de la forma.
- * @param height La altura opcional para guiar la proporción de la forma.
- * @return Un Bitmap formateado como 9-patch, listo para ser usado como fondo escalable.
+ * @param context The application Context.
+ * @param color The background color.
+ * @param topLeft The top-left corner radius in Dp.
+ * @param topRight The top-right corner radius in Dp.
+ * @param bottomLeft The bottom-left corner radius in Dp.
+ * @param bottomRight The bottom-right corner radius in Dp.
+ * @param width The optional width to guide the shape's proportions.
+ * @param height The optional height to guide the shape's proportions.
+ * @return A Bitmap formatted as a 9-patch, ready to be used as a scalable background.
  */
 fun createScalableBackgroundBitmap(
     context: Context,

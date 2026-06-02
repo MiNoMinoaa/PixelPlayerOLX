@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import androidx.compose.ui.graphics.toArgb
-import android.util.Log
 import com.lostf1sh.pixelplayeross.data.model.Album
 import com.lostf1sh.pixelplayeross.data.model.Artist
 import com.lostf1sh.pixelplayeross.data.model.LibraryTabId
@@ -29,6 +28,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -245,7 +245,7 @@ class LibraryStateHolder @Inject constructor(
             return
         }
 
-        Log.d("LibraryStateHolder", "startObservingLibraryData called.")
+        Timber.tag("LibraryStateHolder").d("startObservingLibraryData called.")
         needsReloadAfterTrim = false
 
         songsJob = scope?.launch {

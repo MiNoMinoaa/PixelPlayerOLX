@@ -3,7 +3,6 @@ package com.lostf1sh.pixelplayeross.data.paging
 import android.content.ContentUris
 import android.content.Context
 import android.provider.MediaStore
-import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.lostf1sh.pixelplayeross.data.model.Song
@@ -12,6 +11,7 @@ import com.lostf1sh.pixelplayeross.utils.normalizeMetadataText
 import com.lostf1sh.pixelplayeross.utils.normalizeMetadataTextOrEmpty
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import kotlin.math.min
 
 /**
@@ -73,10 +73,9 @@ class MediaStorePagingSource(
                 nextKey = nextKey
             )
         } catch (e: Exception) {
-            Log.e(
-                TAG,
-                "Failed loading page (pageIndex=${params.key ?: 0}, loadSize=${params.loadSize}, totalIds=${filteredIds.size})",
-                e
+            Timber.tag(TAG).e(
+                e,
+                "Failed loading page (pageIndex=${params.key ?: 0}, loadSize=${params.loadSize}, totalIds=${filteredIds.size})"
             )
             LoadResult.Error(e)
         }

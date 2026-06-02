@@ -61,7 +61,7 @@ class PixelPlayerApplication : Application(), ImageLoaderFactory, Configuration.
 
     private val startupScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    // AÑADE EL COMPANION OBJECT
+    // ADD THE COMPANION OBJECT
     companion object {
         const val NOTIFICATION_CHANNEL_ID = "pixelplayer_music_channel"
     }
@@ -154,7 +154,7 @@ class PixelPlayerApplication : Application(), ImageLoaderFactory, Configuration.
         }
     }
 
-    // 3. Sobrescribe el método para proveer la configuración de WorkManager
+    // 3. Override the method to provide the WorkManager configuration
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)

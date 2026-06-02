@@ -44,7 +44,7 @@ fun AutoScrollingTextOnDemand(
     val canStart by remember(text, style) { derivedStateOf { expansionFractionProvider() > 0.99f && overflow } }
 
 
-// Usamos un Text "medidor" sólo la primera composición para detectar overflow.
+// Use a "measuring" Text only on the first composition to detect overflow.
     if (!canStart) {
         Text(
             text = text,

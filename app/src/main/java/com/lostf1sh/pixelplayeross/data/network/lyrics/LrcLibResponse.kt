@@ -3,8 +3,8 @@ package com.lostf1sh.pixelplayeross.data.network.lyrics
 import com.google.gson.annotations.SerializedName
 
 /**
- * Representa la respuesta de la API de LRCLIB.
- * Contiene la letra de la canción, tanto en formato simple como sincronizado.
+ * Represents the response from the LRCLIB API.
+ * Contains the song's lyrics in both plain and synced formats.
  */
 data class LrcLibResponse(
     @SerializedName("id") val id: Int,

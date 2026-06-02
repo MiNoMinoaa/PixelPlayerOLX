@@ -830,7 +830,7 @@ class SongMetadataEditor(
 
         } catch (e: Exception) {
             Timber.tag(TAG).e("TAGLIB ERROR: ${e.javaClass.simpleName}: ${e.message}")
-            e.printStackTrace()
+            Timber.e(e)
             false
         }
     }
@@ -928,7 +928,7 @@ class SongMetadataEditor(
             true
         } catch (e: Exception) {
             Timber.tag(TAG).e("JAUDIOTAGGER ERROR: ${e.javaClass.simpleName}: ${e.message}")
-            e.printStackTrace()
+            Timber.e(e)
             false
         }
     }
@@ -1023,7 +1023,7 @@ class SongMetadataEditor(
 
         } catch (e: Exception) {
             Timber.tag(TAG).e("VORBISJAVA ERROR: ${e.javaClass.simpleName}: ${e.message}")
-            e.printStackTrace()
+            Timber.e(e)
             false
         } finally {
             try {

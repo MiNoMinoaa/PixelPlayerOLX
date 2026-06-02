@@ -38,7 +38,7 @@ object AudioDecoder {
             val bufferInfo = MediaCodec.BufferInfo()
             var isEndOfStream = false
 
-            while (!isEndOfStream && pcmData.size < requiredSamples) { // --- MODIFICADO: Condición de parada ---
+            while (!isEndOfStream && pcmData.size < requiredSamples) { // --- MODIFIED: stop condition ---
                 val inputBufferIndex = decoder.dequeueInputBuffer(TIMEOUT_US)
                 if (inputBufferIndex >= 0) {
                     val inputBuffer = decoder.getInputBuffer(inputBufferIndex)
@@ -70,7 +70,7 @@ object AudioDecoder {
                     pcmData.addAll(byteBufferToFloatArray(outputBuffer, format).asList())
                     decoder.releaseOutputBuffer(outputBufferIndex, false)
 
-                    // Si ya tenemos suficientes muestras, salimos del bucle interno
+                    // If we already have enough samples, exit the inner loop
                     if (pcmData.size >= requiredSamples) break
 
                     outputBufferIndex = decoder.dequeueOutputBuffer(bufferInfo, TIMEOUT_US)
@@ -83,13 +83,13 @@ object AudioDecoder {
 
             Timber.tag("AudioDecoder").d("Successfully decoded ${pcmData.size} samples.")
 
-            // --- MODIFICADO: Rellenamos con silencio si la canción es más corta que lo requerido ---
+            // --- MODIFIED: pad with silence if the song is shorter than required ---
             if (pcmData.size < requiredSamples) {
                 val padding = FloatArray(requiredSamples - pcmData.size) { 0f }
                 pcmData.addAll(padding.asList())
             }
 
-            // Devolvemos el array con el tamaño exacto
+            // Return the array at the exact size
             pcmData.toFloatArray().copyOf(requiredSamples)
         }
     }

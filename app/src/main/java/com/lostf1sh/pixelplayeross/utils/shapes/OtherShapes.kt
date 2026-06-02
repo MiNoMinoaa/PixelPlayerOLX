@@ -33,10 +33,10 @@ fun createHexagonShape() = object : Shape {
     }
 }
 
-// Implementaciones similares para createRoundedTriangleShape, createSemiCircleShape
-// (Estas pueden ser más complejas dependiendo del diseño exacto que quieras)
+// Similar implementations for createRoundedTriangleShape, createSemiCircleShape
+// (These can be more complex depending on the exact design you want)
 
-// Ejemplo simple de triángulo redondeado (tendrías que ajustarlo)
+// Simple rounded triangle example (you'd need to adjust it)
 fun createRoundedTriangleShape() = object : Shape {
     override fun createOutline(size: androidx.compose.ui.geometry.Size, layoutDirection: LayoutDirection, density: Density): Outline {
         return Outline.Generic(Path().apply {
@@ -46,21 +46,21 @@ fun createRoundedTriangleShape() = object : Shape {
             path.lineTo(0f, size.height)
             path.close()
 
-            // Para redondear las esquinas, podrías usar CornerPathEffect en un Modifier.drawBehind,
-            // o construir la forma con arcos y líneas. Clipping con Shape solo recorta.
-            // Una forma simple es usar un RoundRect para el clip con radios grandes, pero no es un triángulo real.
-            // Para un triángulo redondeado preciso, tendrías que dibujar la forma con arcos.
-            // Por ahora, dejaremos el clip simple o necesitarás una implementación más avanzada.
+            // To round the corners, you could use CornerPathEffect in a Modifier.drawBehind,
+            // or build the shape with arcs and lines. Clipping with Shape only clips.
+            // A simple approach is to use a RoundRect for the clip with large radii, but that isn't a real triangle.
+            // For a precise rounded triangle, you'd have to draw the shape with arcs.
+            // For now, we'll keep the simple clip or you'll need a more advanced implementation.
 
-            // Alternativa simple: clip a un rectángulo con esquinas redondeadas
+            // Simple alternative: clip to a rectangle with rounded corners
             // return Outline.Rounded(RoundRect(0f, 0f, size.width, size.height, CornerRadius(16f, 16f)))
-            // Esto no es un triángulo. Necesitas una implementación real de forma de triángulo redondeado.
-            // Por simplicidad en este ejemplo, usaremos formas más estándar o de la librería.
+            // This isn't a triangle. You need a real rounded-triangle shape implementation.
+            // For simplicity in this example, we'll use more standard shapes or library ones.
 
-            // Para el ejemplo, simplemente usaremos un triángulo básico sin redondeo complejo en el clip.
-            // Si necesitas triángulos redondeados reales, busca implementaciones más avanzadas.
+            // For the example, we'll simply use a basic triangle without complex rounding in the clip.
+            // If you need real rounded triangles, look for more advanced implementations.
             moveTo(size.width / 2f, 0f)
-            lineTo(size.width, size.height * 0.8f) // Ajuste para que la base no llegue hasta abajo
+            lineTo(size.width, size.height * 0.8f) // Adjustment so the base doesn't reach all the way to the bottom
             lineTo(0f, size.height * 0.8f)
             close()
 
@@ -68,24 +68,24 @@ fun createRoundedTriangleShape() = object : Shape {
     }
 }
 
-// Ejemplo simple de Semicírculo (tendrías que ajustarlo)
+// Simple semicircle example (you'd need to adjust it)
 fun createSemiCircleShape() = object : Shape {
     override fun createOutline(size: androidx.compose.ui.geometry.Size, layoutDirection: LayoutDirection, density: Density): Outline {
         return Outline.Generic(Path().apply {
             arcTo(
-                rect = Rect(0f, 0f, size.width, size.width), // Un círculo basado en el ancho
+                rect = Rect(0f, 0f, size.width, size.width), // A circle based on the width
                 startAngleDegrees = 0f,
                 sweepAngleDegrees = 180f,
                 forceMoveTo = false
             )
-            lineTo(size.width / 2f, size.width / 2f) // Dibuja una línea hacia el centro si necesitas cerrarlo como pastel
-            close() // Opcional: cierra la forma
+            lineTo(size.width / 2f, size.width / 2f) // Draw a line to the center if you need to close it like a pie slice
+            close() // Optional: close the shape
         })
     }
 }
 
 /**
- * Crea una forma de hexágono con esquinas redondeadas.
+ * Creates a hexagon shape with rounded corners.
  */
 fun createRoundedHexagonShape(cornerRadius: Dp) = object : Shape {
     override fun createOutline(
@@ -99,7 +99,7 @@ fun createRoundedHexagonShape(cornerRadius: Dp) = object : Shape {
             val radius = min(width, height) / 2f
             val cornerRadiusPx = with(density) { cornerRadius.toPx() }
 
-            // Puntos del hexágono sin redondear
+            // Hexagon points without rounding
             val points = (0..5).map { i ->
                 val angle = PI / 3 * i
                 Offset(
@@ -108,7 +108,7 @@ fun createRoundedHexagonShape(cornerRadius: Dp) = object : Shape {
                 )
             }
 
-            // Movemos al primer punto con un offset para empezar el arco
+            // Move to the first point with an offset to start the arc
             moveTo(points[0].x + cornerRadiusPx * cos(PI / 3.0).toFloat(), points[0].y + cornerRadiusPx * sin(PI / 3.0).toFloat())
 
             for (i in 0..5) {
@@ -116,10 +116,10 @@ fun createRoundedHexagonShape(cornerRadius: Dp) = object : Shape {
                 val p2 = points[(i + 1) % 6]
                 val p3 = points[(i + 2) % 6]
 
-                // Línea hacia el punto de inicio del arco
+                // Line to the arc's start point
                 lineTo(p2.x - cornerRadiusPx * cos(PI / 3.0).toFloat(), p2.y - cornerRadiusPx * sin(PI / 3.0).toFloat())
 
-                // Arco en la esquina
+                // Arc at the corner
                 arcTo(
                     rect = Rect(
                         left = p2.x - cornerRadiusPx,
@@ -127,8 +127,8 @@ fun createRoundedHexagonShape(cornerRadius: Dp) = object : Shape {
                         right = p2.x + cornerRadiusPx,
                         bottom = p2.y + cornerRadiusPx
                     ),
-                    startAngleDegrees = (i * 60 + 30).toFloat(), // Ángulo de inicio del arco
-                    sweepAngleDegrees = 60f, // Ángulo del arco
+                    startAngleDegrees = (i * 60 + 30).toFloat(), // Arc start angle
+                    sweepAngleDegrees = 60f, // Arc sweep angle
                     forceMoveTo = false
                 )
             }
@@ -138,8 +138,8 @@ fun createRoundedHexagonShape(cornerRadius: Dp) = object : Shape {
 }
 
 /**
- * Crea una forma de triángulo con esquinas redondeadas.
- * Implementación simple para clipping.
+ * Creates a triangle shape with rounded corners.
+ * Simple implementation for clipping.
  */
 fun createRoundedTriangleShape(cornerRadius: Dp) = object : Shape {
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
@@ -148,42 +148,42 @@ fun createRoundedTriangleShape(cornerRadius: Dp) = object : Shape {
             val height = size.height
             val cornerRadiusPx = with(density) { cornerRadius.toPx() }
 
-            // Puntos del triángulo
-            val p1 = Offset(width / 2f, 0f) // Superior
-            val p2 = Offset(width, height) // Inferior derecha
-            val p3 = Offset(0f, height) // Inferior izquierda
+            // Triangle points
+            val p1 = Offset(width / 2f, 0f) // Top
+            val p2 = Offset(width, height) // Bottom right
+            val p3 = Offset(0f, height) // Bottom left
 
-            // Para simplificar el redondeo en el clip, usaremos arcos.
-            // Esto no es un triángulo perfecto con arcos tangentes, sino un enfoque práctico para clipping.
+            // To simplify the rounding in the clip, we'll use arcs.
+            // This isn't a perfect triangle with tangent arcs, but a practical approach for clipping.
 
-            // Calcula puntos de control para los arcos
+            // Compute control points for the arcs
             val control12 = Offset(p1.x + (p2.x - p1.x) * 0.8f, p1.y + (p2.y - p1.y) * 0.8f)
             val control23 = Offset(p2.x + (p3.x - p2.x) * 0.2f, p2.y + (p3.y - p2.y) * 0.2f)
             val control31 = Offset(p3.x + (p1.x - p3.x) * 0.8f, p3.y + (p1.y - p3.y) * 0.8f)
 
 
-            moveTo(p1.x, p1.y + cornerRadiusPx * 2) // Empieza un poco más abajo del vértice superior
+            moveTo(p1.x, p1.y + cornerRadiusPx * 2) // Start a bit below the top vertex
 
-            // Arco superior derecha
+            // Top-right arc
             quadraticTo(p1.x, p1.y, p1.x + cornerRadiusPx * sqrt(2f), p1.y + cornerRadiusPx * sqrt(2f))
             lineTo(p2.x - cornerRadiusPx * sqrt(2f), p2.y - cornerRadiusPx * sqrt(2f))
 
-            // Arco inferior derecha
+            // Bottom-right arc
             quadraticTo(p2.x, p2.y, p2.x - cornerRadiusPx * sqrt(2f), p2.y + cornerRadiusPx * sqrt(2f))
             lineTo(p3.x + cornerRadiusPx * sqrt(2f), p3.y + cornerRadiusPx * sqrt(2f))
 
-            // Arco inferior izquierda
+            // Bottom-left arc
             quadraticTo(p3.x, p3.y, p3.x + cornerRadiusPx * sqrt(2f), p3.y - cornerRadiusPx * sqrt(2f))
             lineTo(p1.x - cornerRadiusPx * sqrt(2f), p1.y + cornerRadiusPx * sqrt(2f))
 
-            close() // Cierra la forma
+            close() // Close the shape
         })
     }
 }
 
 
 /**
- * Crea una forma de semicírculo con una base ligeramente redondeada.
+ * Creates a semicircle shape with a slightly rounded base.
  */
 fun createSemiCircleShape(cornerRadius: Dp) = object : Shape {
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
@@ -193,40 +193,40 @@ fun createSemiCircleShape(cornerRadius: Dp) = object : Shape {
             val radius = width / 2f
             val cornerRadiusPx = with(density) { cornerRadius.toPx() }
 
-            // Arco superior (semicírculo)
+            // Top arc (semicircle)
             arcTo(
-                rect = Rect(0f, 0f, width, width), // Un círculo basado en el ancho
+                rect = Rect(0f, 0f, width, width), // A circle based on the width
                 startAngleDegrees = 0f,
                 sweepAngleDegrees = 180f,
                 forceMoveTo = false
             )
 
-            // Base (línea con arcos en los extremos)
+            // Base (line with arcs at the ends)
             val startBaseX = 0f + cornerRadiusPx
             val endBaseX = width - cornerRadiusPx
-            val baseY = width / 2f // La base está a la mitad del diámetro del círculo
+            val baseY = width / 2f // The base sits at half the circle's diameter
 
-            lineTo(endBaseX, baseY) // Línea hacia el final de la base
+            lineTo(endBaseX, baseY) // Line to the end of the base
 
-            // Arco inferior derecho
+            // Bottom-right arc
             arcTo(
                 rect = Rect(endBaseX - cornerRadiusPx, baseY - cornerRadiusPx, endBaseX + cornerRadiusPx, baseY + cornerRadiusPx),
                 startAngleDegrees = 90f,
-                sweepAngleDegrees = -90f, // Arco hacia abajo
+                sweepAngleDegrees = -90f, // Arc downward
                 forceMoveTo = false
             )
 
-            lineTo(startBaseX, baseY + cornerRadiusPx) // Línea inferior
+            lineTo(startBaseX, baseY + cornerRadiusPx) // Bottom line
 
-            // Arco inferior izquierdo
+            // Bottom-left arc
             arcTo(
                 rect = Rect(startBaseX - cornerRadiusPx, baseY - cornerRadiusPx, startBaseX + cornerRadiusPx, baseY + cornerRadiusPx),
                 startAngleDegrees = 180f,
-                sweepAngleDegrees = -90f, // Arco hacia abajo
+                sweepAngleDegrees = -90f, // Arc downward
                 forceMoveTo = false
             )
 
-            close() // Cierra la forma
+            close() // Close the shape
         })
     }
 }

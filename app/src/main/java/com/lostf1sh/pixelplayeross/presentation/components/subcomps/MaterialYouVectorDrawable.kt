@@ -16,8 +16,8 @@ import com.lostf1sh.pixelplayeross.R
 import com.lostf1sh.pixelplayeross.ui.theme.LocalPixelPlayerDarkTheme
 
 /**
- * Infla un vector XML que depende de attrs del tema Android usando el modo
- * claro/oscuro real de la app, no el del Activity por debajo.
+ * Inflates an XML vector that depends on Android theme attrs using the app's
+ * actual light/dark mode, not that of the underlying Activity.
  */
 @Composable
 fun MaterialYouVectorDrawable(

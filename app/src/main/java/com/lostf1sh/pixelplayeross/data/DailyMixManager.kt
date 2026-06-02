@@ -1,7 +1,6 @@
 package com.lostf1sh.pixelplayeross.data
 
 import android.content.Context
-import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
@@ -15,6 +14,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import timber.log.Timber
 import java.io.File
 import java.util.Calendar
 import java.util.LinkedHashSet
@@ -85,7 +85,7 @@ class DailyMixManager @Inject constructor(
                     }
                 } else null
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to read legacy engagement data", e)
+                Timber.tag(TAG).e(e, "Failed to read legacy engagement data")
                 null
             }
         }
@@ -94,13 +94,13 @@ class DailyMixManager @Inject constructor(
         if (entitiesToInsert != null) {
             try {
                 engagementDao.upsertEngagements(entitiesToInsert)
-                Log.i(TAG, "Migrated ${entitiesToInsert.size} engagement records from JSON to Room")
+                Timber.tag(TAG).i("Migrated ${entitiesToInsert.size} engagement records from JSON to Room")
 
                 // Rename legacy file as backup instead of deleting
                 val backupFile = File(context.filesDir, "song_scores.json.bak")
                 legacyScoresFile.renameTo(backupFile)
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to insert legacy engagement data into Room", e)
+                Timber.tag(TAG).e(e, "Failed to insert legacy engagement data into Room")
             }
         }
 
@@ -132,7 +132,7 @@ class DailyMixManager @Inject constructor(
         }
 
         val raw = runCatching { legacyScoresFile.readText() }
-            .onFailure { Log.e(TAG, "Failed to read legacy song scores file", it) }
+            .onFailure { Timber.tag(TAG).e(it, "Failed to read legacy song scores file") }
             .getOrNull()
             ?.takeIf { it.isNotBlank() }
             ?: return mutableMapOf()
@@ -141,7 +141,7 @@ class DailyMixManager @Inject constructor(
             val element = gson.fromJson(raw, JsonElement::class.java)
             parseEngagementElement(element)
         }.getOrElse { throwable ->
-            Log.e(TAG, "Failed to parse legacy song scores file", throwable)
+            Timber.tag(TAG).e(throwable, "Failed to parse legacy song scores file")
             mutableMapOf()
         }
     }
@@ -159,7 +159,7 @@ class DailyMixManager @Inject constructor(
             val parsed: MutableMap<String, SongEngagementStats> = gson.fromJson(element, statsType)
             parsed.mapValuesTo(mutableMapOf()) { (_, stats) -> sanitizeStats(stats) }
         }.getOrElse {
-            Log.w(TAG, "Unsupported song engagement format, ignoring it")
+            Timber.tag(TAG).w("Unsupported song engagement format, ignoring it")
             mutableMapOf()
         }
     }
@@ -171,7 +171,7 @@ class DailyMixManager @Inject constructor(
             if (stats != null) {
                 result[key] = stats
             } else {
-                Log.w(TAG, "Skipping song engagement entry for \"$key\" because it could not be parsed: $value")
+                Timber.tag(TAG).w("Skipping song engagement entry for \"$key\" because it could not be parsed: $value")
             }
         }
         return result
@@ -198,7 +198,7 @@ class DailyMixManager @Inject constructor(
             }
         }
 
-        Log.w(TAG, "Encountered unsupported engagement value for \"$key\": $value")
+        Timber.tag(TAG).w("Encountered unsupported engagement value for \"$key\": $value")
         return null
     }
 
@@ -379,8 +379,9 @@ class DailyMixManager @Inject constructor(
             return selected
         }
 
+        val selectedIds = selected.mapTo(HashSet()) { it.id }
         val remaining = allSongs
-            .filterNot { song -> selected.any { it.id == song.id } }
+            .filterNot { song -> song.id in selectedIds }
             .shuffled(random)
 
         val combined = (selected + remaining).distinctBy { it.id }
@@ -437,8 +438,9 @@ class DailyMixManager @Inject constructor(
         orderedResult.addAll(discoverySection)
 
         if (orderedResult.size < limit) {
+            val resultIds = orderedResult.mapTo(HashSet()) { it.id }
             val filler = allSongs
-                .filterNot { orderedResult.any { selected -> selected.id == it.id } }
+                .filterNot { it.id in resultIds }
                 .shuffled(random)
             for (song in filler) {
                 orderedResult.add(song)
@@ -471,10 +473,12 @@ class DailyMixManager @Inject constructor(
         }
 
         if (selected.size < limit) {
+            val selectedIds = selected.mapTo(HashSet()) { it.id }
             for (candidate in rankedSongs) {
                 if (selected.size >= limit) break
-                if (selected.any { it.id == candidate.song.id }) continue
+                if (candidate.song.id in selectedIds) continue
                 selected += candidate.song
+                selectedIds += candidate.song.id
             }
         }
 

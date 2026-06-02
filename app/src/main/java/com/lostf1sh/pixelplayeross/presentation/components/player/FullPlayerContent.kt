@@ -324,14 +324,14 @@ fun FullPlayerContent(
         LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
 
-    // Lógica para el botón de Lyrics en el reproductor expandido
+    // Logic for the Lyrics button in the expanded player
     val onLyricsClick = {
         val lyrics = lyricsProvider()
         if (lyrics?.synced.isNullOrEmpty() && lyrics?.plain.isNullOrEmpty()) {
-            // Si no hay letra, mostramos el diálogo para buscar
+            // If there are no lyrics, show the dialog to search
             showFetchLyricsDialog = true
         } else {
-            // Si hay letra, mostramos el sheet directamente
+            // If there are lyrics, show the sheet directly
             showLyricsSheet = true
         }
     }
@@ -346,7 +346,7 @@ fun FullPlayerContent(
                 uiState = lyricsSearchUiState,
                 currentSong = song, // Use 'song' which is derived from args/retained
                 onConfirm = { forcePick ->
-                    // El usuario confirma, iniciamos la búsqueda
+                    // The user confirms, start the search
                     playerViewModel.fetchLyricsForCurrentSong(forcePick)
                 },
                 onPickResult = { result ->
@@ -356,7 +356,7 @@ fun FullPlayerContent(
                     playerViewModel.searchLyricsManually(title, artist)
                 },
                 onDismiss = {
-                    // El usuario cancela o cierra el diálogo
+                    // The user cancels or closes the dialog
                     showFetchLyricsDialog = false
                     playerViewModel.resetLyricsSearchState()
                 },
@@ -367,7 +367,7 @@ fun FullPlayerContent(
         }
     }
 
-    // Observador para reaccionar al resultado de la búsqueda de letras
+    // Observer to react to the lyrics search result
     LaunchedEffect(lyricsSearchUiState) {
         when (val state = lyricsSearchUiState) {
             is LyricsSearchUiState.Success -> {
@@ -667,7 +667,7 @@ fun FullPlayerContent(
             }
         },
         topBar = {
-            // MD3: TopAppBar 在竖屏时滑入，横屏时向上滑出淡出
+            // MD3: TopAppBar slides in for portrait; slides up and fades out for landscape
             AnimatedVisibility(
                 visible = !isLandscape,
                 enter = fadeIn(animationSpec = tween(350, easing = FastOutSlowInEasing)) +
@@ -721,13 +721,13 @@ fun FullPlayerContent(
                     navigationIcon = {
                         Box(
                             modifier = Modifier
-                                // Ancho total = 14dp de padding + 42dp del botón
+                                // Total width = 14dp of padding + 42dp of the button
                                 .width(56.dp)
                                 .height(42.dp),
-                            // 2. Alinea el contenido (el botón) al final (derecha) y centrado verticalmente
+                            // 2. Align the content (the button) to the end (right) and centered vertically
                             contentAlignment = Alignment.CenterEnd
                         ) {
-                            // 3. Tu botón circular original, sin cambios
+                            // 3. Your original circular button, unchanged
                             Box(
                                 modifier = Modifier
                                     .size(42.dp)
@@ -782,7 +782,7 @@ fun FullPlayerContent(
             }
         }
     ) { paddingValues ->
-        // MD3: 方向变化时先 alpha=0 再淡入新布局，避免双布局同时测量导致错位
+        // MD3: on orientation change, start at alpha=0 then fade in the new layout to avoid measuring both layouts at once and causing misalignment
         var contentVisible by remember(isLandscape) { mutableStateOf(false) }
         LaunchedEffect(isLandscape) { contentVisible = true }
         val contentAlpha by animateFloatAsState(
@@ -2475,7 +2475,7 @@ private fun BottomToggleRow(
                 inactiveContentColor = inactiveContentColor,
                 onClick = onShuffleToggle,
                 iconId = R.drawable.rounded_shuffle_24,
-                contentDesc = "Aleatorio"
+                contentDesc = "Shuffle"
             )
             val repeatActive = repeatMode != Player.REPEAT_MODE_OFF
             val repeatIcon = when (repeatMode) {
@@ -2493,7 +2493,7 @@ private fun BottomToggleRow(
                 inactiveContentColor = inactiveContentColor,
                 onClick = onRepeatToggle,
                 iconId = repeatIcon,
-                contentDesc = "Repetir"
+                contentDesc = "Repeat"
             )
             ToggleSegmentButton(
                 modifier = commonModifier,
@@ -2505,7 +2505,7 @@ private fun BottomToggleRow(
                 inactiveContentColor = inactiveContentColor,
                 onClick = onFavoriteToggle,
                 iconId = if (isFavorite) R.drawable.round_favorite_24 else R.drawable.rounded_favorite_24,
-                contentDesc = "Favorito"
+                contentDesc = "Favorite"
             )
         }
     }

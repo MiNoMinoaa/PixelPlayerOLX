@@ -30,8 +30,8 @@ fun PlayingEqIcon(
     // Slower cycles mean fewer animation frames / Canvas redraws per second while the icon
     // is visible. With many current-song indicators potentially on screen (home, queue,
     // lyrics sheet), this noticeably lowers screen-on CPU on weaker devices.
-    phaseDurationMillis: Int = 3600,   // ciclo más lento
-    wanderDurationMillis: Int = 12000, // patrón más largo
+    phaseDurationMillis: Int = 3600,   // slower cycle
+    wanderDurationMillis: Int = 12000, // longer pattern
     gapFraction: Float = 0.30f
 ) {
     val fullRotation = (2f * PI).toFloat()
@@ -62,14 +62,14 @@ fun PlayingEqIcon(
         }
     }
 
-    // Factor de actividad: 1 = barras, 0 = puntitos (morph suave)
+    // Activity factor: 1 = bars, 0 = dots (smooth morph)
     val activity by animateFloatAsState(
         targetValue = if (isPlaying) 1f else 0f,
         animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing),
         label = "activity"
     )
 
-    // Velocidades ENTERAS → continuidad perfecta en wrap 2π
+    // INTEGER speeds → perfect continuity on the 2π wrap
     val speeds = remember(bars) { List(bars) { (it + 1).toFloat() } } // 1f, 2f, 3f
     val shifts = remember(bars) { List(bars) { i -> i * 0.9f } }
 
@@ -79,31 +79,31 @@ fun PlayingEqIcon(
         val w = size.width
         val h = size.height
 
-        // Layout barras
+        // Bar layout
         val tentativeBarW = w / (bars + (bars - 1) * (1f + gapFraction))
         val gap = tentativeBarW * gapFraction
         val barW = tentativeBarW
         val corner = CornerRadius(barW / 2f, barW / 2f)
 
         repeat(bars) { i ->
-            // 「Respiración」 lenta para que el patrón dure más
+            // Slow 「breathing」 so the pattern lasts longer
             val slowShift = 0.6f * sin(wander + i * 0.4f)
             val slowAmp   = 0.85f + 0.15f * sin(wander * 0.5f + 1.1f + i * 0.3f)
 
-            // Señal principal continua (sin saltos)
+            // Continuous main signal (no jumps)
             val v = (sin(phase * speeds[i] + shifts[i] + slowShift) * slowAmp + 1f) * 0.5f
 
-            // Suavizado tipo smoothstep
+            // Smoothstep-style easing
             val eased = v * v * (3 - 2 * v)
 
-            // Altura 「viva」 (modo barras)
+            // 「Live」 height (bars mode)
             val fracBars = minHeightFraction + (maxHeightFraction - minHeightFraction) * eased
             val barH = h * fracBars
 
-            // Altura 「punto」 (círculo → alto = ancho)
+            // 「Dot」 height (circle → height = width)
             val dotH = barW
 
-            // Morph: puntito ⇄ barra (sin importar el frame)
+            // Morph: dot ⇄ bar (regardless of the frame)
             val blendedH = dotH + (barH - dotH) * activity
 
             val top = (h - blendedH) / 2f

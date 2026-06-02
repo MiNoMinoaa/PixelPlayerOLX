@@ -5,7 +5,7 @@ import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-// Clase de ayuda para crear y actualizar la cabecera de un archivo WAV.
+// Helper class to create and update the header of a WAV file.
 class WavHeader(
     private var fileSize: Int,
     private var subchunk2Size: Int,

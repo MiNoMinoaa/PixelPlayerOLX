@@ -26,8 +26,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import kotlin.math.*
-import androidx.compose.ui.draw.drawWithCache // Importación necesaria
-import androidx.compose.ui.graphics.drawscope.DrawScope // Para el tipo de onDraw
+import androidx.compose.ui.draw.drawWithCache // Required import
+import androidx.compose.ui.graphics.drawscope.DrawScope // For the onDraw type
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
@@ -38,29 +38,29 @@ import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.util.lerp
 
 /**
- * Un slider personalizado con un efecto de onda que se mueve a lo largo de la pista de progreso.
- * La onda se aplana cuando no se está reproduciendo música o cuando el usuario interactúa con el slider.
- * El thumb se transforma de un círculo a una línea vertical cuando el usuario interactúa con él.
+ * A custom slider with a wave effect that moves along the progress track.
+ * The wave flattens when no music is playing or when the user interacts with the slider.
+ * The thumb morphs from a circle into a vertical line when the user interacts with it.
  *
- * @param value El valor actual del slider (entre 0f y 1f)
- * @param onValueChange Callback invocado cuando el valor cambia
- * @param modifier Modificador a aplicar a este composable
- * @param enabled Si el slider está habilitado o no
- * @param valueRange Rango de valores permitidos
- * @param onValueChangeFinished Callback invocado cuando la interacción con el slider termina
- * @param interactionSource Fuente de interacción para este slider
- * @param trackHeight Altura de la pista del slider
- * @param thumbRadius Radio del thumb
- * @param activeTrackColor Color de la parte activa de la pista
- * @param inactiveTrackColor Color de la parte inactiva de la pista
- * @param thumbColor Color del thumb
- * @param waveAmplitude Amplitud de la onda
- * @param waveLength Longitud de la onda expresada en Dp. Controla la distancia entre los picos
- *                   de la onda a lo largo de la pista.
- * @param animationDuration Duración de la animación de la onda en milisegundos
- * @param hideInactiveTrack Si se debe ocultar la parte inactiva del track que ya ha sido recorrida
- * @param isPlaying Si el contenido asociado está reproduciéndose actualmente
- * @param thumbLineHeight Alto de la línea vertical del thumb cuando está en estado de interacción
+ * @param value The current slider value (between 0f and 1f)
+ * @param onValueChange Callback invoked when the value changes
+ * @param modifier Modifier to apply to this composable
+ * @param enabled Whether the slider is enabled or not
+ * @param valueRange Range of allowed values
+ * @param onValueChangeFinished Callback invoked when interaction with the slider ends
+ * @param interactionSource Interaction source for this slider
+ * @param trackHeight Height of the slider track
+ * @param thumbRadius Radius of the thumb
+ * @param activeTrackColor Color of the active part of the track
+ * @param inactiveTrackColor Color of the inactive part of the track
+ * @param thumbColor Color of the thumb
+ * @param waveAmplitude Wave amplitude
+ * @param waveLength Wave length expressed in Dp. Controls the distance between the wave peaks
+ *                   along the track.
+ * @param animationDuration Duration of the wave animation in milliseconds
+ * @param hideInactiveTrack Whether to hide the inactive part of the track that has already been traversed
+ * @param isPlaying Whether the associated content is currently playing
+ * @param thumbLineHeight Height of the thumb's vertical line when in the interaction state
  */
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
@@ -83,7 +83,7 @@ fun WavyMusicSlider(
     hideInactiveTrackPortion: Boolean = true,
     isPlaying: Boolean = true,
     thumbLineHeightWhenInteracting: Dp = 24.dp,
-    // NUEVO: permite desactivar la onda si el sheet no está expandido
+    // NEW: allows disabling the wave if the sheet is not expanded
     isWaveEligible: Boolean = true,
     semanticsLabel: String? = null,
     semanticsProgressStep: Float = 0.01f
@@ -98,7 +98,7 @@ fun WavyMusicSlider(
         label = "ThumbInteractionAnim"
     )
 
-    // La onda sólo si: el track está reproduciendo, no hay interacción y el contexto lo permite
+    // Wave only if: the track is playing, there is no interaction, and the context allows it
     val shouldShowWave = isWaveEligible && isPlaying && !isInteracting
 
     val animatedWaveAmplitude by animateDpAsState(
@@ -107,7 +107,7 @@ fun WavyMusicSlider(
         label = "WaveAmplitudeAnim"
     )
 
-    // FASE CONDICIONAL: si la onda no se muestra, no hay transición infinita ni invalidaciones.
+    // CONDITIONAL PHASE: if the wave is not shown, there is no infinite transition or invalidations.
     val phaseShiftAnim = remember { Animatable(0f) }
     val phaseShift = phaseShiftAnim.value
 
@@ -229,7 +229,7 @@ fun WavyMusicSlider(
                         )
                     }
                     onDrawWithContent {
-                        // --- Dibujar Pista Inactiva ---
+                        // --- Draw Inactive Track ---
                         val currentProgressPxEndVisual =
                             localTrackStart + localTrackWidth * normalizedValue
                         if (hideInactiveTrackPortion) {
@@ -252,7 +252,7 @@ fun WavyMusicSlider(
                             )
                         }
 
-                        // --- Dibujar Pista Activa (Onda o Línea) ---
+                        // --- Draw Active Track (Wave or Line) ---
                         if (normalizedValue > 0f) {
                             val activeTrackVisualEnd =
                                 currentProgressPxEndVisual - (thumbGapPx * thumbInteractionFraction)
@@ -301,7 +301,7 @@ fun WavyMusicSlider(
                                         style = Stroke(
                                             width = trackHeightPx,
                                             cap = StrokeCap.Round,
-                                            join = StrokeJoin.Round, // <- importante para suavizar uniones
+                                            join = StrokeJoin.Round, // <- important for smoothing joins
                                             miter = 1f
                                         )
                                     )
@@ -320,7 +320,7 @@ fun WavyMusicSlider(
                         }
 
 
-                        // --- Dibujar Thumb ---
+                        // --- Draw Thumb ---
                         val currentThumbCenterX =
                             localTrackStart + localTrackWidth * normalizedValue
                         val thumbCurrentWidthPx =
@@ -459,7 +459,7 @@ fun WavyMusicSlider(
 //                        )
 //                    }
 //                    onDrawWithContent {
-//                        // --- Dibujar Pista Inactiva ---
+//                        // --- Draw Inactive Track ---
 //                        val currentProgressPxEndVisual =
 //                            localTrackStart + localTrackWidth * normalizedValue
 //                        if (hideInactiveTrackPortion) {
@@ -482,7 +482,7 @@ fun WavyMusicSlider(
 //                            )
 //                        }
 //
-//                        // --- Dibujar Pista Activa (Onda o Línea) ---
+//                        // --- Draw Active Track (Wave or Line) ---
 //                        if (normalizedValue > 0f) {
 //                            val activeTrackVisualEnd =
 //                                currentProgressPxEndVisual - (thumbGapPx * thumbInteractionFraction)
@@ -498,7 +498,7 @@ fun WavyMusicSlider(
 //                                        waveStartDrawX,
 //                                        localCenterY + waveAmplitudePxInternal * sin(waveFrequency * waveStartDrawX + phaseShift)
 //                                    )
-//                                    val waveStep = 2f // Aumentado de 1f a 2f para reducir cálculos
+//                                    val waveStep = 2f // Increased from 1f to 2f to reduce calculations
 //                                    var x = waveStartDrawX + waveStep
 //                                    while (x < waveEndDrawX) {
 //                                        val wavePhase = waveFrequency * x + phaseShift
@@ -521,7 +521,7 @@ fun WavyMusicSlider(
 //                                        style = Stroke(width = trackHeightPx, cap = StrokeCap.Round)
 //                                    )
 //                                }
-//                            } else { // Dibujar línea recta
+//                            } else { // Draw straight line
 //                                if (activeTrackVisualEnd > localTrackStart) {
 //                                    drawLine(
 //                                        color = activeTrackColor,
@@ -534,7 +534,7 @@ fun WavyMusicSlider(
 //                            }
 //                        }
 //
-//                        // --- Dibujar Thumb ---
+//                        // --- Draw Thumb ---
 //                        val currentThumbCenterX =
 //                            localTrackStart + localTrackWidth * normalizedValue
 //                        val thumbCurrentWidthPx =

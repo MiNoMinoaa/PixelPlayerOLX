@@ -81,7 +81,7 @@ fun FetchLyricsDialog(
             modifier = Modifier
                 .padding(24.dp)
                 .fillMaxWidth(),
-            shape = RoundedCornerShape(32.dp), // Forma muy redondeada (Expressive)
+            shape = RoundedCornerShape(32.dp), // Heavily rounded shape (Expressive)
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 6.dp
         ) {
@@ -107,7 +107,7 @@ fun FetchLyricsDialog(
                         PickResultContent(
                             results = uiState.results,
                             onPickResult = onPickResult,
-                            onCancel = onDismiss // Usamos botón cancelar en lugar de X
+                            onCancel = onDismiss // Use a cancel button instead of an X
                         )
                     }
                     is LyricsSearchUiState.NotFound -> {
@@ -134,7 +134,7 @@ fun FetchLyricsDialog(
 }
 
 // --------------------------------------------------------------------------
-// Sub-componentes de Estados (Internal)
+// State sub-components (Internal)
 // --------------------------------------------------------------------------
 
 @Composable
@@ -146,7 +146,7 @@ private fun IdleContent(
     onImport: () -> Unit,
     onCancel: () -> Unit
 ) {
-    // Icono Decorativo Grande
+    // Large decorative icon
     Box(
         modifier = Modifier
             .size(72.dp)
@@ -155,7 +155,7 @@ private fun IdleContent(
                 curve = 0.1,
                 rotation = 0f,
                 //iterations = 45
-            )) // Forma "Squircle" agradable
+            )) // Pleasant "Squircle" shape
             .background(MaterialTheme.colorScheme.secondaryContainer),
         contentAlignment = Alignment.Center
     ) {
@@ -169,7 +169,7 @@ private fun IdleContent(
 
     Spacer(modifier = Modifier.height(20.dp))
 
-    // Título y Canción
+    // Title and song
     if (currentSong != null) {
         Text(
             text = currentSong.title,
@@ -243,7 +243,7 @@ private fun IdleContent(
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    // Botones de Acción (Vertical para mejor touch target)
+    // Action buttons (vertical for a better touch target)
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth()
@@ -272,7 +272,7 @@ private fun IdleContent(
             Text(stringResource(R.string.import_file))
         }
 
-        // Botón Cancelar (Reemplaza a la X)
+        // Cancel button (replaces the X)
         TextButton(
             onClick = onCancel,
             modifier = Modifier.fillMaxWidth().height(52.dp),
@@ -316,9 +316,9 @@ private fun PickResultContent(
 
     Spacer(modifier = Modifier.height(24.dp))
 
-    // Lista Scrollable Optimizada
+    // Optimized scrollable list
     LazyColumn(
-        modifier = Modifier.heightIn(max = 350.dp), // Altura máxima dinámica
+        modifier = Modifier.heightIn(max = 350.dp), // Dynamic max height
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(bottom = 8.dp)
     ) {
@@ -338,7 +338,7 @@ private fun PickResultContent(
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    // Botón Cancelar al final de la lista
+    // Cancel button at the end of the list
     TextButton(
         onClick = onCancel,
         modifier = Modifier.fillMaxWidth(),
@@ -608,8 +608,8 @@ private fun ErrorContent(
 }
 
 ///**
-// * Diálogo que gestiona la búsqueda de letras para una canción.
-// * Muestra diferentes contenidos según el estado de la búsqueda.
+// * Dialog that manages the lyrics search for a song.
+// * Shows different content depending on the search state.
 // */
 //@Composable
 //fun FetchLyricsDialog(

@@ -33,43 +33,43 @@ fun AutoSizingTextToFill(
     minFontSize: TextUnit = 8.sp,
     fontFamily: FontFamily? = null,
     fontWeight: FontWeight? = null,
-    maxFontSizeLimit: TextUnit = 100.sp, // Límite superior práctico para la búsqueda
-    lineHeightRatio: Float = 1.2f // Factor para el interlineado (e.g., 1.2f para un 20% más de espacio)
+    maxFontSizeLimit: TextUnit = 100.sp, // Practical upper bound for the search
+    lineHeightRatio: Float = 1.2f // Line-height factor (e.g., 1.2f for 20% more spacing)
 ) {
-    // TextMeasurer se utiliza para medir el texto de forma eficiente.
+    // TextMeasurer is used to measure the text efficiently.
     val textMeasurer = rememberTextMeasurer()
-    // Density se necesita para convertir dp a px.
+    // Density is needed to convert dp to px.
     val density = LocalDensity.current
 
-    // Estado para el tamaño de fuente determinado.
+    // State for the determined font size.
     var currentFontSize by remember { mutableStateOf(minFontSize) }
-    // Estado para saber si el cálculo está listo y podemos dibujar.
+    // State to know whether the calculation is ready and we can draw.
     var readyToDraw by remember { mutableStateOf(false) }
 
-    // BoxWithConstraints nos da el maxWidth y maxHeight disponibles.
+    // BoxWithConstraints gives us the available maxWidth and maxHeight.
     BoxWithConstraints(modifier = modifier) {
-        // Convertimos las restricciones de dp a píxeles una sola vez.
+        // Convert the dp constraints to pixels once.
         val maxWidthPx = with(density) { maxWidth.toPx() }.toInt()
         val maxHeightPx = with(density) { maxHeight.toPx() }.toInt()
 
-        // LaunchedEffect para recalcular cuando el texto, estilo, límites de fuente,
-        // ratio de interlineado o el tamaño del contenedor cambien.
+        // LaunchedEffect to recompute when the text, style, font limits,
+        // line-height ratio, or container size change.
         LaunchedEffect(text, style, minFontSize, maxFontSizeLimit, lineHeightRatio, maxWidthPx, maxHeightPx) {
-            readyToDraw = false // Indicar que necesitamos recalcular.
-            var bestFitFontSize = minFontSize // Empezamos asumiendo el mínimo.
+            readyToDraw = false // Indicate that we need to recompute.
+            var bestFitFontSize = minFontSize // Start by assuming the minimum.
 
-            // Asegurarnos de que los límites para la búsqueda sean válidos.
+            // Make sure the search bounds are valid.
             var lowerBoundSp = minFontSize.value
             var upperBoundSp = maxFontSizeLimit.value.coerceAtLeast(minFontSize.value)
 
-            // Si el rango de búsqueda es inválido (e.g., min > max limit), usamos minFontSize.
+            // If the search range is invalid (e.g., min > max limit), use minFontSize.
             if (lowerBoundSp > upperBoundSp + 0.01f) {
                 currentFontSize = minFontSize
                 readyToDraw = true
                 return@LaunchedEffect
             }
 
-            // 1. Comprobar si el texto con minFontSize (y su lineHeight correspondiente) ya se desborda.
+            // 1. Check whether the text with minFontSize (and its corresponding lineHeight) already overflows.
             val minFontEffectiveLineHeight = minFontSize * lineHeightRatio
             val minFontEffectiveStyle = style.copy(
                 fontSize = minFontSize,
@@ -78,45 +78,45 @@ fun AutoSizingTextToFill(
             val minFontLayoutResult = textMeasurer.measure(
                 text = AnnotatedString(text),
                 style = minFontEffectiveStyle,
-                overflow = TextOverflow.Clip, // Usamos Clip para la medición precisa.
+                overflow = TextOverflow.Clip, // Use Clip for precise measurement.
                 softWrap = true,
-                maxLines = Int.MAX_VALUE, // Permitir todas las líneas necesarias.
+                maxLines = Int.MAX_VALUE, // Allow all the lines we need.
                 constraints = Constraints(
-                    maxWidth = maxWidthPx.coerceAtLeast(0), // Asegurar que no sea negativo.
-                    maxHeight = maxHeightPx.coerceAtLeast(0) // Asegurar que no sea negativo.
+                    maxWidth = maxWidthPx.coerceAtLeast(0), // Make sure it isn't negative.
+                    maxHeight = maxHeightPx.coerceAtLeast(0) // Make sure it isn't negative.
                 )
             )
 
             if (minFontLayoutResult.hasVisualOverflow) {
-                // Incluso con minFontSize, el texto se desborda. Usaremos minFontSize y se truncará.
+                // Even with minFontSize the text overflows. We'll use minFontSize and it will be truncated.
                 currentFontSize = minFontSize
                 readyToDraw = true
                 return@LaunchedEffect
             } else {
-                // minFontSize cabe, así que es nuestro "mejor ajuste" inicial.
+                // minFontSize fits, so it's our initial "best fit".
                 bestFitFontSize = minFontSize
             }
 
-            // 2. Búsqueda binaria para encontrar el tamaño de fuente más grande que quepa.
-            // Iteramos un número fijo de veces para asegurar convergencia.
-            repeat(15) { // 15 iteraciones suelen ser suficientes para la precisión en sp.
-                // Si la diferencia entre los límites es muy pequeña, hemos convergido.
+            // 2. Binary search to find the largest font size that fits.
+            // Iterate a fixed number of times to ensure convergence.
+            repeat(15) { // 15 iterations are usually enough for sp precision.
+                // If the difference between the bounds is very small, we've converged.
                 if (upperBoundSp - lowerBoundSp < 0.1f) {
                     currentFontSize = bestFitFontSize
                     readyToDraw = true
-                    return@LaunchedEffect // Salimos del LaunchedEffect.
+                    return@LaunchedEffect // Exit the LaunchedEffect.
                 }
 
                 val midSp = (lowerBoundSp + upperBoundSp) / 2f
                 val candidateFontSize = midSp.sp
 
-                // Evitar medir tamaños más pequeños que nuestro mejor ajuste conocido, si ya pasamos por ellos.
+                // Avoid measuring sizes smaller than our known best fit, if we already passed them.
                 if (candidateFontSize.value < bestFitFontSize.value && candidateFontSize.value < midSp) {
-                    lowerBoundSp = midSp + 0.01f // Continuar búsqueda en la mitad superior.
-                    return@repeat // Saltar esta iteración de repeat.
+                    lowerBoundSp = midSp + 0.01f // Continue the search in the upper half.
+                    return@repeat // Skip this repeat iteration.
                 }
 
-                // Calculamos el lineHeight dinámicamente basado en el candidateFontSize.
+                // Compute the lineHeight dynamically based on candidateFontSize.
                 val currentEffectiveLineHeight = candidateFontSize * lineHeightRatio
                 val candidateStyle = style.copy(
                     fontSize = candidateFontSize,
@@ -136,11 +136,11 @@ fun AutoSizingTextToFill(
                 )
 
                 if (layoutResult.hasVisualOverflow) {
-                    // El tamaño candidato es demasiado grande (se desborda en alto o ancho).
+                    // The candidate size is too large (overflows in height or width).
                     upperBoundSp = midSp - 0.01f
                 } else {
-                    // El tamaño candidato cabe. Es nuestro nuevo "mejor ajuste".
-                    // Intentaremos encontrar uno aún más grande.
+                    // The candidate size fits. It's our new "best fit".
+                    // We'll try to find an even larger one.
                     bestFitFontSize = candidateFontSize
                     lowerBoundSp = midSp + 0.01f
                 }
@@ -150,22 +150,22 @@ fun AutoSizingTextToFill(
             readyToDraw = true
         }
 
-        // Solo dibujamos el Text una vez que hemos determinado el tamaño de fuente.
+        // Only draw the Text once we've determined the font size.
         if (readyToDraw) {
-            // Aplicamos el fontSize y el lineHeight calculados al Text final.
+            // Apply the computed fontSize and lineHeight to the final Text.
             val finalEffectiveLineHeight = currentFontSize * lineHeightRatio
             Text(
                 text = text,
-                modifier = Modifier, // El modifier del Text no necesita fillMaxSize aquí.
+                modifier = Modifier, // The Text's modifier doesn't need fillMaxSize here.
                 style = style.copy(
                     fontSize = currentFontSize,
                     lineHeight = finalEffectiveLineHeight
                 ),
                 fontFamily = fontFamily,
                 fontWeight = fontWeight,
-                overflow = TextOverflow.Ellipsis, // Trunca si, a pesar de todo, aún se desborda.
+                overflow = TextOverflow.Ellipsis, // Truncate if it still overflows despite everything.
                 softWrap = true,
-                // El tamaño de fuente se eligió para que todas las líneas quepan en altura.
+                // The font size was chosen so all lines fit in height.
                 maxLines = Int.MAX_VALUE
             )
         }

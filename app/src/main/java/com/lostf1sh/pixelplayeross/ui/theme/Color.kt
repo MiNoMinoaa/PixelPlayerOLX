@@ -11,7 +11,7 @@ val PixelPlayerWhite = Color(0xFFFFFFFF)
 val PixelPlayerBlack = Color(0xFF000000)
 val PixelPlayerSurface = Color(0xFF2A1F40)
 
-// Colores para tema claro (si se implementa)
+// Colors for light theme (if implemented)
 val LightBackground = Color(0xFFF7F2FF)
 val LightSurface = Color(0xFFFBF8FF)
 val LightSurfaceVariant = Color(0xFFE8DEF9)
