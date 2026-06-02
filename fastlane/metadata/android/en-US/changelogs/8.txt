@@ -1,7 +1,6 @@
 PixelPlayerOSS 0.7.0-foss:
 
-* Prepared the OSS edition for public source builds with release, privacy, and security documentation.
-* Removed non-OSS-oriented integrations and Google Play Services runtime dependencies.
-* Kept optional online lookups user-controlled: Navidrome/Subsonic, Jellyfin, LRCLIB, and Deezer artwork.
-* Added smart playlist creation from local listening history and favorites.
-* Improved release builds so missing local signing keys produce unsigned artifacts instead of dummy-signed APKs.
+* Initial FOSS release tracking the PixelPlayer 0.7.0 line.
+* Removed non-FOSS and Google Play oriented integrations: Telegram, NetEase, QQ Music, Google Drive, Gemini, Cast, Wear OS, Play Store billing, Firebase, Crashlytics, Google Play Services runtime dependencies, and public Last.fm/ListenBrainz scrobbling.
+* Kept local playback, Navidrome/Subsonic, Jellyfin, LRCLIB lyrics, and Deezer artist artwork as user-controlled features.
+* Added F-Droid metadata, license documentation, unsigned release build support, and security hardening for cloud streaming and backup restore.

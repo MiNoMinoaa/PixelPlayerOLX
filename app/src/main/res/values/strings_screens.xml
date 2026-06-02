@@ -180,18 +180,13 @@
     <string name="no_genres_available">No genres available.</string>
 
     <!-- About -->
-    <string name="about_no_contributors">No contributors found right now. Please try again later.</string>
     <string name="about_app_name">PixelPlayerOSS</string>
     <string name="about_tagline">OSS edition tracking the 0.7.0-foss PixelPlayer line.</string>
     <string name="about_version_format">Version v%1$s</string>
     <string name="about_contributions_format">%1$d contrib.</string>
     <string name="screen_about">About</string>
-    <string name="about_maintainer_title">Maintainer</string>
-    <string name="about_maintainer_subtitle">Maintained separately from the Google Play / non-FOSS edition.</string>
-    <string name="about_spotlight_title">Community spotlight</string>
-    <string name="about_spotlight_subtitle">Recognition for original app maintainers and major collaborators.</string>
-    <string name="about_contributors_section_title">Open source contributors</string>
-    <string name="about_contributors_section_subtitle">Live contributor list from GitHub.</string>
+    <string name="about_maintainer_title">Maintainers</string>
+    <string name="about_maintainer_subtitle">FOSS and original/non-FOSS maintainership.</string>
     <string name="about_signal_open_source">Open source</string>
     <string name="about_signal_community_first">Community-first</string>
     <string name="about_signal_material3">Material 3 expressive</string>
