@@ -502,7 +502,7 @@ Backslash (\) can be used to escape character delimiters.</string>
     </string-array>
     <string-array name="presentation_batch_g_changelog_070_improvements">
         <item>Removed Telegram, NetEase, QQ Music, Google Drive, Gemini, Cast, Wear OS, Play Store billing, Firebase, Crashlytics, and Google Play Services runtime dependencies.</item>
-        <item>Removed public Last.fm and ListenBrainz scrobbling; self-hosted Navidrome/Subsonic reporting remains scoped to the user's own server.</item>
+        <item>Removed public Last.fm and ListenBrainz scrobbling; self-hosted Navidrome/Subsonic reporting remains scoped to the user\'s own server.</item>
         <item>Removed bundled translations and the in-app language selector for this first FOSS release; English resources ship first.</item>
         <item>Removed release paths that depended on local/private signing artifacts, dummy signing values, or app-store-only assumptions.</item>
     </string-array>
