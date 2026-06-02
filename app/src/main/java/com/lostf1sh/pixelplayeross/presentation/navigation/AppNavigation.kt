@@ -53,6 +53,7 @@ import com.lostf1sh.pixelplayeross.presentation.screens.RecentlyPlayedScreen
 import com.lostf1sh.pixelplayeross.presentation.screens.AboutScreen
 import com.lostf1sh.pixelplayeross.presentation.screens.SearchScreen
 import com.lostf1sh.pixelplayeross.presentation.screens.StatsScreen
+import com.lostf1sh.pixelplayeross.presentation.screens.DuplicateSongsScreen
 import com.lostf1sh.pixelplayeross.presentation.screens.SettingsScreen
 import com.lostf1sh.pixelplayeross.presentation.screens.SettingsCategoryScreen
 import com.lostf1sh.pixelplayeross.presentation.screens.EqualizerScreen
@@ -323,6 +324,20 @@ fun AppNavigation(
                 ScreenWrapper(navController = navController, playerViewModel = playerViewModel) {
                     StatsScreen(
                         navController = navController
+                    )
+                }
+            }
+            composable(
+                Screen.Duplicates.route,
+                enterTransition = { enterTransition() },
+                exitTransition = { exitTransition() },
+                popEnterTransition = { popEnterTransition() },
+                popExitTransition = { popExitTransition() },
+            ) {
+                ScreenWrapper(navController = navController, playerViewModel = playerViewModel) {
+                    DuplicateSongsScreen(
+                        navController = navController,
+                        playerViewModel = playerViewModel
                     )
                 }
             }

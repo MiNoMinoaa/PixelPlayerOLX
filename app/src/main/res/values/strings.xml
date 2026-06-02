@@ -211,4 +211,15 @@
     <string name="batch_edit_set_cover_art">Set Cover Art for All</string>
     <string name="batch_edit_remove_all_art">Remove All Cover Art</string>
     <string name="batch_edit_multiple_covers">(Multiple different covers)</string>
+
+    <!-- Duplicate tracks -->
+    <string name="duplicates_title">Duplicate tracks</string>
+    <string name="duplicates_none">No duplicate tracks found.</string>
+    <string name="duplicates_summary">%1$d groups · %2$d tracks</string>
+    <string name="duplicates_group_count">%1$d copies</string>
+    <string name="duplicates_group_title_format">%1$s — %2$s</string>
+    <string name="setcat_find_duplicates_title">Find duplicate tracks</string>
+    <string name="setcat_find_duplicates_subtitle">Scan your library for tracks that appear more than once.</string>
+    <string name="setcat_find_duplicates_action">Scan</string>
+
 </resources>
