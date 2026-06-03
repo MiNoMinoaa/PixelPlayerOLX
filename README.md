@@ -67,18 +67,6 @@ PixelPlayerOSS separates offline playback from network lookups.
 
 LRCLIB and Deezer can be enabled during first-run setup or later from `Settings > Music Management > Optional online services`.
 
-## Screenshots
-
-<p align="center">
-  <img src="assets/screenshot1.jpeg" alt="Home and mini player" width="230"/>
-  <img src="assets/screenshot2.jpeg" alt="Now playing" width="230"/>
-</p>
-
-<p align="center">
-  <img src="assets/screenshot3.jpeg" alt="Library" width="230"/>
-  <img src="assets/screenshot4.jpeg" alt="Synced lyrics" width="230"/>
-</p>
-
 ## Requirements
 
 | Requirement | Version |
