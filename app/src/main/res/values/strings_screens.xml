@@ -181,7 +181,7 @@
 
     <!-- About -->
     <string name="about_app_name">PixelPlayerOSS</string>
-    <string name="about_tagline">OSS edition tracking the 0.7.0-foss PixelPlayer line.</string>
+    <string name="about_tagline">Free and open-source edition of the PixelPlayer music player.</string>
     <string name="about_version_format">Version v%1$s</string>
     <string name="about_contributions_format">%1$d contrib.</string>
     <string name="screen_about">About</string>

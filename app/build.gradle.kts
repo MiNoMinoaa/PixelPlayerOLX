@@ -301,12 +301,10 @@ dependencies {
     testImplementation(libs.org.json)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.junit)
-    testImplementation(libs.androidx.room.testing)
     testImplementation(kotlin("test"))
 
     // Testing (Instrumentation)
     androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.truth)

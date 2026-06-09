@@ -2,10 +2,10 @@
 
 All notable changes to PixelPlayerOSS will be documented in this file.
 
-## [0.7.0-foss] - 2026-06-02
+## [0.1.0] - 2026-06-09
 
 ### Initial release
-- First public FOSS release of PixelPlayerOSS, tracking the PixelPlayer 0.7.0 line as an OSS-focused Android music player.
+- First public FOSS release of PixelPlayerOSS, an OSS-focused Android music player.
 - Includes local music playback, playlists, favorites, lyrics, listening stats, dynamic Material 3 theming, widgets, and backup/restore.
 - Keeps self-hosted library support for Navidrome/Subsonic and Jellyfin, plus optional LRCLIB lyrics and Deezer artist artwork lookups.
 

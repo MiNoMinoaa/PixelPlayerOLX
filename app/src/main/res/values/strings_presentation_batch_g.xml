@@ -273,8 +273,8 @@ Backslash (\) can be used to escape character delimiters.</string>
     <string name="presentation_batch_g_presets_cd_pin">Pin</string>
     <string name="presentation_batch_g_presets_cd_rename">Rename</string>
     <string name="presentation_batch_g_presets_cd_delete">Delete</string>
-    <string name="presentation_batch_g_beta_sheet_version">0.7.0-foss</string>
-    <string name="presentation_batch_g_beta_sheet_welcome_title">Welcome to PixelPlayerOSS 0.7.0-foss</string>
+    <string name="presentation_batch_g_beta_sheet_version">0.1.0</string>
+    <string name="presentation_batch_g_beta_sheet_welcome_title">Welcome to PixelPlayerOSS 0.1.0</string>
     <string name="presentation_batch_g_beta_sheet_welcome_body">You\'re using a beta build that may contain bugs, crashes, or experimental features. Help us improve by reporting issues.</string>
     <string name="presentation_batch_g_beta_sheet_expect_title">What to expect</string>
     <string name="presentation_batch_g_beta_sheet_expect_1">Bugs, crashes, or incomplete features may occur unexpectedly.</string>
@@ -489,7 +489,7 @@ Backslash (\) can be used to escape character delimiters.</string>
         <item>Fixed several bugs that caused the app to crash.</item>
     </string-array>
     <string-array name="presentation_batch_g_changelog_070_whats_new">
-        <item>First public FOSS release of PixelPlayerOSS, tracking the PixelPlayer 0.7.0 line.</item>
+        <item>First public FOSS release of PixelPlayerOSS.</item>
         <item>Includes local playback, playlists, favorites, lyrics, listening stats, dynamic Material 3 theming, widgets, and backup/restore.</item>
         <item>Keeps self-hosted Navidrome/Subsonic and Jellyfin support, plus optional LRCLIB lyrics and Deezer artist artwork lookup.</item>
     </string-array>
