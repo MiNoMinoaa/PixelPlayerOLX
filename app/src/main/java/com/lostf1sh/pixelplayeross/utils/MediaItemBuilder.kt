@@ -9,14 +9,10 @@ import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
-import androidx.media3.common.MediaMetadata.PICTURE_TYPE_FRONT_COVER
 import androidx.media3.common.util.UnstableApi
 import com.lostf1sh.pixelplayeross.data.provider.SharedArtworkContentProvider
 import com.lostf1sh.pixelplayeross.data.model.Song
-import com.lostf1sh.pixelplayeross.data.service.loadArtworkBytesViaCoil
 import java.io.File
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 
 object MediaItemBuilder {
     private const val EXTERNAL_MEDIA_ID_PREFIX = "external:"
@@ -118,7 +114,6 @@ object MediaItemBuilder {
             .setMediaMetadata(
                 buildMediaMetadataForSong(
                     song = song,
-                    context = context,
                     exposedArtworkUri = externalControllerArtworkUri(context, song.albumArtUriString)
                 )
             )
@@ -269,7 +264,6 @@ object MediaItemBuilder {
     @OptIn(UnstableApi::class)
     private fun buildMediaMetadataForSong(
         song: Song,
-        context: Context? = null,
         exposedArtworkUri: Uri? = artworkUri(song.albumArtUriString)
     ): MediaMetadata {
         val metadataBuilder = MediaMetadata.Builder()
@@ -279,13 +273,6 @@ object MediaItemBuilder {
 
         exposedArtworkUri?.let { artworkUri ->
             metadataBuilder.setArtworkUri(artworkUri)
-            context?.let { appContext ->
-                runBlocking(Dispatchers.IO) {
-                    loadArtworkBytesViaCoil(appContext, artworkUri)
-                }?.let { artworkData ->
-                    metadataBuilder.setArtworkData(artworkData, PICTURE_TYPE_FRONT_COVER)
-                }
-            }
         }
 
         val extras = Bundle().apply {

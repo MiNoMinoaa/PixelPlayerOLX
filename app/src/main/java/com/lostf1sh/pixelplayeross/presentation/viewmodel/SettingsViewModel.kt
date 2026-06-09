@@ -72,7 +72,6 @@ data class SettingsUiState(
     val externalArtistImagesEnabled: Boolean = false,
     val blockedDirectories: Set<String> = emptySet(),
     val appRebrandDialogShown: Boolean = false,
-    val beta05CleanInstallDisclaimerDismissed: Boolean? = null,
     val fullPlayerLoadingTweaks: FullPlayerLoadingTweaks = FullPlayerLoadingTweaks(),
     val showPlayerFileInfo: Boolean = true,
     // Developer Options
@@ -385,12 +384,6 @@ class SettingsViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            userPreferencesRepository.beta05CleanInstallDisclaimerDismissedFlow.collect { dismissed ->
-                _uiState.update { it.copy(beta05CleanInstallDisclaimerDismissed = dismissed) }
-            }
-        }
-
-        viewModelScope.launch {
             fileExplorerStateHolder.isLoading.collect { loading ->
                 _uiState.update { it.copy(isLoadingDirectories = loading) }
             }
@@ -443,12 +436,6 @@ class SettingsViewModel @Inject constructor(
     fun setAppRebrandDialogShown(wasShown: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setAppRebrandDialogShown(wasShown)
-        }
-    }
-
-    fun setBeta05CleanInstallDisclaimerDismissed(dismissed: Boolean) {
-        viewModelScope.launch {
-            userPreferencesRepository.setBeta05CleanInstallDisclaimerDismissed(dismissed)
         }
     }
 

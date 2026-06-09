@@ -50,9 +50,28 @@ class TransitionController @Inject constructor(
             currentObservedPlayer = newPlayer
             newPlayer.addListener(listener)
 
-            // Trigger check for the new player immediately
+            // Delay before scheduling so the incoming track's duration has time to resolve
+            // and currentPosition stabilizes. Without this, scheduleTransitionFor reads
+            // C.TIME_UNSET for duration, waits, then finds currentPosition already past
+            // transitionPoint and fires another crossfade immediately on the new track.
             if (newPlayer.isPlaying) {
-                newPlayer.currentMediaItem?.let { scheduleTransitionFor(it) }
+                val item = newPlayer.currentMediaItem
+                if (item != null) {
+                    scope.launch {
+                        delay(1_000L)
+                        // Re-check both that this is still the observed player AND that the
+                        // track hasn't changed during the delay. If the user skipped while
+                        // we were waiting, currentMediaItem will differ from the captured
+                        // item and we must not schedule a transition for the stale track.
+                        // onMediaItemTransition will have already fired for the new track,
+                        // so we can safely drop this work.
+                        if (currentObservedPlayer === newPlayer &&
+                            newPlayer.currentMediaItem?.mediaId == item.mediaId
+                        ) {
+                            scheduleTransitionFor(item)
+                        }
+                    }
+                }
             }
         }
     }
@@ -129,6 +148,9 @@ class TransitionController @Inject constructor(
                 Timber.tag("TransitionDebug").d("Cancelling active transition to schedule next...")
                 engine.cancelNext()
             }
+
+            // Debounce preparing the next track during rapid skips
+            delay(1500)
 
             val player = engine.masterPlayer
             val repeatMode = player.repeatMode

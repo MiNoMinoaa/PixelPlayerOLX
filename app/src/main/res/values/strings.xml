@@ -59,6 +59,8 @@
     <string name="sync_complete">Sync complete</string>
     <string name="sync_pending">Waiting…</string>
     <string name="syncing_library">Syncing library…</string>
+    <string name="sync_preparing_library">Preparing your library…</string>
+    <string name="sync_scanned_count">Scanned %1$d of %2$d songs</string>
     <string name="library_background_sync">Finishing in the background…</string>
     <string name="library_background_sync_lyrics">Scanning lyrics…</string>
     <string name="library_background_sync_cache">Cleaning album art cache…</string>

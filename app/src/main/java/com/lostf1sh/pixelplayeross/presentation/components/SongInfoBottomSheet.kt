@@ -340,21 +340,24 @@ fun SongInfoBottomSheet(
                                     text = song.title
                                 )
                             }
-                            FilledTonalIconButton(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .padding(vertical = 6.dp),
-                                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceBright,
-                                    contentColor = MaterialTheme.colorScheme.onSurface
-                                ),
-                                onClick = { showEditSheet = true },
-                            ) {
-                                Icon(
-                                    modifier = Modifier.padding(horizontal = 8.dp),
-                                    imageVector = Icons.Rounded.Edit,
-                                    contentDescription = stringResource(R.string.cd_edit_song_metadata)
-                                )
+                            val isEditable = remember(song) { songInfoViewModel.isSongEditable(song) }
+                            if (isEditable) {
+                                FilledTonalIconButton(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .padding(vertical = 6.dp),
+                                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceBright,
+                                        contentColor = MaterialTheme.colorScheme.onSurface
+                                    ),
+                                    onClick = { showEditSheet = true },
+                                ) {
+                                    Icon(
+                                        modifier = Modifier.padding(horizontal = 8.dp),
+                                        imageVector = Icons.Rounded.Edit,
+                                        contentDescription = stringResource(R.string.cd_edit_song_metadata)
+                                    )
+                                }
                             }
                         }
                     }

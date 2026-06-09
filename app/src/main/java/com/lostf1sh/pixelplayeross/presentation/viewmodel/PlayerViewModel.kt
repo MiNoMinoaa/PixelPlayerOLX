@@ -110,6 +110,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.yield
 import kotlinx.serialization.json.Json
 import timber.log.Timber
 import java.util.Locale
@@ -2286,9 +2287,23 @@ class PlayerViewModel @Inject constructor(
         lastQueueUpdateJob = viewModelScope.launch {
             // Debounce slightly to handle rapid-fire timeline events
             delay(100)
-            
-            val timeline = currentMediaController.currentTimeline
-            val count = timeline.windowCount
+
+            val isWindowed = dualPlayerEngine.isUsingWindowedQueue()
+            val mediaItems = if (isWindowed) {
+                dualPlayerEngine.getFullQueue()
+            } else {
+                val timeline = currentMediaController.currentTimeline
+                val windowCount = timeline.windowCount
+                val list = ArrayList<MediaItem>(windowCount)
+                val window = Timeline.Window()
+                for (i in 0 until windowCount) {
+                    list.add(timeline.getWindow(i, window).mediaItem)
+                    if (i % 500 == 0) yield()
+                }
+                list
+            }
+
+            val count = mediaItems.size
             if (count == 0) {
                 if (requestId != lastQueueUpdateRequestId) return@launch
                 val emptySignature = QueueTimelineSignature(
@@ -2304,20 +2319,17 @@ class PlayerViewModel @Inject constructor(
                 return@launch
             }
 
-            val mediaItems = ArrayList<MediaItem>(count)
-            val window = Timeline.Window()
             var orderHash = 1125899906842597L
             var firstMediaId: String? = null
             var lastMediaId: String? = null
-            
+
             for (i in 0 until count) {
-                val mediaItem = timeline.getWindow(i, window).mediaItem
-                mediaItems.add(mediaItem)
+                val mediaItem = mediaItems[i]
                 val mediaId = mediaItem.mediaId
                 if (i == 0) firstMediaId = mediaId
                 if (i == count - 1) lastMediaId = mediaId
                 orderHash = (orderHash * 31) + mediaId.hashCode()
-                if (i % 500 == 0) kotlinx.coroutines.yield()
+                if (i % 500 == 0) yield()
             }
 
             val signature = QueueTimelineSignature(
@@ -2500,7 +2512,12 @@ class PlayerViewModel @Inject constructor(
         val mediaItem = player.currentMediaItem ?: return
         val currentSongId = playbackStateHolder.stablePlayerState.value.currentSong?.id
         val currentIndex = playbackStateHolder.stablePlayerState.value.currentMediaItemIndex
-        if (currentSongId == mediaItem.mediaId && currentIndex == player.currentMediaItemIndex) return
+        val expectedIndex = if (dualPlayerEngine.isUsingWindowedQueue()) {
+            dualPlayerEngine.getCurrentAbsoluteIndex()
+        } else {
+            player.currentMediaItemIndex
+        }
+        if (currentSongId == mediaItem.mediaId && currentIndex == expectedIndex) return
 
         playbackStateHolder.onPlaybackOccurrenceTransition(mediaItem.mediaId)
         preparePlaybackAudioMetadataForMedia(mediaItem.mediaId)
@@ -2523,7 +2540,7 @@ class PlayerViewModel @Inject constructor(
         playbackStateHolder.updateStablePlayerState {
             it.copy(
                 currentSong = song,
-                currentMediaItemIndex = player.currentMediaItemIndex,
+                currentMediaItemIndex = expectedIndex,
                 totalDuration = resolvedDuration,
                 lyrics = null,
                 isLoadingLyrics = song != null,
@@ -2691,7 +2708,11 @@ class PlayerViewModel @Inject constructor(
                         playbackStateHolder.updateStablePlayerState {
                             it.copy(
                                 currentSong = song,
-                                currentMediaItemIndex = playerCtrl.currentMediaItemIndex,
+                                currentMediaItemIndex = if (dualPlayerEngine.isUsingWindowedQueue()) {
+                                    dualPlayerEngine.getCurrentAbsoluteIndex()
+                                } else {
+                                    playerCtrl.currentMediaItemIndex
+                                },
                                 totalDuration = resolvedDuration,
                                 lyrics = null,
                                 isLoadingLyrics = song != null,
@@ -2704,7 +2725,7 @@ class PlayerViewModel @Inject constructor(
                         )
 
                         song?.let { currentSongValue ->
-                            viewModelScope.launch {
+                            launch {
                                 val uri = currentSongValue.albumArtUriString?.toUri()
                                 val currentUri = playbackStateHolder.stablePlayerState.value.currentSong?.albumArtUriString
                                 themeStateHolder.extractAndGenerateColorScheme(uri, currentUri)
@@ -2737,7 +2758,7 @@ class PlayerViewModel @Inject constructor(
                 bufferingDebounceJob?.cancel()
                 if (playbackState == Player.STATE_BUFFERING) {
                     bufferingDebounceJob = viewModelScope.launch {
-                        delay(150) // Wait 150ms before showing buffering indicator
+                        delay(500) // Wait 500ms before showing buffering indicator
                         playbackStateHolder.updateStablePlayerState { state ->
                             state.copy(isBuffering = true)
                         }
@@ -2813,6 +2834,7 @@ class PlayerViewModel @Inject constructor(
                 if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED ||
                     reason == Player.TIMELINE_CHANGE_REASON_SOURCE_UPDATE) {
                     updateCurrentPlaybackQueueFromPlayer(mediaController)
+                    dualPlayerEngine.triggerAdjacentPreResolution()
                 }
             }
         }
@@ -3032,7 +3054,7 @@ class PlayerViewModel @Inject constructor(
         )
     }
 
-    private fun attachPreparedQueueSegmentsIfCurrent(
+    private suspend fun attachPreparedQueueSegmentsIfCurrent(
         player: Player,
         startSongId: String,
         preparedSegments: PreparedPlaybackQueueSegments
@@ -3041,15 +3063,28 @@ class PlayerViewModel @Inject constructor(
         if (player.mediaItemCount != 1) return
         if (player.getMediaItemAt(0).mediaId != startSongId) return
 
+        val batchSize = 200
+
         if (preparedSegments.beforeCurrent.isNotEmpty()) {
-            player.addMediaItems(0, preparedSegments.beforeCurrent)
+            var insertedCount = 0
+            while (insertedCount < preparedSegments.beforeCurrent.size) {
+                val end = (insertedCount + batchSize).coerceAtMost(preparedSegments.beforeCurrent.size)
+                val batch = preparedSegments.beforeCurrent.subList(insertedCount, end)
+                player.addMediaItems(insertedCount, batch)
+                insertedCount = end
+                yield()
+            }
         }
 
         if (preparedSegments.afterCurrent.isNotEmpty()) {
-            player.addMediaItems(
-                preparedSegments.beforeCurrent.size + 1,
-                preparedSegments.afterCurrent
-            )
+            var insertedCount = 0
+            while (insertedCount < preparedSegments.afterCurrent.size) {
+                val end = (insertedCount + batchSize).coerceAtMost(preparedSegments.afterCurrent.size)
+                val batch = preparedSegments.afterCurrent.subList(insertedCount, end)
+                player.addMediaItems(preparedSegments.beforeCurrent.size + 1 + insertedCount, batch)
+                insertedCount = end
+                yield()
+            }
         }
 
         playbackStateHolder.updateStablePlayerState {

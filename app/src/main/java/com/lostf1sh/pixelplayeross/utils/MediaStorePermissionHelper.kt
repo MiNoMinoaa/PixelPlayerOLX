@@ -8,6 +8,7 @@ import android.os.Build
 import android.provider.BaseColumns
 import android.provider.MediaStore
 import androidx.annotation.RequiresApi
+import timber.log.Timber
 
 /**
  * Helper for requesting MediaStore write/delete permissions on Android 11+
@@ -199,7 +200,49 @@ object MediaStorePermissionHelper {
         uris: Collection<Uri>
     ): IntentSender? {
         if (uris.isEmpty()) return null
-        return MediaStore.createWriteRequest(context.contentResolver, uris).intentSender
+
+        // Filter out URIs that do not exist in the MediaStore database
+        // to avoid IllegalArgumentException: Invalid Uri
+        val existingIds = try {
+            val projection = arrayOf(MediaStore.Files.FileColumns._ID)
+            val idList = uris.mapNotNull { it.lastPathSegment?.toLongOrNull() }
+            if (idList.isEmpty()) {
+                emptySet()
+            } else {
+                val selection = "${MediaStore.Files.FileColumns._ID} IN (${idList.joinToString(",") { "?" }})"
+                val selectionArgs = idList.map { it.toString() }.toTypedArray()
+                context.contentResolver.query(
+                    MediaStore.Files.getContentUri("external"),
+                    projection,
+                    selection,
+                    selectionArgs,
+                    null
+                )?.use { cursor ->
+                    val idSet = mutableSetOf<Long>()
+                    val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns._ID)
+                    while (cursor.moveToNext()) {
+                        idSet.add(cursor.getLong(idColumn))
+                    }
+                    idSet
+                } ?: emptySet()
+            }
+        } catch (e: Exception) {
+            emptySet<Long>()
+        }
+
+        val validUris = uris.filter { uri ->
+            val id = uri.lastPathSegment?.toLongOrNull()
+            id != null && id in existingIds
+        }
+
+        if (validUris.isEmpty()) return null
+
+        return try {
+            MediaStore.createWriteRequest(context.contentResolver, validUris).intentSender
+        } catch (e: Exception) {
+            Timber.tag("MediaStorePermissionHelper").e(e, "Failed to create write request for URIs: %s", validUris)
+            null
+        }
     }
 
     /**

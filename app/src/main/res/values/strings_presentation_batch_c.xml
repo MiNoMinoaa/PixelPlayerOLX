@@ -16,9 +16,9 @@
     <string name="cd_create_new_playlist">Create new playlist</string>
     <string name="cd_import_m3u_playlist">Import M3U playlist</string>
     <string name="cd_locate_current_song">Locate current song</string>
-    <string name="library_storage_filter_all_songs">All songs</string>
-    <string name="library_storage_filter_online">CLOUD</string>
-    <string name="library_storage_filter_offline">LOCAL</string>
+    <string name="library_storage_filter_all_songs">All Songs</string>
+    <string name="library_storage_filter_online">Cloud</string>
+    <string name="library_storage_filter_offline">Local</string>
     <string name="cd_sort_options">Sort options</string>
 
     <!-- Fetch lyrics (manual search fields) -->

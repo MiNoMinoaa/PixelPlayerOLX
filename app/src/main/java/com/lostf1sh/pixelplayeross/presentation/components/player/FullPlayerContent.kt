@@ -751,18 +751,11 @@ fun FullPlayerContent(
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Queue Button
+                            // Queue Button — full circle, matching the collapse button
                             Box(
                                 modifier = Modifier
-                                    .size(height = 42.dp, width = 50.dp)
-                                    .clip(
-                                        RoundedCornerShape(
-                                            topStart = 6.dp,
-                                            topEnd = 50.dp,
-                                            bottomStart = 6.dp,
-                                            bottomEnd = 50.dp
-                                        )
-                                    )
+                                    .size(42.dp)
+                                    .clip(CircleShape)
                                     .background(playerOnAccentColor.copy(alpha = 0.7f))
                                     .clickable {
                                         showSongInfoBottomSheet = true

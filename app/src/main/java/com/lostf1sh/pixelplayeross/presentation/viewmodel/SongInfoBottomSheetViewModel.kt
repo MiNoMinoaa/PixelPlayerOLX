@@ -131,10 +131,23 @@ class SongInfoBottomSheetViewModel @Inject constructor(
         }
     }
 
+    fun isSongEditable(song: Song): Boolean {
+        if (getCloudProviderLabel(song.contentUriString) != null) return false
+
+        if (song.path.isNotBlank()) {
+            val file = File(song.path)
+            return file.exists() && file.isFile
+        }
+
+        val uri = song.contentUriString
+        return uri.startsWith("content://") || uri.startsWith("file://")
+    }
+
     private fun getCloudProviderLabel(contentUriString: String): String? {
+        val normalized = contentUriString.lowercase().trim()
         return when {
-            contentUriString.startsWith("navidrome://") -> "Navidrome"
-            contentUriString.startsWith("jellyfin://") -> "Jellyfin"
+            normalized.startsWith("navidrome://") || normalized.startsWith("navidrome:") -> "Navidrome"
+            normalized.startsWith("jellyfin://") || normalized.startsWith("jellyfin:") -> "Jellyfin"
             else -> null
         }
     }

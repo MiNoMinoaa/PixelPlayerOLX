@@ -75,6 +75,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
@@ -460,7 +461,6 @@ class MainActivity : ComponentActivity() {
         Trace.beginSection("MainActivity.MainAppContent")
         val navController = rememberNavController()
         val isSyncing by mainViewModel.isSyncing.collectAsStateWithLifecycle()
-        val isLibraryEmpty by mainViewModel.isLibraryEmpty.collectAsStateWithLifecycle()
         val hasCompletedInitialSync by mainViewModel.hasCompletedInitialSync.collectAsStateWithLifecycle()
         val syncProgress by mainViewModel.syncProgress.collectAsStateWithLifecycle()
 
@@ -517,7 +517,13 @@ class MainActivity : ComponentActivity() {
         var loadingShownTimestamp by remember { mutableStateOf(0L) }
         val minimumDisplayDuration = 1500L // Show loading for at least 1.5 seconds
 
-        val shouldPotentiallyShowLoading = isSyncing && isLibraryEmpty && !hasCompletedInitialSync
+        // First-install gate: until the first library sync has ever completed
+        // (lastSyncTimestamp == 0), keep the preparing overlay up while the sync runs.
+        // Deliberately NOT conditioned on the library being empty: the scanner inserts
+        // songs in batches mid-scan, so an emptiness check drops the indicator after the
+        // first batch lands while the scan is still running — leaving the user on a
+        // half-filled home screen with no feedback (the bug this replaces).
+        val shouldPotentiallyShowLoading = isSyncing && !hasCompletedInitialSync
 
         LaunchedEffect(shouldPotentiallyShowLoading) {
             if (shouldPotentiallyShowLoading) {
@@ -526,7 +532,7 @@ class MainActivity : ComponentActivity() {
                 delay(300L)
                 // Re-check the condition after the delay,
                 // since the state may have changed.
-                if (mainViewModel.isSyncing.value && mainViewModel.isLibraryEmpty.value) {
+                if (mainViewModel.isSyncing.value && !mainViewModel.hasCompletedInitialSync.value) {
                     canShowLoadingIndicator = true
                     loadingShownTimestamp = System.currentTimeMillis()
                 }
@@ -979,7 +985,7 @@ class MainActivity : ComponentActivity() {
                 CircularWavyProgressIndicator()
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Preparing your library...",
+                    text = stringResource(R.string.sync_preparing_library),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -992,7 +998,11 @@ class MainActivity : ComponentActivity() {
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Scanned ${syncProgress.currentCount} of ${syncProgress.totalCount} songs",
+                        text = stringResource(
+                            R.string.sync_scanned_count,
+                            syncProgress.currentCount,
+                            syncProgress.totalCount
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

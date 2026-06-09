@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
@@ -335,6 +336,10 @@ class SyncManager @Inject constructor(
 
     private suspend fun runLocalAutoSyncAfterDebounce() {
         delay(MEDIASTORE_CHANGE_DEBOUNCE_MS)
+        if (!userPreferencesRepository.initialSetupDoneFlow.first()) {
+            Timber.tag(TAG).d("Skipping storage-change sync: initial setup not finished")
+            return
+        }
         Timber.tag(TAG).i("Storage change detected - scheduling local incremental sync")
         enqueueSyncWork(
             request = SyncWorker.incrementalSyncWork(runMaintenance = false),
@@ -365,13 +370,23 @@ class SyncManager @Inject constructor(
             Timber.tag(TAG).d("Skipping foreground catch-up sync (cooldown active)")
             return
         }
-        lastForegroundSyncTime = now
-        Timber.tag(TAG).i("Foreground catch-up - scheduling local incremental sync")
-        enqueueSyncWork(
-            request = SyncWorker.incrementalSyncWork(runMaintenance = false),
-            policy = ExistingWorkPolicy.KEEP,
-            notifyObserver = false
-        )
+        sharingScope.launch {
+            // Never auto-sync before initial setup finishes: this fires on the very first
+            // app foreground (while the user is still on the setup screen, before the media
+            // permission exists). That run would scan zero files, "succeed", and write
+            // lastSyncTimestamp — permanently hiding the first-install sync indicator.
+            if (!userPreferencesRepository.initialSetupDoneFlow.first()) {
+                Timber.tag(TAG).d("Skipping foreground catch-up sync: initial setup not finished")
+                return@launch
+            }
+            lastForegroundSyncTime = now
+            Timber.tag(TAG).i("Foreground catch-up - scheduling local incremental sync")
+            enqueueSyncWork(
+                request = SyncWorker.incrementalSyncWork(runMaintenance = false),
+                policy = ExistingWorkPolicy.KEEP,
+                notifyObserver = false
+            )
+        }
     }
 
     private fun enqueueSyncWork(

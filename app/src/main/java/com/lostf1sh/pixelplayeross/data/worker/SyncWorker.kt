@@ -75,6 +75,18 @@ constructor(
     private var minSongDurationMs: Int = 10000
     private var minTracksPerAlbum: Int = 1
 
+    private fun hasMediaReadPermission(): Boolean {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            android.Manifest.permission.READ_MEDIA_AUDIO
+        } else {
+            android.Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+        return androidx.core.content.ContextCompat.checkSelfPermission(
+            applicationContext,
+            permission
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+    }
+
     override suspend fun doWork(): Result =
             withContext(Dispatchers.IO) {
                 Trace.beginSection("SyncWorker.doWork")
@@ -84,6 +96,18 @@ constructor(
                     val syncMode = SyncMode.valueOf(syncModeName)
                     val requestedForceMetadata = inputData.getBoolean(INPUT_FORCE_METADATA, false)
                     val requestedRunMaintenance = inputData.getBoolean(INPUT_RUN_MAINTENANCE, true)
+
+                    // Without the media-read permission the MediaStore query silently returns
+                    // zero rows, so the worker would "succeed", write lastSyncTimestamp, and
+                    // permanently suppress the first-install sync indicator (which keys off
+                    // lastSyncTimestamp == 0). Bail out WITHOUT touching the timestamp; the
+                    // post-setup sync runs again once permission is granted.
+                    if (!hasMediaReadPermission()) {
+                        Timber.tag(TAG).w(
+                            "Skipping sync: media read permission not granted (setup not finished?)"
+                        )
+                        return@withContext Result.success()
+                    }
 
                     // Battery / thermal: defer background INCREMENTAL syncs while
                     // music is playing. FULL and REBUILD are skipped from this

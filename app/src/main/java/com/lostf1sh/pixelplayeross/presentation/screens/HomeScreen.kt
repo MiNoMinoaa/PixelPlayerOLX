@@ -86,7 +86,6 @@ import com.lostf1sh.pixelplayeross.data.model.Song
 import com.lostf1sh.pixelplayeross.data.preferences.CollagePattern
 import com.lostf1sh.pixelplayeross.presentation.components.AlbumArtCollage
 import com.lostf1sh.pixelplayeross.presentation.components.BetaInfoBottomSheet
-import com.lostf1sh.pixelplayeross.presentation.components.Beta05CleanInstallDisclaimerDialog
 import com.lostf1sh.pixelplayeross.presentation.components.ChangelogBottomSheet
 import com.lostf1sh.pixelplayeross.presentation.jellyfin.dashboard.JellyfinDashboardViewModel
 import com.lostf1sh.pixelplayeross.presentation.navidrome.dashboard.NavidromeDashboardViewModel
@@ -246,7 +245,6 @@ fun HomeScreen(
     var showChangelogBottomSheet by remember { mutableStateOf(false) }
     var showBetaInfoBottomSheet by remember { mutableStateOf(false) }
     var showStreamingProviderSheet by remember { mutableStateOf(false) }
-    var cleanInstallDisclaimerDismissedThisSession by rememberSaveable { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     val betaSheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
@@ -297,9 +295,6 @@ fun HomeScreen(
 
     // Drawer state for sidebar
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val shouldShowCleanInstallDisclaimer =
-        settingsUiState.beta05CleanInstallDisclaimerDismissed == false &&
-            !cleanInstallDisclaimerDismissedThisSession
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -555,16 +550,6 @@ fun HomeScreen(
             isJellyfinLoggedIn = isJellyfinLoggedIn,
             onNavigateToJellyfinDashboard = {
                 navController.navigateSafely(Screen.JellyfinDashboard.route)
-            }
-        )
-    }
-    if (shouldShowCleanInstallDisclaimer) {
-        Beta05CleanInstallDisclaimerDialog(
-            onDismiss = { dontShowAgain ->
-                cleanInstallDisclaimerDismissedThisSession = true
-                if (dontShowAgain) {
-                    settingsViewModel.setBeta05CleanInstallDisclaimerDismissed(true)
-                }
             }
         )
     }

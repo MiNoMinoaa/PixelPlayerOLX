@@ -339,13 +339,6 @@ Backslash (\) can be used to escape character delimiters.</string>
     <string name="presentation_batch_g_beta_sheet_nightly_access">Access them from the repository\'s GitHub Actions workflow artifacts if available.</string>
     <string name="presentation_batch_g_beta_sheet_nightly_report_title">Reporting nightly issues</string>
     <string name="presentation_batch_g_beta_sheet_nightly_report_body">When reporting an issue from a nightly build, always mention that it happened on a nightly build, not on the official release. Include the build date, workflow run name or number, or commit SHA if possible. Also check if the same problem happens on the latest official release.</string>
-    <string name="presentation_batch_g_beta05_title">Beta 0.5.0 upgrade</string>
-    <string name="presentation_batch_g_beta05_clean_install_title">Clean install recommended</string>
-    <string name="presentation_batch_g_beta05_clean_install_body">If you\'re coming from beta 0.5.0, this update may need fresh library data instead of older cached state.</string>
-    <string name="presentation_batch_g_beta05_if_wrong_meta_title">If metadata or library entries look wrong</string>
-    <string name="presentation_batch_g_beta05_if_wrong_meta_body">Wrong song metadata, mismatched artists or albums, or duplicate-looking entries usually mean a clean install is the fix.</string>
-    <string name="presentation_batch_g_beta05_dont_show">Don\'t show again</string>
-    <string name="presentation_batch_g_beta05_got_it">Got it</string>
     <string name="presentation_batch_g_album_sel_count">%1$d ALBUMS</string>
     <string name="presentation_batch_g_album_sel_selected">selected</string>
     <string name="presentation_batch_g_album_sel_queue_hint">Queue + play respects your selection order.</string>
