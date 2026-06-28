@@ -20,7 +20,7 @@
     <img src="https://img.shields.io/github/downloads/lostf1sh/PixelPlayerOSS/total?logo=github&style=for-the-badge" alt="Total downloads">
   </a>
   <img src="https://img.shields.io/badge/Android-11%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android 11+">
-  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT license">
+  <img src="https://img.shields.io/badge/License-GPLv3-blue?style=for-the-badge" alt="GPLv3 license">
 </p>
 
 <p align="center">
@@ -195,7 +195,7 @@ Security policy: [SECURITY.md](SECURITY.md)
 
 ## License
 
-PixelPlayerOSS is licensed under the [MIT License](LICENSE).
+PixelPlayerOSS is licensed under the [GNU General Public License v3.0](LICENSE).
 
 Distributed APKs include third-party components under their own licenses. In particular, the optional FFmpeg decoder dependency `org.jellyfin.media3:media3-ffmpeg-decoder` is GPL-3.0; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 

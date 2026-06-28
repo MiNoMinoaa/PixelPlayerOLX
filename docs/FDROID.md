@@ -58,7 +58,7 @@ tarball.
 
 These properties got the app accepted and must be maintained:
 
-1. MIT license.
+1. GPL-3.0 license.
 2. OSS-focused package name: `com.lostf1sh.pixelplayeross`.
 3. No Firebase, Crashlytics, Play Store billing, ads, analytics, Cast, Wear OS, or
    Google Play Services runtime dependencies.
@@ -82,7 +82,7 @@ The dependency license review table is tracked in `docs/DEPENDENCY_LICENSES.md`.
 
 These artifacts can produce native `.so` files in the APK. Keep the source/license trail current when versions change.
 
-The project source is MIT-licensed, but release APKs include `org.jellyfin.media3:media3-ffmpeg-decoder`, whose Maven POM declares GPL-3.0. Treat distributed APK artifacts as containing a GPL-3.0 component and preserve the source/license trail below.
+The project source is GPL-3.0-licensed. Release APKs also include `org.jellyfin.media3:media3-ffmpeg-decoder`, whose Maven POM declares GPL-3.0 — consistent with the source license. Preserve the source/license trail below.
 
 | Artifact | Native library seen in APK | License/source evidence |
 | --- | --- | --- |
