@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   mirror:
-    if: github.repository == 'lostf1sh/PixelPlayerOSS'
+    if: github.repository == 'PixelPlayerHQ/PixelPlayerOSS'
     runs-on: ubuntu-latest
 
     steps:
