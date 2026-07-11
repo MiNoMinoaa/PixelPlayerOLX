@@ -23,10 +23,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -152,7 +153,7 @@ fun MashupScreen(
 
 
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun DeckUi(
     deckNumber: Int,
@@ -262,7 +263,7 @@ private fun DeckUi(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth(0.8f))
+                    LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth(0.8f))
                     Spacer(Modifier.height(16.dp))
                     Text(loadingMessage, style = MaterialTheme.typography.bodyMedium)
                 }

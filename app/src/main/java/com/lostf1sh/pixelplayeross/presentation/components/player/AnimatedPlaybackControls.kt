@@ -1,6 +1,5 @@
 package com.lostf1sh.pixelplayeross.presentation.components.player
 
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
@@ -18,8 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Pause
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -161,12 +158,13 @@ fun AnimatedPlaybackControls(
                 animationSpec = pressAnimationSpec,
                 label = "playWeight"
             )
-            // Tween (matching the Crossfade duration) instead of a spring with
-            // StiffnessMedium. The old spring took ~600 ms to settle and read
-            // playCorner in the composition phase, recomposing AnimatedPlaybackControls
-            // every frame for the entire settle. A bounded 220 ms tween that completes
-            // alongside the icon Crossfade keeps the recomposition window small enough
-            // that it doesn't overlap with a subsequent sheet-collapse gesture.
+            // Bounded tween instead of a spring with StiffnessMedium. The old spring
+            // took ~600 ms to settle and read playCorner in the composition phase,
+            // recomposing AnimatedPlaybackControls every frame for the entire settle.
+            // A 220 ms tween (matching the icon morph's visual beat) keeps the
+            // recomposition window small enough that it doesn't overlap with a
+            // subsequent sheet-collapse gesture. The icon morph itself animates in
+            // the draw phase only, so it doesn't contribute recompositions.
             val playCorner by animateDpAsState(
                 targetValue = if (!playPauseVisualState) playPauseCornerPlaying else playPauseCornerPaused,
                 animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
@@ -230,22 +228,3 @@ fun AnimatedPlaybackControls(
     }
 }
 
-@Composable
-private fun MorphingPlayPauseIcon(
-    isPlaying: Boolean,
-    tint: Color,
-    size: Dp,
-) {
-    Crossfade(
-        targetState = isPlaying,
-        animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
-        label = "playPauseCrossfade"
-    ) { playing ->
-        Icon(
-            imageVector = if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-            contentDescription = if (playing) stringResource(R.string.cd_pause) else stringResource(R.string.cd_play),
-            tint = tint,
-            modifier = Modifier.size(size)
-        )
-    }
-}

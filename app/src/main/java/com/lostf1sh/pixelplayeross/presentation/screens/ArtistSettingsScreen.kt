@@ -50,8 +50,9 @@ import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -343,6 +344,7 @@ fun ArtistSettingsScreen(
 
 
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun RescanRequiredBanner(
     isResyncing: Boolean,
@@ -394,9 +396,8 @@ private fun RescanRequiredBanner(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 if (isResyncing) {
-                    CircularProgressIndicator(
+                    LoadingIndicator(
                         modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
                         color = MaterialTheme.colorScheme.onTertiary
                     )
                 } else {

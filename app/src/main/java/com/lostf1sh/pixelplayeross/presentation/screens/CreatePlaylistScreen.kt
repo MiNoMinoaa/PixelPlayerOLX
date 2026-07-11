@@ -87,7 +87,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -937,6 +937,7 @@ fun EditPlaylistContent(
 }
 
 
+@kotlin.OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun PlaylistFormContent(
     modifier: Modifier = Modifier,
@@ -1042,7 +1043,7 @@ private fun PlaylistFormContent(
                     }
                  }
              } else {
-                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                 ContainedLoadingIndicator(modifier = Modifier.align(Alignment.Center))
              }
          }
          return

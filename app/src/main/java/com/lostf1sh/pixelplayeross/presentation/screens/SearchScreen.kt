@@ -12,7 +12,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +30,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import com.lostf1sh.pixelplayeross.ui.theme.ShapeCache
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
@@ -92,8 +92,9 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.focus.FocusRequester
@@ -1020,7 +1021,7 @@ fun SearchResultArtistItem(
                     targetSize = SmartImageListTargetSize,
                     modifier = Modifier
                         .size(56.dp)
-                        .clip(CircleShape)
+                        .clip(ShapeCache.expressiveAvatar)
                 )
             } else {
                 Icon(
@@ -1028,7 +1029,7 @@ fun SearchResultArtistItem(
                     contentDescription = "Artist",
                     modifier = Modifier
                         .size(56.dp)
-                        .background(MaterialTheme.colorScheme.tertiaryContainer, CircleShape)
+                        .background(MaterialTheme.colorScheme.tertiaryContainer, ShapeCache.expressiveAvatar)
                         .padding(12.dp),
                     tint = MaterialTheme.colorScheme.onTertiaryContainer
                 )
@@ -1134,6 +1135,7 @@ fun SearchResultPlaylistItem(
 }
 
 @androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SearchFilterChip(
     filterType: SearchFilterType,
@@ -1143,34 +1145,26 @@ fun SearchFilterChip(
 ) {
     val selected = filterType == currentFilter
 
-    FilterChip(
-        selected = selected,
-        onClick = { playerViewModel.updateSearchFilter(filterType) },
-        label = { Text(filterType.name.lowercase().replaceFirstChar { it.titlecase() }) },
+    ToggleButton(
+        checked = selected,
+        onCheckedChange = { playerViewModel.updateSearchFilter(filterType) },
         modifier = modifier,
-        shape = CircleShape,
-        border = BorderStroke(
-            width = 0.dp,
-            color = Color.Transparent
-        ),
-        colors = FilterChipDefaults.filterChipColors(
-            containerColor =  MaterialTheme.colorScheme.secondaryContainer,
-            labelColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            selectedContainerColor = MaterialTheme.colorScheme.primary,
-            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-            selectedLeadingIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-        ),
-         leadingIcon = if (selected) {
-             {
-                 Icon(
-                     painter = painterResource(R.drawable.rounded_check_circle_24),
-                     contentDescription = "Selected",
-                     tint = MaterialTheme.colorScheme.onPrimary,
-                     modifier = Modifier.size(FilterChipDefaults.IconSize)
-                 )
-             }
-         } else {
-             null
-         }
-    )
+        shapes = ToggleButtonDefaults.shapes(),
+        colors = ToggleButtonDefaults.toggleButtonColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            checkedContainerColor = MaterialTheme.colorScheme.primary,
+            checkedContentColor = MaterialTheme.colorScheme.onPrimary
+        )
+    ) {
+        if (selected) {
+            Icon(
+                painter = painterResource(R.drawable.rounded_check_circle_24),
+                contentDescription = stringResource(R.string.presentation_batch_g_cd_selected),
+                modifier = Modifier.size(FilterChipDefaults.IconSize)
+            )
+            Spacer(Modifier.width(8.dp))
+        }
+        Text(filterType.name.lowercase().replaceFirstChar { it.titlecase() })
+    }
 }

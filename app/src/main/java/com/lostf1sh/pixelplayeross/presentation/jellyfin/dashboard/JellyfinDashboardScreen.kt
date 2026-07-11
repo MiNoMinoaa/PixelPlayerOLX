@@ -108,6 +108,7 @@ fun JellyfinDashboardScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun JellyfinDashboardContent(
     playlists: List<JellyfinPlaylistEntity>,
@@ -153,9 +154,8 @@ private fun JellyfinDashboardContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         if (isSyncing) {
-                            CircularProgressIndicator(
+                            LoadingIndicator(
                                 modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Spacer(Modifier.width(12.dp))
@@ -312,6 +312,7 @@ private fun JellyfinDashboardContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun JellyfinMenuCard(
     isSyncing: Boolean,
@@ -359,9 +360,8 @@ private fun JellyfinMenuCard(
                     )
                 ) {
                     if (isSyncing) {
-                        CircularProgressIndicator(
+                        LoadingIndicator(
                             modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Spacer(modifier = Modifier.width(8.dp))

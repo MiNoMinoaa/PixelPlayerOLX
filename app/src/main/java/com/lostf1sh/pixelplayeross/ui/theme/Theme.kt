@@ -5,7 +5,9 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -105,6 +107,7 @@ val LightColorScheme = lightColorScheme(
     onError = PixelPlayerWhite
 )
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PixelPlayerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -139,6 +142,7 @@ fun PixelPlayerTheme(
     CompositionLocalProvider(LocalPixelPlayerDarkTheme provides darkTheme) {
         MaterialTheme(
             colorScheme = finalColorScheme,
+            motionScheme = MotionScheme.expressive(),
             typography = Typography,
             shapes = Shapes,
             content = content

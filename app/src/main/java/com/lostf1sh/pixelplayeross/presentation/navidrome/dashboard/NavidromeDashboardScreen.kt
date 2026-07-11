@@ -135,6 +135,7 @@ fun NavidromeDashboardScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun DashboardContent(
     playlists: List<NavidromePlaylistEntity>,
@@ -189,9 +190,8 @@ private fun DashboardContent(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             if (isSyncing && syncProgress == null) {
-                                CircularProgressIndicator(
+                                LoadingIndicator(
                                     modifier = Modifier.size(20.dp),
-                                    strokeWidth = 2.dp,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                                 Spacer(Modifier.width(12.dp))
@@ -215,12 +215,9 @@ private fun DashboardContent(
                         
                         if (isSyncing && syncProgress != null) {
                             Spacer(Modifier.height(12.dp))
-                            LinearProgressIndicator(
+                            LinearWavyProgressIndicator(
                                 progress = { syncProgress },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(8.dp)
-                                    .clip(CircleShape),
+                                modifier = Modifier.fillMaxWidth(),
                                 color = MaterialTheme.colorScheme.primary,
                                 trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                             )
@@ -408,6 +405,7 @@ private fun DashboardContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SubsonicMenuCard(
     isSyncing: Boolean,
@@ -496,9 +494,8 @@ private fun SubsonicMenuCard(
                     )
                 ) {
                     if (isSyncing) {
-                        CircularProgressIndicator(
+                        LoadingIndicator(
                             modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Spacer(modifier = Modifier.width(8.dp))

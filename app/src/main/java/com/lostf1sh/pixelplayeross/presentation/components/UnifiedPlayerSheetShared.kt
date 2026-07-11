@@ -18,17 +18,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Pause
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CircularWavyProgressIndicator
+import com.lostf1sh.pixelplayeross.presentation.components.player.MorphingPlayPauseIcon
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.getValue
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
@@ -100,9 +102,8 @@ internal fun MiniPlayerContentInternal(
                 )
             }
             if (isOutputConnecting) {
-                CircularProgressIndicator(
+                LoadingIndicator(
                     modifier = Modifier.size(24.dp),
-                    strokeWidth = 2.dp,
                     color = LocalMaterialTheme.current.onPrimaryContainer
                 )
             } else if (isPreparingPlayback) {
@@ -172,10 +173,15 @@ internal fun MiniPlayerContentInternal(
 
         Spacer(modifier = Modifier.width(8.dp))
 
+        val playPauseCorner by animateDpAsState(
+            targetValue = if (isPlaying) 10.dp else 18.dp,
+            animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
+            label = "MiniPlayerPlayPauseCorner"
+        )
         Box(
             modifier = Modifier
                 .size(36.dp)
-                .clip(CircleShape)
+                .clip(RoundedCornerShape(playPauseCorner))
                 .background(LocalMaterialTheme.current.primary)
                 .clickable(
                     interactionSource = playPauseInteraction,
@@ -187,11 +193,10 @@ internal fun MiniPlayerContentInternal(
                 },
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                contentDescription = if (isPlaying) stringResource(R.string.cd_pause) else stringResource(R.string.cd_play),
+            MorphingPlayPauseIcon(
+                isPlaying = isPlaying,
                 tint = LocalMaterialTheme.current.onPrimary,
-                modifier = Modifier.size(22.dp)
+                size = 22.dp
             )
         }
 

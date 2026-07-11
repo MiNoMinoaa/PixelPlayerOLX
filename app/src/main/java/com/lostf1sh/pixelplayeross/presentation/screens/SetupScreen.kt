@@ -85,7 +85,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.LoadingIndicator
 
 import androidx.compose.material3.FloatingActionButtonDefaults
@@ -935,7 +935,7 @@ fun BackupRestorePage(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        LinearProgressIndicator(
+                        LinearWavyProgressIndicator(
                             progress = { progress.progress },
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -1808,7 +1808,7 @@ private fun SetupRestoreDialog(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                LinearProgressIndicator(
+                                LinearWavyProgressIndicator(
                                     progress = { progress.progress },
                                     modifier = Modifier.fillMaxWidth()
                                 )

@@ -24,7 +24,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,7 +52,7 @@ fun RecentlyPlayedRangeSelector(
     onRangeSelected: (StatsTimeRange) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val motionScheme = MotionScheme.expressive()
+    val motionScheme = MaterialTheme.motionScheme
 
     LazyRow(
         modifier = modifier.fillMaxWidth(),
@@ -83,7 +82,7 @@ private fun RecentlyPlayedRangeChip(
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
-    val motionScheme = MotionScheme.expressive()
+    val motionScheme = MaterialTheme.motionScheme
 
     val containerColor by animateColorAsState(
         targetValue = if (selected) colors.tertiary else Color.Transparent,

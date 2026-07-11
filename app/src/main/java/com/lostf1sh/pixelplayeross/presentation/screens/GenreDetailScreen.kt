@@ -562,7 +562,7 @@ fun GenreDetailScreen(
         
             // Loading/Error States
             if (uiState.isLoadingSongs) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                ContainedLoadingIndicator(modifier = Modifier.align(Alignment.Center))
             }
         }
     }

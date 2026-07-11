@@ -12,8 +12,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -34,6 +34,7 @@ import kotlin.math.roundToInt
  * A professional progress indicator for library synchronization.
  * Shows current file count and progress percentage.
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SyncProgressBar(
     syncProgress: SyncProgress,
@@ -85,12 +86,9 @@ fun SyncProgressBar(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Progress bar
-            LinearProgressIndicator(
+            LinearWavyProgressIndicator(
                 progress = { animatedProgress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(MaterialTheme.shapes.small),
+                modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.primaryContainer,
             )
@@ -115,9 +113,8 @@ fun SyncProgressBar(
 
                 if (syncProgress.isRunning) {
                     // Small indeterminate indicator for ongoing work
-                    CircularProgressIndicator(
+                    LoadingIndicator(
                         modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
                         color = MaterialTheme.colorScheme.primary
                     )
                 } else if (syncProgress.isCompleted) {
@@ -167,6 +164,7 @@ private fun getPhaseText(syncProgress: SyncProgress): String {
 /**
  * Compact progress indicator for use in smaller spaces.
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CompactSyncProgressIndicator(
     syncProgress: SyncProgress,
@@ -182,12 +180,9 @@ fun CompactSyncProgressIndicator(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        LinearProgressIndicator(
+        LinearWavyProgressIndicator(
             progress = { animatedProgress },
-            modifier = Modifier
-                .weight(1f)
-                .height(4.dp)
-                .clip(MaterialTheme.shapes.small),
+            modifier = Modifier.weight(1f),
             color = MaterialTheme.colorScheme.primary,
             trackColor = MaterialTheme.colorScheme.primaryContainer,
         )

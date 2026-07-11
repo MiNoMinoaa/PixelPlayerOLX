@@ -83,7 +83,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -2319,6 +2318,7 @@ private fun ImportModuleSelectionDialog(
         onConfirm = onConfirm
     )
 }
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun PaletteRegenerateSongSheetContent(
     songs: List<Song>,
@@ -2375,9 +2375,8 @@ private fun PaletteRegenerateSongSheetContent(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(18.dp),
-                    strokeWidth = 2.dp
+                LoadingIndicator(
+                    modifier = Modifier.size(18.dp)
                 )
                 Text(
                     text = stringResource(R.string.palette_regenerating_progress),

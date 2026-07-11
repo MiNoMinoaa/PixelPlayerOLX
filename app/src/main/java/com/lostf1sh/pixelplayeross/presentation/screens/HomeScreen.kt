@@ -112,6 +112,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import com.lostf1sh.pixelplayeross.ui.theme.ShapeCache
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import androidx.compose.ui.res.stringResource
 import com.lostf1sh.pixelplayeross.presentation.components.rememberModalSheetState
@@ -592,16 +593,7 @@ private fun YourMixEmptyPlaceholder(
         ) {
             Surface(
                 modifier = Modifier.size(76.dp),
-                shape = AbsoluteSmoothCornerShape(
-                    cornerRadiusTL = 28.dp,
-                    smoothnessAsPercentTR = 60,
-                    cornerRadiusBR = 28.dp,
-                    smoothnessAsPercentTL = 60,
-                    cornerRadiusBL = 28.dp,
-                    smoothnessAsPercentBR = 60,
-                    cornerRadiusTR = 28.dp,
-                    smoothnessAsPercentBL = 60,
-                ),
+                shape = ShapeCache.expressiveHero,
                 color = colors.secondaryContainer,
                 contentColor = colors.onSecondaryContainer
             ) {

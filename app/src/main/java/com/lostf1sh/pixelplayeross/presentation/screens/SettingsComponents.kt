@@ -34,11 +34,12 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -413,6 +414,7 @@ fun SliderSettingsItem(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun RefreshLibraryItem(
         isSyncing: Boolean,
@@ -512,7 +514,7 @@ fun RefreshLibraryItem(
                 Spacer(modifier = Modifier.height(12.dp))
                 val phaseLabel = activeOperationLabel ?: syncPhaseLabel(syncProgress.phase)
                 if (syncProgress.hasProgress) {
-                    LinearProgressIndicator(
+                    LinearWavyProgressIndicator(
                             progress = { syncProgress.progress },
                             modifier = Modifier.fillMaxWidth()
                     )
@@ -529,7 +531,7 @@ fun RefreshLibraryItem(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth())
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                             text = stringResource(
@@ -565,6 +567,7 @@ private fun syncPhaseLabel(phase: SyncProgress.SyncPhase): String =
                 }
         )
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun RefreshLyricsItem(
         isRefreshing: Boolean,
@@ -625,7 +628,7 @@ fun RefreshLyricsItem(
 
             if (isRefreshing && progress.hasProgress) {
                 Spacer(modifier = Modifier.height(12.dp))
-                LinearProgressIndicator(
+                LinearWavyProgressIndicator(
                         progress = { progress.progress },
                         modifier = Modifier.fillMaxWidth()
                 )

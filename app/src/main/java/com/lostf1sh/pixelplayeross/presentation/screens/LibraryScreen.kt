@@ -79,6 +79,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
+import com.lostf1sh.pixelplayeross.ui.theme.ShapeCache
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.DisposableEffect
@@ -2783,7 +2784,7 @@ fun FolderListItem(folder: MusicFolder, onClick: () -> Unit) {
                 contentDescription = stringResource(R.string.presentation_batch_d_cd_folder),
                 modifier = Modifier
                     .size(48.dp)
-                    .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer, ShapeCache.expressiveClover)
                     .padding(8.dp),
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
@@ -3104,7 +3105,7 @@ fun ArtistListItem(artist: Artist, onClick: () -> Unit, isLoading: Boolean = fal
                 Box(
                     modifier = Modifier
                         .size(48.dp)
-                        .clip(CircleShape)
+                        .clip(ShapeCache.expressiveAvatar)
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
                 ) {

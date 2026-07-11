@@ -848,7 +848,7 @@ data class CoverArtCropResult(
     val update: CoverArtUpdate,
 )
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CoverArtCropperDialog(
     sourceUri: Uri,
@@ -949,7 +949,7 @@ fun CoverArtCropperDialog(
                         ) {
                             when {
                                 isLoading -> {
-                                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                                    LoadingIndicator(modifier = Modifier.align(Alignment.Center))
                                 }
 
                                 loadError != null -> {
@@ -1061,8 +1061,7 @@ fun CoverArtCropperDialog(
                         }
                     ) {
                         if (isSaving) {
-                            CircularProgressIndicator(
-                                strokeWidth = 2.dp,
+                            LoadingIndicator(
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))

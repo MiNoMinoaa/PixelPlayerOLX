@@ -1,6 +1,18 @@
 package com.lostf1sh.pixelplayeross.ui.theme
 
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Matrix
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.asComposePath
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.graphics.shapes.RoundedPolygon
+import androidx.graphics.shapes.toPath
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 
 /**
@@ -45,4 +57,34 @@ object ShapeCache {
 
     /** Fully smooth (pill) — 50dp, used for buttons and chips */
     val smoothPill = AbsoluteSmoothCornerShape(cornerRadius = 50.dp, smoothnessAsPercent = 60)
+
+    /** M3 Expressive cookie — artist/people avatars and placeholders */
+    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
+    val expressiveAvatar: Shape = RoundedPolygonShape(MaterialShapes.Cookie9Sided)
+
+    /** M3 Expressive clover — folder/collection icon containers */
+    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
+    val expressiveClover: Shape = RoundedPolygonShape(MaterialShapes.Clover8Leaf)
+
+    /** M3 Expressive soft burst — empty-state hero icon containers */
+    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
+    val expressiveHero: Shape = RoundedPolygonShape(MaterialShapes.SoftBurst)
+}
+
+/**
+ * Singleton-friendly alternative to material3's @Composable RoundedPolygon.toShape():
+ * the normalized (0..1 bounds) polygon path is computed once and scaled to the outline size,
+ * so the shape can be cached here like the other ShapeCache entries.
+ */
+private class RoundedPolygonShape(polygon: RoundedPolygon) : Shape {
+    private val basePath = polygon.toPath().asComposePath()
+
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val matrix = Matrix()
+        matrix.scale(size.width, size.height)
+        val path = Path()
+        path.addPath(basePath)
+        path.transform(matrix)
+        return Outline.Generic(path)
+    }
 }

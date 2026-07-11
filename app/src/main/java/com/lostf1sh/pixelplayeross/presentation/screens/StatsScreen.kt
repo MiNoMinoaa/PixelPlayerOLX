@@ -52,8 +52,8 @@ import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -1060,30 +1060,23 @@ private fun ListeningTimelineSection(
         ) {
             TimelineMetric.entries.forEach { metric ->
                 val isSelected = metric == selectedMetric
-                FilterChip(
-                    selected = isSelected,
-                    onClick = { onMetricSelected(metric) },
-                    label = {
-                        Text(
-                            text = stringResource(metric.displayNameRes),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                        )
-                    },
-                    shape = CircleShape, // Fully rounded
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.primary,
-                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                ToggleButton(
+                    checked = isSelected,
+                    onCheckedChange = { onMetricSelected(metric) },
+                    shapes = ToggleButtonDefaults.shapes(),
+                    colors = ToggleButtonDefaults.toggleButtonColors(
+                        checkedContainerColor = MaterialTheme.colorScheme.primary,
+                        checkedContentColor = MaterialTheme.colorScheme.onPrimary,
                         containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                        labelColor = MaterialTheme.colorScheme.onSurface
-                    ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        borderColor = Color.Transparent,
-                        selectedBorderColor = Color.Transparent,
-                        enabled = true,
-                        selected = isSelected
+                        contentColor = MaterialTheme.colorScheme.onSurface
                     )
-                )
+                ) {
+                    Text(
+                        text = stringResource(metric.displayNameRes),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                    )
+                }
             }
         }
 
@@ -1211,30 +1204,23 @@ private fun CategoryMetricsSection(
             CategoryDimension.entries.reversed().forEach { dimension ->
                 val isSelected = dimension == selectedDimension
                 val chipPalette = categoryPaletteFor(dimension)
-                FilterChip(
-                    selected = isSelected,
-                    onClick = { onDimensionSelected(dimension) },
-                    label = {
-                        Text(
-                            text = stringResource(dimension.displayNameRes),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                        )
-                    },
-                    shape = CircleShape,
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = chipPalette.accentColor,
-                        selectedLabelColor = chipPalette.accentOnColor,
+                ToggleButton(
+                    checked = isSelected,
+                    onCheckedChange = { onDimensionSelected(dimension) },
+                    shapes = ToggleButtonDefaults.shapes(),
+                    colors = ToggleButtonDefaults.toggleButtonColors(
+                        checkedContainerColor = chipPalette.accentColor,
+                        checkedContentColor = chipPalette.accentOnColor,
                         containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                        labelColor = MaterialTheme.colorScheme.onSurface
-                    ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        borderColor = Color.Transparent,
-                        selectedBorderColor = Color.Transparent,
-                        enabled = true,
-                        selected = isSelected
+                        contentColor = MaterialTheme.colorScheme.onSurface
                     )
-                )
+                ) {
+                    Text(
+                        text = stringResource(dimension.displayNameRes),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                    )
+                }
             }
         }
 
