@@ -35,7 +35,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -77,7 +76,7 @@ fun LibrarySortBottomSheet(
     sourceToggleContent: (@Composable () -> Unit)? = null,
     extraContent: (@Composable () -> Unit)? = null
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberModalSheetState(skipPartiallyExpanded = true)
 
     val selectedColor = MaterialTheme.colorScheme.secondaryContainer
     val unselectedColor = MaterialTheme.colorScheme.surfaceContainerLow
@@ -142,19 +141,11 @@ fun LibrarySortBottomSheet(
                     SortDirection.Ascending -> stringResource(R.string.presentation_batch_g_sort_ascending)
                     null -> stringResource(R.string.presentation_batch_g_sort_original_order)
                 }
-                val directionHint = when {
-                    resolvedSelectedOption.canFlipDirection && selectedDirection == SortDirection.Descending ->
-                        stringResource(R.string.presentation_batch_g_sort_tap_ascending)
-                    resolvedSelectedOption.canFlipDirection && selectedDirection == SortDirection.Ascending ->
-                        stringResource(R.string.presentation_batch_g_sort_tap_descending)
-                    else -> stringResource(R.string.presentation_batch_g_sort_keeps_order)
-                }
                 val isDescending = selectedDirection == SortDirection.Descending
 
                 LibrarySheetSortDirectionCard(
                     modifier = Modifier.padding(bottom = 12.dp),
                     label = directionLabel,
-                    supportingText = directionHint,
                     isDescending = isDescending,
                     enabled = resolvedSelectedOption.canFlipDirection,
                     onClick = {
@@ -274,7 +265,6 @@ fun LibrarySortBottomSheet(
 private fun LibrarySheetSortDirectionCard(
     modifier: Modifier = Modifier,
     label: String,
-    supportingText: String,
     isDescending: Boolean,
     enabled: Boolean,
     onClick: () -> Unit
@@ -385,11 +375,6 @@ private fun LibrarySheetSortDirectionCard(
                     fontWeight = FontWeight.SemiBold,
                     color = contentColor
                 )
-//                Text(
-//                    text = supportingText,
-//                    style = MaterialTheme.typography.bodySmall,
-//                    color = contentColor.copy(alpha = 0.78f)
-//                )
             }
         }
     }

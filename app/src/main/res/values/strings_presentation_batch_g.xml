@@ -89,20 +89,13 @@
     <string name="presentation_batch_g_stats_top_three_share_label">Top 3 share</string>
     <string name="presentation_batch_g_stats_avatar_placeholder">\?</string>
     <string name="presentation_batch_g_device_info_title">Device Info</string>
-    <string name="presentation_batch_g_device_supported_codecs_title">Supported Audio Codecs</string>
-    <string name="presentation_batch_g_device_section_audio_output">Audio Output</string>
     <string name="presentation_batch_g_device_section_exoplayer">ExoPlayer Engine</string>
     <string name="presentation_batch_g_device_label_sample_rate">Sample Rate</string>
-    <string name="presentation_batch_g_device_label_frames_per_buffer">Frames Per Buffer</string>
     <string name="presentation_batch_g_device_label_low_latency">Low Latency Support</string>
     <string name="presentation_batch_g_device_label_pro_audio">Pro Audio Support</string>
-    <string name="presentation_batch_g_device_label_version">Version</string>
-    <string name="presentation_batch_g_device_label_active_renderers">Active Renderers</string>
-    <string name="presentation_batch_g_device_label_decoder_counters">Decoder Counters</string>
     <string name="presentation_batch_g_device_value_hz">%1$d Hz</string>
     <string name="presentation_batch_g_yes">Yes</string>
     <string name="presentation_batch_g_no">No</string>
-    <string name="presentation_batch_g_device_cd_hw_accelerated">Hardware accelerated</string>
     <string name="presentation_batch_g_device_key_manufacturer">Manufacturer</string>
     <string name="presentation_batch_g_device_key_model">Model</string>
     <string name="presentation_batch_g_device_key_brand">Brand</string>
@@ -110,7 +103,6 @@
     <string name="presentation_batch_g_device_key_android_version">Android Version</string>
     <string name="presentation_batch_g_device_key_sdk_version">SDK Version</string>
     <string name="presentation_batch_g_device_key_hardware">Hardware</string>
-    <string name="device_capabilities_unknown_device">This device</string>
     <string name="device_capabilities_unknown_short">--</string>
     <string name="device_capabilities_ready_title">Ready for playback</string>
     <string name="device_capabilities_review_title">Playback needs review</string>
@@ -169,7 +161,6 @@
     <string name="presentation_batch_g_artist_item_word_delimiters">Word Delimiters</string>
     <string name="presentation_batch_g_artist_word_none">None</string>
     <string name="presentation_batch_g_artist_word_current_prefix">Current: %1$s</string>
-    <string name="presentation_batch_g_artist_word_ellipsis">…</string>
     <string name="presentation_batch_g_artist_cd_configure">Configure</string>
     <string name="presentation_batch_g_artist_extract_from_title">Extract Artists from Title</string>
     <string name="presentation_batch_g_artist_extract_from_title_sub">Detect feat., ft., with in song titles</string>
@@ -194,7 +185,6 @@ Backslash (\) can be used to escape character delimiters.</string>
     <string name="presentation_batch_g_artist_ex_4_out">A, B</string>
     <string name="presentation_batch_g_artist_ex_5_in">\"AC\\DC\"</string>
     <string name="presentation_batch_g_artist_ex_5_out">AC/DC (escaped)</string>
-    <string name="presentation_batch_g_artist_topbar_title">Artists</string>
     <string name="presentation_batch_g_artist_rescan_banner_title">Rescan Required</string>
     <string name="presentation_batch_g_artist_rescan_banner_body">Artist settings have changed. Rescan your library to apply.</string>
     <string name="presentation_batch_g_artist_rescan_scanning">Scanning…</string>
@@ -202,7 +192,6 @@ Backslash (\) can be used to escape character delimiters.</string>
     <string name="presentation_batch_g_topbar_beta_letter">β</string>
     <string name="presentation_batch_g_topbar_beta">Beta</string>
     <string name="presentation_batch_g_topbar_cd_changelog">Changelog</string>
-    <string name="presentation_batch_g_topbar_cd_settings">Settings</string>
     <string name="presentation_batch_g_lyrics_mode_synced">Synced</string>
     <string name="presentation_batch_g_lyrics_mode_static">Static</string>
     <string name="presentation_batch_g_lyrics_cd_options">Lyrics options</string>
@@ -213,9 +202,6 @@ Backslash (\) can be used to escape character delimiters.</string>
     <string name="presentation_batch_g_sort_descending">Descending</string>
     <string name="presentation_batch_g_sort_ascending">Ascending</string>
     <string name="presentation_batch_g_sort_original_order">Original Order</string>
-    <string name="presentation_batch_g_sort_tap_ascending">Tap to switch to ascending</string>
-    <string name="presentation_batch_g_sort_tap_descending">Tap to switch to descending</string>
-    <string name="presentation_batch_g_sort_keeps_order">This sort keeps its original order</string>
     <string name="presentation_batch_g_cd_switch_on">Switch is on</string>
     <string name="presentation_batch_g_file_explorer_cd_close">Close</string>
     <string name="presentation_batch_g_file_explorer_cd_refresh">Refresh</string>
@@ -237,7 +223,6 @@ Backslash (\) can be used to escape character delimiters.</string>
     <string name="presentation_batch_g_selection_all">All</string>
     <string name="presentation_batch_g_selection_deselect">Deselect</string>
     <string name="presentation_batch_g_selection_cd_more">More options</string>
-    <string name="presentation_batch_g_selection_options">Options</string>
     <string name="presentation_batch_g_selection_overflow_count">+%1$d</string>
     <string name="presentation_batch_g_list_song_artist_album">%1$s • %2$s</string>
     <string name="presentation_batch_g_list_cd_selected">Selected</string>
@@ -286,7 +271,6 @@ Backslash (\) can be used to escape character delimiters.</string>
     <string name="presentation_batch_g_beta_sheet_github_body">Search first, then open a focused report for bugs, crashes, requests, or questions.</string>
     <string name="presentation_batch_g_beta_sheet_open_issues">Open existing issues</string>
     <string name="presentation_batch_g_beta_sheet_report_bug">Report issue or crash</string>
-    <string name="presentation_batch_g_beta_sheet_report_body">Share steps to reproduce, expected results, actual results, and your device/OS details.</string>
     <string name="presentation_batch_g_beta_sheet_report_title">How to report</string>
     <string name="presentation_batch_g_beta_sheet_report_summary">A quick checklist before opening a new issue.</string>
     <string name="presentation_batch_g_beta_sheet_before_title">Before opening an issue</string>
@@ -343,7 +327,6 @@ Backslash (\) can be used to escape character delimiters.</string>
     <string name="presentation_batch_g_album_sel_selected">selected</string>
     <string name="presentation_batch_g_album_sel_queue_hint">Queue + play respects your selection order.</string>
     <string name="presentation_batch_g_album_sel_limit">Limit: %1$d albums per selection.</string>
-    <string name="presentation_batch_g_album_sel_add_queue_play">Add to Queue &amp; Play</string>
     <string name="presentation_batch_g_app_name">PixelPlayerOSS</string>
     <string name="presentation_batch_g_app_tagline">Music Player</string>
     <string name="presentation_batch_g_brick_high">HIGH %1$d</string>
@@ -379,20 +362,9 @@ Backslash (\) can be used to escape character delimiters.</string>
     <string name="presentation_batch_g_backup_entries_will_replace">%1$d entries · Will replace current data</string>
     <string name="presentation_batch_g_player_cd_cloud_stream">Cloud stream</string>
     <string name="presentation_batch_g_player_cd_collapse">Collapse player</string>
-    <string name="presentation_batch_g_player_cd_bluetooth">Bluetooth</string>
-    <string name="presentation_batch_g_player_cd_local_playback">Local playback</string>
-    <string name="presentation_batch_g_player_connecting">Connecting…</string>
     <string name="presentation_batch_g_player_cd_queue">Queue</string>
     <string name="presentation_batch_g_player_cd_lyrics">Lyrics</string>
 
-    <string name="presentation_batch_g_changelog_sec_highlights">Highlights</string>
-    <string name="presentation_batch_g_changelog_sec_improvements">Improvements</string>
-    <string name="presentation_batch_g_changelog_sec_fixes">Fixes</string>
-    <string name="presentation_batch_g_changelog_sec_whats_new">What\'s New</string>
-    <string name="presentation_batch_g_changelog_sec_whats_new_lower">What\'s new</string>
-    <string name="presentation_batch_g_changelog_sec_added">Added</string>
-    <string name="presentation_batch_g_changelog_sec_changed">Changed</string>
-    <string name="presentation_batch_g_changelog_sec_fixed">Fixed</string>
     <string name="presentation_batch_g_changelog_sec_initial_release">Initial release</string>
     <string name="presentation_batch_g_changelog_sec_removed_for_foss">Removed for FOSS</string>
     <string name="presentation_batch_g_changelog_sec_release_readiness">Release readiness</string>

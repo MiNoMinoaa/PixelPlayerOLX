@@ -212,15 +212,12 @@
     <!-- Streaming / cloud dashboards -->
     <string name="screen_subsonic_dashboard_title">Subsonic</string>
     <string name="dash_playlists_synced_count">%1$d playlists synced</string>
-    <string name="dash_folders_synced_count">%1$d folders synced</string>
     <string name="dash_title_playlists">Playlists</string>
     <string name="dash_library_playlist_title">Library</string>
-    <string name="dash_music_folders">Music folders</string>
     <string name="dash_action_sync">Sync</string>
     <string name="dash_playlists_empty_title">No playlists synced yet</string>
     <string name="dash_playlists_empty_hint_subsonic">Tap sync to fetch your playlists</string>
     <string name="dash_playlists_empty_hint_jellyfin">Tap sync to fetch your Jellyfin playlists</string>
-    <string name="dash_no_folders_yet">No folders added yet</string>
     <string name="dash_quick_actions">Quick actions</string>
     <string name="dash_quick_actions_subsonic_subtitle">Manage Navidrome, Airsonic and other Subsonic-compatible servers.</string>
     <string name="dash_quick_actions_jellyfin_subtitle">Manage your Jellyfin server connection.</string>
@@ -249,12 +246,7 @@
     <string name="dash_status_library_sync_complete">Library sync complete</string>
     <string name="dash_song_count">%1$d songs</string>
     <string name="cd_sync">Sync</string>
-    <string name="cd_sync_all">Sync all</string>
     <string name="cd_logout">Log out</string>
-    <string name="cd_sync_all_playlists">Sync all playlists</string>
-    <string name="error_with_message_format">Error: %1$s</string>
-    <string name="sync_status_syncing_ellipsis">Syncing…</string>
-    <string name="cd_user_avatar">User avatar</string>
     <string name="toast_playlist_created">Playlist created successfully</string>
     <string name="toast_added_to_queue">Added to queue</string>
     <string name="toast_playing_next">Playing next</string>

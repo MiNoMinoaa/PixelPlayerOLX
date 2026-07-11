@@ -33,7 +33,7 @@ class DailyMixManager @Inject constructor(
     private val fileLock = Any()
     private val statsType = object : TypeToken<MutableMap<String, SongEngagementStats>>() {}.type
 
-    // P2-2: Async migration scope — migration runs on IO without blocking the main thread.
+    // Migration runs on IO without blocking the main thread.
     private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     // Deferred result: null if no migration needed, completes when done.
@@ -49,7 +49,7 @@ class DailyMixManager @Inject constructor(
     )
 
     init {
-        // P2-2: Launch migration asynchronously — does NOT block the calling thread.
+        // Launch migration asynchronously — does not block the calling thread.
         // Any method that needs migrated data should call migrationDeferred.await() first.
         migrationDeferred = managerScope.async {
             migrateLegacyDataIfNeeded()
@@ -59,7 +59,7 @@ class DailyMixManager @Inject constructor(
     /**
      * Migrates engagements from legacy JSON file to Room database.
      * This runs once on startup if the legacy file exists.
-     * P2-2: This is now a suspend fun running on an IO coroutine, so no runBlocking needed.
+     * Suspend fun running on an IO coroutine, so no runBlocking needed.
      * The synchronized block only guards the file read (no suspension points inside).
      */
     private suspend fun migrateLegacyDataIfNeeded() {
@@ -109,7 +109,7 @@ class DailyMixManager @Inject constructor(
 
     /**
      * Reads engagements from Room database.
-     * P2-2: Awaits migration completion before querying, ensuring data consistency
+     * Awaits migration completion before querying, ensuring data consistency
      * without blocking any thread at startup.
      */
     private suspend fun readEngagements(): Map<String, SongEngagementStats> {

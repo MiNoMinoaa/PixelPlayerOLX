@@ -112,7 +112,6 @@ fun DailyMixScreen(
     val systemNavBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val bottomBarHeightDp = resolveNavBarOccupiedHeight(systemNavBarInset, navBarCompactMode)
     var showPlaylistBottomSheet by remember { mutableStateOf(false) }
-    val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
     val favoriteSongIds by playerViewModel.favoriteSongIds.collectAsStateWithLifecycle()
     val selectedSongForInfo by playerViewModel.selectedSongForInfo.collectAsStateWithLifecycle()
 
@@ -252,7 +251,7 @@ fun DailyMixScreen(
                             onClick = {
                                 if (dailyMixSongs.isNotEmpty()) {
                                     playerViewModel.playSongs(dailyMixSongs, dailyMixSongs.first(), dailyMixTitle)
-                                    if (isShuffleEnabled) playerViewModel.toggleShuffle() // Disable shuffle if it was active
+                                    if (isShuffleEnabled) playerViewModel.toggleShuffle()
                                 }
                             },
                             modifier = Modifier
@@ -305,7 +304,7 @@ fun DailyMixScreen(
                         modifier = Modifier
                             .padding(horizontal = 16.dp),
                         song = song,
-                        isCurrentSong = stablePlayerState.currentSong?.id == song.id,
+                        isCurrentSong = currentSongId == song.id,
                         isPlaying = currentSongId == song.id && isPlaying,
                         onClick = { playerViewModel.showAndPlaySong(song, dailyMixSongs, dailyMixTitle, isVoluntaryPlay = false) },
                         onMoreOptionsClick = {

@@ -425,20 +425,6 @@ private fun ExpressiveRecentlyPlayedHeader(
                 .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.Bottom
         ) {
-//            Surface(
-//                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.88f),
-//                shape = RoundedCornerShape(50),
-//                tonalElevation = 0.dp
-//            ) {
-//                Text(
-//                    text = "LIVE HISTORY · ${selectedRange.displayName.uppercase()}",
-//                    style = MaterialTheme.typography.labelMedium,
-//                    fontWeight = FontWeight.SemiBold,
-//                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-//                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
-//                )
-//            }
-
             Spacer(modifier = Modifier.height(10.dp))
 
             Text(

@@ -76,29 +76,11 @@ class ConnectivityStateHolder @Inject constructor(
 
     private val _bluetoothAudioDevices = MutableStateFlow<List<String>>(emptyList())
     val bluetoothAudioDevices: StateFlow<List<String>> = _bluetoothAudioDevices.asStateFlow()
-    
-    // Offline Barrier Event
-    // Event to signal that playback was blocked due to offline status
-    // Using extraBufferCapacity to ensure the event isn't lost if no collectors are immediately suspended
-    private val _offlinePlaybackBlocked = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST)
-    val offlinePlaybackBlocked: SharedFlow<Unit> = _offlinePlaybackBlocked.asSharedFlow()
-    
-    fun triggerOfflineBlockedEvent() {
-        _offlinePlaybackBlocked.tryEmit(Unit)
-    }
+
 
     /**
      * Manually refresh local connection info (e.g. WiFi SSID).
      */
-    fun refreshLocalConnectionInfo(refreshBluetoothDevices: Boolean = false) {
-        updateWifiInfo()
-        if (refreshBluetoothDevices) {
-            refreshBluetoothAudioDevices()
-        } else {
-            updateAudioDevices()
-        }
-    }
-
     // System services
     private val connectivityManager: ConnectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -331,7 +313,7 @@ class ConnectivityStateHolder @Inject constructor(
             ) {
                 val name = device.productName?.toString()?.trim().orEmpty()
                 if (name.isNotEmpty() && !isOwnBluetoothDeviceName(name, localDeviceNames)) {
-                    val address = device.address?.trim().orEmpty().takeIf { it.isNotEmpty() }
+                    val address = device.address.trim().takeIf { it.isNotEmpty() }
                     val key = bluetoothDeviceKey(address, name)
                     connectedDevices[key] = BluetoothAudioDeviceState(
                         name = name,
@@ -359,19 +341,6 @@ class ConnectivityStateHolder @Inject constructor(
         }
 
         return connectedDevices.values.toList()
-    }
-
-    private fun refreshBluetoothAudioDevices() {
-        discoveredBluetoothAudioDevices.clear()
-        updateAudioDevices()
-
-        val adapter = bluetoothAdapter ?: return
-        if (!canStartBluetoothDiscovery()) return
-
-        if (isBluetoothDiscoveryActive(adapter)) {
-            cancelBluetoothDiscovery(adapter)
-        }
-        startBluetoothDiscovery(adapter)
     }
 
     private fun sanitizeBluetoothAudioDeviceState(
@@ -430,17 +399,6 @@ class ConnectivityStateHolder @Inject constructor(
 
     private fun hasFineLocationPermission(): Boolean {
         return ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-    }
-
-    private fun hasBluetoothDiscoveryLocationPermission(): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ||
-            hasFineLocationPermission()
-    }
-
-    private fun canStartBluetoothDiscovery(): Boolean {
-        return _isBluetoothEnabled.value &&
-            hasBluetoothScanPermission() &&
-            hasBluetoothDiscoveryLocationPermission()
     }
 
     private fun BluetoothAudioDeviceState.uniqueKey(): String {
@@ -543,13 +501,6 @@ class ConnectivityStateHolder @Inject constructor(
         if (!hasBluetoothScanPermission()) return
 
         runCatching { adapter.cancelDiscovery() }
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun startBluetoothDiscovery(adapter: BluetoothAdapter) {
-        if (!hasBluetoothScanPermission()) return
-
-        runCatching { adapter.startDiscovery() }
     }
 
     private inline fun <T> safeBluetoothCall(defaultValue: T, block: () -> T): T {

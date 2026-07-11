@@ -1033,7 +1033,6 @@ class MusicService : MediaLibraryService() {
         playbackSnapshotPersistJob?.cancel()
         mediaSessionButtonRefreshJob?.cancel()
         followUpMediaSessionUiRefreshJob?.cancel()
-        followUpWidgetUpdateJob?.cancel()
         debouncedWidgetUpdateJob?.cancel()
         unregisterHeadsetReconnectMonitor()
         replayGainJob?.cancel()
@@ -1820,7 +1819,6 @@ class MusicService : MediaLibraryService() {
 
     // --- WIDGET AND DATA UPDATE LOGIC ---
     private var debouncedWidgetUpdateJob: Job? = null
-    private var followUpWidgetUpdateJob: Job? = null
     private var followUpMediaSessionUiRefreshJob: Job? = null
     private var mediaSessionButtonRefreshJob: Job? = null
     private var lastAppliedMediaButtonSignature: String? = null
@@ -1838,15 +1836,6 @@ class MusicService : MediaLibraryService() {
                 delay(debounceMs)
             }
             processWidgetUpdateInternal()
-        }
-    }
-
-    private fun requestWidgetRefreshWithFollowUp() {
-        requestWidgetFullUpdate(force = true)
-        followUpWidgetUpdateJob?.cancel()
-        followUpWidgetUpdateJob = serviceScope.launch {
-            delay(250L)
-            requestWidgetFullUpdate(force = true)
         }
     }
 
@@ -2045,14 +2034,6 @@ class MusicService : MediaLibraryService() {
     private var cachedWidgetArtBytes: ByteArray? = null
     private var cachedWidgetArtLoadFailureKey: String? = null
     private var cachedWidgetArtLoadFailureAtMs: Long = 0L
-
-    private fun invalidateCachedWidgetArtwork() {
-        cachedWidgetArtSourceKey = null
-        cachedWidgetArtResolvedUri = null
-        cachedWidgetArtBytes = null
-        cachedWidgetArtLoadFailureKey = null
-        cachedWidgetArtLoadFailureAtMs = 0L
-    }
 
     private suspend fun getAlbumArtForWidget(
         mediaId: String?,
@@ -2435,7 +2416,6 @@ class MusicService : MediaLibraryService() {
         isPlaybackUnloadInProgress = true
         followUpMediaSessionUiRefreshJob?.cancel()
         mediaSessionButtonRefreshJob?.cancel()
-        followUpWidgetUpdateJob?.cancel()
         debouncedWidgetUpdateJob?.cancel()
         playbackSnapshotPersistJob?.cancel()
 

@@ -59,13 +59,8 @@
 
 # Mantener clases de datos y sus miembros para evitar que R8 Full elimine campos
 -keepclassmembers class com.lostf1sh.pixelplayeross.data.model.** { *; }
--keepclassmembers class com.lostf1sh.pixelplayeross.domain.model.** { *; }
 
 -keepattributes Signature, InnerClasses, EnclosingMethod, AnnotationDefault, *Annotation*
-
-# Cast framework classes loaded via manifest/reflective entry points.
--keep class com.lostf1sh.pixelplayeross.data.service.cast.CastOptionsProvider { *; }
--keep class * implements com.google.android.gms.cast.framework.OptionsProvider
 
 # Gson generic type capture for backup/restore in release builds.
 -keep class com.google.gson.reflect.TypeToken { *; }

@@ -159,8 +159,6 @@ private data class ProjectLink(
     val url: String,
 )
 
-// AboutTopBar removed, replaced by CollapsibleCommonTopBar
-
 @androidx.annotation.OptIn(UnstableApi::class)
 @Suppress("UNUSED_PARAMETER")
 @Composable

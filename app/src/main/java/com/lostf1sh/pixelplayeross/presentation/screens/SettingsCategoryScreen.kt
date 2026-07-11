@@ -104,7 +104,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -169,6 +168,7 @@ import com.lostf1sh.pixelplayeross.presentation.viewmodel.LyricsRefreshProgress
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.PlayerViewModel
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.SettingsViewModel
 import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
+import com.lostf1sh.pixelplayeross.presentation.components.rememberModalSheetState
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -184,7 +184,6 @@ fun SettingsCategoryScreen(
     val category = SettingsCategory.fromId(categoryId) ?: return
     val context = LocalContext.current
     
-    // State Collection (Duplicated from SettingsScreen for now to ensure functionality)
     val uiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
     val playbackSpeed by settingsViewModel.playbackSpeed.collectAsStateWithLifecycle()
     val currentPath by settingsViewModel.currentPath.collectAsStateWithLifecycle()
@@ -267,7 +266,7 @@ fun SettingsCategoryScreen(
     var paletteBulkCompletedCount by remember { mutableStateOf(0) }
     var paletteBulkTotalCount by remember { mutableStateOf(0) }
     var paletteSongSearchQuery by remember { mutableStateOf("") }
-    val paletteRegenerateSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val paletteRegenerateSheetState = rememberModalSheetState(skipPartiallyExpanded = true)
     val isAnyPaletteRegenerateRunning = isPaletteRegenerateRunning || isPaletteBulkRegenerateRunning
     val filteredPaletteSongs = remember(paletteRegenerateTargets, paletteSongSearchQuery) {
         val query = paletteSongSearchQuery.trim()
@@ -374,7 +373,6 @@ fun SettingsCategoryScreen(
             )
         ) {
             item {
-               // Use a simple Column for now, or ExpressiveSettingsGroup if preferred strictly for items
                Column(
                     modifier = Modifier.background(Color.Transparent)
                ) {
@@ -978,7 +976,6 @@ fun SettingsCategoryScreen(
             }
 
             item {
-                // Spacer handled by contentPadding
                 Spacer(Modifier.height(1.dp))
             }
         }

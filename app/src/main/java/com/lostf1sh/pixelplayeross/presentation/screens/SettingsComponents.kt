@@ -362,7 +362,6 @@ fun ExpressiveSettingsGroup(
         modifier = modifier
             .clip(RoundedCornerShape(24.dp)) // Large corners for the group
             .background(Color.Transparent),
-        //verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         content()
     }

@@ -295,7 +295,7 @@ class SongMetadataEditor(
             // Write permission is now handled upstream via MediaStore.createWriteRequest()
             // before this method is called. No File.canWrite() check needed.
 
-            val finalFilePath = filePath ?: ""
+            val finalFilePath = filePath
             val extension = finalFilePath.substringAfterLast('.', "").lowercase(Locale.ROOT)
             val detectedContainer = if (finalFilePath.isNotBlank() && File(finalFilePath).exists()) {
                 detectContainerFormat(finalFilePath)
@@ -1158,40 +1158,6 @@ class SongMetadataEditor(
         } catch (e: Exception) {
             Timber.tag(TAG).e("getFilePathFromMediaStore: Error querying MediaStore: ${e.message}")
             null
-        }
-    }
-    private fun saveCoverArtPreview(songId: Long, coverArtUpdate: CoverArtUpdate): String? {
-        return try {
-            val extension = imageExtensionFromMimeType(coverArtUpdate.mimeType) ?: "jpg"
-            val directory = File(context.cacheDir, "").apply {
-                if (!exists()) mkdirs()
-            }
-
-            // Clean up old cover art files for this song
-            directory.listFiles { file ->
-                file.name.startsWith("song_art_${songId}")
-            }?.forEach { it.delete() }
-
-            // Save new cover art
-            val file = File(directory, "song_art_${songId}_${System.currentTimeMillis()}.$extension")
-            FileOutputStream(file).use { outputStream ->
-                outputStream.write(coverArtUpdate.bytes)
-            }
-
-            file.toUri().toString()
-        } catch (e: Exception) {
-            Timber.e(e, "Error saving cover art preview for songId: $songId")
-            null
-        }
-    }
-
-    private fun imageExtensionFromMimeType(mimeType: String): String? {
-        return when (mimeType) {
-            "image/jpeg", "image/jpg" -> "jpg"
-            "image/png" -> "png"
-            "image/webp" -> "webp"
-            "image/gif" -> "gif"
-            else -> null
         }
     }
 }

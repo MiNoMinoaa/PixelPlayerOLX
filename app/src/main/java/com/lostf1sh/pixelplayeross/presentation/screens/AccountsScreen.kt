@@ -613,7 +613,7 @@ private fun ServiceIcon(service: ExternalServiceAccount, tint: Color, modifier: 
                 tint = Color.Unspecified,
                 modifier = Modifier
                     .size(32.dp)
-                    .offset(x = 16.dp) // Closer overlap offset (was 24dp)
+                    .offset(x = 16.dp)
             )
         }
     } else if (service == ExternalServiceAccount.JELLYFIN) {

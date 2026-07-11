@@ -6,5 +6,4 @@
     <string name="presentation_batch_h_mashup_speed_multiplier">x%1$.2f</string>
     <!-- Beta info sheet: glyph in badge -->
     <string name="presentation_batch_h_beta_glyph">β</string>
-    <string name="presentation_batch_h_transfer_bytes_progress">%1$s / %2$s</string>
 </resources>

@@ -50,8 +50,6 @@
     <string name="song_field_album_artist">Album artist</string>
     <string name="song_field_genre">Genre</string>
     <string name="song_field_composer">Composer</string>
-    <string name="action_try_again">Try again</string>
-    <string name="action_apply_changes">Apply changes</string>
 
     <!-- Edit song metadata sheet -->
     <string name="edit_song_info_dialog_title">Editing song metadata</string>
@@ -92,13 +90,9 @@
     <string name="cd_add_to_playlist">Add to playlist</string>
     <string name="action_add_to_queue">Add to queue</string>
     <string name="action_queue_next">Next</string>
-    <string name="song_info_transferring_percent">Transferring %1$d%%</string>
-    <string name="song_info_transfer_in_progress">Transfer in progress</string>
     <string name="song_info_set_as_short">Set as</string>
     <string name="song_info_choose_tone">Set as sound</string>
     <string name="cd_choose_song_tone">Choose how to use this song as a system sound</string>
-    <string name="song_info_set_ringtone">Set as ringtone</string>
-    <string name="cd_set_song_as_ringtone">Set song as ringtone</string>
     <string name="song_info_tone_picker_title">Use this song as</string>
     <string name="song_info_tone_picker_body">Choose where PixelPlayerOSS should install this sound.</string>
     <string name="song_info_tone_ringtone_title">Phone ringtone</string>
@@ -116,7 +110,6 @@
     <string name="song_info_tone_alarm_label">alarm sound</string>
     <string name="song_info_ringtone_permission_prompt">Enable Modify system settings, then return to PixelPlayerOSS to finish automatically.</string>
     <string name="song_info_ringtone_permission_missing">Modify system settings was not enabled.</string>
-    <string name="song_info_ringtone_success">Set \"%1$s\" as your ringtone</string>
     <string name="song_info_ringtone_local_only">Only local songs can be used as ringtones.</string>
     <string name="song_info_ringtone_missing_file">Couldn\'t prepare this audio file for ringtone.</string>
     <string name="song_info_ringtone_failed">Couldn\'t set ringtone: %1$s</string>
@@ -175,4 +168,12 @@
     <string name="cd_drag_handle">Drag handle</string>
     <string name="cd_reset">Reset</string>
     <string name="action_done">Done</string>
+    <string name="cd_play_selected_albums">Play selected albums</string>
+    <string name="cd_play_selected_albums_next">Play selected albums next</string>
+    <string name="cd_add_selected_albums_to_queue">Add selected albums to queue</string>
+    <string name="playlist_songs_added_toast">Songs added to playlists</string>
+    <string name="playlist_created_songs_added_toast">Playlist created and songs added</string>
+    <string name="playlist_saved_toast">Saved</string>
+    <string name="folder_state_excluded">Excluded</string>
+    <string name="folder_state_included">Included</string>
 </resources>

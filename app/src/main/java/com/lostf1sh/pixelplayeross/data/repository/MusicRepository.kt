@@ -192,7 +192,6 @@ interface MusicRepository {
      * Returns the filtered list of artists.
      * @return Flow that emits a complete list of Artist objects.
      */
-    //fun getArtists(): Flow<List<Artist>>
 
     /**
      * Returns the list of songs for a specific album (NOT paginated, for the playback queue).
@@ -251,7 +250,7 @@ interface MusicRepository {
      * @param genreId The genre ID (e.g., "pop", "rock").
      * @return Flow that emits a list of Song objects (simulated for this genre).
      */
-    fun getMusicByGenre(genreId: String): Flow<List<Song>> // Changed to Flow
+    fun getMusicByGenre(genreId: String): Flow<List<Song>>
 
     /**
      * Toggles the favorite status of a song.

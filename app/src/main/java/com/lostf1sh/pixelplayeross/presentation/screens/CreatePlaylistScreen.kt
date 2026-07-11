@@ -123,7 +123,6 @@ import com.lostf1sh.pixelplayeross.data.model.Song
 import com.lostf1sh.pixelplayeross.presentation.components.ImageCropView
 import com.lostf1sh.pixelplayeross.data.model.PlaylistShapeType
 import com.lostf1sh.pixelplayeross.data.model.SmartPlaylistRule
-// import com.lostf1sh.pixelplayeross.presentation.screens.ShapeType // Removed local enum
 import com.lostf1sh.pixelplayeross.presentation.components.SongPickerSelectionPane
 import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
 import androidx.compose.material3.Slider
@@ -232,8 +231,6 @@ fun CreatePlaylistDialog(
         }
     }
 }
-
-// Enum removed, using com.lostf1sh.pixelplayeross.data.model.PlaylistShapeType
 
 @Composable
 fun EditPlaylistDialog(
@@ -1560,7 +1557,6 @@ fun ExpressiveButtonGroup(
         modifier = modifier
             .clip(CircleShape)
             .background(Color.Transparent, CircleShape), // Optional container background
-            //.padding(1.dp), // Check if padding is needed
         horizontalArrangement = Arrangement.spacedBy(4.dp) // Gap between buttons
     ) {
         items.forEachIndexed { index, title ->

@@ -70,7 +70,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -133,6 +132,7 @@ import com.lostf1sh.pixelplayeross.data.model.isSmartPlaylist
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import com.lostf1sh.pixelplayeross.presentation.components.rememberModalSheetState
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(
@@ -572,7 +572,6 @@ fun PlaylistDetailScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .weight(1f)
-                            //.padding(horizontal = 10.dp)
                     ) {
                         LazyColumn(
                             state = listState,
@@ -721,18 +720,13 @@ fun PlaylistDetailScreen(
         )
     }
     if (showPlaylistOptionsSheet && !isFolderPlaylist) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val sheetState = rememberModalSheetState(skipPartiallyExpanded = true)
 
         ModalBottomSheet(
             onDismissRequest = { showPlaylistOptionsSheet = false },
             sheetState = sheetState,
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             tonalElevation = 4.dp,
-//            dragHandle = {
-//                SheetDefaults.DragHandle(
-//                    color = MaterialTheme.colorScheme.onSurfaceVariant
-//                )
-//            }
         ) {
             Column(
                 modifier = Modifier

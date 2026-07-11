@@ -214,9 +214,7 @@ fun StatsScreen(
     val isRefreshingFromViewModel by rememberUpdatedState(uiState.isRefreshing)
 
     val onPullRefresh: () -> Unit = {
-        if (hasPendingPullRefresh || uiState.isLoading) {
-            Unit
-        } else {
+        if (!hasPendingPullRefresh && !uiState.isLoading) {
             hasPendingPullRefresh = true
             isPullRefreshAnimating = true
             isPullRefreshMinDelayActive = true
@@ -387,8 +385,6 @@ fun StatsScreen(
         }
     }
 }
-
-// StatsTopBar removed, replaced by CollapsibleCommonTopBar
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -648,7 +644,6 @@ private fun RangeTabsHeader(
             .fillMaxWidth()
             .zIndex(1f),
         color = Color.Transparent,
-        //shadowElevation = 6.dp
     ) {
         PrimaryScrollableTabRow(
             modifier = if (indicatorSpacing > 0.dp) Modifier.padding(bottom = indicatorSpacing) else Modifier,

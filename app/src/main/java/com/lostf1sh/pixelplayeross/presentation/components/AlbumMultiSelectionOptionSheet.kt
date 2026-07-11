@@ -32,7 +32,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,7 +56,7 @@ fun AlbumMultiSelectionOptionSheet(
     onPlayNext: () -> Unit,
     onAddToQueue: () -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberModalSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -129,10 +128,10 @@ fun AlbumMultiSelectionOptionSheet(
                 icon = {
                     Icon(
                         imageVector = Icons.Rounded.PlayArrow,
-                        contentDescription = "Play selected albums"
+                        contentDescription = stringResource(R.string.cd_play_selected_albums)
                     )
                 },
-                text = "Play"
+                text = stringResource(R.string.play_playback)
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -159,10 +158,10 @@ fun AlbumMultiSelectionOptionSheet(
                     icon = {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.QueueMusic,
-                            contentDescription = "Play selected albums next"
+                            contentDescription = stringResource(R.string.cd_play_selected_albums_next)
                         )
                     },
-                    text = "Next"
+                    text = stringResource(R.string.action_queue_next)
                 )
 
                 AlbumSelectionActionButton(
@@ -180,10 +179,10 @@ fun AlbumMultiSelectionOptionSheet(
                     icon = {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
-                            contentDescription = "Add selected albums to queue"
+                            contentDescription = stringResource(R.string.cd_add_selected_albums_to_queue)
                         )
                     },
-                    text = "Add to Queue"
+                    text = stringResource(R.string.action_add_to_queue)
                 )
             }
 

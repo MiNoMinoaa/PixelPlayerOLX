@@ -380,14 +380,6 @@ private fun MiniFullPlayerSkeletonPreview(
                     )
                 }
 
-//                Box(
-//                    modifier = Modifier
-//                        .fillMaxWidth(0.5f)
-//                        .height(scaled(12.dp))
-//                        .clip(RoundedCornerShape(scaled(6.dp)))
-//                        .background(placeholderOnColor)
-//                )
-
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()

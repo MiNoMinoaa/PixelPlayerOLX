@@ -57,9 +57,4 @@
     <string name="presentation_batch_e_cd_hidden">Hidden</string>
 
     <!-- DailyMixMenu -->
-    <string name="presentation_batch_e_daily_mix_how_title">How your Daily Mix is built</string>
-    <string name="presentation_batch_e_daily_mix_how_body">Your Daily Mix is built from your favorite and most-played songs. We also add tracks from artists and genres you like so you can discover new music.</string>
-    <string name="presentation_batch_e_daily_mix_cost_hint">We use a small sample to keep costs low</string>
-    <string name="presentation_batch_e_daily_mix_updating">Updating…</string>
-    <string name="presentation_batch_e_daily_mix_update">Update Daily Mix</string>
 </resources>

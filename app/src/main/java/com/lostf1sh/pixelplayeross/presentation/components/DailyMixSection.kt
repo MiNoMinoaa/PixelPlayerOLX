@@ -287,7 +287,6 @@ fun DailyMixHeader(thumbnails: ImmutableList<Song>) {
                     val modifier = shapeConditionalModifier(index)
                     Box(
                         modifier = modifier
-                            //.size(48.dp)
                             .clip(threeShapeSwitch(index))
                             .border(2.dp, MaterialTheme.colorScheme.surface, threeShapeSwitch(index))
                     ) {

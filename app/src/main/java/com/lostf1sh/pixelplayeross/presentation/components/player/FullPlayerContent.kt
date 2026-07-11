@@ -55,8 +55,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LoadingIndicator
-// import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults // Removed
-// import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState // Removed
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -64,7 +62,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -146,6 +143,7 @@ import com.lostf1sh.pixelplayeross.presentation.components.ToggleSegmentButton
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.withContext
+import com.lostf1sh.pixelplayeross.presentation.components.rememberModalSheetState
 
 private const val PREVIOUS_TRACK_RESTART_THRESHOLD_MS = 10_000L
 private const val SKIP_COMMAND_GUARD_MS = 96L
@@ -856,7 +854,7 @@ fun FullPlayerContent(
         )
     }
 
-    val artistPickerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val artistPickerSheetState = rememberModalSheetState(skipPartiallyExpanded = true)
     if (showArtistPicker && currentSongArtists.isNotEmpty()) {
         PlayerArtistPickerBottomSheet(
             song = song,

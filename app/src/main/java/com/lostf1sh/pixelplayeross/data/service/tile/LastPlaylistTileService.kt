@@ -31,7 +31,7 @@ import kotlinx.coroutines.withContext
  * Reads the last playlist ID from DataStore and fires ACTION_OPEN_PLAYLIST to MainActivity.
  * Works whether the app is open or not.
  *
- * P0-2: Uses coroutines instead of runBlocking to avoid blocking the binder thread
+ * Uses coroutines instead of runBlocking to avoid blocking the binder thread
  * (which could cause ANR when the user opens the Quick Settings panel).
  */
 @RequiresApi(Build.VERSION_CODES.N)
@@ -80,7 +80,6 @@ class LastPlaylistTileService : TileService() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     override fun onStartListening() {
-        // P0-2: Read DataStore without blocking the binder thread
         serviceScope.launch(Dispatchers.IO) {
             val lastPlaylistId = resolveLaunchablePlaylistId()
             withContext(Dispatchers.Main) {
@@ -94,7 +93,6 @@ class LastPlaylistTileService : TileService() {
     }
 
     override fun onClick() {
-        // P0-2: Read DataStore without blocking the binder thread
         serviceScope.launch(Dispatchers.IO) {
             val playlistId = resolveLaunchablePlaylistId()
             withContext(Dispatchers.Main) {

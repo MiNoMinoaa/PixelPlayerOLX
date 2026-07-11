@@ -6,15 +6,12 @@
     <string name="presentation_batch_b_accounts_connected_hero_body">Manage linked providers and keep each integration under your control.</string>
     <string name="presentation_batch_b_accounts_stat_active">Active</string>
     <string name="presentation_batch_b_accounts_stat_available">Available</string>
-    <string name="presentation_batch_b_accounts_status_soon">Soon</string>
     <string name="presentation_batch_b_accounts_status_connected">Connected</string>
     <string name="presentation_batch_b_accounts_open_service">Open Service</string>
-    <string name="presentation_batch_b_accounts_coming_soon_short">Coming soon</string>
     <string name="presentation_batch_b_accounts_logging_out">Logging out…</string>
     <string name="presentation_batch_b_accounts_no_linked_title">No linked accounts yet</string>
     <string name="presentation_batch_b_accounts_no_linked_body">Connect a provider to manage it from this screen.</string>
     <string name="presentation_batch_b_accounts_connect_service">Connect %1$s</string>
-    <string name="presentation_batch_b_accounts_service_paren_coming_soon">%1$s (Coming soon)</string>
 
     <!-- PlaylistDetailScreen -->
     <string name="presentation_batch_b_sort_songs">Sort Songs</string>

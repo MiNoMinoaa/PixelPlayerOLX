@@ -78,8 +78,8 @@ data class SongEntity(
     @ColumnInfo(name = "album_art_uri_string") val albumArtUriString: String?,
     @ColumnInfo(name = "duration") val duration: Long,
     @ColumnInfo(name = "genre") val genre: String?,
-    @ColumnInfo(name = "file_path") val filePath: String, // Added filePath
-    @ColumnInfo(name = "parent_directory_path") val parentDirectoryPath: String, // Added for directory filtering
+    @ColumnInfo(name = "file_path") val filePath: String,
+    @ColumnInfo(name = "parent_directory_path") val parentDirectoryPath: String,
     @ColumnInfo(name = "is_favorite", defaultValue = "0") val isFavorite: Boolean = false,
     @ColumnInfo(name = "lyrics", defaultValue = "null") val lyrics: String? = null,
     @ColumnInfo(name = "track_number", defaultValue = "0") val trackNumber: Int = 0,

@@ -281,7 +281,7 @@ fun QuickFillContent(
                     ),
                     shape = CircleShape,
                     modifier = Modifier
-                        .height(44.dp) // Removed padding(end=8.dp) for symmetry
+                        .height(44.dp)
                 ) {
                     Text(
                         text = if (step == 0) stringResource(R.string.cd_next_step)

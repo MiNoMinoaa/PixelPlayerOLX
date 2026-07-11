@@ -20,7 +20,6 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.util.lerp
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.compose.animation.AnimatedVisibility
@@ -448,7 +447,7 @@ fun LyricsSheet(
     var immersiveMode by remember { mutableStateOf(false) }
     var lastInteractionTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var showMoreSheet by remember { mutableStateOf(false) }
-    val moreSheetState = rememberModalBottomSheetState(
+    val moreSheetState = rememberModalSheetState(
         skipPartiallyExpanded = true
     )
 
@@ -1363,23 +1362,10 @@ fun SyncedLyricsList(
                                 .padding(vertical = 8.dp)
                         )
                     }
-// 16 dp Spacer removed to allow dynamic padding in LyricLineRow
                 }
                 footer()
             }
 
-//            if (metrics.zoneHeight > 0.dp) {
-//                Box(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .offset(y = metrics.topPadding)
-//                        .height(metrics.zoneHeight)
-//                        .align(Alignment.TopCenter)
-//                        .clip(RoundedCornerShape(18.dp))
-//                        .background(accentColor.copy(alpha = 0.12f))
-//                        .testTag("synced_highlight_zone")
-//                )
-//            }
         }
     }
 }

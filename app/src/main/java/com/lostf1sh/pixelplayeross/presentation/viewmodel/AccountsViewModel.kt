@@ -64,8 +64,8 @@ class AccountsViewModel @Inject constructor(
         ) { it.toList() },
         loggingOutServices
     ) { states, activeLogouts ->
-        val (navidromeConnected, navidromePlaylistCount) = states[0] as Pair<Boolean, Int>
-        val (jellyfinConnected, jellyfinPlaylistCount) = states[1] as Pair<Boolean, Int>
+        val (navidromeConnected, navidromePlaylistCount) = states[0]
+        val (jellyfinConnected, jellyfinPlaylistCount) = states[1]
 
         val connectedAccounts = buildList {
             if (navidromeConnected) {

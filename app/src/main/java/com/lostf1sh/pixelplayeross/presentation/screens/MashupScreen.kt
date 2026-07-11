@@ -36,7 +36,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
@@ -58,6 +57,7 @@ import com.lostf1sh.pixelplayeross.presentation.viewmodel.DeckState
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.MashupViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
+import com.lostf1sh.pixelplayeross.presentation.components.rememberModalSheetState
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,7 +66,7 @@ fun MashupScreen(
     mashupViewModel: MashupViewModel = hiltViewModel()
 ) {
     val mashupUiState by mashupViewModel.uiState.collectAsStateWithLifecycle()
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalSheetState()
     val scope = rememberCoroutineScope()
 
     Scaffold(

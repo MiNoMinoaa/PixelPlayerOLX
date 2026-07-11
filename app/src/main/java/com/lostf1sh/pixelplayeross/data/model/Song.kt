@@ -20,7 +20,7 @@ data class Song(
     val album: String,
     val albumId: Long,
     val albumArtist: String? = null, // Album artist from metadata
-    val path: String, // Added for direct file system access
+    val path: String,
     val contentUriString: String,
     val albumArtUriString: String?,
     val duration: Long,

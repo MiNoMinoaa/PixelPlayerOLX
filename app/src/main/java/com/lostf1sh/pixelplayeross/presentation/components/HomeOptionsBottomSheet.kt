@@ -22,7 +22,7 @@ fun HomeOptionsBottomSheet(
 ) {
     Column(modifier.padding(bottom = 32.dp)) { // Padding for gesture bar
         ListItem(
-            headlineContent = { Text(stringResource(R.string.home_option_dj_mashup)) },
+            content = { Text(stringResource(R.string.home_option_dj_mashup)) },
             leadingContent = {
                 Icon(
                     painter = painterResource(id = R.drawable.rounded_instant_mix_24),

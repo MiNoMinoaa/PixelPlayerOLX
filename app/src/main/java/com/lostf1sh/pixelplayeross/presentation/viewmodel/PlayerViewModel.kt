@@ -138,21 +138,21 @@ private fun ImmutableList<Song>.asPersistentPlaybackQueue(): PersistentList<Song
 private fun ImmutableList<Song>.replaceSong(updatedSong: Song): ImmutableList<Song> {
     val index = indexOfFirst { it.id == updatedSong.id }
     if (index == -1) return this
-    return asPersistentPlaybackQueue().set(index, updatedSong)
+    return asPersistentPlaybackQueue().replacingAt(index, updatedSong)
 }
 
 private fun ImmutableList<Song>.removeSongById(songId: String): ImmutableList<Song> {
     val index = indexOfFirst { it.id == songId }
     if (index == -1) return this
-    return asPersistentPlaybackQueue().removeAt(index)
+    return asPersistentPlaybackQueue().removingAt(index)
 }
 
 private fun ImmutableList<Song>.moveSong(fromIndex: Int, toIndex: Int): ImmutableList<Song> {
     if (fromIndex == toIndex || fromIndex !in indices || toIndex !in indices) return this
     val movedSong = this[fromIndex]
     return asPersistentPlaybackQueue()
-        .removeAt(fromIndex)
-        .add(toIndex, movedSong)
+        .removingAt(fromIndex)
+        .addingAt(toIndex, movedSong)
 }
 
 private fun moveQueueIndex(index: Int, fromIndex: Int, toIndex: Int): Int {
@@ -292,12 +292,6 @@ class PlayerViewModel @Inject constructor(
             initialValue = persistentListOf()
         )
 
-    private val _showNoInternetDialog = MutableSharedFlow<Unit>(
-        extraBufferCapacity = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
-    val showNoInternetDialog: SharedFlow<Unit> = _showNoInternetDialog.asSharedFlow()
-
     val stablePlayerState: StateFlow<StablePlayerState> = playbackStateHolder.stablePlayerState
     val albumArtPaletteStyle: StateFlow<AlbumArtPaletteStyle> = themePreferencesRepository
         .albumArtPaletteStyleFlow
@@ -312,9 +306,6 @@ class PlayerViewModel @Inject constructor(
      */
     val currentPlaybackPosition: StateFlow<Long> = playbackStateHolder.currentPosition
     val playbackHistory = listeningStatsTracker.playbackHistory
-
-    // Removed: _masterAllSongs was a duplicate of libraryStateHolder.allSongs
-    // All reads now delegate to libraryStateHolder.allSongs
 
     // Lyrics load callback for LyricsStateHolder
     private val lyricsLoadCallback = object : LyricsLoadCallback {
@@ -375,13 +366,6 @@ class PlayerViewModel @Inject constructor(
             )
         }
         .cachedIn(viewModelScope)
-
-    private val offlinePlaybackObserverJob = viewModelScope.launch {
-        connectivityStateHolder.offlinePlaybackBlocked.collect {
-            Timber.w("Received offline blocked event. Showing dialog.")
-            _showNoInternetDialog.emit(Unit)
-        }
-    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val currentSongArtists: StateFlow<List<Artist>> = stablePlayerState
@@ -829,9 +813,6 @@ class PlayerViewModel @Inject constructor(
 
     // Connectivity is now managed by ConnectivityStateHolder
 
-    private val _trackVolume = MutableStateFlow(1.0f)
-    val trackVolume: StateFlow<Float> = _trackVolume.asStateFlow()
-
 
     @Inject
     lateinit var mediaMapper: com.lostf1sh.pixelplayeross.data.media.MediaMapper
@@ -956,14 +937,6 @@ class PlayerViewModel @Inject constructor(
                         lyricsStateHolder.loadLyricsForSong(hydratedSong, lyricsSourcePreference.value)
                     }
                 }
-        }
-    }
-
-    fun setTrackVolume(volume: Float) {
-        mediaController?.let {
-            val clampedVolume = volume.coerceIn(0f, 1f)
-            it.volume = clampedVolume
-            _trackVolume.value = clampedVolume
         }
     }
 
@@ -1518,10 +1491,6 @@ class PlayerViewModel @Inject constructor(
     }
 
     // Connectivity refresh delegated to ConnectivityStateHolder
-    fun refreshLocalConnectionInfo(refreshBluetoothDevices: Boolean = false) {
-        connectivityStateHolder.refreshLocalConnectionInfo(refreshBluetoothDevices)
-    }
-
     init {
         // Must pair with the Trace.endSection() at the bottom of this init block — an
         // unmatched endSection pops whatever section the caller had open on this thread.
@@ -2563,7 +2532,6 @@ class PlayerViewModel @Inject constructor(
     private fun setupMediaControllerListeners() {
         Trace.beginSection("PlayerViewModel.setupMediaControllerListeners")
         val playerCtrl = mediaController ?: return Trace.endSection()
-        _trackVolume.value = playerCtrl.volume
         playbackStateHolder.updateStablePlayerState {
             it.copy(
                 isShuffleEnabled = it.isShuffleEnabled,
@@ -2626,10 +2594,6 @@ class PlayerViewModel @Inject constructor(
                 viewModelScope.launch {
                     _toastEvents.emit(context.getString(R.string.player_error_skipping))
                 }
-            }
-
-            override fun onVolumeChanged(volume: Float) {
-                _trackVolume.value = volume
             }
 
             override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -2864,7 +2828,6 @@ class PlayerViewModel @Inject constructor(
 
             // Store the original order so we can "unshuffle" later if the user turns shuffle off
             queueStateHolder.setOriginalQueueOrder(validSongs)
-            queueStateHolder.saveOriginalQueueState(validSongs, queueName)
 
             // Check if the user wants shuffle to be persistent across different albums
             val isPersistent = userPreferencesRepository.persistentShuffleEnabledFlow.first()
@@ -2910,7 +2873,7 @@ class PlayerViewModel @Inject constructor(
         cancelPendingFullQueuePlayback()
         val requestToken = beginDirectPlaybackRequest()
         directPlaybackJob = viewModelScope.launch {
-            val result = queueStateHolder.prepareShuffledQueueSuspending(songsToPlay, queueName, startAtZero)
+            val result = queueStateHolder.prepareShuffledQueueSuspending(songsToPlay, startAtZero)
             throwIfDirectPlaybackRequestIsStale(requestToken)
             if (result == null) {
                 sendToast(context.getString(R.string.player_no_songs_to_shuffle))
@@ -3237,7 +3200,6 @@ class PlayerViewModel @Inject constructor(
         playbackStateHolder.toggleShuffle(
             currentSongs = currentQueue,
             currentSong = currentSong,
-            currentQueueSourceName = _playerUiState.value.currentQueueSourceName,
             updateQueueCallback = { newQueue ->
                 _playerUiState.update { it.copy(currentPlaybackQueue = newQueue.toPlaybackQueue()) }
             }
@@ -3454,7 +3416,7 @@ class PlayerViewModel @Inject constructor(
             try {
                 val resolvedSelection = resolveSelectedAlbumSongs(albums)
                 if (resolvedSelection.songs.isEmpty()) {
-                    _toastEvents.emit("No playable songs found in selected albums")
+                    _toastEvents.emit(context.getString(R.string.player_no_playable_songs_in_albums))
                     return@launch
                 }
 
@@ -3463,13 +3425,13 @@ class PlayerViewModel @Inject constructor(
                     .forEach(::addSongNextToQueue)
 
                 if (resolvedSelection.wasTrimmed) {
-                    _toastEvents.emit("Only the first $MAX_ALBUM_BATCH_SELECTION albums were added as next")
+                    _toastEvents.emit(context.getString(R.string.player_only_first_n_albums_next, MAX_ALBUM_BATCH_SELECTION))
                 } else {
-                    _toastEvents.emit("${resolvedSelection.albums.size} albums will play next")
+                    _toastEvents.emit(context.getString(R.string.player_albums_will_play_next_format, resolvedSelection.albums.size))
                 }
             } catch (e: Exception) {
                 Timber.tag("PlayerViewModel").e(e, "Error adding selected albums as next")
-                _toastEvents.emit("Could not add selected albums as next")
+                _toastEvents.emit(context.getString(R.string.player_could_not_add_albums_next))
             }
         }
     }
@@ -3481,26 +3443,22 @@ class PlayerViewModel @Inject constructor(
             try {
                 val resolvedSelection = resolveSelectedAlbumSongs(albums)
                 if (resolvedSelection.songs.isEmpty()) {
-                    _toastEvents.emit("No playable songs found in selected albums")
+                    _toastEvents.emit(context.getString(R.string.player_no_playable_songs_in_albums))
                     return@launch
                 }
 
                 resolvedSelection.songs.forEach(::addSongToQueue)
 
                 if (resolvedSelection.wasTrimmed) {
-                    _toastEvents.emit("Only the first $MAX_ALBUM_BATCH_SELECTION albums were added to queue")
+                    _toastEvents.emit(context.getString(R.string.player_only_first_n_albums_added_queue, MAX_ALBUM_BATCH_SELECTION))
                 } else {
-                    _toastEvents.emit("${resolvedSelection.albums.size} albums added to queue")
+                    _toastEvents.emit(context.getString(R.string.player_albums_added_to_queue_format, resolvedSelection.albums.size))
                 }
             } catch (e: Exception) {
                 Timber.tag("PlayerViewModel").e(e, "Error adding selected albums to queue")
-                _toastEvents.emit("Could not add selected albums to queue")
+                _toastEvents.emit(context.getString(R.string.player_could_not_add_albums_queue))
             }
         }
-    }
-
-    fun queueAndPlaySelectedAlbums(albums: List<Album>) {
-        playSelectedAlbums(albums)
     }
 
     /**
@@ -3575,9 +3533,7 @@ class PlayerViewModel @Inject constructor(
                 _toastEvents.emit(
                     context.getString(R.string.player_share_zip_failed_format, error.localizedMessage ?: ""),
                 )
-                println(
-                    "Failed to share: ${error.localizedMessage}"
-                )
+                Timber.tag("PlayerViewModel").e(error, "Failed to share selection as zip")
             }
         }
     }
@@ -4205,12 +4161,6 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
-    fun saveLastLibraryTabIndex(tabIndex: Int) {
-        viewModelScope.launch {
-            userPreferencesRepository.saveLastLibraryTabIndex(tabIndex)
-        }
-    }
-
     fun showSortingSheet() {
         libraryTabsStateHolder.showSortingSheet(_isSortingSheetVisible)
     }
@@ -4731,7 +4681,6 @@ class PlayerViewModel @Inject constructor(
             }
 
             // No need for full library sync - file, MediaStore, and local DB are already updated
-            // syncManager.sync() was removed to avoid unnecessary wait time
             _toastEvents.emit(context.getString(R.string.metadata_updated_successfully))
         } else {
             val errorMessage = result.getUserFriendlyErrorMessage()
@@ -4750,11 +4699,6 @@ class PlayerViewModel @Inject constructor(
 
         withContext(Dispatchers.IO) {
             albumArtThemeDao.deleteThemesByUris(uris)
-        }
-
-        uris.forEach { uri ->
-            // Cache invalidation delegated to ThemeStateHolder (if implemented) or relied on re-generation
-            // individualAlbumColorSchemes was removed.
         }
     }
 

@@ -123,20 +123,6 @@ class MultiSelectionStateHolder @Inject constructor() {
     }
 
     /**
-     * Removes a specific song from selection if it exists.
-     * Useful when a song is deleted from the library.
-     *
-     * @param songId The ID of the song to remove
-     */
-    fun removeFromSelection(songId: String) {
-        if (!_selectedSongIds.value.contains(songId)) return
-        
-        val currentList = _selectedSongs.value.filter { it.id != songId }
-        val currentIds = _selectedSongIds.value - songId
-        updateState(currentList, currentIds)
-    }
-
-    /**
      * Updates all state flows atomically.
      */
     private fun updateState(songs: List<Song>, ids: Set<String>) {

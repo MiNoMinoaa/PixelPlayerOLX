@@ -162,19 +162,6 @@ fun EditTransitionScreen(
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
                 )
             )
-        },
-        floatingActionButton = {
-//            if (!uiState.isLoading) {
-//                ExtendedFloatingActionButton(
-//                    modifier = Modifier.padding(),
-//                    onClick = { viewModel.saveSettings() },
-//                    icon = { Icon(Icons.Rounded.Save, contentDescription = null) },
-//                    text = { Text("Save changes") },
-//                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-//                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-//                    elevation = androidx.compose.material3.FloatingActionButtonDefaults.elevation(0.dp) // Flat style for consistency
-//                )
-//            }
         }
     ) { paddingValues ->
         if (uiState.isLoading) {
@@ -388,7 +375,6 @@ private fun ExpressiveMorphingToggle(
             .fillMaxWidth()
             .height(56.dp)
             .clip(shape)
-            //.border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .padding(4.dp)
     ) {
@@ -498,7 +484,6 @@ private fun TransitionDurationSection(
                     modifier = Modifier
                         .size(height = 36.dp, width = 8.dp)
                         .background(MaterialTheme.colorScheme.primary, CircleShape)
-                        //.border(4.dp, MaterialTheme.colorScheme.surfaceContainerLow, CircleShape)
                 )
             }
         )
@@ -579,11 +564,6 @@ private fun CrossfadeVisualizer(durationMs: Int) {
                         color = MaterialTheme.colorScheme.surfaceContainerLow//.copy(alpha = 0.8f) // Masking effect
                     )
                     .height(32.dp)
-//                    .border(
-//                        1.dp,
-//                        MaterialTheme.colorScheme.outlineVariant,
-//                        RoundedCornerShape(8.dp)
-//                    )
             ) {
                 // Internal representation of the crossover
                 Row(modifier = Modifier.fillMaxSize()) {
@@ -605,7 +585,6 @@ private fun CrossfadeVisualizer(durationMs: Int) {
                                 )
                             )
                     )
-                    //Spacer(modifier = Modifier.width(1.dp))
                     Box(
                         modifier = Modifier
                             .weight(1f)

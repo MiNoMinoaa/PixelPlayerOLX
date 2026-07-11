@@ -139,7 +139,7 @@ fun LyricsMoreBottomSheet(
                  // Save lyrics to .lrc
                 if (lyrics != null) {
                     ListItem(
-                        headlineContent = { Text(stringResource(R.string.save_lyrics_dialog_title).substringBefore("?")) },
+                        content = { Text(stringResource(R.string.save_lyrics_dialog_title).substringBefore("?")) },
                         leadingContent = {
                             Icon(
                                 painter = painterResource(R.drawable.outline_save_24),
@@ -170,7 +170,7 @@ fun LyricsMoreBottomSheet(
                 }
 
                 ListItem(
-                    headlineContent = { Text(stringResource(R.string.reset_imported_lyrics)) },
+                    content = { Text(stringResource(R.string.reset_imported_lyrics)) },
                     leadingContent = {
                         Icon(
                             painter = painterResource(R.drawable.outline_restart_alt_24),
@@ -331,7 +331,7 @@ fun LyricsMoreBottomSheet(
 
                     if (isSyncVisible) {
                         ListItem(
-                            headlineContent = {
+                            content = {
                                 Text(
                                     if (isSyncControlsVisible) {
                                         stringResource(R.string.lyrics_more_hide_sync_controls)
@@ -371,7 +371,7 @@ fun LyricsMoreBottomSheet(
 
                     if (isRomanizationVisible) {
                         ListItem(
-                            headlineContent = { Text(stringResource(R.string.lyrics_more_show_romanization)) },
+                            content = { Text(stringResource(R.string.lyrics_more_show_romanization)) },
                             leadingContent = {
                                 Icon(
                                     imageVector = Icons.Rounded.Abc,
@@ -412,7 +412,7 @@ fun LyricsMoreBottomSheet(
 
                     if (isTranslationVisible) {
                         ListItem(
-                            headlineContent = { Text(stringResource(R.string.lyrics_more_show_translations)) },
+                            content = { Text(stringResource(R.string.lyrics_more_show_translations)) },
                             leadingContent = {
                                 Icon(
                                     imageVector = Icons.Rounded.Translate,
@@ -454,7 +454,7 @@ fun LyricsMoreBottomSheet(
                     // Immersive Mode Toggle
                     if (isImmersiveVisible) {
                         ListItem(
-                            headlineContent = { Text(stringResource(R.string.lyrics_more_disable_immersive_once)) },
+                            content = { Text(stringResource(R.string.lyrics_more_disable_immersive_once)) },
                             leadingContent = {
                                 Icon(
                                     imageVector = Icons.Rounded.VisibilityOff,
@@ -498,7 +498,7 @@ fun LyricsMoreBottomSheet(
                     // Keep Screen On Toggle
                     if (isKeepScreenOnVisible) {
                         ListItem(
-                            headlineContent = { Text(stringResource(R.string.lyrics_more_keep_screen_on)) },
+                            content = { Text(stringResource(R.string.lyrics_more_keep_screen_on)) },
                             leadingContent = {
                                 Icon(
                                     imageVector = Icons.Rounded.BrightnessHigh,
@@ -546,7 +546,6 @@ fun LyricsMoreBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(24.dp))
-                    //.background(contentColor.copy(alpha = 0.08f))
                     .padding(vertical = 0.dp, horizontal = 0.dp)
             ) {
                  BottomToggleRow(

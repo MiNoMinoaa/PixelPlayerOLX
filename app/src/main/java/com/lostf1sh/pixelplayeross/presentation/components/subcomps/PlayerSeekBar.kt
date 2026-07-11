@@ -90,19 +90,10 @@ fun PlayerSeekBar(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-//        Text(
-//            modifier = Modifier.weight(0.2f),
-//            text = formatDuration(currentPosition),
-//            textAlign = TextAlign.Center,
-//            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
-//            color = onBackgroundColor,
-//            fontSize = 12.sp
-//        )
         WavySliderExpressive(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 0.dp),
-                //.weight(0.8f),
             value = { seekFraction },
             onValueChange = { newFraction ->
                 isUserSeeking = true
@@ -131,13 +122,5 @@ fun PlayerSeekBar(
             isPlaying = isPlaying,
             semanticsLabel = "Playback position"
         )
-//        Text(
-//            modifier = Modifier.weight(0.2f),
-//            text = formatDuration(totalDuration),
-//            textAlign = TextAlign.Center,
-//            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
-//            color = onBackgroundColor,
-//            fontSize = 12.sp
-//        )
     }
 }

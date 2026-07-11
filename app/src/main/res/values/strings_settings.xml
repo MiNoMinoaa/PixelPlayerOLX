@@ -45,7 +45,6 @@
     <string name="setcat_min_song_duration">Minimum Song Duration</string>
     <string name="setcat_min_tracks_per_album">Minimum Tracks per Album</string>
     <string name="setcat_album_art_cache_limit">Album Art Cache Limit</string>
-    <string name="setcat_album_art_cache_limit_desc">Max cache size before oldest images are auto-deleted</string>
     <string name="setcat_sync_scanning">Sync and Scanning</string>
     <string name="setcat_sync_full_rescan_label">Running full rescan</string>
     <string name="toast_library_sync_finished">Library sync finished</string>
@@ -157,12 +156,6 @@
     <string name="setcat_haptic_feedback_title">Haptic feedback</string>
     <string name="setcat_haptic_feedback_subtitle">Enable vibration feedback across the app.</string>
 
-    <string name="setcat_credentials">Credentials</string>
-    <string name="setcat_model_selection">Model Selection</string>
-    <string name="setcat_loading_models">Loading available models…</string>
-    <string name="setcat_prompt_behavior">Prompt Behavior</string>
-    <string name="setcat_system_prompt_title">System Prompt</string>
-    <string name="setcat_total_consumption_title">Total Consumption</string>
 
     <!-- Backup / developer / dialogs -->
     <string name="setcat_create_backup">Create Backup</string>
@@ -241,8 +234,6 @@
     <string name="setcat_regenerating">Regenerating…</string>
     <string name="setcat_choose_song">Choose Song</string>
 
-    <string name="cd_show">Show</string>
-    <string name="cd_hide">Hide</string>
     <string name="setcat_select_export">Select &amp; Export</string>
     <string name="setcat_select_restore">Select &amp; Restore</string>
 

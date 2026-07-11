@@ -8,7 +8,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-// import androidx.datastore.preferences.protobuf.ByteString // No longer needed
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
@@ -419,11 +418,9 @@ class PixelPlayerGlanceWidget : GlanceAppWidget() {
                     modifier = GlanceModifier
                         .defaultWeight()
                         .height(48.dp)
-                        //.padding(4.dp)
                     ,
                     bitmapData = albumArtBitmapData,
                     albumArtUri = albumArtUri,
-                    //size = 48.dp,
                     context = context,
                     cornerRadius = 64.dp
                 )
@@ -654,7 +651,6 @@ class PixelPlayerGlanceWidget : GlanceAppWidget() {
                         context = context,
                         cornerRadius = 64.dp
                     )
-                    //Spacer(GlanceModifier.width(10.dp))
                 }
                 Spacer(GlanceModifier.height(8.dp))
                 PlayPauseButtonGlance(
@@ -1001,17 +997,7 @@ class PixelPlayerGlanceWidget : GlanceAppWidget() {
                 }
 
                 Spacer(GlanceModifier.defaultWeight()) // Pushes the content down
-                //Spacer(GlanceModifier.height(16.dp))
 
-//                Text(
-//                    text = "Next Up",
-//                    style = TextStyle(
-//                        fontSize = 16.sp,
-//                        fontWeight = FontWeight.Bold,
-//                        color = textColor
-//                    ),
-//                    modifier = GlanceModifier.padding(bottom = 8.dp)
-//                )
                 Box(
                     modifier = GlanceModifier
                         .fillMaxWidth()

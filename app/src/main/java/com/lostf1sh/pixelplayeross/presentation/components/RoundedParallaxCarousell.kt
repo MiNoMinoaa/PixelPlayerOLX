@@ -306,16 +306,6 @@ private fun RoundedCarousel(
             }
         }
 
-//        val clipShape = remember {
-//            object : Shape {
-//                override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
-//                    return Outline.Rectangle(carouselItemInfo.maskRect) // <-- RECTANGLE: causes the flat clipping
-//                }
-//            }
-//        }
-
-        //val clipShape = rememberRoundedClipShape(carouselItemInfo, itemCornerRadius)
-
         val animatedAlpha by animateFloatAsState(
             targetValue = if (carouselStyle == CarouselStyle.ONE_PEEK && page > state.pagerState.currentPage + 1) 0f else 1f,
             animationSpec = tween(durationMillis = 200),
@@ -576,7 +566,7 @@ private class CarouselItemModifierNode(
                 }
 
                 // --- also constrain to the layer itself (safe)
-                val layerBounds = Rect(0f, 0f, size.width.toFloat(), size.height.toFloat())
+                val layerBounds = Rect(0f, 0f, size.width, size.height)
                 val maskRect = Rect(left, top, right, bottom).intersect(layerBounds)
 
                 // --- update mask info (for MaskScope, etc.)

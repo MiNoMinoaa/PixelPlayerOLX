@@ -15,8 +15,8 @@ import kotlinx.serialization.json.Json
 import okio.IOException
 import java.io.File
 
-object PlayerInfoStateDefinition : GlanceStateDefinition<PlayerInfo> { // Changed to PlayerInfo
-    private const val DATASTORE_FILE_NAME = "pixelPlayPlayerInfo_v1_json" // Changed filename suffix
+object PlayerInfoStateDefinition : GlanceStateDefinition<PlayerInfo> {
+    private const val DATASTORE_FILE_NAME = "pixelPlayPlayerInfo_v1_json"
 
     // Json instance for serialization. Could be injected if this object were a class.
     // For simplicity here, using a default configured instance.

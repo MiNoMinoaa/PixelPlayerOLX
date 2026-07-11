@@ -44,7 +44,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -84,7 +83,7 @@ fun PlaylistMultiSelectionBottomSheet(
     onMergeAll: () -> Unit,
     onShareAll: () -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberModalSheetState(skipPartiallyExpanded = true)
     val evenCornerRadius = 26.dp
     val buttonShape = AbsoluteSmoothCornerShape(
         cornerRadiusTR = evenCornerRadius, smoothnessAsPercentBR = 60,

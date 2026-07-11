@@ -1,7 +1,6 @@
 package com.lostf1sh.pixelplayeross.presentation.components
 
 import android.widget.Toast
-import com.lostf1sh.pixelplayeross.presentation.components.ExpressiveOfflineDialog
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -115,7 +114,6 @@ fun UnifiedPlayerSheetV2(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val latestContext by rememberUpdatedState(context)
-    var showNoInternetDialog by remember { mutableStateOf(false) }
 
     // MediaStore write-permission launcher (for metadata editing without MANAGE_EXTERNAL_STORAGE)
     val writePermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
@@ -139,11 +137,6 @@ fun UnifiedPlayerSheetV2(
                 }
             }
             launch {
-                playerViewModel.showNoInternetDialog.collect {
-                    showNoInternetDialog = true
-                }
-            }
-            launch {
                 playerViewModel.writePermissionRequest.collect { intentSender ->
                     writePermissionLauncher.launch(
                         androidx.activity.result.IntentSenderRequest.Builder(intentSender).build()
@@ -158,16 +151,6 @@ fun UnifiedPlayerSheetV2(
                 }
             }
         }
-    }
-
-    if (showNoInternetDialog) {
-        ExpressiveOfflineDialog(
-            onDismiss = { showNoInternetDialog = false },
-            onRetry = {
-                 playerViewModel.refreshLocalConnectionInfo()
-                 showNoInternetDialog = false
-            }
-        )
     }
 
     val infrequentPlayerStateReference = playerViewModel.stablePlayerState.collectAsStateWithLifecycle()

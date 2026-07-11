@@ -189,13 +189,3 @@ fun String.extractArtistsFromTitle(
 
     return cleanedTitle.trim() to extractedArtists.distinct()
 }
-
-/**
- * Joins a list of artist names into a display string.
- * 
- * @param separator The separator to use between artist names (default: ", ")
- * @return A formatted string with all artist names joined.
- */
-fun List<String>.joinArtistsForDisplay(separator: String = ", "): String {
-    return this.joinToString(separator)
-}

@@ -24,7 +24,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class NavidromeApiService @Inject constructor(
-    // P1-3: Inject singleton OkHttpClient instead of creating a new one.
+    // Inject singleton OkHttpClient instead of creating a new one.
     // Use newBuilder() to apply Navidrome-specific timeouts while sharing the base
     // connection pool and dispatcher, saving ~2-4MB RAM.
     baseOkHttpClient: OkHttpClient

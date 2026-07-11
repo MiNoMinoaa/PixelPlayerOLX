@@ -223,11 +223,6 @@ class LibraryStateHolder @Inject constructor(
 
     // --- Data Loading ---
 
-    // We observe the repository flows permanently in initialize(), or we start collecting here?
-    // Better to start collecting in initialize() or have these functions just be "ensure active".
-    // Actually, explicit "load" functions are legacy imperative style.
-    // We should launch collectors in initialize() that update the state.
-
     private var songsJob: Job? = null
     private var albumsJob: Job? = null
     private var artistsJob: Job? = null

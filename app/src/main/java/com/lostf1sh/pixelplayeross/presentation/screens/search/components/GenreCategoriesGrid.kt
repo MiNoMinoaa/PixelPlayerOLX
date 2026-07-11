@@ -171,17 +171,6 @@ private fun GenreCard(
 
     val shape = RoundedCornerShape(20.dp)
 
-//    val shape = AbsoluteSmoothCornerShape(
-//        cornerRadiusTR = 24.dp,
-//        smoothnessAsPercentTL = 70,
-//        cornerRadiusTL = 24.dp,
-//        smoothnessAsPercentTR = 70,
-//        cornerRadiusBR = 24.dp,
-//        smoothnessAsPercentBL = 70,
-//        cornerRadiusBL = 24.dp,
-//        smoothnessAsPercentBR = 70
-//    )
-
     // Layout Modifier Logic
     val cardModifier = if (isGridView) {
         Modifier.aspectRatio(1.2f)

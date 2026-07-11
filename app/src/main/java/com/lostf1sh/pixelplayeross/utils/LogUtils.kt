@@ -30,8 +30,4 @@ object LogUtils {
     fun e(tagProvider: Any, throwable: Throwable? = null, message: String, vararg args: Any?) {
         Timber.tag(getTag(tagProvider)).e(throwable, buildLogMessage(message), *args)
     }
-
-    fun v(tagProvider: Any, message: String, vararg args: Any?) {
-        Timber.tag(getTag(tagProvider)).v(buildLogMessage(message), *args)
-    }
 }

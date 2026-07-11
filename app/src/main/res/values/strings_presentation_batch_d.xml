@@ -6,7 +6,6 @@
     <string name="presentation_batch_d_edit_library_tabs_cd">Edit</string>
     <string name="presentation_batch_d_reorder_tabs_cd">Reorder tabs</string>
     <string name="presentation_batch_d_sort_by">Sort by</string>
-    <string name="presentation_batch_d_view_section_cloud">Cloud</string>
     <string name="presentation_batch_d_view_section_view">View</string>
     <string name="presentation_batch_d_playlist_view">Playlist View</string>
     <string name="presentation_batch_d_view_grid">Grid</string>
@@ -14,10 +13,6 @@
     <string name="presentation_batch_d_storage_internal">Internal</string>
     <string name="presentation_batch_d_storage_sd_card">SD Card</string>
     <string name="presentation_batch_d_sd_card_unavailable">SD card is not available right now.</string>
-    <string name="presentation_batch_d_topics_display">Topics Display</string>
-    <string name="presentation_batch_d_topic_mode_channels">Channels</string>
-    <string name="presentation_batch_d_topic_mode_topics">Topics</string>
-    <string name="presentation_batch_d_topic_mode_both">Both</string>
     <string name="presentation_batch_d_cloud_sources_heading">Cloud</string>
     <string name="presentation_batch_d_cloud_only">Cloud Only</string>
     <string name="presentation_batch_d_max_albums_selection">You can select up to %1$d albums</string>
@@ -74,7 +69,6 @@
     <string name="presentation_batch_d_eq_band_bass_low">Bass / Low</string>
     <string name="presentation_batch_d_eq_band_mid_high">Mid / High</string>
     <string name="presentation_batch_d_eq_page_n">Page %1$d</string>
-    <string name="presentation_batch_d_eq_reset_duration_cd">Reset duration</string>
 
     <!-- EditTransitionScreen -->
     <string name="presentation_batch_d_transition_snackbar_using_global">Using global defaults</string>

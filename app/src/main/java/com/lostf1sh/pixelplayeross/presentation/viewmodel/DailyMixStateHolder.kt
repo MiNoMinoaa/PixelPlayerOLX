@@ -154,27 +154,6 @@ class DailyMixStateHolder @Inject constructor(
         }
     }
 
-    /**
-     * Set the daily mix songs directly.
-     */
-    fun setDailyMixSongs(songs: List<Song>) {
-        _dailyMixSongs.value = songs.toImmutableList()
-        scope?.launch {
-            userPreferencesRepository.saveDailyMixSongIds(songs.map { it.id })
-        }
-    }
-
-    /**
-     * Get a candidate pool for mix generation.
-     */
-    suspend fun getCandidatePool(
-        allSongs: List<Song>,
-        favoriteIds: Set<String>,
-        maxSize: Int = 100
-    ): List<Song> {
-        return dailyMixManager.generateDailyMix(allSongs, favoriteIds, maxSize)
-    }
-
     fun onCleared() {
         updateJob?.cancel()
         scope = null

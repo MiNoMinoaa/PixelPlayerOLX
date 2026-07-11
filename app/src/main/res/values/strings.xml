@@ -7,7 +7,6 @@
     <string name="all_files_access_title">Special Permission Required</string>
     <string name="all_files_access_description">To edit song metadata (.mp3 files), PixelPlayerOSS needs special access to all files. This allows us to modify track tags directly. Please grant this permission on the next screen to enable metadata editing.</string>
     <string name="grant_permission_button">Grant Permission</string>
-    <string name="all_files_access_setting">All Files Access</string>
     <string name="error">Error</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
@@ -15,9 +14,7 @@
     <string name="search">Search</string>
 
     <string name="lyrics">Lyrics</string>
-    <string name="close_lyrics_sheet">Close Lyrics Sheet</string>
     <string name="loading_lyrics">Loading lyrics…</string>
-    <string name="cant_find_lyrics">Couldn\'t find lyrics for this song.</string>
     <string name="lyrics_provided_by">Lyrics provided by</string>
     <string name="lrclib_uri">https://lrclib.net/</string>
     <string name="lyrics_not_found">Lyrics not found</string>
@@ -37,7 +34,6 @@
     <string name="local_lrc_already_available">Local (.lrc) lyrics already found. Online fetch skipped.</string>
     <string name="fetch_lyrics_show_options_title">Show lyric options</string>
     <string name="fetch_lyrics_show_options_subtitle">Always open the picker instead of auto-applying the first match</string>
-    <string name="save_lyrics_as_lrc">Save lyrics as .lrc</string>
     <string name="save_lyrics_dialog_title">Save Lyrics</string>
     <string name="save_lyrics_dialog_message">Choose which version to save:</string>
     <string name="save_synced_lyrics">Synced (with timestamps)</string>
@@ -46,11 +42,6 @@
     <string name="lyrics_save_failed">Failed to save lyrics</string>
     <string name="no_lyrics_to_save">No lyrics available to save</string>
     <string name="reset_imported_lyrics">Reset imported lyrics</string>
-    <string name="lyrics_sync_offset">Lyrics sync offset</string>
-    <string name="lyrics_sync_offset_format">%+.1fs</string>
-    <string name="lyrics_sync_offset_reset">Reset</string>
-    <string name="lyrics_earlier">Earlier</string>
-    <string name="lyrics_later">Later</string>
 
     <string name="sync_scanning">Scanning music files…</string>
     <string name="sync_processing">Processing files…</string>
@@ -61,7 +52,6 @@
     <string name="syncing_library">Syncing library…</string>
     <string name="sync_preparing_library">Preparing your library…</string>
     <string name="sync_scanned_count">Scanned %1$d of %2$d songs</string>
-    <string name="library_background_sync">Finishing in the background…</string>
     <string name="library_background_sync_lyrics">Scanning lyrics…</string>
     <string name="library_background_sync_cache">Cleaning album art cache…</string>
     <string name="library_background_sync_cloud">Syncing cloud sources…</string>
@@ -69,7 +59,6 @@
     <string name="unknown_artist">Unknown artist</string>
     <string name="unknown_album">Unknown album</string>
     <string name="artist_picker_title">Pick an Artist</string>
-    <string name="artist_picker_supporting_text">Open any credited artist for this track.</string>
     <string name="artist_picker_count_single">1 artist</string>
     <string name="artist_picker_count_multiple">%1$d artists</string>
     <string name="artist_picker_primary_label">Primary artist</string>
@@ -77,11 +66,9 @@
     <string name="external_queue_label">Quick play</string>
     <string name="external_playback_error">Unable to open that audio file.</string>
     <string name="open_full_player">Open full player</string>
-    <string name="close_external_player">Close floating player</string>
     <string name="close_notification_player">Close player</string>
     <string name="previous_track">Previous track</string>
     <string name="next_track">Next track</string>
-    <string name="pause_playback">Pause playback</string>
     <string name="play_playback">Play</string>
     <string name="playlist_not_found">Playlist not found.</string>
     <string name="disc_number_header">Disc %d</string>
@@ -91,7 +78,6 @@
     <string name="shortcut_shuffle_short">Shuffle</string>
     <string name="shortcut_shuffle_long">Shuffle all songs</string>
     <string name="shortcut_playlist_short">Playlist</string>
-    <string name="shortcut_playlist_long">Last played playlist</string>
 
     <string name="tile_shuffle_all">Shuffle All</string>
     <string name="tile_last_playlist">Last Playlist</string>
@@ -101,7 +87,6 @@
     <string name="album_id_not_found">Album ID not found</string>
     <string name="error_loading_album">Error loading album data: %s</string>
     <string name="album_not_found">Album not found</string>
-    <string name="could_not_update">Could not update: %s</string>
     <string name="invalid_artist_id">Invalid artist ID</string>
     <string name="artist_id_not_found">Artist ID not found</string>
     <string name="error_loading_artist">Error loading artist data: %s</string>
@@ -153,6 +138,12 @@
     <string name="player_only_first_n_albums_queued">Only the first %1$d albums were queued</string>
     <string name="player_albums_queued_format">%1$d albums queued (%2$d songs)</string>
     <string name="player_could_not_queue_albums">Could not queue selected albums</string>
+    <string name="player_only_first_n_albums_next">Only the first %1$d albums were added as next</string>
+    <string name="player_albums_will_play_next_format">%1$d albums will play next</string>
+    <string name="player_could_not_add_albums_next">Could not add selected albums as next</string>
+    <string name="player_only_first_n_albums_added_queue">Only the first %1$d albums were added to queue</string>
+    <string name="player_albums_added_to_queue_format">%1$d albums added to queue</string>
+    <string name="player_could_not_add_albums_queue">Could not add selected albums to queue</string>
     <string name="player_all_songs_already_in_favorites">All songs already in favorites</string>
     <string name="player_no_songs_were_in_favorites">No songs were in favorites</string>
     <string name="player_creating_zip">Creating ZIP file…</string>
@@ -233,6 +224,5 @@
     <string name="duplicates_group_title_format">%1$s — %2$s</string>
     <string name="setcat_find_duplicates_title">Find duplicate tracks</string>
     <string name="setcat_find_duplicates_subtitle">Scan your library for tracks that appear more than once.</string>
-    <string name="setcat_find_duplicates_action">Scan</string>
 
 </resources>

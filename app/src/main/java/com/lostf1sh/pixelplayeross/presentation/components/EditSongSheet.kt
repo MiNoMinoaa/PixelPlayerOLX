@@ -1043,22 +1043,18 @@ fun CoverArtCropperDialog(
                             dialogScope.launch {
                                 isSaving = true
                                 val captured = captureController.captureAsync().await()
-                                if (captured != null) {
-                                    val bytes = withContext(Dispatchers.IO) {
-                                        imageBitmapToJpeg(captured)
-                                    }
-                                    if (bytes != null) {
-                                        onConfirm(
-                                            CoverArtCropResult(
-                                                preview = captured,
-                                                update = CoverArtUpdate(bytes, COVER_ART_MIME_TYPE)
-                                            )
+                                val bytes = withContext(Dispatchers.IO) {
+                                    imageBitmapToJpeg(captured)
+                                }
+                                if (bytes != null) {
+                                    onConfirm(
+                                        CoverArtCropResult(
+                                            preview = captured,
+                                            update = CoverArtUpdate(bytes, COVER_ART_MIME_TYPE)
                                         )
-                                    } else {
-                                        Timber.w("Failed to convert captured cover art to JPEG")
-                                    }
+                                    )
                                 } else {
-                                    Timber.w("CaptureController returned null bitmap")
+                                    Timber.w("Failed to convert captured cover art to JPEG")
                                 }
                                 isSaving = false
                             }

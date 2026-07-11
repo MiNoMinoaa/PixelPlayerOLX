@@ -87,8 +87,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
 import com.lostf1sh.pixelplayeross.data.preferences.LaunchTab
 
-// SettingsTopBar removed, replaced by CollapsibleCommonTopBar
-
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -436,21 +434,6 @@ fun ExpressiveCategoryItem(
             
             Spacer(modifier = Modifier.width(8.dp))
             
-//            // Chevron or indicator
-//             Box(
-//                contentAlignment = Alignment.Center,
-//                modifier = Modifier
-//                    .size(36.dp)
-//                    .clip(CircleShape)
-//                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-//            ) {
-//                 Icon(
-//                    imageVector = Icons.Rounded.ChevronRight,
-//                    contentDescription = null,
-//                    tint = MaterialTheme.colorScheme.onSurface,
-//                    modifier = Modifier.size(20.dp)
-//                )
-//            }
         }
     }
 }

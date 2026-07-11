@@ -78,7 +78,6 @@ import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lostf1sh.pixelplayeross.data.media.CoverArtUpdate
-import com.lostf1sh.pixelplayeross.ui.theme.MontserratFamily
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.SongInfoBottomSheetViewModel
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.SongInfoBottomSheetViewModel.ToneTarget
 import kotlinx.coroutines.launch
@@ -232,7 +231,7 @@ fun SongInfoBottomSheet(
         )
     }
 
-    val sheetState = rememberModalBottomSheetState(
+    val sheetState = rememberModalSheetState(
         skipPartiallyExpanded = true,
         confirmValueChange = { true }
     )
@@ -776,7 +775,7 @@ fun SongInfoBottomSheet(
         },
     )
 
-    val artistPickerSheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val artistPickerSheetState = rememberModalSheetState(skipPartiallyExpanded = true)
     if (showArtistPicker && resolvedArtists.isNotEmpty()) {
         com.lostf1sh.pixelplayeross.presentation.components.player.PlayerArtistPickerBottomSheet(
             song = song,
@@ -901,7 +900,7 @@ private fun ToneTargetOption(
                 iconModifier = Modifier.size(22.dp),
             )
         },
-        headlineContent = {
+        content = {
             Text(
                 text = stringResource(target.titleResId),
                 fontWeight = FontWeight.SemiBold,
@@ -1121,7 +1120,7 @@ private fun SongInfoSegmentedListItem(
     ) {
         ListItem(
             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-            headlineContent = { Text(headline) },
+            content = { Text(headline) },
             supportingContent = { Text(supporting) },
             leadingContent = {
                 Icon(

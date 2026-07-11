@@ -3,7 +3,6 @@ package com.lostf1sh.pixelplayeross.data
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-// import android.util.Log // Uncomment if logging is needed
 
 /**
  * Singleton object to hold and share the state of the "End of Track" (EOT) timer,

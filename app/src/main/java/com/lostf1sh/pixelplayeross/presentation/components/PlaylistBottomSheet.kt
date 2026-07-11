@@ -25,7 +25,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
@@ -65,7 +64,7 @@ fun PlaylistBottomSheet(
 ) {
     var showCreatePlaylistDialog by remember { mutableStateOf(false) }
 
-    val sheetState = rememberModalBottomSheetState(
+    val sheetState = rememberModalSheetState(
         skipPartiallyExpanded = true,
         confirmValueChange = { true }
     )
@@ -108,6 +107,9 @@ fun PlaylistBottomSheet(
         contentWindowInsets = { BottomSheetDefaults.modalWindowInsets } // Handle insets such as the keyboard
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
+            val playlistCreatedToast = stringResource(R.string.playlist_created_songs_added_toast)
+            val songsAddedToast = stringResource(R.string.playlist_songs_added_toast)
+            val savedToast = stringResource(R.string.playlist_saved_toast)
 
             Column {
                 Row(
@@ -202,7 +204,7 @@ fun PlaylistBottomSheet(
                             playlistViewModel.createPlaylist(name, songIds = songs.map { it.id })
                             showCreatePlaylistDialog = false
                             onDismiss() // Close sheet after creation + add
-                            playerViewModel.sendToast("Playlist created and songs added")
+                            playerViewModel.sendToast(playlistCreatedToast)
                         }
                     )
                 }
@@ -236,11 +238,11 @@ fun PlaylistBottomSheet(
                          }
                     }
                     onDismiss()
-                    playerViewModel.sendToast(if (songs.size > 1) "Songs added to playlists" else "Saved")
+                    playerViewModel.sendToast(if (songs.size > 1) songsAddedToast else savedToast)
                     playerViewModel.multiSelectionStateHolder.clearSelection()
                 },
-                icon = { Icon(Icons.Rounded.Save, "Save") },
-                text = { Text(if (songs.size > 1) "Add" else "Save") },
+                icon = { Icon(Icons.Rounded.Save, stringResource(R.string.action_save)) },
+                text = { Text(stringResource(if (songs.size > 1) R.string.song_picker_action_add else R.string.action_save)) },
             )
         }
     }

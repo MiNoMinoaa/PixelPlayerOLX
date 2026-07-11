@@ -20,12 +20,7 @@
     <string name="presentation_batch_f_refresh_lyrics_subtitle">Automatically fetch lyrics for all songs using lrclib.</string>
     <string name="presentation_batch_f_cd_refresh_lyrics">Refresh lyrics</string>
     <string name="presentation_batch_f_refresh_lyrics_processing">Processing %1$d of %2$d songs</string>
-    <string name="presentation_batch_f_enter_api_key">Enter API Key</string>
     <string name="presentation_batch_f_save">Save</string>
-    <string name="presentation_batch_f_saved">Saved!</string>
-    <string name="presentation_batch_f_preset_prompts">Preset Prompts</string>
-    <string name="presentation_batch_f_enter_system_prompt_placeholder">Enter system prompt…</string>
-    <string name="presentation_batch_f_reset">Reset</string>
 
     <!-- Create playlist -->
     <string name="presentation_batch_f_new_smart_playlist">New smart playlist</string>
@@ -36,7 +31,6 @@
     <string name="presentation_batch_f_create">Create</string>
     <string name="presentation_batch_f_edit_playlist">Edit Playlist</string>
     <string name="presentation_batch_f_cd_close">Close</string>
-    <string name="presentation_batch_f_cd_confirm_crop">Confirm Crop</string>
     <string name="presentation_batch_f_auto_generated_collage">Auto-generated collage</string>
     <string name="presentation_batch_f_cd_add_photo">Add Photo</string>
     <string name="presentation_batch_f_pick_image">Pick Image</string>

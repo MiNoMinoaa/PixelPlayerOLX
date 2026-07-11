@@ -512,7 +512,7 @@ class PlaybackStateHolder @Inject constructor(
                             if (hasMediaMismatch) {
                                 Timber.tag(TAG).v(
                                     "Skipping local progress tick due media mismatch (visible=%s, player=%s)",
-                                    visibleSong?.id,
+                                    visibleSong.id,
                                     currentMediaId
                                 )
                                 delay(tickMs)
@@ -734,7 +734,6 @@ class PlaybackStateHolder @Inject constructor(
     fun toggleShuffle(
         currentSongs: List<Song>,
         currentSong: Song?,
-        currentQueueSourceName: String,
         updateQueueCallback: (List<Song>) -> Unit
     ) {
         val nowMs = SystemClock.elapsedRealtime()
@@ -754,7 +753,6 @@ class PlaybackStateHolder @Inject constructor(
                         // Enable Shuffle
                         if (!queueStateHolder.hasOriginalQueue()) {
                             queueStateHolder.setOriginalQueueOrder(currentSongs)
-                            queueStateHolder.saveOriginalQueueState(currentSongs, currentQueueSourceName)
                         }
 
                         val currentMediaId = player.currentMediaItem?.mediaId ?: currentSong?.id

@@ -80,10 +80,6 @@ class EqualizerViewModel @Inject constructor(
 
     private val audioManager = context.getSystemService(android.content.Context.AUDIO_SERVICE) as android.media.AudioManager
     
-    // UI-only state for view mode
-    // UI-only state for view mode - Now persisted
-    // val isGraphView: StateFlow<Boolean> = _isGraphView.asStateFlow() // Removed local state
-
     private val _uiState = MutableStateFlow(EqualizerUiState())
     val uiState: StateFlow<EqualizerUiState> = _uiState.asStateFlow()
 

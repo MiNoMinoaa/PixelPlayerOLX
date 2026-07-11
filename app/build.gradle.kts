@@ -50,7 +50,6 @@ android {
     }
 
     androidResources {
-        noCompress.add("tflite")
     }
 
     packaging {
@@ -270,7 +269,6 @@ dependencies {
     implementation(libs.timber)
     implementation(libs.smooth.corner.rect.android.compose)
     implementation(libs.reorderables)
-    implementation(libs.codeview)
     implementation(libs.androidx.glance)
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.glance.material3)

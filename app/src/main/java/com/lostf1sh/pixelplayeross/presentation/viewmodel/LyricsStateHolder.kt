@@ -154,13 +154,6 @@ class LyricsStateHolder @Inject constructor(
     }
 
     /**
-     * Set the lyrics search UI state.
-     */
-    fun setSearchState(state: LyricsSearchUiState) {
-        _searchUiState.value = state
-    }
-
-    /**
      * Reset the lyrics search state to idle.
      */
     fun resetSearchState() {

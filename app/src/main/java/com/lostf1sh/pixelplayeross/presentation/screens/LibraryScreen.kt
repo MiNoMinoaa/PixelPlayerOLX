@@ -218,7 +218,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.ripple
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.input.pointer.pointerInput
@@ -246,6 +245,7 @@ import com.lostf1sh.pixelplayeross.presentation.components.subcomps.EnhancedSong
 import timber.log.Timber
 import java.io.File
 import kotlin.math.abs
+import com.lostf1sh.pixelplayeross.presentation.components.rememberModalSheetState
 
 val ListExtraBottomGap = 30.dp
 val PlayerSheetCollapsedCornerRadius = 32.dp
@@ -822,7 +822,7 @@ fun LibraryScreen(
                 Surface(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 0.dp, vertical = 0.dp), // Removed horizontal padding for more space
+                        .padding(horizontal = 0.dp, vertical = 0.dp),
                     color = MaterialTheme.colorScheme.surface,
                     shape = AbsoluteSmoothCornerShape(
                         cornerRadiusTL = 34.dp,
@@ -2237,7 +2237,7 @@ private fun LibraryTabSwitcherSheet(
     onEditClick: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberModalSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -2975,7 +2975,6 @@ fun AlbumGridItemRedesigned(
                     onLongClick = onLongPress
                 ),
             shape = cardShape,
-            //elevation = CardDefaults.cardElevation(defaultElevation = 4.dp, pressedElevation = 8.dp),
             colors = CardDefaults.cardColors(containerColor = itemDesignColorScheme.surfaceVariant.copy(alpha = 0.3f))
         ) {
             Box {

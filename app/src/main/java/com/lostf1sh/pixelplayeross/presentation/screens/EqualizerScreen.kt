@@ -436,8 +436,6 @@ fun EqualizerScreen(
     }
 }
 
-// EqualizerTopBar removed, replaced by CollapsibleCommonTopBar
-
 @Composable
 private fun PresetTabsRow(
     presets: List<EqualizerPreset>,
@@ -955,8 +953,6 @@ private fun VerticalBandSlider(
 }
 
 
-
-// ... imports ...
 
 
 @SuppressLint("UnusedBoxWithConstraintsScope")

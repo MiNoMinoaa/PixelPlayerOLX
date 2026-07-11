@@ -751,55 +751,6 @@ class LyricsRepositoryImpl @Inject constructor(
     private fun isUnknownArtist(value: String): Boolean =
         normalizeForMatch(value) in UNKNOWN_ARTISTS
 
-    private fun convertAmlTtmlToLrc(ttml: String): String? {
-        val lineRegex = Regex(
-            "<p\\b[^>]*\\bbegin=\"([^\"]+)\"[^>]*>(.*?)</p>",
-            setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
-        )
-        val spanRegex = Regex(
-            "<span\\b([^>]*)>(.*?)</span>",
-            setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
-        )
-        val beginAttrRegex = Regex("\\bbegin=\"([^\"]+)\"")
-        val roleAttrRegex = Regex("\\bttm:role=\"([^\"]+)\"")
-
-        val lrcLines = mutableListOf<String>()
-        lineRegex.findAll(ttml).forEach { lineMatch ->
-            val lineStartMs = parseTtmlTimeToMs(lineMatch.groupValues[1]) ?: return@forEach
-            var inner = lineMatch.groupValues[2]
-            val markerRegex = Regex("§§TS\\(([^)]+)\\)§§")
-
-            inner = spanRegex.replace(inner) { spanMatch ->
-                val attributes = spanMatch.groupValues[1]
-                val role = roleAttrRegex.find(attributes)?.groupValues?.getOrNull(1)?.lowercase()
-                if (role == "x-roman") {
-                    return@replace ""
-                }
-                val wordStartMs = beginAttrRegex
-                    .find(attributes)
-                    ?.groupValues
-                    ?.getOrNull(1)
-                    ?.let(::parseTtmlTimeToMs)
-                val text = decodeXmlEntities(spanMatch.groupValues[2])
-
-                if (wordStartMs == null) {
-                    // Keep visible text (e.g. translation) but do not inject word timing.
-                    return@replace text
-                }
-
-                "§§TS(${formatTimestamp(wordStartMs.toInt())})§§$text"
-            }
-
-            val withoutXmlTags = decodeXmlEntities(inner.replace(Regex("<[^>]+>"), ""))
-            val lrcInlineTagged = markerRegex.replace(withoutXmlTags, "<$1>")
-            if (lrcInlineTagged.isBlank()) return@forEach
-
-            lrcLines += "[${formatTimestamp(lineStartMs.toInt())}]$lrcInlineTagged"
-        }
-
-        return lrcLines.takeIf { it.isNotEmpty() }?.joinToString("\n")
-    }
-
     private fun parseTtmlTimeToMs(value: String): Long? {
         val raw = value.trim()
         if (raw.isEmpty()) return null

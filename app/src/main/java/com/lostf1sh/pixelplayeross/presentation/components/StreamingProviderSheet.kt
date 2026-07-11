@@ -42,7 +42,7 @@ fun StreamingProviderSheet(
     onNavigateToNavidromeDashboard: () -> Unit = {},
     isJellyfinLoggedIn: Boolean = false,
     onNavigateToJellyfinDashboard: () -> Unit = {},
-    sheetState: SheetState = rememberModalBottomSheetState(
+    sheetState: SheetState = rememberModalSheetState(
         skipPartiallyExpanded = true
     )
 ) {
@@ -185,7 +185,7 @@ private fun ProviderRow(
     ) {
         ListItem(
             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-            headlineContent = {
+            content = {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge,

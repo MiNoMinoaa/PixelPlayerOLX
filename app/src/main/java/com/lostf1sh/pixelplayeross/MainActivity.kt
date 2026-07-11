@@ -2,8 +2,6 @@ package com.lostf1sh.pixelplayeross
 
 import com.lostf1sh.pixelplayeross.presentation.navigation.navigateSafely
 
-// import androidx.compose.ui.platform.LocalView // No longer needed for this
-// import androidx.core.view.WindowInsetsCompat // No longer needed for this
 import android.Manifest
 import android.content.ComponentName
 import android.content.Intent

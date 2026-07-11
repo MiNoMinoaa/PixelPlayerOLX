@@ -23,7 +23,6 @@
     <string name="auth_navidrome_server_url_hint">Use the full server URL, including http:// for local servers or https:// for remote servers.</string>
     <string name="auth_navidrome_username_hint">This is your Subsonic or Navidrome account name.</string>
     <string name="auth_navidrome_password_hint">App password also works if your server supports it.</string>
-    <string name="auth_navidrome_пароль_hint">App password also works if your server supports it.</string>
     <string name="auth_prefill_http">Prefill http://</string>
     <string name="auth_use_http">Use HTTP / VPN</string>
     <string name="auth_navidrome_footer">Compatible with Navidrome, Gonic, Airsonic, and other Subsonic-compatible servers</string>
@@ -43,20 +42,5 @@
     <string name="cd_jellyfin_logo">Jellyfin</string>
 
 
-    <string name="auth_web_exit_confirm_body">You can come back later. Current page state will be discarded when closing.</string>
-    <string name="auth_exit">Exit</string>
-    <string name="auth_stay">Stay</string>
-    <string name="auth_web_cd_web_back">Web back</string>
-    <string name="auth_web_cd_web_forward">Web forward</string>
-    <string name="auth_web_cd_refresh">Refresh</string>
-    <string name="auth_web_cd_open_home">Open home</string>
-    <string name="auth_saving">Saving…</string>
-    <string name="auth_done">Done</string>
     <string name="auth_web_retry">Retry</string>
-    <string name="auth_dial_plus">+</string>
-    <string name="auth_snackbar_page_timeout">Page load timed out. You can retry without losing your progress.</string>
-    <string name="auth_error_cookies_unreadable">Could not read session cookies.</string>
-    <string name="auth_page_slow">Page is taking too long to load. Use refresh or try another network.</string>
-    <string name="auth_webview_load_failed">WebView load failed.</string>
-    <string name="auth_error_no_cookies">No cookies found. Log in first.</string>
 </resources>

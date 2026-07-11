@@ -692,7 +692,6 @@ fun WelcomePage() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(240.dp)
-                //.background(color = Color.Red)
                 .clip(RoundedCornerShape(20.dp))
         ){
             MaterialYouVectorDrawable(
@@ -1310,7 +1309,6 @@ fun LibraryLayoutPage(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            //modifier = Modifier.padding(top = 24.dp)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
@@ -1413,7 +1411,6 @@ fun LibraryHeaderPreview(isCompact: Boolean) {
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        //elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
             .fillMaxWidth()
     ) {

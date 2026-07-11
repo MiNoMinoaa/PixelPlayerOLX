@@ -102,8 +102,6 @@ fun LibrarySongsTab(
             .distinctUntilChanged()
     }.collectAsStateWithLifecycle(initialValue = null)
 
-    // Check if list is effectively empty (based on Paging state)
-    // val isListEmpty = songs.itemCount == 0 && songs.loadState.refresh is LoadState.NotLoading
     
     // Calculate current song index for button visibility
     val currentSongListIndex = remember(songs.itemSnapshotList, currentSongId) {
@@ -225,7 +223,7 @@ fun LibrarySongsTab(
 
     when {
         refreshState is LoadState.Error && songs.itemCount == 0 -> {
-            val error = (refreshState as LoadState.Error).error
+            val error = refreshState.error
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -315,7 +313,6 @@ fun LibrarySongsTab(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             contentPadding = PaddingValues(bottom = bottomBarHeight + MiniPlayerHeight + 30.dp)
                         ) {
-                            //item(key = "songs_top_spacer") { Spacer(Modifier.height(0.dp)) }
 
                             items(
                                 count = songs.itemCount,
@@ -348,7 +345,6 @@ fun LibrarySongsTab(
                                         song = song,
                                         playerViewModel = playerViewModel,
                                         isSelected = isSelected,
-                                        //albumArtSize = 46.dp,
                                         isSelectionMode = isSelectionMode,
                                         selectionIndex = if (isSelectionMode) getSelectionIndex(song.id) else null,
                                         onLongPress = rememberedOnLongPress,

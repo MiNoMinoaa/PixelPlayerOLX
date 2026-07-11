@@ -71,6 +71,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import androidx.compose.ui.text.style.TextOverflow
 
 // Shared placeholder for loading skeletons: allocating a fresh MutableStateFlow inline in
@@ -218,7 +219,7 @@ fun LibraryAlbumsTab(
 
     when {
         refreshState is LoadState.Error && albums.itemCount == 0 -> {
-            val error = (refreshState as LoadState.Error).error
+            val error = refreshState.error
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -378,8 +379,12 @@ fun LibraryAlbumsTab(
                                     }
                                 }
                             }
-                            val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
-                            val bottomPadding = if (stablePlayerState.currentSong != null && stablePlayerState.currentSong != Song.emptySong())
+                            val hasActiveSong by remember {
+                                playerViewModel.stablePlayerState
+                                    .map { it.currentSong != null && it.currentSong != Song.emptySong() }
+                                    .distinctUntilChanged()
+                            }.collectAsStateWithLifecycle(initialValue = false)
+                            val bottomPadding = if (hasActiveSong)
                                 bottomBarHeight + MiniPlayerHeight + 16.dp
                             else
                                 bottomBarHeight + 16.dp
@@ -449,8 +454,12 @@ fun LibraryAlbumsTab(
                                 }
                             }
 
-                            val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
-                            val bottomPadding = if (stablePlayerState.currentSong != null && stablePlayerState.currentSong != Song.emptySong())
+                            val hasActiveSong by remember {
+                                playerViewModel.stablePlayerState
+                                    .map { it.currentSong != null && it.currentSong != Song.emptySong() }
+                                    .distinctUntilChanged()
+                            }.collectAsStateWithLifecycle(initialValue = false)
+                            val bottomPadding = if (hasActiveSong)
                                 bottomBarHeight + MiniPlayerHeight + 16.dp
                             else
                                 bottomBarHeight + 16.dp
@@ -528,7 +537,7 @@ fun LibraryArtistsTab(
 
     when {
         refreshState is LoadState.Error && artists.itemCount == 0 -> {
-            val error = (refreshState as LoadState.Error).error
+            val error = refreshState.error
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -641,8 +650,12 @@ fun LibraryArtistsTab(
                             }
                         }
 
-                        val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
-                        val bottomPadding = if (stablePlayerState.currentSong != null && stablePlayerState.currentSong != Song.emptySong())
+                        val hasActiveSong by remember {
+                            playerViewModel.stablePlayerState
+                                .map { it.currentSong != null && it.currentSong != Song.emptySong() }
+                                .distinctUntilChanged()
+                        }.collectAsStateWithLifecycle(initialValue = false)
+                        val bottomPadding = if (hasActiveSong)
                             bottomBarHeight + MiniPlayerHeight + 16.dp
                         else
                             bottomBarHeight + 16.dp

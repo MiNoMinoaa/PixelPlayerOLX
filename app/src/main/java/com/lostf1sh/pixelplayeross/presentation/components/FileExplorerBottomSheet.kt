@@ -620,7 +620,7 @@ private fun FileExplorerItem(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = if (isBlocked) "Excluded" else "Included",
+                text = stringResource(if (isBlocked) R.string.folder_state_excluded else R.string.folder_state_included),
                 style = MaterialTheme.typography.labelMedium,
                 color = if (isBlocked) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
             )

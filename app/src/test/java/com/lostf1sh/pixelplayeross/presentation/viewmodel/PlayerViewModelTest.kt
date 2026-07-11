@@ -157,7 +157,6 @@ class PlayerViewModelTest {
 
         // Connectivity mocks removed as properties differ from expectations
         every { mockConnectivityStateHolder.initialize() } just runs
-        every { mockConnectivityStateHolder.offlinePlaybackBlocked } returns MutableSharedFlow()
 
         _favoriteIdsFlow.value = emptySet()
         stablePlayerStateFlow = MutableStateFlow(StablePlayerState(currentSong = null))
@@ -459,11 +458,10 @@ class PlayerViewModelTest {
 
         private fun stubShuffledPlayback(
             songs: List<Song>,
-            queueName: String,
             startSong: Song = songs.first()
         ) {
             coEvery {
-                mockQueueStateHolder.prepareShuffledQueueSuspending(songs, queueName, true)
+                mockQueueStateHolder.prepareShuffledQueueSuspending(songs, true)
             } returns Pair(songs, startSong)
 
             mockkObject(MediaItemBuilder)
@@ -487,7 +485,7 @@ class PlayerViewModelTest {
         fun `shuffleAllSongs calls prepareShuffledQueue with random songs at index zero`() = runTest {
             val randomSongs = listOf(song2, song3, song1)
             coEvery { mockMusicRepository.getRandomSongs(500) } returns randomSongs
-            stubShuffledPlayback(randomSongs, "All Songs (Shuffled)", startSong = song2)
+            stubShuffledPlayback(randomSongs, startSong = song2)
 
             playerViewModel.shuffleAllSongs()
             advanceUntilIdle()
@@ -496,7 +494,6 @@ class PlayerViewModelTest {
             coVerify {
                 mockQueueStateHolder.prepareShuffledQueueSuspending(
                     randomSongs,
-                    "All Songs (Shuffled)",
                     true
                 )
             }
@@ -506,7 +503,7 @@ class PlayerViewModelTest {
         fun `playRandomSong calls prepareShuffledQueue with startAtZero`() = runTest {
             val randomSongs = listOf(song3, song1, song2)
             coEvery { mockMusicRepository.getRandomSongs(500) } returns randomSongs
-            stubShuffledPlayback(randomSongs, "All Songs (Shuffled)", startSong = song3)
+            stubShuffledPlayback(randomSongs, startSong = song3)
 
             playerViewModel.playRandomSong()
             advanceUntilIdle()
@@ -514,7 +511,6 @@ class PlayerViewModelTest {
             coVerify {
                 mockQueueStateHolder.prepareShuffledQueueSuspending(
                     randomSongs,
-                    "All Songs (Shuffled)",
                     true
                 )
             }
@@ -524,7 +520,7 @@ class PlayerViewModelTest {
         fun `shuffleFavoriteSongs calls prepareShuffledQueue with startAtZero`() = runTest {
             val favoriteSongs = listOf(song1, song3)
             coEvery { mockMusicRepository.getFavoriteSongsOnce(StorageFilter.ALL) } returns favoriteSongs
-            stubShuffledPlayback(favoriteSongs, "Liked Songs (Shuffled)", startSong = song1)
+            stubShuffledPlayback(favoriteSongs, startSong = song1)
 
             playerViewModel.shuffleFavoriteSongs()
             advanceUntilIdle()
@@ -533,7 +529,6 @@ class PlayerViewModelTest {
             coVerify {
                 mockQueueStateHolder.prepareShuffledQueueSuspending(
                     favoriteSongs,
-                    "Liked Songs (Shuffled)",
                     true
                 )
             }
@@ -552,7 +547,7 @@ class PlayerViewModelTest {
             )
             every { mockLibraryStateHolder.albums } returns MutableStateFlow(persistentListOf(album))
             every { mockMusicRepository.getSongsForAlbum(album.id) } returns flowOf(listOf(song1, song2, song3))
-            stubShuffledPlayback(listOf(song1, song2, song3), album.title, startSong = song2)
+            stubShuffledPlayback(listOf(song1, song2, song3), startSong = song2)
 
             playerViewModel.shuffleRandomAlbum()
             advanceUntilIdle()
@@ -560,7 +555,6 @@ class PlayerViewModelTest {
             coVerify {
                 mockQueueStateHolder.prepareShuffledQueueSuspending(
                     listOf(song1, song2, song3),
-                    "Album Roulette",
                     true
                 )
             }
@@ -571,7 +565,7 @@ class PlayerViewModelTest {
             val artist = Artist(id = 88L, name = "Artist Roulette", songCount = 3)
             every { mockLibraryStateHolder.artists } returns MutableStateFlow(persistentListOf(artist))
             every { mockMusicRepository.getSongsForArtist(artist.id) } returns flowOf(listOf(song3, song2, song1))
-            stubShuffledPlayback(listOf(song3, song2, song1), artist.name, startSong = song3)
+            stubShuffledPlayback(listOf(song3, song2, song1), startSong = song3)
 
             playerViewModel.shuffleRandomArtist()
             advanceUntilIdle()
@@ -579,7 +573,6 @@ class PlayerViewModelTest {
             coVerify {
                 mockQueueStateHolder.prepareShuffledQueueSuspending(
                     listOf(song3, song2, song1),
-                    "Artist Roulette",
                     true
                 )
             }
@@ -589,7 +582,7 @@ class PlayerViewModelTest {
         fun `triggerShuffleAllFromTile uses repository sample and startAtZero`() = runTest {
             val songs = listOf(song1, song2, song3)
             coEvery { mockMusicRepository.getRandomSongs(500) } returns songs
-            stubShuffledPlayback(songs, "All Songs (Shuffled)", startSong = song1)
+            stubShuffledPlayback(songs, startSong = song1)
 
             playerViewModel.triggerShuffleAllFromTile()
             advanceUntilIdle()
@@ -598,7 +591,6 @@ class PlayerViewModelTest {
             coVerify {
                 mockQueueStateHolder.prepareShuffledQueueSuspending(
                     songs,
-                    "All Songs (Shuffled)",
                     true
                 )
             }

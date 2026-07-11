@@ -118,20 +118,6 @@ class PlaylistSelectionStateHolder @Inject constructor() {
     }
 
     /**
-     * Removes a specific playlist from selection if it exists.
-     * Useful when a playlist is deleted.
-     *
-     * @param playlistId The ID of the playlist to remove
-     */
-    fun removeFromSelection(playlistId: String) {
-        if (!_selectedPlaylistIds.value.contains(playlistId)) return
-        
-        val currentList = _selectedPlaylists.value.filter { it.id != playlistId }
-        val currentIds = _selectedPlaylistIds.value - playlistId
-        updateState(currentList, currentIds)
-    }
-
-    /**
      * Updates all state flows atomically.
      */
     private fun updateState(playlists: List<Playlist>, ids: Set<String>) {
