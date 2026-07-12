@@ -93,6 +93,8 @@ import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
 import com.lostf1sh.pixelplayeross.ui.theme.ShapeCache
 import kotlinx.coroutines.flow.map
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 @OptIn(UnstableApi::class)
 @ExperimentalMaterial3Api
@@ -388,8 +390,9 @@ fun SongPickerSelectionPane(
 
         when {
             searchQuery.isNotBlank() -> {
-                val displayed = (searchResults ?: emptyList()).let { results ->
-                    if (favoritesOnly) results.filter { it.id in favoriteIds } else results
+                val displayed = remember(searchResults, favoritesOnly, favoriteIds) {
+                    val results = searchResults ?: emptyList()
+                    (if (favoritesOnly) results.filter { it.id in favoriteIds } else results).toImmutableList()
                 }
                 SongPickerList(
                     filteredSongs = displayed,
@@ -778,7 +781,7 @@ fun SongPickerEmptyState(
 @kotlin.OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SongPickerList(
-    filteredSongs: List<Song>,
+    filteredSongs: ImmutableList<Song>,
     isLoading: Boolean,
     selectedSongIds: MutableMap<String, Boolean>,
     albumShape: androidx.compose.ui.graphics.Shape,

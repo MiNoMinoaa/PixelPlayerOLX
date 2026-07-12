@@ -7,6 +7,7 @@ import com.lostf1sh.pixelplayeross.data.equalizer.EqualizerPreset
 import com.lostf1sh.pixelplayeross.data.preferences.EqualizerPreferencesRepository
 import com.lostf1sh.pixelplayeross.data.preferences.UserPreferencesRepository
 import com.lostf1sh.pixelplayeross.data.service.player.DualPlayerEngine
+import com.lostf1sh.pixelplayeross.di.AppScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,19 +19,20 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.math.roundToInt
 import kotlinx.serialization.json.Json // Added import
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 data class EqualizerUiState(
     val isEnabled: Boolean = false,
     val currentPreset: EqualizerPreset = EqualizerPreset.FLAT,
-    val bandLevels: List<Int> = List(10) { 0 },
+    val bandLevels: ImmutableList<Int> = List(10) { 0 }.toImmutableList(),
     val editingPresetName: String? = null,
     val bassBoostEnabled: Boolean = false,
     val bassBoostStrength: Float = 0f, // Changed to Float
@@ -45,23 +47,23 @@ data class EqualizerUiState(
     val isBassBoostDismissed: Boolean = false,
     val isVirtualizerDismissed: Boolean = false,
     val isLoudnessDismissed: Boolean = false,
-    val customPresets: List<EqualizerPreset> = emptyList(), // Added
-    val pinnedPresetsNames: List<String> = emptyList(), // Added
+    val customPresets: ImmutableList<EqualizerPreset> = persistentListOf(), // Added
+    val pinnedPresetsNames: ImmutableList<String> = persistentListOf(), // Added
 ) {
     // Computed property for accessible presets (Pinned)
-    val accessiblePresets: List<EqualizerPreset>
+    val accessiblePresets: ImmutableList<EqualizerPreset>
         get() {
             // Map pinned names to actual Presets (Default or Custom)
             return pinnedPresetsNames.mapNotNull { name ->
                 // First check custom presets
                 customPresets.find { it.name == name }
                     ?: EqualizerPreset.fromName(name) // Then standard defaults
-            }
+            }.toImmutableList()
         }
         
     // Computed property for All Available Presets (for Edit Sheet)
-    val allAvailablePresets: List<EqualizerPreset>
-        get() = EqualizerPreset.ALL_PRESETS + customPresets
+    val allAvailablePresets: ImmutableList<EqualizerPreset>
+        get() = (EqualizerPreset.ALL_PRESETS + customPresets).toImmutableList()
 }
 
 @HiltViewModel
@@ -69,6 +71,7 @@ class EqualizerViewModel @Inject constructor(
     private val equalizerManager: EqualizerManager,
     private val equalizerPreferencesRepository: EqualizerPreferencesRepository,
     private val dualPlayerEngine: DualPlayerEngine,
+    @param:AppScope private val appScope: CoroutineScope,
     @param:dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
     
@@ -151,20 +154,24 @@ class EqualizerViewModel @Inject constructor(
             }
             
             // Update UI state with device capabilities
-            _uiState.value = _uiState.value.copy(
-                isBassBoostSupported = equalizerManager.isBassBoostSupported(),
-                isVirtualizerSupported = equalizerManager.isVirtualizerSupported(),
-                isLoudnessEnhancerSupported = equalizerManager.isLoudnessEnhancerSupported()
-            )
+            _uiState.update {
+                it.copy(
+                    isBassBoostSupported = equalizerManager.isBassBoostSupported(),
+                    isVirtualizerSupported = equalizerManager.isVirtualizerSupported(),
+                    isLoudnessEnhancerSupported = equalizerManager.isLoudnessEnhancerSupported()
+                )
+            }
 
             dualPlayerEngine.activeAudioSessionId.collect { sessionId ->
                 if (sessionId != 0) {
                     Timber.tag(TAG).d("Audio Session ID changed to $sessionId.")
-                    _uiState.value = _uiState.value.copy(
-                        isBassBoostSupported = equalizerManager.isBassBoostSupported(),
-                        isVirtualizerSupported = equalizerManager.isVirtualizerSupported(),
-                        isLoudnessEnhancerSupported = equalizerManager.isLoudnessEnhancerSupported()
-                    )
+                    _uiState.update {
+                        it.copy(
+                            isBassBoostSupported = equalizerManager.isBassBoostSupported(),
+                            isVirtualizerSupported = equalizerManager.isVirtualizerSupported(),
+                            isLoudnessEnhancerSupported = equalizerManager.isLoudnessEnhancerSupported()
+                        )
+                    }
                 }
             }
         }
@@ -219,7 +226,7 @@ class EqualizerViewModel @Inject constructor(
                 EqualizerUiState(
                     isEnabled = enabled,
                     currentPreset = currentPreset,
-                    bandLevels = if (currentPreset.name == "custom") customBands else currentPreset.bandLevels,
+                    bandLevels = (if (currentPreset.name == "custom") customBands else currentPreset.bandLevels).toImmutableList(),
                     editingPresetName = _uiState.value.editingPresetName,
                     bassBoostEnabled = bbEnabled,
                     bassBoostStrength = bbStrength.toFloat(), // Raw 0-1000
@@ -232,8 +239,8 @@ class EqualizerViewModel @Inject constructor(
                     isLoudnessDismissed = lDismissed,
                     viewMode = viewMode,
                     // New State
-                    customPresets = customPresets,
-                    pinnedPresetsNames = pinnedPresets,
+                    customPresets = customPresets.toImmutableList(),
+                    pinnedPresetsNames = pinnedPresets.toImmutableList(),
                     // Capabilities (Keep existing values)
                     isBassBoostSupported = _uiState.value.isBassBoostSupported,
                     isVirtualizerSupported = _uiState.value.isVirtualizerSupported,
@@ -278,7 +285,7 @@ class EqualizerViewModel @Inject constructor(
         _uiState.update { current ->
             current.copy(
                 currentPreset = preset,
-                bandLevels = preset.bandLevels,
+                bandLevels = preset.bandLevels.toImmutableList(),
                 editingPresetName = null
             )
         }
@@ -301,7 +308,7 @@ class EqualizerViewModel @Inject constructor(
                 ?: current.currentPreset.name.takeIf { current.currentPreset.isCustom && it != "custom" }
             current.copy(
                 currentPreset = EqualizerPreset.custom(updatedBands),
-                bandLevels = updatedBands,
+                bandLevels = updatedBands.toImmutableList(),
                 editingPresetName = editingName
             )
         }
@@ -487,7 +494,9 @@ class EqualizerViewModel @Inject constructor(
 
     private fun persistLatestStateAsync() {
         val latest = _uiState.value
-        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+        // Runs on the app scope: viewModelScope is already cancelled in onCleared,
+        // and this final flush must survive the ViewModel.
+        appScope.launch {
             runCatching {
                 equalizerPreferencesRepository.setEqualizerEnabled(latest.isEnabled)
                 equalizerPreferencesRepository.setEqualizerPreset(latest.currentPreset.name)

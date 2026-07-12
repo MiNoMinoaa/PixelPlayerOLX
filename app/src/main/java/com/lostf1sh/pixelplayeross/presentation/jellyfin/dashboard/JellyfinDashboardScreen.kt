@@ -40,6 +40,7 @@ import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.stringResource
+import kotlinx.collections.immutable.ImmutableList
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -111,7 +112,7 @@ fun JellyfinDashboardScreen(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun JellyfinDashboardContent(
-    playlists: List<JellyfinPlaylistEntity>,
+    playlists: ImmutableList<JellyfinPlaylistEntity>,
     isSyncing: Boolean,
     syncMessage: String?,
     username: String?,

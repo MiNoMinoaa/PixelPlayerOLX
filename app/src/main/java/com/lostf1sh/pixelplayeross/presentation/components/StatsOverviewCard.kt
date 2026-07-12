@@ -42,6 +42,9 @@ import com.lostf1sh.pixelplayeross.presentation.stats.displayNameRes
 import com.lostf1sh.pixelplayeross.utils.formatListeningDurationCompact
 import com.lostf1sh.pixelplayeross.utils.formatListeningDurationLong
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
+import androidx.compose.runtime.remember
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -214,7 +217,7 @@ private fun PlaceholderOverviewContent() {
 
 @Composable
 private fun MiniListeningTimeline(summary: PlaybackStatsRepository.PlaybackStatsSummary?) {
-    val timeline = summary?.timeline ?: emptyList()
+    val timeline = remember(summary) { (summary?.timeline ?: emptyList()).toImmutableList() }
     if (summary?.range == StatsTimeRange.MONTH && timeline.isNotEmpty()) {
         MonthlyHorizontalListeningTimeline(timeline)
         return
@@ -267,7 +270,7 @@ private fun MiniListeningTimeline(summary: PlaybackStatsRepository.PlaybackStats
 
 @Composable
 private fun MonthlyHorizontalListeningTimeline(
-    timeline: List<PlaybackStatsRepository.TimelineEntry>
+    timeline: ImmutableList<PlaybackStatsRepository.TimelineEntry>
 ) {
     val maxDuration = timeline.maxOfOrNull { it.totalDurationMs }?.takeIf { it > 0 } ?: 1L
     Column(

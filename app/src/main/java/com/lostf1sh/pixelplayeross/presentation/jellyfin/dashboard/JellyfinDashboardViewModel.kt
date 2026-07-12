@@ -14,14 +14,19 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.flow.map
 
 @HiltViewModel
 class JellyfinDashboardViewModel @Inject constructor(
     private val repository: JellyfinRepository
 ) : ViewModel() {
 
-    val playlists: StateFlow<List<JellyfinPlaylistEntity>> = repository.getPlaylists()
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    val playlists: StateFlow<ImmutableList<JellyfinPlaylistEntity>> = repository.getPlaylists()
+        .map { it.toImmutableList() }
+        .stateIn(viewModelScope, SharingStarted.Lazily, persistentListOf())
 
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
@@ -29,8 +34,8 @@ class JellyfinDashboardViewModel @Inject constructor(
     private val _syncMessage = MutableStateFlow<String?>(null)
     val syncMessage: StateFlow<String?> = _syncMessage.asStateFlow()
 
-    private val _selectedPlaylistSongs = MutableStateFlow<List<Song>>(emptyList())
-    val selectedPlaylistSongs: StateFlow<List<Song>> = _selectedPlaylistSongs.asStateFlow()
+    private val _selectedPlaylistSongs = MutableStateFlow<ImmutableList<Song>>(persistentListOf())
+    val selectedPlaylistSongs: StateFlow<ImmutableList<Song>> = _selectedPlaylistSongs.asStateFlow()
 
     val username: String? get() = repository.username
     val serverUrl: String? get() = repository.serverUrl
@@ -95,7 +100,7 @@ class JellyfinDashboardViewModel @Inject constructor(
     fun loadPlaylistSongs(playlistId: String) {
         viewModelScope.launch {
             repository.getPlaylistSongs(playlistId).collect { songs ->
-                _selectedPlaylistSongs.value = songs
+                _selectedPlaylistSongs.value = songs.toImmutableList()
             }
         }
     }

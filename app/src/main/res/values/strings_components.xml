@@ -3,6 +3,10 @@
     <string name="widget_tap_to_open">Tap to open</string>
     <string name="widget_album_art">Album art</string>
     <string name="widget_album_art_placeholder">Album art placeholder</string>
+    <string name="cd_album_art_of">Album art of %1$s</string>
+    <string name="cd_album_art_placeholder">%1$s placeholder</string>
+    <string name="cd_show_controls">Show controls</string>
+    <string name="cd_cover_art">Cover art</string>
     <string name="cd_favorite">Favorite</string>
     <string name="cd_play">Play</string>
     <string name="cd_pause">Pause</string>

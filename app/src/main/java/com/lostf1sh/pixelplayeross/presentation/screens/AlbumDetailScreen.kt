@@ -103,6 +103,7 @@ import com.lostf1sh.pixelplayeross.utils.shapes.RoundedStarShape
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import androidx.compose.ui.res.stringResource
+import kotlinx.collections.immutable.persistentListOf
 
 private const val UseSharedCollapsibleTopBarProbe = true
 
@@ -501,7 +502,7 @@ fun AlbumDetailScreen(
 
                     PlaylistBottomSheet(
                         playlistUiState = playlistUiState,
-                        songs = listOf(currentSong),
+                        songs = persistentListOf(currentSong),
                         onDismiss = { showPlaylistBottomSheet = false },
                         bottomBarHeight = bottomBarHeightDp,
                         playerViewModel = playerViewModel

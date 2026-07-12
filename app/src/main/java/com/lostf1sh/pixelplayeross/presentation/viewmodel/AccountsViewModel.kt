@@ -14,6 +14,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 enum class ExternalServiceAccount {
     NAVIDROME,
@@ -30,7 +33,7 @@ data class ExternalAccountUiModel(
 
 data class AccountsUiState(
     val connectedAccounts: List<ExternalAccountUiModel> = emptyList(),
-    val disconnectedServices: List<ExternalServiceAccount> = emptyList()
+    val disconnectedServices: ImmutableList<ExternalServiceAccount> = persistentListOf()
 )
 
 @HiltViewModel
@@ -111,7 +114,7 @@ class AccountsViewModel @Inject constructor(
 
         AccountsUiState(
             connectedAccounts = connectedAccounts,
-            disconnectedServices = disconnectedServices
+            disconnectedServices = disconnectedServices.toImmutableList()
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AccountsUiState())
 

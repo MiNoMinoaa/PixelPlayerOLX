@@ -43,11 +43,13 @@ import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import androidx.compose.ui.res.stringResource
 import com.lostf1sh.pixelplayeross.R
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 @Composable
 fun QuickFillDialog(
     visible: Boolean,
-    songs: List<Song>, // Initial list of songs (from Unknown genre)
+    songs: ImmutableList<Song>, // Initial list of songs (from Unknown genre)
     customGenres: Set<String>,
     customGenreIcons: Map<String, Int>,
     onDismiss: () -> Unit,
@@ -73,7 +75,7 @@ fun QuickFillDialog(
 
 @Composable
 fun QuickFillContent(
-    songs: List<Song>,
+    songs: ImmutableList<Song>,
     customGenres: Set<String>,
     customGenreIcons: Map<String, Int>,
     onDismiss: () -> Unit,
@@ -161,7 +163,7 @@ fun QuickFillContent(
                         
                         val filteredSongs = remember(songs, searchQuery) {
                             if (searchQuery.isBlank()) songs 
-                            else songs.filter { it.title.contains(searchQuery, true) || it.artist.contains(searchQuery, true) }
+                            else songs.filter { it.title.contains(searchQuery, true) || it.artist.contains(searchQuery, true) }.toImmutableList()
                         }
                         
                         SongPickerList(

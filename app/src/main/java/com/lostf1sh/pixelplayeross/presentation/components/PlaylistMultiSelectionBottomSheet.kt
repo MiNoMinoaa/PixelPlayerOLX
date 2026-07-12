@@ -61,6 +61,9 @@ import com.lostf1sh.pixelplayeross.utils.resolvePlaylistCoverContentColor
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import androidx.compose.ui.res.stringResource
 import com.lostf1sh.pixelplayeross.R
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
+import androidx.compose.runtime.remember
 
 /**
  * Bottom sheet for batch operations on multiple selected playlists.
@@ -76,7 +79,7 @@ import com.lostf1sh.pixelplayeross.R
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PlaylistMultiSelectionBottomSheet(
-    selectedPlaylists: List<Playlist>,
+    selectedPlaylists: ImmutableList<Playlist>,
     onDismiss: () -> Unit,
     onDeleteAll: () -> Unit,
     onExportAll: () -> Unit,
@@ -124,7 +127,7 @@ fun PlaylistMultiSelectionBottomSheet(
                     } else 0.dp
 
                     StackedPlaylistCovers(
-                        playlists = selectedPlaylists.take(4),
+                        playlists = remember(selectedPlaylists) { selectedPlaylists.take(4).toImmutableList() },
                         modifier = Modifier
                             .height(74.dp)
                             .width(stackedWidth)
@@ -280,7 +283,7 @@ fun PlaylistMultiSelectionBottomSheet(
  */
 @Composable
 private fun StackedPlaylistCovers(
-    playlists: List<Playlist>,
+    playlists: ImmutableList<Playlist>,
     modifier: Modifier = Modifier
 ) {
     val imageSize = 66.dp

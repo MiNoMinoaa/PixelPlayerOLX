@@ -61,6 +61,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import androidx.compose.ui.res.stringResource
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
+import kotlinx.collections.immutable.persistentListOf
 
 
 // 2) DailyMixSection y DailyMixCard quedan igual de ligeras...
@@ -168,7 +169,7 @@ fun DailyMixSection(
         if (showPlaylistBottomSheet) {
             PlaylistBottomSheet(
                 playlistUiState = playlistUiState,
-                songs = listOf(song),
+                songs = persistentListOf(song),
                 onDismiss = { showPlaylistBottomSheet = false },
                 bottomBarHeight = bottomBarHeightDp,
                 playerViewModel = playerViewModel,

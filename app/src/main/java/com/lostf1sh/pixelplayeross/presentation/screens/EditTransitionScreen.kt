@@ -86,6 +86,8 @@ import com.lostf1sh.pixelplayeross.presentation.viewmodel.TransitionViewModel
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import java.util.concurrent.TimeUnit
 import androidx.compose.ui.res.stringResource
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -352,7 +354,7 @@ private fun TransitionModeSection(
 
         // Redesigned Toggle component: flat, symmetric, no weird shadows
         ExpressiveMorphingToggle(
-            options = listOf(TransitionMode.NONE, TransitionMode.OVERLAP),
+            options = remember { persistentListOf(TransitionMode.NONE, TransitionMode.OVERLAP) },
             selectedOption = selected,
             onOptionSelected = onModeSelected
         )
@@ -361,7 +363,7 @@ private fun TransitionModeSection(
 
 @Composable
 private fun ExpressiveMorphingToggle(
-    options: List<TransitionMode>,
+    options: ImmutableList<TransitionMode>,
     selectedOption: TransitionMode,
     onOptionSelected: (TransitionMode) -> Unit
 ) {

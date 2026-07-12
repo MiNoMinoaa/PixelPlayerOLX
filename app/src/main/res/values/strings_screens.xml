@@ -251,4 +251,10 @@
     <string name="toast_added_to_queue">Added to queue</string>
     <string name="toast_playing_next">Playing next</string>
     <string name="error_share_song_format">Could not share song: %1$s</string>
+    <string name="cd_artist_format">Artist: %1$s</string>
+    <string name="cd_play_artist">Play artist</string>
+    <string name="cd_play_playlist">Play playlist</string>
+    <string name="cd_toggle_grid_list">Toggle grid/list view</string>
+    <string name="cd_genre_illustration">Genre illustration</string>
+    <string name="dash_last_synced_format">Last synced: %1$s</string>
 </resources>

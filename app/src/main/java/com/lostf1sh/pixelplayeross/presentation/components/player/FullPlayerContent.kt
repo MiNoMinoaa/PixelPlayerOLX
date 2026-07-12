@@ -1175,7 +1175,7 @@ private fun predictSkipPreviousCarouselIndex(
 @Composable
 private fun FullPlayerSongMetadataSection(
     song: Song,
-    currentSongArtists: List<Artist>,
+    currentSongArtists: ImmutableList<Artist>,
     loadingTweaks: FullPlayerLoadingTweaks,
     isSheetDragGestureActive: Boolean,
     expansionFractionProvider: () -> Float,
@@ -1323,7 +1323,7 @@ private fun FullPlayerLandscapeContent(
 @Composable
 private fun SongMetadataDisplaySection(
     song: Song?,
-    currentSongArtists: List<Artist>,
+    currentSongArtists: ImmutableList<Artist>,
     expansionFractionProvider: () -> Float,
     textColor: Color,
     artistTextColor: Color,
@@ -1996,7 +1996,7 @@ private fun PlayerSongInfo(
     title: String,
     artist: String,
     artistId: Long,
-    artists: List<Artist>,
+    artists: ImmutableList<Artist>,
     expansionFractionProvider: () -> Float,
     textColor: Color,
     artistTextColor: Color,

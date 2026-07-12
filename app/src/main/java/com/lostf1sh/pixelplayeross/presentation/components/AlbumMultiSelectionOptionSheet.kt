@@ -45,11 +45,14 @@ import coil.size.Size
 import com.lostf1sh.pixelplayeross.R
 import com.lostf1sh.pixelplayeross.data.model.Album
 import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
+import androidx.compose.runtime.remember
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AlbumMultiSelectionOptionSheet(
-    selectedAlbums: List<Album>,
+    selectedAlbums: ImmutableList<Album>,
     maxSelection: Int,
     onDismiss: () -> Unit,
     onPlay: () -> Unit,
@@ -75,7 +78,7 @@ fun AlbumMultiSelectionOptionSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 StackedAlbumCovers(
-                    albums = selectedAlbums.take(4)
+                    albums = remember(selectedAlbums) { selectedAlbums.take(4).toImmutableList() }
                 )
 
                 Spacer(modifier = Modifier.width(16.dp))
@@ -217,7 +220,7 @@ private fun AlbumSelectionActionButton(
 
 @Composable
 private fun StackedAlbumCovers(
-    albums: List<Album>,
+    albums: ImmutableList<Album>,
     modifier: Modifier = Modifier
 ) {
     val imageSize = 64.dp

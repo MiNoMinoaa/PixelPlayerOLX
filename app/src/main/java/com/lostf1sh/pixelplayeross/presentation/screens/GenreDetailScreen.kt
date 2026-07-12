@@ -82,6 +82,7 @@ import kotlinx.coroutines.launch
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import kotlin.math.roundToInt
 import androidx.compose.ui.res.stringResource
+import kotlinx.collections.immutable.toImmutableList
 
 // --- Data Models & Helpers ---
 
@@ -450,7 +451,7 @@ fun GenreDetailScreen(
             MaterialTheme(colorScheme = baseColorScheme) {
                 QuickFillDialog(
                     visible = showQuickFillDialog,
-                    songs = uiState.songs,
+                    songs = remember(uiState.songs) { uiState.songs.toImmutableList() },
                     customGenres = customGenres,
                     customGenreIcons = customGenreIcons,
                     onDismiss = { showQuickFillDialog = false },
@@ -552,7 +553,7 @@ fun GenreDetailScreen(
                 if (showPlaylistBottomSheet) {
                     com.lostf1sh.pixelplayeross.presentation.components.PlaylistBottomSheet(
                         playlistUiState = playlistUiState,
-                        songs = listOf(song),
+                        songs = persistentListOf(song),
                         onDismiss = { showPlaylistBottomSheet = false },
                         bottomBarHeight = 0.dp, // Or calculate if needed
                         playerViewModel = playerViewModel

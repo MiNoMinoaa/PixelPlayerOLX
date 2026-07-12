@@ -130,6 +130,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.lostf1sh.pixelplayeross.R
@@ -224,20 +225,22 @@ fun SetupScreen(
     val directorySelectionPageIndex = remember(pages) { pages.indexOf(SetupPage.DirectorySelection) }
     val finishPageIndex = remember(pages) { pages.indexOf(SetupPage.Finish) }
 
-    LaunchedEffect(Unit) {
-        setupViewModel.events.collectLatest { event ->
-            when (event) {
-                is SetupEvent.Message -> {
-                    Toast.makeText(context, event.value, Toast.LENGTH_LONG).show()
-                }
-                is SetupEvent.RestoreCompleted -> {
-                    Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
-                    val targetPageIndex = finishPageIndex.takeIf { it >= 0 }
+    LaunchedEffect(setupViewModel, lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            setupViewModel.events.collectLatest { event ->
+                when (event) {
+                    is SetupEvent.Message -> {
+                        Toast.makeText(context, event.value, Toast.LENGTH_LONG).show()
+                    }
+                    is SetupEvent.RestoreCompleted -> {
+                        Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                        val targetPageIndex = finishPageIndex.takeIf { it >= 0 }
 
-                    if (targetPageIndex != null) {
-                        pagerState.animateScrollToPage(targetPageIndex)
-                    } else {
-                        onSetupComplete()
+                        if (targetPageIndex != null) {
+                            pagerState.animateScrollToPage(targetPageIndex)
+                        } else {
+                            onSetupComplete()
+                        }
                     }
                 }
             }
@@ -445,8 +448,8 @@ fun SetupScreen(
 fun DirectorySelectionPage(
     uiState: SetupUiState,
     currentPath: File,
-    directoryChildren: List<DirectoryEntry>,
-    availableStorages: List<StorageInfo>,
+    directoryChildren: ImmutableList<DirectoryEntry>,
+    availableStorages: ImmutableList<StorageInfo>,
     selectedStorageIndex: Int,
     isExplorerPriming: Boolean,
     isExplorerReady: Boolean,

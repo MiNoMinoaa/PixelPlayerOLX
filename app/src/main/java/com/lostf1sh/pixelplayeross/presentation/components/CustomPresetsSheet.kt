@@ -38,12 +38,13 @@ import androidx.compose.ui.res.stringResource
 import com.lostf1sh.pixelplayeross.R
 import com.lostf1sh.pixelplayeross.data.equalizer.EqualizerPreset
 import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
+import kotlinx.collections.immutable.ImmutableList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomPresetsSheet(
-    presets: List<EqualizerPreset>,
-    pinnedPresetsNames: List<String>,
+    presets: ImmutableList<EqualizerPreset>,
+    pinnedPresetsNames: ImmutableList<String>,
     onPresetSelected: (EqualizerPreset) -> Unit,
     onPinToggled: (EqualizerPreset) -> Unit,
     onRename: (EqualizerPreset) -> Unit,

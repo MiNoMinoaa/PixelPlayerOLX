@@ -93,6 +93,8 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import androidx.compose.ui.res.stringResource
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -140,13 +142,13 @@ fun RecentlyPlayedScreen(
     }.collectAsStateWithLifecycle(initialValue = recentSongsInitialValue)
 
     val recentlyPlayedSongs = remember(playbackHistory, recentlyPlayedSourceSongs, selectedRange) {
-        val sourceSongs = recentlyPlayedSourceSongs ?: return@remember emptyList()
+        val sourceSongs = recentlyPlayedSourceSongs ?: return@remember persistentListOf()
         mapRecentlyPlayedSongs(
             playbackHistory = playbackHistory,
             songs = sourceSongs,
             range = selectedRange,
             maxItems = Int.MAX_VALUE
-        )
+        ).toImmutableList()
     }
     val groupedSongs = remember(recentlyPlayedSongs, selectedRange, context) {
         groupRecentlyPlayedSongs(
@@ -341,7 +343,7 @@ fun RecentlyPlayedScreen(
             if (showPlaylistBottomSheet) {
                 PlaylistBottomSheet(
                     playlistUiState = playlistUiState,
-                    songs = listOf(song),
+                    songs = persistentListOf(song),
                     onDismiss = { showPlaylistBottomSheet = false },
                     bottomBarHeight = bottomBarHeightDp,
                     playerViewModel = playerViewModel,
@@ -373,7 +375,7 @@ fun RecentlyPlayedScreen(
 @Composable
 private fun ExpressiveRecentlyPlayedHeader(
     title: String,
-    songs: List<RecentlyPlayedSongUiModel>,
+    songs: ImmutableList<RecentlyPlayedSongUiModel>,
     selectedRange: StatsTimeRange,
     scrollState: LazyListState
 ) {

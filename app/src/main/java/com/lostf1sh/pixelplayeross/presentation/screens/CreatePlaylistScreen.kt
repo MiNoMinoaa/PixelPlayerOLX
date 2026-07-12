@@ -170,6 +170,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lostf1sh.pixelplayeross.R
 import com.lostf1sh.pixelplayeross.presentation.screens.TabAnimation
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 
@@ -1324,7 +1326,7 @@ private fun PlaylistFormContent(
                 }
             }
 
-            val tabs = listOf(
+            val tabs = persistentListOf(
                 stringResource(R.string.presentation_batch_f_tab_default),
                 stringResource(R.string.presentation_batch_f_tab_image),
                 stringResource(R.string.presentation_batch_f_tab_icon)
@@ -1549,7 +1551,7 @@ fun getIconByName(name: String?): ImageVector? {
 
 @Composable
 fun ExpressiveButtonGroup(
-    items: List<String>,
+    items: ImmutableList<String>,
     selectedIndex: Int,
     onItemClick: (Int) -> Unit,
     modifier: Modifier = Modifier

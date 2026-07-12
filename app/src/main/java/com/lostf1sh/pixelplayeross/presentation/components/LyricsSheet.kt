@@ -137,6 +137,8 @@ import androidx.compose.ui.text.style.TextGeometricTransform
 import androidx.compose.ui.text.style.TextOverflow
 import com.lostf1sh.pixelplayeross.presentation.components.subcomps.PlayingEqIcon
 import com.lostf1sh.pixelplayeross.utils.MultiLangRomanizer
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 internal data class LyricsSheetColors(
     val container: Color,
@@ -763,12 +765,13 @@ fun LyricsSheet(
 
                     true -> {
                         lyrics?.synced?.let { synced ->
+                            val syncedLines = remember(synced) { synced.toImmutableList() }
                             SyncedLyricsList(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(horizontal = 24.dp),
                                 contentPadding = PaddingValues(top = 130.dp, bottom = 100.dp),
-                                lines = synced,
+                                lines = syncedLines,
                                 listState = syncedListState,
                                 playbackPositionFlow = playbackPositionFlow,
                                 lyricsSyncOffset = lyricsSyncOffset,
@@ -946,7 +949,7 @@ fun LyricsSheet(
                                 Icon(
                                     modifier = Modifier.size(32.dp),
                                     imageVector = Icons.Rounded.Pause,
-                                    contentDescription = "Pause",
+                                    contentDescription = stringResource(R.string.cd_pause),
                                     tint = onPlayPauseColor
                                 )
                             } else {
@@ -1101,7 +1104,7 @@ fun LyricsSheet(
             ) {
                 Icon(
                     imageVector = Icons.Rounded.KeyboardArrowUp,
-                    contentDescription = "Show Controls"
+                    contentDescription = stringResource(R.string.cd_show_controls)
                 )
             }
         }
@@ -1182,7 +1185,7 @@ private fun LyricsPlaybackSeekBar(
 @OptIn(ExperimentalSnapperApi::class)
 @Composable
 fun SyncedLyricsList(
-    lines: List<SyncedLine>,
+    lines: ImmutableList<SyncedLine>,
     listState: LazyListState,
     playbackPositionFlow: StateFlow<Long>,
     lyricsSyncOffset: Int,
@@ -2013,7 +2016,7 @@ private fun LyricsTrackInfo(
         SmartImage(
             model = song.albumArtUriString ?: R.drawable.rounded_album_24,
             shape = albumShape,
-            contentDescription = "Cover Art",
+            contentDescription = stringResource(R.string.cd_cover_art),
             modifier = Modifier
                 .size(66.dp)
                 .padding(6.dp)

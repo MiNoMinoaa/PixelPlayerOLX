@@ -37,7 +37,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
 import com.lostf1sh.pixelplayeross.data.model.LibraryTabId
 import com.lostf1sh.pixelplayeross.data.model.Song
@@ -118,15 +121,18 @@ fun LibrarySongsTab(
     }
 
     // Scroll Handler from ViewModel
-    LaunchedEffect(Unit) {
-        playerViewModel.scrollToIndexEvent.collect { index ->
-            if (index >= 0) {
-                 val firstVisible = listState.firstVisibleItemIndex
-                 if (Math.abs(index - firstVisible) > 20) {
-                     listState.scrollToItem(index)
-                 } else {
-                     listState.animateScrollToItem(index)
-                 }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(playerViewModel, lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            playerViewModel.scrollToIndexEvent.collect { index ->
+                if (index >= 0) {
+                    val firstVisible = listState.firstVisibleItemIndex
+                    if (Math.abs(index - firstVisible) > 20) {
+                        listState.scrollToItem(index)
+                    } else {
+                        listState.animateScrollToItem(index)
+                    }
+                }
             }
         }
     }

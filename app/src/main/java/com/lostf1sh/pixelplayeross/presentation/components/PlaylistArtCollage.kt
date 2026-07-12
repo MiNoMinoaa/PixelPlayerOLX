@@ -28,10 +28,11 @@ import com.lostf1sh.pixelplayeross.R
 import com.lostf1sh.pixelplayeross.data.model.Song
 import kotlin.math.floor
 import kotlin.math.sqrt
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun PlaylistArtCollage(
-    songs: List<Song>,
+    songs: ImmutableList<Song>,
     modifier: Modifier = Modifier,
 ) {
     if (songs.isEmpty()) {

@@ -3,6 +3,7 @@ package com.lostf1sh.pixelplayeross.data.navidrome
 import android.net.Uri
 import com.lostf1sh.pixelplayeross.data.stream.CloudStreamProxy
 import com.lostf1sh.pixelplayeross.data.stream.CloudStreamSecurity
+import kotlinx.coroutines.CancellationException
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import timber.log.Timber
@@ -48,6 +49,7 @@ class NavidromeStreamProxy @Inject constructor(
         return try {
             repository.getStreamUrl(id)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Timber.w(e, "NavidromeStreamProxy: Failed to resolve stream URL for song $id")
             null
         }
@@ -71,6 +73,7 @@ class NavidromeStreamProxy @Inject constructor(
         try {
             getOrFetchStreamUrl(songId)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Timber.w(e, "warmUpStreamUrl failed for $songId")
         }
     }

@@ -11,6 +11,7 @@ import com.lostf1sh.pixelplayeross.presentation.components.SaveQueueOverlayData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.collections.immutable.toImmutableList
 
 /**
  * Owns transient overlay state that is coupled to the sheet scene:
@@ -47,7 +48,7 @@ internal class SheetModalOverlayController(
             queueSheetControllerProvider().animateTo(false)
             onCollapsePlayerSheet()
             delay(animationDurationMs.toLong())
-            pendingSaveQueueOverlay = SaveQueueOverlayData(songs, defaultName, onConfirm)
+            pendingSaveQueueOverlay = SaveQueueOverlayData(songs.toImmutableList(), defaultName, onConfirm)
         }
     }
 }

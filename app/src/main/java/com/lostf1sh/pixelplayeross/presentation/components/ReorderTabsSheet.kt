@@ -63,11 +63,13 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ReorderTabsSheet(
-    tabs: List<String>,
+    tabs: ImmutableList<String>,
     onReorder: (List<String>) -> Unit,
     onReset: () -> Unit,
     onDismiss: () -> Unit
@@ -115,7 +117,7 @@ fun ReorderTabsSheet(
         onMove = { from, to ->
             localTabs = localTabs.toMutableList().apply {
                 add(to.index, removeAt(from.index))
-            }
+            }.toImmutableList()
             // Haptic feedback on reorder
             performAppCompatHapticFeedback(
                 view,

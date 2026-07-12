@@ -22,10 +22,10 @@ import com.lostf1sh.pixelplayeross.data.repository.MusicRepository
 import com.lostf1sh.pixelplayeross.data.worker.SyncManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
@@ -76,8 +76,10 @@ class SetupViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(SetupUiState())
     val uiState = _uiState.asStateFlow()
-    private val _events = MutableSharedFlow<SetupEvent>()
-    val events = _events.asSharedFlow()
+    // Channel instead of SharedFlow: RestoreCompleted drives navigation, so an event
+    // emitted while the collector is being re-created (config change) must not be lost.
+    private val _events = Channel<SetupEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
     
     /**
      * Expose sync progress for UI to show during initial setup
@@ -326,7 +328,7 @@ class SetupViewModel @Inject constructor(
                 },
                 onFailure = { error ->
                     _uiState.update { it.copy(isInspectingBackup = false) }
-                    _events.emit(
+                    _events.send(
                         SetupEvent.Message(
                             context.getString(
                                 R.string.backup_invalid_format,
@@ -382,18 +384,18 @@ class SetupViewModel @Inject constructor(
 
             when (result) {
                 is RestoreResult.Success -> {
-                    _events.emit(SetupEvent.RestoreCompleted(context.getString(R.string.restore_completed_success)))
+                    _events.send(SetupEvent.RestoreCompleted(context.getString(R.string.restore_completed_success)))
                 }
                 is RestoreResult.PartialFailure -> {
                     val canFinishSetup = result.succeeded.isNotEmpty() || !result.rolledBack
                     if (canFinishSetup) {
-                        _events.emit(
+                        _events.send(
                             SetupEvent.RestoreCompleted(
                                 context.getString(R.string.restore_completed_partial_issues),
                             )
                         )
                     } else {
-                        _events.emit(
+                        _events.send(
                             SetupEvent.Message(
                                 context.getString(
                                     R.string.restore_could_not_complete,
@@ -404,7 +406,7 @@ class SetupViewModel @Inject constructor(
                     }
                 }
                 is RestoreResult.TotalFailure -> {
-                    _events.emit(SetupEvent.Message(context.getString(R.string.restore_failed_format, result.error)))
+                    _events.send(SetupEvent.Message(context.getString(R.string.restore_failed_format, result.error)))
                 }
             }
 

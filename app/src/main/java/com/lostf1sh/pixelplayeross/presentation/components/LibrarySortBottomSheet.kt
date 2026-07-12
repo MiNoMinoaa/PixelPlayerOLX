@@ -57,12 +57,13 @@ import com.lostf1sh.pixelplayeross.data.model.SortDirection
 import com.lostf1sh.pixelplayeross.data.model.SortOption
 import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
+import kotlinx.collections.immutable.ImmutableList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibrarySortBottomSheet(
     title: String,
-    options: List<SortOption>,
+    options: ImmutableList<SortOption>,
     selectedOption: SortOption?,
     onDismiss: () -> Unit,
     onOptionSelected: (SortOption) -> Unit,

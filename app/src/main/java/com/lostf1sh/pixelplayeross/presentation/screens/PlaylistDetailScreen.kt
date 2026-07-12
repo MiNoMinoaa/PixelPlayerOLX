@@ -133,6 +133,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import com.lostf1sh.pixelplayeross.presentation.components.rememberModalSheetState
+import kotlinx.collections.immutable.persistentListOf
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(
@@ -951,7 +952,7 @@ fun PlaylistDetailScreen(
 
                 PlaylistBottomSheet(
                     playlistUiState = playlistUiState,
-                    songs = listOf(currentSong),
+                    songs = persistentListOf(currentSong),
                     onDismiss = {
                         showPlaylistBottomSheet = false
                     },
@@ -979,7 +980,7 @@ fun PlaylistDetailScreen(
         }
 
         // Build options list inline to avoid potential static initialization issues
-        val songSortOptions = listOf(
+        val songSortOptions = persistentListOf(
             SortOption.SongDefaultOrder,
             SortOption.SongTitleAZ,
             SortOption.SongTitleZA,

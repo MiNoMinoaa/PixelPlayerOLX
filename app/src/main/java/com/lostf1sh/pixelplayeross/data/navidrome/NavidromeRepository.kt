@@ -28,6 +28,7 @@ import com.lostf1sh.pixelplayeross.data.preferences.UserPreferencesRepository
 import com.lostf1sh.pixelplayeross.data.stream.BulkSyncResult
 import com.lostf1sh.pixelplayeross.data.stream.CloudMusicUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -214,6 +215,7 @@ class NavidromeRepository @Inject constructor(
                 Timber.d("$TAG: Login successful for $username@$serverUrl")
                 Result.success(username)
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Timber.e(e, "$TAG: Login failed")
                 api.clearCredentials()
                 _isLoggedInFlow.value = false
@@ -347,6 +349,7 @@ class NavidromeRepository @Inject constructor(
                 Timber.d("$TAG: Synced ${entities.size} playlists")
                 Result.success(entities)
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Timber.e(e, "$TAG: Failed to sync playlists")
                 Result.failure(e)
             }
@@ -414,6 +417,7 @@ class NavidromeRepository @Inject constructor(
                 Timber.d("$TAG: Synced ${entities.size} songs for playlist $playlistId")
                 Result.success(entities.size)
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Timber.e(e, "$TAG: Failed to sync playlist songs")
                 Result.failure(e)
             }
@@ -526,6 +530,7 @@ class NavidromeRepository @Inject constructor(
                 onProgress?.invoke(1f, context.getString(R.string.dash_status_library_sync_complete))
                 Result.success(entities.size)
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Timber.e(e, "$TAG: Failed to sync library songs")
                 Result.failure(e)
             }
@@ -586,6 +591,7 @@ class NavidromeRepository @Inject constructor(
                 try {
                     syncUnifiedLibrarySongsFromNavidrome()
                 } catch (e: Exception) {
+                    if (e is CancellationException) throw e
                     Timber.e(e, "$TAG: Failed to sync unified library after playlist fetch failure")
                 }
                 return@withContext Result.success(
@@ -623,6 +629,7 @@ class NavidromeRepository @Inject constructor(
             try {
                 syncUnifiedLibrarySongsFromNavidrome()
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Timber.e(e, "$TAG: Failed to sync unified library")
             }
 
@@ -697,6 +704,7 @@ class NavidromeRepository @Inject constructor(
 
                 Result.success(songs)
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Timber.e(e, "$TAG: Search failed")
                 Result.failure(e)
             }
@@ -762,6 +770,7 @@ class NavidromeRepository @Inject constructor(
 
                 Result.failure(Exception("No lyrics found"))
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Timber.e(e, "$TAG: Failed to get lyrics for song $songId")
                 Result.failure(e)
             }
@@ -970,6 +979,7 @@ class NavidromeRepository @Inject constructor(
                 Timber.d("$TAG: Created app playlist for Navidrome playlist $navidromePlaylistId")
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Timber.e(e, "$TAG: Failed to update app playlist for Navidrome playlist $navidromePlaylistId")
         }
     }
@@ -980,6 +990,7 @@ class NavidromeRepository @Inject constructor(
             playlistPreferencesRepository.deletePlaylist(appPlaylistId)
             Timber.d("$TAG: Deleted app playlist for Navidrome playlist $navidromePlaylistId")
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Timber.w(e, "$TAG: Failed to delete app playlist for Navidrome playlist $navidromePlaylistId")
         }
     }

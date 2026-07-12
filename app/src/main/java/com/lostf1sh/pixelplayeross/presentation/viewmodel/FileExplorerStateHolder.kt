@@ -28,6 +28,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 data class DirectoryEntry(
     val file: File,
@@ -87,8 +90,8 @@ class FileExplorerStateHolder(
     private var rootCanonicalPath: String = normalizePath(visibleRoot)
 
     // Available storages (Internal, SD Card, USB)
-    private val _availableStorages = MutableStateFlow<List<StorageInfo>>(emptyList())
-    val availableStorages: StateFlow<List<StorageInfo>> = _availableStorages.asStateFlow()
+    private val _availableStorages = MutableStateFlow<ImmutableList<StorageInfo>>(persistentListOf())
+    val availableStorages: StateFlow<ImmutableList<StorageInfo>> = _availableStorages.asStateFlow()
 
     private val _selectedStorageIndex = MutableStateFlow(0)
     val selectedStorageIndex: StateFlow<Int> = _selectedStorageIndex.asStateFlow()
@@ -122,8 +125,8 @@ class FileExplorerStateHolder(
     val isCurrentDirectoryResolved: StateFlow<Boolean> = _isCurrentDirectoryResolved.asStateFlow()
 
     // Combined flow for UI consumption
-    private val _currentDirectoryChildren = MutableStateFlow<List<DirectoryEntry>>(emptyList())
-    val currentDirectoryChildren: StateFlow<List<DirectoryEntry>> = _currentDirectoryChildren.asStateFlow()
+    private val _currentDirectoryChildren = MutableStateFlow<ImmutableList<DirectoryEntry>>(persistentListOf())
+    val currentDirectoryChildren: StateFlow<ImmutableList<DirectoryEntry>> = _currentDirectoryChildren.asStateFlow()
 
     private val mapperDispatcher = Dispatchers.Default
     private val prefetchDispatcher = Dispatchers.IO.limitedParallelism(2)
@@ -179,13 +182,13 @@ class FileExplorerStateHolder(
             }
             .flowOn(mapperDispatcher)
             .onEach {
-                _currentDirectoryChildren.value = it
+                _currentDirectoryChildren.value = it.toImmutableList()
             }.launchIn(scope)
 
     }
 
     fun refreshAvailableStorages() {
-        _availableStorages.value = StorageUtils.getAvailableStorages(context)
+        _availableStorages.value = StorageUtils.getAvailableStorages(context).toImmutableList()
         // Ensure selected index is valid
         if (_selectedStorageIndex.value >= _availableStorages.value.size) {
             _selectedStorageIndex.value = 0

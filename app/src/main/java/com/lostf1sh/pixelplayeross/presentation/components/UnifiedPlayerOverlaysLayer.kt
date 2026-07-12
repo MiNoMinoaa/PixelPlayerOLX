@@ -38,9 +38,10 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import kotlin.math.roundToInt
+import kotlinx.collections.immutable.persistentListOf
 
 internal data class SaveQueueOverlayData(
-    val songs: List<Song>,
+    val songs: ImmutableList<Song>,
     val defaultName: String,
     val onConfirm: (String, Set<String>) -> Unit
 )
@@ -252,7 +253,7 @@ internal fun UnifiedPlayerSongInfoLayer(
             if (showPlaylistBottomSheet) {
                 PlaylistBottomSheet(
                     playlistUiState = playlistUiState,
-                    songs = listOf(liveSong),
+                    songs = persistentListOf(liveSong),
                     onDismiss = { showPlaylistBottomSheet = false },
                     bottomBarHeight = 0.dp,
                     playerViewModel = playerViewModel,

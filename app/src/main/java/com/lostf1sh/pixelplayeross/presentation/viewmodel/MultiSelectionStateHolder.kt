@@ -10,6 +10,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 /**
  * State holder for multi-selection functionality in LibraryScreen tabs.
@@ -23,12 +26,12 @@ class MultiSelectionStateHolder @Inject constructor() {
 
     // Internal mutable state - uses List to preserve selection order
     // LinkedHashSet behavior is enforced via toggle logic
-    private val _selectedSongs = MutableStateFlow<List<Song>>(emptyList())
+    private val _selectedSongs = MutableStateFlow<ImmutableList<Song>>(persistentListOf())
     
     /**
      * Immutable flow of selected songs, preserving selection order.
      */
-    val selectedSongs: StateFlow<List<Song>> = _selectedSongs.asStateFlow()
+    val selectedSongs: StateFlow<ImmutableList<Song>> = _selectedSongs.asStateFlow()
     
     /**
      * Set of selected song IDs for efficient lookup.
@@ -126,7 +129,7 @@ class MultiSelectionStateHolder @Inject constructor() {
      * Updates all state flows atomically.
      */
     private fun updateState(songs: List<Song>, ids: Set<String>) {
-        _selectedSongs.value = songs
+        _selectedSongs.value = songs.toImmutableList()
         _selectedSongIds.value = ids
         _selectedCount.value = songs.size
         _isSelectionMode.value = songs.isNotEmpty()

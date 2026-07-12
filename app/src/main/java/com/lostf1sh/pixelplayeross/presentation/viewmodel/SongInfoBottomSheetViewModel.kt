@@ -31,6 +31,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 @HiltViewModel
 class SongInfoBottomSheetViewModel @Inject constructor(
@@ -57,15 +60,15 @@ class SongInfoBottomSheetViewModel @Inject constructor(
     }
 
     private val _audioMeta = MutableStateFlow<AudioMeta?>(null)
-    private val _resolvedArtists = MutableStateFlow<List<Artist>>(emptyList())
-    val resolvedArtists: StateFlow<List<Artist>> = _resolvedArtists.asStateFlow()
+    private val _resolvedArtists = MutableStateFlow<ImmutableList<Artist>>(persistentListOf())
+    val resolvedArtists: StateFlow<ImmutableList<Artist>> = _resolvedArtists.asStateFlow()
 
     val audioMeta: StateFlow<AudioMeta?> = _audioMeta.asStateFlow()
 
     fun loadArtistsForSong(song: Song) {
         val refs = song.artists
         if (refs.isEmpty() || refs.size < 2) {
-            _resolvedArtists.value = emptyList()
+            _resolvedArtists.value = persistentListOf()
             return
         }
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
@@ -79,7 +82,7 @@ class SongInfoBottomSheetViewModel @Inject constructor(
                 entitiesById[ref.id]?.toArtist()
                     ?: Artist(id = ref.id, name = ref.name, songCount = 0)
             }
-            _resolvedArtists.value = resolved
+            _resolvedArtists.value = resolved.toImmutableList()
         }
     }
 

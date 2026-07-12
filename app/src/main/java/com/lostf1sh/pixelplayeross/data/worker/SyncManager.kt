@@ -29,6 +29,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import timber.log.Timber
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Data class representing the progress of the sync operation.
@@ -112,7 +113,16 @@ class SyncManager @Inject constructor(
                 replay = 0
             )
 
-    init {
+    private val started = AtomicBoolean(false)
+
+    /**
+     * Starts background observation (storage-change auto-sync, app-foreground catch-up)
+     * and schedules periodic maintenance. Called once from PixelPlayerApplication.onCreate
+     * so the launch site is explicit and greppable instead of hidden in DI construction.
+     * Idempotent — extra calls are no-ops.
+     */
+    fun start() {
+        if (!started.compareAndSet(false, true)) return
         observeStorageChanges()
         observeAppForeground()
         schedulePeriodicMaintenance()

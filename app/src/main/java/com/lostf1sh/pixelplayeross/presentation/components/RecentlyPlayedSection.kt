@@ -49,6 +49,7 @@ import com.lostf1sh.pixelplayeross.R
 import com.lostf1sh.pixelplayeross.data.model.Song
 import com.lostf1sh.pixelplayeross.presentation.model.RecentlyPlayedSongUiModel
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.ThemeStateHolder
+import kotlinx.collections.immutable.ImmutableList
 
 private val HomeRecentlyPlayedPillHeight = 58.dp
 private val HomeRecentlyPlayedPillSpacing = 8.dp
@@ -71,7 +72,7 @@ private data class RecentlyPlayedPillRow(
 
 @Composable
 fun RecentlyPlayedSection(
-    songs: List<RecentlyPlayedSongUiModel>,
+    songs: ImmutableList<RecentlyPlayedSongUiModel>,
     onSongClick: (Song) -> Unit,
     onOpenAllClick: () -> Unit,
     themeStateHolder: ThemeStateHolder,

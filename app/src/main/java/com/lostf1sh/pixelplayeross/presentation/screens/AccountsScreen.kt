@@ -82,6 +82,7 @@ import com.lostf1sh.pixelplayeross.presentation.viewmodel.ExternalServiceAccount
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun AccountsScreen(
@@ -494,7 +495,7 @@ private fun ConnectedAccountCard(
 
 @Composable
 private fun EmptyAccountsCard(
-    disconnectedServices: List<ExternalServiceAccount>,
+    disconnectedServices: ImmutableList<ExternalServiceAccount>,
     onConnect: (ExternalServiceAccount) -> Unit
 ) {
     val noLinkedTitle = stringResource(R.string.presentation_batch_b_accounts_no_linked_title)

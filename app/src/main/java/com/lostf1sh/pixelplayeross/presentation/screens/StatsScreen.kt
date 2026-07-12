@@ -131,6 +131,8 @@ import com.lostf1sh.pixelplayeross.utils.shapes.RoundedStarShape
 import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.PlayCircleOutline
 import com.lostf1sh.pixelplayeross.ui.theme.ExpTitleTypography
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 private const val PULL_TO_REFRESH_MIN_DURATION_MS = 3500L
 
@@ -631,7 +633,7 @@ private fun SummaryProgressRow(
 
 @Composable
 private fun RangeTabsHeader(
-    ranges: List<StatsTimeRange>,
+    ranges: ImmutableList<StatsTimeRange>,
     selected: StatsTimeRange,
     onRangeSelected: (StatsTimeRange) -> Unit,
     indicatorSpacing: Dp,
@@ -1029,7 +1031,7 @@ private fun ListeningTimelineSection(
     modifier: Modifier = Modifier
 ) {
     val range = summary?.range ?: StatsTimeRange.WEEK
-    val timeline = summary?.timeline.orEmpty()
+    val timeline = remember(summary) { summary?.timeline.orEmpty().toImmutableList() }
     val hasTimeline = timeline.isNotEmpty() && timeline.any { it.totalDurationMs > 0L || it.playCount > 0 }
     val sectionTitleStyle = rememberStatsSectionTitleStyle()
     val emDash = stringResource(R.string.presentation_batch_g_stats_em_dash)
@@ -1274,7 +1276,7 @@ private fun CategoryMetricsSection(
                     supporting = supportingParts.joinToString(separator = " • ")
                 )
             }
-        }.filter { it.durationMs > 0L }
+        }.filter { it.durationMs > 0L }.toImmutableList()
 
         if (entries.isEmpty()) {
             StatsEmptyState(
@@ -1305,7 +1307,7 @@ private fun CategoryMetricsSection(
 
 @Composable
 private fun CategoryHorizontalBarChart(
-    entries: List<CategoryMetricEntry>,
+    entries: ImmutableList<CategoryMetricEntry>,
     palette: CategoryChartPalette,
     modifier: Modifier = Modifier
 ) {
@@ -1453,7 +1455,7 @@ private fun TimelineMetricBadge(
 
 @Composable
 private fun TimelineBarChart(
-    entries: List<PlaybackStatsRepository.TimelineEntry>,
+    entries: ImmutableList<PlaybackStatsRepository.TimelineEntry>,
     metric: TimelineMetric,
     range: StatsTimeRange,
     blankLabel: String,
@@ -1485,7 +1487,7 @@ private fun TimelineBarChart(
 
 @Composable
 private fun VerticalTimelineBarChart(
-    entries: List<PlaybackStatsRepository.TimelineEntry>,
+    entries: ImmutableList<PlaybackStatsRepository.TimelineEntry>,
     metric: TimelineMetric,
     range: StatsTimeRange,
     spec: TimelineChartSpec,
@@ -1584,7 +1586,7 @@ private fun VerticalTimelineBarChart(
 
 @Composable
 private fun HorizontalTimelineBarChart(
-    entries: List<PlaybackStatsRepository.TimelineEntry>,
+    entries: ImmutableList<PlaybackStatsRepository.TimelineEntry>,
     metric: TimelineMetric,
     range: StatsTimeRange,
     spec: TimelineChartSpec,
@@ -2257,7 +2259,7 @@ private fun TrackConcentrationCard(
                             )
                         )
                     }
-                }
+                }.toImmutableList()
 
                 TrackDistributionOverview(
                     slices = slices,
@@ -2273,7 +2275,7 @@ private fun TrackConcentrationCard(
 
 @Composable
 private fun TrackDistributionOverview(
-    slices: List<TrackShareSlice>,
+    slices: ImmutableList<TrackShareSlice>,
     totalDurationMs: Long,
     topThreeShare: Float,
     averagePlaysPerTrack: Float,
@@ -2455,7 +2457,7 @@ private fun TrackDistributionStats(
 
 @Composable
 private fun TrackDistributionDonut(
-    slices: List<TrackShareSlice>,
+    slices: ImmutableList<TrackShareSlice>,
     totalDurationMs: Long,
     topThreeShare: Float,
     modifier: Modifier = Modifier

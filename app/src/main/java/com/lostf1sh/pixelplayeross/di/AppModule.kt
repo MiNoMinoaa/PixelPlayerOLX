@@ -105,8 +105,8 @@ object AppModule {
     @Singleton
     @Provides
     @AppScope
-    fun provideAppCoroutineScope(): CoroutineScope {
-        return CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    fun provideAppCoroutineScope(dispatchers: DispatcherProvider): CoroutineScope {
+        return CoroutineScope(SupervisorJob() + dispatchers.io)
     }
 
     @Singleton

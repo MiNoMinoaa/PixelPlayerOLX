@@ -73,6 +73,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import androidx.compose.ui.text.style.TextOverflow
+import kotlinx.collections.immutable.ImmutableList
 
 // Shared placeholder for loading skeletons: allocating a fresh MutableStateFlow inline in
 // composition would create a new object on every recomposition of every skeleton row.
@@ -678,7 +679,7 @@ fun LibraryArtistsTab(
 @Composable
 fun LibraryPlaylistsTab(
     playlistUiState: PlaylistUiState,
-    filteredPlaylists: List<com.lostf1sh.pixelplayeross.data.model.Playlist> = playlistUiState.playlists,
+    filteredPlaylists: ImmutableList<com.lostf1sh.pixelplayeross.data.model.Playlist> = playlistUiState.playlists,
     navController: NavController,
     playerViewModel: PlayerViewModel,
     bottomBarHeight: Dp,

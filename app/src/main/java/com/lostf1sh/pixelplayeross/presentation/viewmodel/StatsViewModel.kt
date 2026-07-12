@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 @HiltViewModel
 class StatsViewModel @Inject constructor(
@@ -31,7 +33,7 @@ class StatsViewModel @Inject constructor(
         val isLoading: Boolean = true,
         val isRefreshing: Boolean = false,
         val summary: PlaybackStatsSummary? = null,
-        val availableRanges: List<StatsTimeRange> = StatsTimeRange.entries
+        val availableRanges: ImmutableList<StatsTimeRange> = StatsTimeRange.entries.toImmutableList()
     )
 
     private val _uiState = MutableStateFlow(StatsUiState())

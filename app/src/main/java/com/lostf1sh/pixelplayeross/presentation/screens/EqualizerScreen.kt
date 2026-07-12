@@ -150,6 +150,8 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -303,7 +305,7 @@ fun EqualizerScreen(
             item(key = "preset_tabs") {
                 val visiblePresets = remember(uiState.accessiblePresets) {
                     val defaultPresets = uiState.accessiblePresets.filter { !it.isCustom }
-                    defaultPresets + EqualizerPreset.custom(List(10) { 0 }) // Always show "Custom" tab at end
+                    (defaultPresets + EqualizerPreset.custom(List(10) { 0 })).toImmutableList() // Always show "Custom" tab at end
                 }
                 
                 PresetTabsRow(
@@ -437,7 +439,7 @@ fun EqualizerScreen(
 
 @Composable
 private fun PresetTabsRow(
-    presets: List<EqualizerPreset>,
+    presets: ImmutableList<EqualizerPreset>,
     selectedPreset: EqualizerPreset,
     onPresetSelected: (EqualizerPreset) -> Unit,
     onEditClick: () -> Unit
@@ -529,7 +531,7 @@ private fun PresetTabsRow(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun BandSlidersSection(
-    bandLevels: List<Int>,
+    bandLevels: ImmutableList<Int>,
     isEnabled: Boolean,
     currentPreset: EqualizerPreset,
     editingPresetName: String?,
@@ -540,7 +542,7 @@ private fun BandSlidersSection(
     onUnpinClick: () -> Unit,
     onPresetsListClick: () -> Unit
 ) {
-    val frequencies = EqualizerPreset.BAND_FREQUENCIES
+    val frequencies = remember { EqualizerPreset.BAND_FREQUENCIES.toImmutableList() }
     
     Card(
         modifier = Modifier
@@ -747,9 +749,9 @@ private fun BandSlidersSection(
 
 @Composable
 private fun GraphBandSliders(
-    bandLevels: List<Int>,
+    bandLevels: ImmutableList<Int>,
     isEnabled: Boolean,
-    frequencies: List<String>,
+    frequencies: ImmutableList<String>,
     onBandLevelChanged: (Int, Int) -> Unit
 ) {
     Box(
@@ -1565,9 +1567,9 @@ private fun VolumeControlCard(
 
 @Composable
 private fun HybridBandSliders(
-    bandLevels: List<Int>,
+    bandLevels: ImmutableList<Int>,
     isEnabled: Boolean,
-    frequencies: List<String>,
+    frequencies: ImmutableList<String>,
     onBandLevelChanged: (Int, Int) -> Unit
 ) {
     val context = LocalContext.current
@@ -1785,9 +1787,9 @@ private fun HybridHorizontalSlider(
 
 @Composable
 private fun HybridFrequencyResponseGraph(
-    bandLevels: List<Int>,
+    bandLevels: ImmutableList<Int>,
     isEnabled: Boolean,
-    frequencies: List<String>? = null
+    frequencies: ImmutableList<String>? = null
 ) {
      val primaryColor = MaterialTheme.colorScheme.primary
      val gridColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)

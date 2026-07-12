@@ -30,6 +30,7 @@ import com.lostf1sh.pixelplayeross.data.worker.SyncManager
 import com.lostf1sh.pixelplayeross.data.worker.SyncProgress
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -43,6 +44,9 @@ import com.lostf1sh.pixelplayeross.data.preferences.LaunchTab
 import com.lostf1sh.pixelplayeross.data.model.Song
 import com.lostf1sh.pixelplayeross.data.service.player.HiFiCapabilityChecker
 import java.io.File
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 data class SettingsUiState(
     val isLoadingDirectories: Boolean = false,
@@ -87,7 +91,7 @@ data class SettingsUiState(
     val backupInfoDismissed: Boolean = false,
     val isDataTransferInProgress: Boolean = false,
     val restorePlan: RestorePlan? = null,
-    val backupHistory: List<BackupHistoryEntry> = emptyList(),
+    val backupHistory: ImmutableList<BackupHistoryEntry> = persistentListOf(),
     val backupValidationErrors: List<ValidationError> = emptyList(),
     val isInspectingBackup: Boolean = false,
     val collagePattern: CollagePattern = CollagePattern.default,
@@ -200,13 +204,15 @@ class SettingsViewModel @Inject constructor(
             initialValue = SyncProgress()
         )
 
-    private val _dataTransferEvents = MutableSharedFlow<String>()
-    val dataTransferEvents: SharedFlow<String> = _dataTransferEvents.asSharedFlow()
+    // Channel instead of SharedFlow: backup/restore results must survive the window
+    // where the collector is torn down (config change, backstack) and re-subscribes.
+    private val _dataTransferEvents = Channel<String>(Channel.BUFFERED)
+    val dataTransferEvents: Flow<String> = _dataTransferEvents.receiveAsFlow()
 
     init {
         viewModelScope.launch {
             backupManager.getBackupHistory().collect { history ->
-                _uiState.update { it.copy(backupHistory = history) }
+                _uiState.update { it.copy(backupHistory = history.toImmutableList()) }
             }
         }
 
@@ -895,9 +901,9 @@ class SettingsViewModel @Inject constructor(
                 _dataTransferProgress.value = progress
             }
             result.fold(
-                onSuccess = { _dataTransferEvents.emit(context.getString(R.string.data_exported_successfully)) },
+                onSuccess = { _dataTransferEvents.send(context.getString(R.string.data_exported_successfully)) },
                 onFailure = {
-                    _dataTransferEvents.emit(
+                    _dataTransferEvents.send(
                         context.getString(
                             R.string.export_failed_format,
                             it.localizedMessage ?: context.getString(R.string.error_unknown),
@@ -921,7 +927,7 @@ class SettingsViewModel @Inject constructor(
                     _uiState.update { it.copy(restorePlan = plan, isInspectingBackup = false) }
                 },
                 onFailure = { error ->
-                    _dataTransferEvents.emit(
+                    _dataTransferEvents.send(
                         context.getString(
                             R.string.backup_invalid_format,
                             error.localizedMessage ?: context.getString(R.string.error_unknown),
@@ -958,12 +964,12 @@ class SettingsViewModel @Inject constructor(
             }
             when (result) {
                 is RestoreResult.Success -> {
-                    _dataTransferEvents.emit(context.getString(R.string.data_restored_successfully))
+                    _dataTransferEvents.send(context.getString(R.string.data_restored_successfully))
                     syncManager.sync()
                 }
                 is RestoreResult.PartialFailure -> {
                     val failedNames = result.failed.entries.joinToString { "${it.key.label}: ${it.value}" }
-                    _dataTransferEvents.emit(
+                    _dataTransferEvents.send(
                         context.getString(R.string.restore_partial_unresolved_format, failedNames),
                     )
                     if (result.succeeded.isNotEmpty() || !result.rolledBack) {
@@ -971,7 +977,7 @@ class SettingsViewModel @Inject constructor(
                     }
                 }
                 is RestoreResult.TotalFailure -> {
-                    _dataTransferEvents.emit(context.getString(R.string.restore_failed_format, result.error))
+                    _dataTransferEvents.send(context.getString(R.string.restore_failed_format, result.error))
                 }
             }
             delay(300)

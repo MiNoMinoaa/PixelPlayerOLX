@@ -105,7 +105,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -168,6 +171,8 @@ import com.lostf1sh.pixelplayeross.presentation.viewmodel.PlayerViewModel
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.SettingsViewModel
 import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
 import com.lostf1sh.pixelplayeross.presentation.components.rememberModalSheetState
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -240,9 +245,12 @@ fun SettingsCategoryScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        settingsViewModel.dataTransferEvents.collectLatest { message ->
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(settingsViewModel, lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            settingsViewModel.dataTransferEvents.collectLatest { message ->
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -277,7 +285,7 @@ fun SettingsCategoryScreen(
                     song.displayArtist.contains(query, ignoreCase = true) ||
                     song.album.contains(query, ignoreCase = true)
             }
-        }
+        }.toImmutableList()
     }
 
     // TopBar Animations (identical to SettingsScreen)
@@ -1971,7 +1979,7 @@ private fun BackupTransferProgressDialog(progress: BackupTransferProgressUpdate)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ImportFileSelectionDialog(
-    backupHistory: List<BackupHistoryEntry>,
+    backupHistory: ImmutableList<BackupHistoryEntry>,
     isInspecting: Boolean,
     onDismiss: () -> Unit,
     onBrowseFile: () -> Unit,
@@ -2321,7 +2329,7 @@ private fun ImportModuleSelectionDialog(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun PaletteRegenerateSongSheetContent(
-    songs: List<Song>,
+    songs: ImmutableList<Song>,
     isRunning: Boolean,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,

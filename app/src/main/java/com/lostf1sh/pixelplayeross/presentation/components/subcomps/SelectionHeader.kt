@@ -53,6 +53,9 @@ import com.lostf1sh.pixelplayeross.presentation.components.SmartImage
 import androidx.compose.ui.res.stringResource
 import com.lostf1sh.pixelplayeross.R
 import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
+import androidx.compose.runtime.remember
 
 /**
  * Header component displayed during multi-selection mode.
@@ -67,7 +70,7 @@ import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SelectionHeader(
-    selectedSongs: List<Song>,
+    selectedSongs: ImmutableList<Song>,
     onPlayClick: () -> Unit,
     onLikeClick: () -> Unit,
     onShareClick: () -> Unit,
@@ -86,7 +89,7 @@ fun SelectionHeader(
         ) {
             // Stacked album arts (up to 5, overlapping)
             StackedCoverArts(
-                songs = selectedSongs.take(5),
+                songs = remember(selectedSongs) { selectedSongs.take(5).toImmutableList() },
                 totalCount = selectedSongs.size
             )
             
@@ -192,7 +195,7 @@ fun SelectionHeader(
  */
 @Composable
 private fun StackedCoverArts(
-    songs: List<Song>,
+    songs: ImmutableList<Song>,
     totalCount: Int,
     modifier: Modifier = Modifier
 ) {

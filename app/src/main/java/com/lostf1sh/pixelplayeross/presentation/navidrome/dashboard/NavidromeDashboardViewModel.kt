@@ -19,6 +19,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.flow.map
 
 @HiltViewModel
 class NavidromeDashboardViewModel @Inject constructor(
@@ -26,8 +30,9 @@ class NavidromeDashboardViewModel @Inject constructor(
     private val workManager: WorkManager
 ) : ViewModel() {
 
-    val playlists: StateFlow<List<NavidromePlaylistEntity>> = repository.getPlaylists()
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    val playlists: StateFlow<ImmutableList<NavidromePlaylistEntity>> = repository.getPlaylists()
+        .map { it.toImmutableList() }
+        .stateIn(viewModelScope, SharingStarted.Lazily, persistentListOf())
 
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
@@ -38,14 +43,14 @@ class NavidromeDashboardViewModel @Inject constructor(
     private val _syncMessage = MutableStateFlow<String?>(null)
     val syncMessage: StateFlow<String?> = _syncMessage.asStateFlow()
 
-    private val _selectedPlaylistSongs = MutableStateFlow<List<Song>>(emptyList())
-    val selectedPlaylistSongs: StateFlow<List<Song>> = _selectedPlaylistSongs.asStateFlow()
+    private val _selectedPlaylistSongs = MutableStateFlow<ImmutableList<Song>>(persistentListOf())
+    val selectedPlaylistSongs: StateFlow<ImmutableList<Song>> = _selectedPlaylistSongs.asStateFlow()
 
     private val _selectedPlaylistName = MutableStateFlow<String?>(null)
     val selectedPlaylistName: StateFlow<String?> = _selectedPlaylistName.asStateFlow()
 
-    private val _musicFolders = MutableStateFlow<List<NavidromeMusicFolder>>(emptyList())
-    val musicFolders: StateFlow<List<NavidromeMusicFolder>> = _musicFolders.asStateFlow()
+    private val _musicFolders = MutableStateFlow<ImmutableList<NavidromeMusicFolder>>(persistentListOf())
+    val musicFolders: StateFlow<ImmutableList<NavidromeMusicFolder>> = _musicFolders.asStateFlow()
 
     private val _musicFoldersLoadFailed = MutableStateFlow(false)
     val musicFoldersLoadFailed: StateFlow<Boolean> = _musicFoldersLoadFailed.asStateFlow()
@@ -117,12 +122,12 @@ class NavidromeDashboardViewModel @Inject constructor(
         viewModelScope.launch {
             repository.getMusicFolders()
                 .onSuccess { folders ->
-                    _musicFolders.value = folders
+                    _musicFolders.value = folders.toImmutableList()
                     _musicFoldersLoadFailed.value = false
                 }
                 .onFailure {
                     // Music-folder discovery is optional; sync falls back to the server-wide library.
-                    _musicFolders.value = emptyList()
+                    _musicFolders.value = persistentListOf()
                     _musicFoldersLoadFailed.value = true
                 }
         }
@@ -148,7 +153,7 @@ class NavidromeDashboardViewModel @Inject constructor(
         selectedPlaylistJob?.cancel()
         selectedPlaylistJob = viewModelScope.launch {
             repository.getPlaylistSongs(playlistId).collect { songs ->
-                _selectedPlaylistSongs.value = songs
+                _selectedPlaylistSongs.value = songs.toImmutableList()
             }
         }
     }
