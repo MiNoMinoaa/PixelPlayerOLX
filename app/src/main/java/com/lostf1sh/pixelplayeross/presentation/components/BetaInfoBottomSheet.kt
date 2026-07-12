@@ -60,6 +60,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import com.lostf1sh.pixelplayeross.BuildConfig
 import com.lostf1sh.pixelplayeross.R
 import com.lostf1sh.pixelplayeross.presentation.components.subcomps.SineWaveLine
 import com.lostf1sh.pixelplayeross.ui.theme.ExpTitleTypography
@@ -89,7 +90,7 @@ fun BetaInfoBottomSheet(modifier: Modifier = Modifier) {
             item(key = "header") {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = stringResource(R.string.presentation_batch_g_beta_sheet_version),
+                        text = BuildConfig.VERSION_NAME,
                         fontFamily = RoundedSans,
                         style = ExpTitleTypography.displaySmall,
                         color = MaterialTheme.colorScheme.onSurface
@@ -133,37 +134,25 @@ fun BetaInfoBottomSheet(modifier: Modifier = Modifier) {
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(42.dp)
-                                .background(
-                                    brush = Brush.linearGradient(
-                                        listOf(
-                                            MaterialTheme.colorScheme.primary,
-                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.65f)
-                                        )
-                                    ),
-                                    shape = CircleShape
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = stringResource(R.string.presentation_batch_h_beta_glyph),
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Black
-                            )
-                        }
                         Column(
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
-                                text = stringResource(R.string.presentation_batch_g_beta_sheet_welcome_title),
+                                text = stringResource(
+                                    R.string.presentation_batch_g_beta_sheet_welcome_title,
+                                    BuildConfig.VERSION_NAME
+                                ),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = stringResource(R.string.presentation_batch_g_beta_sheet_welcome_body),
+                                text = stringResource(
+                                    if (BuildConfig.BUILD_TYPE == "release") {
+                                        R.string.presentation_batch_g_beta_sheet_welcome_body_stable
+                                    } else {
+                                        R.string.presentation_batch_g_beta_sheet_welcome_body
+                                    }
+                                ),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -179,22 +168,24 @@ fun BetaInfoBottomSheet(modifier: Modifier = Modifier) {
                 )
             }
 
-            item(key = "section-expect") {
-                BetaFaqSection(
-                    title = stringResource(R.string.presentation_batch_g_beta_sheet_expect_title),
-                    summary = stringResource(R.string.presentation_batch_g_beta_sheet_expect_summary),
-                    icon = Icons.Rounded.Whatshot,
-                    iconTint = MaterialTheme.colorScheme.primary,
-                    initiallyExpanded = true
-                ) {
-                    BetaBulletList(
-                        items = listOf(
-                            R.string.presentation_batch_g_beta_sheet_expect_1,
-                            R.string.presentation_batch_g_beta_sheet_expect_2,
-                            R.string.presentation_batch_g_beta_sheet_expect_3,
-                            R.string.presentation_batch_g_beta_sheet_expect_4
+            if (BuildConfig.BUILD_TYPE != "release") {
+                item(key = "section-expect") {
+                    BetaFaqSection(
+                        title = stringResource(R.string.presentation_batch_g_beta_sheet_expect_title),
+                        summary = stringResource(R.string.presentation_batch_g_beta_sheet_expect_summary),
+                        icon = Icons.Rounded.Whatshot,
+                        iconTint = MaterialTheme.colorScheme.primary,
+                        initiallyExpanded = true
+                    ) {
+                        BetaBulletList(
+                            items = listOf(
+                                R.string.presentation_batch_g_beta_sheet_expect_1,
+                                R.string.presentation_batch_g_beta_sheet_expect_2,
+                                R.string.presentation_batch_g_beta_sheet_expect_3,
+                                R.string.presentation_batch_g_beta_sheet_expect_4
+                            )
                         )
-                    )
+                    }
                 }
             }
 

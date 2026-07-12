@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.lostf1sh.pixelplayeross.BuildConfig
 import com.lostf1sh.pixelplayeross.R
 import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
 import com.lostf1sh.pixelplayeross.ui.theme.PixelPlayerStatusBarStyle
@@ -134,21 +135,15 @@ fun HomeGradientTopBar(
                     ),
                     onClick = onBetaClick
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.presentation_batch_g_topbar_beta_letter),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Black
-                        )
-                        Text(
-                            text = stringResource(R.string.presentation_batch_g_topbar_beta),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
+                    Text(
+                        text = when (BuildConfig.BUILD_TYPE) {
+                            "release" -> stringResource(R.string.presentation_batch_g_topbar_build_stable)
+                            "debug" -> stringResource(R.string.presentation_batch_g_topbar_build_debug)
+                            else -> BuildConfig.BUILD_TYPE.replaceFirstChar { it.uppercase() }
+                        },
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
         },

@@ -189,8 +189,8 @@ Backslash (\) can be used to escape character delimiters.</string>
     <string name="presentation_batch_g_artist_rescan_banner_body">Artist settings have changed. Rescan your library to apply.</string>
     <string name="presentation_batch_g_artist_rescan_scanning">Scanning…</string>
     <string name="presentation_batch_g_artist_rescan">Rescan</string>
-    <string name="presentation_batch_g_topbar_beta_letter">β</string>
-    <string name="presentation_batch_g_topbar_beta">Beta</string>
+    <string name="presentation_batch_g_topbar_build_stable">Stable</string>
+    <string name="presentation_batch_g_topbar_build_debug">Debug</string>
     <string name="presentation_batch_g_topbar_cd_changelog">Changelog</string>
     <string name="presentation_batch_g_lyrics_mode_synced">Synced</string>
     <string name="presentation_batch_g_lyrics_mode_static">Static</string>
@@ -258,9 +258,9 @@ Backslash (\) can be used to escape character delimiters.</string>
     <string name="presentation_batch_g_presets_cd_pin">Pin</string>
     <string name="presentation_batch_g_presets_cd_rename">Rename</string>
     <string name="presentation_batch_g_presets_cd_delete">Delete</string>
-    <string name="presentation_batch_g_beta_sheet_version">0.1.0</string>
-    <string name="presentation_batch_g_beta_sheet_welcome_title">Welcome to PixelPlayerOSS 0.1.0</string>
+    <string name="presentation_batch_g_beta_sheet_welcome_title">Welcome to PixelPlayerOSS %1$s</string>
     <string name="presentation_batch_g_beta_sheet_welcome_body">You\'re using a beta build that may contain bugs, crashes, or experimental features. Help us improve by reporting issues.</string>
+    <string name="presentation_batch_g_beta_sheet_welcome_body_stable">You\'re running the stable release build. Check the changelog to see what\'s new, and report anything that misbehaves.</string>
     <string name="presentation_batch_g_beta_sheet_expect_title">What to expect</string>
     <string name="presentation_batch_g_beta_sheet_expect_1">Bugs, crashes, or incomplete features may occur unexpectedly.</string>
     <string name="presentation_batch_g_beta_sheet_expect_2">Some features may change or be removed without notice.</string>
@@ -482,5 +482,23 @@ Backslash (\) can be used to escape character delimiters.</string>
         <item>Backup restore ignores preference keys owned by dedicated module handlers.</item>
         <item>Release logging is tightened so HTTP request headers and raw Android logs do not bypass the Timber release filter.</item>
         <item>Also includes smart playlist persistence, duplicate-track scanning, playback speed control, clearer playback/sync failure messages, and improved accessibility.</item>
+    </string-array>
+
+    <string name="presentation_batch_g_changelog_sec_whats_new">What\'s new</string>
+    <string name="presentation_batch_g_changelog_sec_improvements">Improvements</string>
+    <string name="presentation_batch_g_changelog_sec_under_the_hood">Under the hood</string>
+    <string-array name="presentation_batch_g_changelog_v020_whats_new">
+        <item>Material 3 Expressive design pass: a new motion scheme, wavy progress indicators, and shape-morphing animations throughout the app.</item>
+        <item>Jellyfin servers over plain HTTP are now allowed for VPN and local-network hosts.</item>
+    </string-array>
+    <string-array name="presentation_batch_g_changelog_v020_improvements">
+        <item>Smaller app: leaner code-shrinking rules trim about 1.5 MB off the install size.</item>
+        <item>Faster, smoother startup: Baseline Profiles were regenerated from scratch to match the new UI and code paths.</item>
+        <item>Snappier lists, sheets, and the equalizer thanks to a wide Compose performance pass.</item>
+    </string-array>
+    <string-array name="presentation_batch_g_changelog_v020_under_the_hood">
+        <item>More reliable cloud playback: cancelled Navidrome/Jellyfin requests are no longer misreported as network errors when skipping tracks quickly.</item>
+        <item>Backup, restore, and setup events can no longer be lost during screen rotation.</item>
+        <item>Spring cleaning: dead code removed, deprecated APIs migrated, and dependencies updated.</item>
     </string-array>
 </resources>
