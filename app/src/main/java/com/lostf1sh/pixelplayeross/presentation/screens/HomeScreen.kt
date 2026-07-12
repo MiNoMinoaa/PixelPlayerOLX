@@ -451,7 +451,7 @@ fun HomeScreen(
                         contentType = "recently_played_section"
                     ) {
                         RecentlyPlayedSection(
-                            songs = recentlyPlayedSongs,
+                            songs = remember(recentlyPlayedSongs) { recentlyPlayedSongs.toImmutableList() },
                             onSongClick = { song ->
                                 if (recentlyPlayedQueue.isNotEmpty()) {
                                     playerViewModel.playSongs(

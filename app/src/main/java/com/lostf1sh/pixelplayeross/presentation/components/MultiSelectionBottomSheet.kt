@@ -88,11 +88,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.lostf1sh.pixelplayeross.R
 import com.lostf1sh.pixelplayeross.presentation.components.subcomps.AutoSizingTextToFill
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MultiSelectionBottomSheet(
-    selectedSongs: List<Song>,
+    selectedSongs: ImmutableList<Song>,
     favoriteSongIds: Set<String> = emptySet(),
     onDismiss: () -> Unit,
     onPlayAll: () -> Unit,
@@ -176,7 +178,7 @@ fun MultiSelectionBottomSheet(
                     } else 0.dp
                     
                     StackedAlbumArts(
-                        songs = selectedSongs.take(4),
+                        songs = remember(selectedSongs) { selectedSongs.take(4).toImmutableList() },
                         modifier = Modifier
                             .height(74.dp)
                             .width(stackedWidth)
@@ -449,7 +451,7 @@ fun MultiSelectionBottomSheet(
  */
 @Composable
 private fun StackedAlbumArts(
-    songs: List<Song>,
+    songs: ImmutableList<Song>,
     modifier: Modifier = Modifier
 ) {
     val imageSize = 66.dp

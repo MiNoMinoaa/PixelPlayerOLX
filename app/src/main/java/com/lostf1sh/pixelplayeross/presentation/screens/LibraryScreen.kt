@@ -84,7 +84,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -332,7 +335,7 @@ fun LibraryScreen(
 
     var showSongInfoBottomSheet by remember { mutableStateOf(false) }
     var showPlaylistBottomSheet by remember { mutableStateOf(false) }
-    var playlistSheetSongs by remember { mutableStateOf<List<Song>>(emptyList()) }
+    var playlistSheetSongs by remember { mutableStateOf<ImmutableList<Song>>(persistentListOf()) }
     val selectedSongForInfo by playerViewModel.selectedSongForInfo.collectAsStateWithLifecycle()
     val tabTitles by playerViewModel.libraryTabsFlow.collectAsStateWithLifecycle()
     val currentTabId by playerViewModel.currentLibraryTabId.collectAsStateWithLifecycle()
@@ -381,7 +384,7 @@ fun LibraryScreen(
     val isSelectionMode by multiSelectionState.isSelectionMode.collectAsStateWithLifecycle()
     val selectedSongIds by multiSelectionState.selectedSongIds.collectAsStateWithLifecycle()
     var showMultiSelectionSheet by remember { mutableStateOf(false) }
-    var selectedAlbums by remember { mutableStateOf<List<Album>>(emptyList()) }
+    var selectedAlbums by remember { mutableStateOf<ImmutableList<Album>>(persistentListOf()) }
     val selectedAlbumIds = remember(selectedAlbums) { selectedAlbums.map { it.id }.toSet() }
     val isAlbumSelectionMode = selectedAlbums.isNotEmpty()
     var showAlbumMultiSelectionSheet by remember { mutableStateOf(false) }
@@ -411,11 +414,11 @@ fun LibraryScreen(
         { album ->
             val existingIndex = selectedAlbums.indexOfFirst { it.id == album.id }
             if (existingIndex >= 0) {
-                selectedAlbums = selectedAlbums.toMutableList().also { it.removeAt(existingIndex) }
+                selectedAlbums = selectedAlbums.toMutableList().also { it.removeAt(existingIndex) }.toImmutableList()
             } else if (selectedAlbums.size >= MAX_ALBUM_MULTI_SELECTION) {
                 playerViewModel.sendToast(context.getString(R.string.presentation_batch_d_max_albums_selection, MAX_ALBUM_MULTI_SELECTION))
             } else {
-                selectedAlbums = selectedAlbums + album
+                selectedAlbums = (selectedAlbums + album).toImmutableList()
             }
         }
     }
@@ -577,7 +580,7 @@ fun LibraryScreen(
                     }
 
                     LibraryTabId.ALBUMS -> {
-                        selectedAlbums = emptyList()
+                        selectedAlbums = persistentListOf()
                         showAlbumMultiSelectionSheet = false
                     }
 
@@ -599,11 +602,14 @@ fun LibraryScreen(
     }
 
     // Feedback for Playlist Creation
-    LaunchedEffect(Unit) {
-        playlistViewModel.playlistCreationEvent.collect { success ->
-            if (success) {
-                showCreatePlaylistDialog = false
-                Toast.makeText(context, context.getString(R.string.toast_playlist_created), Toast.LENGTH_SHORT).show()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(playlistViewModel, lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            playlistViewModel.playlistCreationEvent.collect { success ->
+                if (success) {
+                    showCreatePlaylistDialog = false
+                    Toast.makeText(context, context.getString(R.string.toast_playlist_created), Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -623,7 +629,7 @@ fun LibraryScreen(
         // Clear selection when switching tabs
         multiSelectionState.clearSelection()
         playlistMultiSelectionState.clearSelection()
-        selectedAlbums = emptyList()
+        selectedAlbums = persistentListOf()
         showMultiSelectionSheet = false
         showPlaylistMultiSelectionSheet = false
         showAlbumMultiSelectionSheet = false
@@ -654,15 +660,14 @@ fun LibraryScreen(
         }
     }
 
-    val gradientColorsDark = listOf(
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-        Color.Transparent
-    ).toImmutableList()
-
-    val gradientColorsLight = listOf(
-        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f),
-        Color.Transparent
-    ).toImmutableList()
+    val primaryContainer = MaterialTheme.colorScheme.primaryContainer
+    val onPrimaryContainer = MaterialTheme.colorScheme.onPrimaryContainer
+    val gradientColorsDark = remember(primaryContainer) {
+        listOf(primaryContainer.copy(alpha = 0.5f), Color.Transparent).toImmutableList()
+    }
+    val gradientColorsLight = remember(onPrimaryContainer) {
+        listOf(onPrimaryContainer.copy(alpha = 0.2f), Color.Transparent).toImmutableList()
+    }
 
     val gradientColors = if (dm) gradientColorsDark else gradientColorsLight
 
@@ -855,7 +860,7 @@ fun LibraryScreen(
                             }
 
                             val distinctByKey = ensured.distinctBy { it.storageKey }
-                            distinctByKey.ifEmpty { listOf(currentTabId.defaultSort) }
+                            distinctByKey.ifEmpty { listOf(currentTabId.defaultSort) }.toImmutableList()
                         }
 
                         val playlistUiState by playlistViewModel.uiState.collectAsStateWithLifecycle()
@@ -955,11 +960,11 @@ fun LibraryScreen(
                                                     .filterNot { selectedAlbumIds.contains(it.id) }
                                                     .take(remaining)
                                                 if (albumsToAppend.isNotEmpty()) {
-                                                    selectedAlbums = selectedAlbums + albumsToAppend
+                                                    selectedAlbums = (selectedAlbums + albumsToAppend).toImmutableList()
                                                 }
                                             }
                                         },
-                                        onDeselect = { selectedAlbums = emptyList() },
+                                        onDeselect = { selectedAlbums = persistentListOf() },
                                         onOptionsClick = { showAlbumMultiSelectionSheet = true }
                                     )
                                 } else {
@@ -1494,7 +1499,7 @@ fun LibraryScreen(
                     playerViewModel.sendToast(context.getString(R.string.toast_playing_next))
                 },
                 onAddToPlayList = {
-                    playlistSheetSongs = listOf(currentSong)
+                    playlistSheetSongs = persistentListOf(currentSong)
                     showPlaylistBottomSheet = true
                 },
                 onDeleteFromDevice = playerViewModel::deleteFromDevice,
@@ -1623,17 +1628,17 @@ fun LibraryScreen(
             onDismiss = { showAlbumMultiSelectionSheet = false },
             onPlay = {
                 playerViewModel.playSelectedAlbums(selectedAlbums)
-                selectedAlbums = emptyList()
+                selectedAlbums = persistentListOf()
                 showAlbumMultiSelectionSheet = false
             },
             onPlayNext = {
                 playerViewModel.addSelectedAlbumsAsNext(selectedAlbums)
-                selectedAlbums = emptyList()
+                selectedAlbums = persistentListOf()
                 showAlbumMultiSelectionSheet = false
             },
             onAddToQueue = {
                 playerViewModel.addSelectedAlbumsToQueue(selectedAlbums)
-                selectedAlbums = emptyList()
+                selectedAlbums = persistentListOf()
                 showAlbumMultiSelectionSheet = false
             }
         )
@@ -2232,7 +2237,7 @@ private fun rememberLibraryNavigationPillTitleStyle(widthAxis: Float): TextStyle
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LibraryTabSwitcherSheet(
-    tabs: List<String>,
+    tabs: ImmutableList<String>,
     currentIndex: Int,
     onTabSelected: (Int) -> Unit,
     onEditClick: () -> Unit,
@@ -2731,7 +2736,7 @@ fun LibraryFoldersTab(
 
 @Composable
 fun FolderPlaylistItem(folder: MusicFolder, onClick: () -> Unit) {
-    val previewSongs = remember(folder) { folder.collectAllSongs().take(9) }
+    val previewSongs = remember(folder) { folder.collectAllSongs().take(9).toImmutableList() }
 
     Card(
         onClick = onClick,

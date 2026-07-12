@@ -44,9 +44,12 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import timber.log.Timber
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 data class PlaylistUiState(
-    val playlists: List<Playlist> = emptyList(),
+    val playlists: ImmutableList<Playlist> = persistentListOf(),
     val currentPlaylistSongs: List<Song> = emptyList(),
     val currentPlaylistDetails: Playlist? = null,
     val isLoading: Boolean = false,
@@ -131,7 +134,7 @@ class PlaylistViewModel @Inject constructor(
                 val currentSortOption =
                     _uiState.value.currentPlaylistSortOption // Use the most up-to-date sort option
                 val sortedPlaylists = sortPlaylistsList(playlists, currentSortOption)
-                _uiState.update { it.copy(playlists = sortedPlaylists) }
+                _uiState.update { it.copy(playlists = sortedPlaylists.toImmutableList()) }
             }
         }
         // Collect subsequent changes to sort option from preferences
@@ -687,7 +690,7 @@ class PlaylistViewModel @Inject constructor(
         val currentPlaylists = _uiState.value.playlists
         val sortedPlaylists = sortPlaylistsList(currentPlaylists, sortOption)
 
-        _uiState.update { it.copy(playlists = sortedPlaylists) }
+        _uiState.update { it.copy(playlists = sortedPlaylists.toImmutableList()) }
 
         viewModelScope.launch {
             playlistPreferencesRepository.setPlaylistsSortOption(sortOption.storageKey)

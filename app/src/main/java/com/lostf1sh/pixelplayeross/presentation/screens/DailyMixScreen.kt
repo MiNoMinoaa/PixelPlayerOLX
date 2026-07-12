@@ -89,6 +89,7 @@ import kotlinx.coroutines.flow.map
 import com.lostf1sh.pixelplayeross.presentation.components.subcomps.EnhancedSongListItem
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import kotlinx.collections.immutable.persistentListOf
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -203,7 +204,7 @@ fun DailyMixScreen(
 
             PlaylistBottomSheet(
                 playlistUiState = playlistUiState,
-                songs = listOf(song),
+                songs = persistentListOf(song),
                 onDismiss = { showPlaylistBottomSheet = false },
                 bottomBarHeight = bottomBarHeightDp,
                 playerViewModel = playerViewModel,
@@ -376,7 +377,7 @@ fun DailyMixScreen(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ExpressiveDailyMixHeader(
-    songs: List<Song>,
+    songs: ImmutableList<Song>,
     scrollState: LazyListState
 ) {
     val dailyMixHeaderTitle = stringResource(R.string.presentation_batch_b_daily_mix_title)

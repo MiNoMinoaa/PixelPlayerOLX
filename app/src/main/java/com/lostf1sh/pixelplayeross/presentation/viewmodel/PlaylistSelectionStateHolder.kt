@@ -6,6 +6,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 /**
  * State holder for multi-selection functionality for playlists in LibraryScreen.
@@ -18,12 +21,12 @@ import javax.inject.Singleton
 class PlaylistSelectionStateHolder @Inject constructor() {
 
     // Internal mutable state - uses List to preserve selection order
-    private val _selectedPlaylists = MutableStateFlow<List<Playlist>>(emptyList())
+    private val _selectedPlaylists = MutableStateFlow<ImmutableList<Playlist>>(persistentListOf())
     
     /**
      * Immutable flow of selected playlists, preserving selection order.
      */
-    val selectedPlaylists: StateFlow<List<Playlist>> = _selectedPlaylists.asStateFlow()
+    val selectedPlaylists: StateFlow<ImmutableList<Playlist>> = _selectedPlaylists.asStateFlow()
     
     /**
      * Set of selected playlist IDs for efficient lookup.
@@ -121,7 +124,7 @@ class PlaylistSelectionStateHolder @Inject constructor() {
      * Updates all state flows atomically.
      */
     private fun updateState(playlists: List<Playlist>, ids: Set<String>) {
-        _selectedPlaylists.value = playlists
+        _selectedPlaylists.value = playlists.toImmutableList()
         _selectedPlaylistIds.value = ids
         _selectedCount.value = playlists.size
         _isSelectionMode.value = playlists.isNotEmpty()

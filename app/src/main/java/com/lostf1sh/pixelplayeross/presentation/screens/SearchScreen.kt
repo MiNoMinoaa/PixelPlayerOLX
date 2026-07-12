@@ -195,15 +195,14 @@ fun SearchScreen(
 
     val dm = LocalPixelPlayerDarkTheme.current
 
-    val gradientColorsDark = listOf(
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-        Color.Transparent
-    ).toImmutableList()
-
-    val gradientColorsLight = listOf(
-        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f),
-        Color.Transparent
-    ).toImmutableList()
+    val primaryContainer = MaterialTheme.colorScheme.primaryContainer
+    val onPrimaryContainer = MaterialTheme.colorScheme.onPrimaryContainer
+    val gradientColorsDark = remember(primaryContainer) {
+        listOf(primaryContainer.copy(alpha = 0.5f), Color.Transparent).toImmutableList()
+    }
+    val gradientColorsLight = remember(onPrimaryContainer) {
+        listOf(onPrimaryContainer.copy(alpha = 0.2f), Color.Transparent).toImmutableList()
+    }
 
     val gradientColors = if (dm) gradientColorsDark else gradientColorsLight
 
@@ -519,7 +518,7 @@ fun SearchScreen(
 
                 PlaylistBottomSheet(
                     playlistUiState = playlistUiState,
-                    songs = listOf(currentSong),
+                    songs = persistentListOf(currentSong),
                     onDismiss = { showPlaylistBottomSheet = false },
                     bottomBarHeight = bottomBarHeightDp,
                     playerViewModel = playerViewModel,
@@ -542,7 +541,7 @@ fun SearchResultSectionHeader(title: String) {
 
 @Composable
 fun SearchHistoryList(
-    historyItems: List<SearchHistoryItem>,
+    historyItems: ImmutableList<SearchHistoryItem>,
     onHistoryClick: (String) -> Unit,
     onHistoryDelete: (String) -> Unit,
     onClearAllHistory: () -> Unit
@@ -668,7 +667,7 @@ fun EmptySearchResults(searchQuery: String, colorScheme: ColorScheme) {
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun SearchResultsList(
-    results: List<SearchResultItem>,
+    results: ImmutableList<SearchResultItem>,
     searchQuery: String,
     playerViewModel: PlayerViewModel,
     onItemSelected: () -> Unit,
@@ -861,7 +860,8 @@ fun SearchResultsList(
                             is SearchResultItem.PlaylistItem -> {
                                 val playlistSongs by remember(item.playlist.songIds, playerViewModel) {
                                     playerViewModel.observeSongs(item.playlist.songIds)
-                                }.collectAsStateWithLifecycle(initialValue = emptyList())
+                                        .map { it.toImmutableList() }
+                                }.collectAsStateWithLifecycle(initialValue = persistentListOf())
                                 val coroutineScope = rememberCoroutineScope()
                                 val onPlayClick: () -> Unit = {
                                     coroutineScope.launch {
@@ -939,7 +939,7 @@ fun SearchResultAlbumItem(
         ) {
             SmartImage(
                 model = album.albumArtUriString,
-                contentDescription = "Album Art: ${album.title}",
+                contentDescription = stringResource(R.string.cd_album_art_of, album.title),
                 targetSize = SmartImageListTargetSize,
                 modifier = Modifier
                     .size(56.dp)
@@ -1017,7 +1017,7 @@ fun SearchResultArtistItem(
             if (!artist.effectiveImageUrl.isNullOrBlank()) {
                 SmartImage(
                     model = artist.effectiveImageUrl,
-                    contentDescription = "Artist: ${artist.name}",
+                    contentDescription = stringResource(R.string.cd_artist_format, artist.name),
                     targetSize = SmartImageListTargetSize,
                     modifier = Modifier
                         .size(56.dp)
@@ -1026,7 +1026,7 @@ fun SearchResultArtistItem(
             } else {
                 Icon(
                     painter = painterResource(id = R.drawable.rounded_artist_24),
-                    contentDescription = "Artist",
+                    contentDescription = stringResource(R.string.cd_artist_icon),
                     modifier = Modifier
                         .size(56.dp)
                         .background(MaterialTheme.colorScheme.tertiaryContainer, ShapeCache.expressiveAvatar)
@@ -1058,7 +1058,7 @@ fun SearchResultArtistItem(
                     contentColor = MaterialTheme.colorScheme.onTertiary
                 )
             ) {
-                Icon(Icons.Rounded.PlayArrow, contentDescription = "Play Artist", modifier = Modifier.size(24.dp))
+                Icon(Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.cd_play_artist), modifier = Modifier.size(24.dp))
             }
         }
     }
@@ -1068,7 +1068,7 @@ fun SearchResultArtistItem(
 @Composable
 fun SearchResultPlaylistItem(
     playlist: Playlist,
-    playlistSongs: List<Song>,
+    playlistSongs: ImmutableList<Song>,
     onOpenClick: () -> Unit,
     onPlayClick: () -> Unit
 ) {
@@ -1128,7 +1128,7 @@ fun SearchResultPlaylistItem(
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
-                Icon(Icons.Rounded.PlayArrow, contentDescription = "Play Playlist", modifier = Modifier.size(24.dp))
+                Icon(Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.cd_play_playlist), modifier = Modifier.size(24.dp))
             }
         }
     }

@@ -51,6 +51,8 @@ import com.lostf1sh.pixelplayeross.utils.formatTimeAgo
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.stringResource
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -138,13 +140,13 @@ fun NavidromeDashboardScreen(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun DashboardContent(
-    playlists: List<NavidromePlaylistEntity>,
+    playlists: ImmutableList<NavidromePlaylistEntity>,
     isSyncing: Boolean,
     syncProgress: Float?,
     syncMessage: String?,
-    selectedPlaylistSongs: List<Song>,
+    selectedPlaylistSongs: ImmutableList<Song>,
     selectedPlaylistName: String?,
-    musicFolders: List<NavidromeMusicFolder>,
+    musicFolders: ImmutableList<NavidromeMusicFolder>,
     musicFoldersLoadFailed: Boolean,
     selectedMusicFolderIds: Set<String>,
     librarySelectionNeedsSync: Boolean,
@@ -273,7 +275,7 @@ private fun DashboardContent(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "Last synced: ${formatTimeAgo(lastSyncTime)}",
+                            text = stringResource(R.string.dash_last_synced_format, formatTimeAgo(lastSyncTime)),
                             style = MaterialTheme.typography.bodySmall,
                             fontFamily = RoundedSans,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
@@ -409,7 +411,7 @@ private fun DashboardContent(
 @Composable
 private fun SubsonicMenuCard(
     isSyncing: Boolean,
-    musicFolders: List<NavidromeMusicFolder>,
+    musicFolders: ImmutableList<NavidromeMusicFolder>,
     musicFoldersLoadFailed: Boolean,
     selectedMusicFolderIds: Set<String>,
     librarySelectionNeedsSync: Boolean,
@@ -421,7 +423,7 @@ private fun SubsonicMenuCard(
     var showLibrarySelector by remember { mutableStateOf(false) }
     val effectiveSelectedIds = selectedNavidromeMusicFolderIds(musicFolders, selectedMusicFolderIds)
     val selectedFolderNames = remember(musicFolders, effectiveSelectedIds) {
-        musicFolders.filter { it.id in effectiveSelectedIds }.map { it.name }
+        musicFolders.filter { it.id in effectiveSelectedIds }.map { it.name }.toImmutableList()
     }
     val librarySummary = when {
         musicFoldersLoadFailed -> stringResource(R.string.dash_libraries_load_failed)
@@ -535,7 +537,7 @@ private fun SubsonicMenuCard(
 @Composable
 private fun NavidromeLibrarySummaryPanel(
     librarySummary: String,
-    selectedFolderNames: List<String>,
+    selectedFolderNames: ImmutableList<String>,
     selectedCount: Int,
     totalCount: Int,
     loadFailed: Boolean,
@@ -714,7 +716,7 @@ private fun NavidromeLibrarySummaryPanel(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun LibrarySelectorSheet(
-    musicFolders: List<NavidromeMusicFolder>,
+    musicFolders: ImmutableList<NavidromeMusicFolder>,
     selectedMusicFolderIds: Set<String>,
     onDismiss: () -> Unit,
     onSelectionChange: (Set<String>) -> Unit

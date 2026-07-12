@@ -53,11 +53,12 @@ import com.lostf1sh.pixelplayeross.ui.theme.LocalPixelPlayerDarkTheme
 import androidx.compose.ui.res.stringResource
 import com.lostf1sh.pixelplayeross.R
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
+import kotlinx.collections.immutable.ImmutableList
 
 @OptIn(UnstableApi::class)
 @Composable
 fun GenreCategoriesGrid(
-    genres: List<Genre>,
+    genres: ImmutableList<Genre>,
     onGenreClick: (Genre) -> Unit,
     playerViewModel: PlayerViewModel,
     modifier: Modifier = Modifier
@@ -135,7 +136,7 @@ fun GenreCategoriesGrid(
                 ) {
                 androidx.compose.material3.Icon(
                         imageVector = if (isGridView) Icons.AutoMirrored.Rounded.ViewList else Icons.Rounded.GridView,
-                        contentDescription = "Toggle Grid/List View"
+                        contentDescription = stringResource(R.string.cd_toggle_grid_list)
                     )
                 }
             }
@@ -225,7 +226,7 @@ private fun GenreCard(
             ) {
                 SmartImage(
                     model = GenreIconProvider.getGenreImageResource(genre.name, customIcons),
-                    contentDescription = "Genre illustration",
+                    contentDescription = stringResource(R.string.cd_genre_illustration),
                     modifier = Modifier
                         .fillMaxSize()
                         .alpha(0.55f),

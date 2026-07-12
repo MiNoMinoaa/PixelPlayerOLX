@@ -78,13 +78,14 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import kotlinx.collections.immutable.ImmutableList
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ReorderPresetsSheet(
     visible: Boolean,
-    allAvailablePresets: List<EqualizerPreset>,
-    pinnedPresetsNames: List<String>,
+    allAvailablePresets: ImmutableList<EqualizerPreset>,
+    pinnedPresetsNames: ImmutableList<String>,
     onSave: (List<String>) -> Unit,
     onReset: () -> Unit,
     onDismiss: () -> Unit

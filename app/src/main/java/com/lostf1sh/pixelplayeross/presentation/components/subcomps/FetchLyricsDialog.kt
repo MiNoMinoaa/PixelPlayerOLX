@@ -58,6 +58,7 @@ import com.lostf1sh.pixelplayeross.data.repository.LyricsSearchResult
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.LyricsSearchUiState
 import com.lostf1sh.pixelplayeross.utils.ProviderText
 import com.lostf1sh.pixelplayeross.utils.shapes.RoundedStarShape
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun FetchLyricsDialog(
@@ -303,7 +304,7 @@ private fun LoadingContent() {
 
 @Composable
 private fun PickResultContent(
-    results: List<LyricsSearchResult>,
+    results: ImmutableList<LyricsSearchResult>,
     onPickResult: (LyricsSearchResult) -> Unit,
     onCancel: () -> Unit
 ) {

@@ -43,6 +43,7 @@ import com.lostf1sh.pixelplayeross.data.model.Song
 import com.lostf1sh.pixelplayeross.presentation.components.SmartImage
 import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
+import kotlinx.collections.immutable.ImmutableList
 
 private data class PlayerArtistShortcutItem(
     val artist: Artist,
@@ -53,7 +54,7 @@ private data class PlayerArtistShortcutItem(
 @Composable
 internal fun PlayerArtistPickerBottomSheet(
     song: Song,
-    artists: List<Artist>,
+    artists: ImmutableList<Artist>,
     sheetState: SheetState,
     onDismiss: () -> Unit,
     onArtistClick: (Artist) -> Unit

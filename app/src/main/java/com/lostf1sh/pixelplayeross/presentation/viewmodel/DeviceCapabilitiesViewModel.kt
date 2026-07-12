@@ -31,6 +31,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 data class CodecInfo(
     val name: String,
@@ -131,7 +134,7 @@ data class DeviceCapabilitiesState(
     val exoPlayerInfo: ExoPlayerInfo? = null,
     val storageSummary: LocalMusicStorageSummary? = null,
     val playbackCompatibility: PlaybackCompatibilitySummary? = null,
-    val formatSupport: List<FormatSupportInfo> = emptyList(),
+    val formatSupport: ImmutableList<FormatSupportInfo> = persistentListOf(),
     val memorySummary: MemorySummary? = null,
     val decoderInfo: ActiveDecoderInfo? = null,
     val isLoading: Boolean = true
@@ -176,7 +179,7 @@ class DeviceCapabilitiesViewModel @Inject constructor(
                     exoPlayerInfo = exoInfo,
                     storageSummary = storage,
                     playbackCompatibility = playback,
-                    formatSupport = formatSupport,
+                    formatSupport = formatSupport.toImmutableList(),
                     memorySummary = memorySummary,
                     decoderInfo = decoderInfo,
                     isLoading = false

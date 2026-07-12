@@ -94,6 +94,8 @@ import com.lostf1sh.pixelplayeross.presentation.viewmodel.PlayerViewModel
 import kotlinx.coroutines.launch
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import kotlin.math.roundToInt
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 @OptIn(UnstableApi::class)
 @kotlin.OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -501,7 +503,7 @@ private fun PlaybackPathCard(
         SectionLabel(text = stringResource(R.string.device_capabilities_offload_title))
         ChipRow(
             emptyText = stringResource(R.string.device_capabilities_offload_empty),
-            chips = audioCapabilities.offloadSupportedFormats
+            chips = remember(audioCapabilities) { audioCapabilities.offloadSupportedFormats.toImmutableList() }
         )
 
         SectionLabel(text = stringResource(R.string.device_capabilities_outputs_title))
@@ -542,7 +544,7 @@ private fun PlaybackPathCard(
 
 @Composable
 private fun FormatCompatibilityCard(
-    formats: List<FormatSupportInfo>,
+    formats: ImmutableList<FormatSupportInfo>,
     playbackCompatibility: PlaybackCompatibilitySummary?,
     modifier: Modifier = Modifier
 ) {
@@ -1165,7 +1167,7 @@ private fun TonalChip(
 
 @Composable
 private fun ChipRow(
-    chips: List<String>,
+    chips: ImmutableList<String>,
     emptyText: String,
     modifier: Modifier = Modifier
 ) {

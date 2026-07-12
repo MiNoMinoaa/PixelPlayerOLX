@@ -90,6 +90,8 @@ import com.lostf1sh.pixelplayeross.utils.formatSongCount
 import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
 import androidx.compose.foundation.combinedClickable
 import kotlinx.coroutines.flow.map
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -104,7 +106,7 @@ fun PlaylistContainer(
     playerViewModel: PlayerViewModel,
     isAddingToPlaylist: Boolean = false,
     selectedPlaylists: SnapshotStateMap<String, Boolean>? = null,
-    filteredPlaylists: List<Playlist> = playlistUiState.playlists,
+    filteredPlaylists: ImmutableList<Playlist> = playlistUiState.playlists,
     currentSortOption: SortOption? = null,
     isSelectionMode: Boolean = false,
     selectedPlaylistIds: Set<String> = emptySet(),
@@ -230,7 +232,7 @@ fun PlaylistItems(
     currentSong: Song? = null,
     playerViewModel: PlayerViewModel,
     isAddingToPlaylist: Boolean = false,
-    filteredPlaylists: List<Playlist>,
+    filteredPlaylists: ImmutableList<Playlist>,
     currentSortOption: SortOption? = null,
     selectedPlaylists: SnapshotStateMap<String, Boolean>? = null,
     isSelectionMode: Boolean = false,
@@ -423,7 +425,7 @@ fun PlaylistItem(
         ) {
             PlaylistCover(
                 playlist = playlist,
-                playlistSongs = playlistSongs ?: emptyList(),
+                playlistSongs = remember(playlistSongs) { (playlistSongs ?: emptyList()).toImmutableList() },
                 size = 48.dp
             )
 
@@ -446,7 +448,7 @@ fun PlaylistItem(
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(
                             painter = painterResource(R.drawable.ic_navidrome),
-                            contentDescription = "Navidrome",
+                            contentDescription = stringResource(R.string.cd_navidrome_logo),
                             tint = Color.Unspecified,
                             modifier = Modifier.size(18.dp)
                         )

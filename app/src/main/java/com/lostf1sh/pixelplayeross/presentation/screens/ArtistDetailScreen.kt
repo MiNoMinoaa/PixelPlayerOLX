@@ -99,6 +99,7 @@ import coil.size.Size
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import androidx.compose.ui.res.stringResource
 import com.lostf1sh.pixelplayeross.R
+import kotlinx.collections.immutable.persistentListOf
 
 private const val UseSharedCollapsibleTopBarProbe = true
 
@@ -550,7 +551,7 @@ fun ArtistDetailScreen(
 
                 PlaylistBottomSheet(
                     playlistUiState = playlistUiState,
-                    songs = listOf(currentSong),
+                    songs = persistentListOf(currentSong),
                     onDismiss = { showPlaylistBottomSheet = false },
                     bottomBarHeight = bottomBarHeightDp,
                     playerViewModel = playerViewModel,

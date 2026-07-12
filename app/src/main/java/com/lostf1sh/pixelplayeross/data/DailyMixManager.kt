@@ -9,11 +9,8 @@ import com.lostf1sh.pixelplayeross.data.database.EngagementDao
 import com.lostf1sh.pixelplayeross.data.database.SongEngagementEntity
 import com.lostf1sh.pixelplayeross.data.model.Song
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 import java.io.File
 import java.util.Calendar
@@ -33,13 +30,12 @@ class DailyMixManager @Inject constructor(
     private val fileLock = Any()
     private val statsType = object : TypeToken<MutableMap<String, SongEngagementStats>>() {}.type
 
-    // Migration runs on IO without blocking the main thread.
-    private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
-    // Deferred result: null if no migration needed, completes when done.
-    private val migrationDeferred: Deferred<Unit>
+    // Migration is lazy: it runs inside the first caller that needs migrated data,
+    // on that caller's scope, instead of a fire-and-forget launch at construction.
+    private val migrationMutex = Mutex()
 
     // Flag to track if we've migrated legacy data
+    @Volatile
     private var legacyMigrationComplete = false
 
     data class SongEngagementStats(
@@ -48,18 +44,19 @@ class DailyMixManager @Inject constructor(
         val lastPlayedTimestamp: Long = 0L
     )
 
-    init {
-        // Launch migration asynchronously — does not block the calling thread.
-        // Any method that needs migrated data should call migrationDeferred.await() first.
-        migrationDeferred = managerScope.async {
-            migrateLegacyDataIfNeeded()
+    private suspend fun ensureLegacyDataMigrated() {
+        if (legacyMigrationComplete) return
+        migrationMutex.withLock {
+            if (!legacyMigrationComplete) {
+                migrateLegacyDataIfNeeded()
+            }
         }
     }
 
     /**
      * Migrates engagements from legacy JSON file to Room database.
-     * This runs once on startup if the legacy file exists.
-     * Suspend fun running on an IO coroutine, so no runBlocking needed.
+     * Runs once, lazily, inside the first caller that needs engagement data.
+     * Suspend fun running on the caller's coroutine, so no runBlocking needed.
      * The synchronized block only guards the file read (no suspension points inside).
      */
     private suspend fun migrateLegacyDataIfNeeded() {
@@ -113,7 +110,7 @@ class DailyMixManager @Inject constructor(
      * without blocking any thread at startup.
      */
     private suspend fun readEngagements(): Map<String, SongEngagementStats> {
-        migrationDeferred.await() // Only waits if migration is still running
+        ensureLegacyDataMigrated()
         return engagementDao.getAllEngagements().associate { entity ->
             entity.songId to SongEngagementStats(
                 playCount = entity.playCount,

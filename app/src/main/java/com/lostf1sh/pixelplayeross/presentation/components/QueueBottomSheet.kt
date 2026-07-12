@@ -191,6 +191,7 @@ import java.util.RandomAccess
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import kotlin.math.abs
+import kotlinx.collections.immutable.ImmutableList
 
 private data class QueueUndoBarProjection(
     val isVisible: Boolean = false,
@@ -212,7 +213,7 @@ fun QueueBottomSheet(
     viewModel: PlayerViewModel = hiltViewModel(),
     playlistViewModel: PlaylistViewModel = hiltViewModel(),
     settingsViewModel: SettingsViewModel = hiltViewModel(),
-    queue: List<Song>,
+    queue: ImmutableList<Song>,
     currentQueueSourceName: String,
     currentSongId: String?,
     currentMediaItemIndex: Int = -1,
@@ -239,7 +240,7 @@ fun QueueBottomSheet(
     onCancelCountedPlay: () -> Unit,
     onPlayCounter: (count: Int) -> Unit,
     onRequestSaveAsPlaylist: (
-        songs: List<Song>,
+        songs: ImmutableList<Song>,
         defaultName: String,
         onConfirm: (String, Set<String>) -> Unit
     ) -> Unit,
@@ -1444,7 +1445,7 @@ private fun QueueControlsToolbar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SaveQueueAsPlaylistSheet(
-    songs: List<Song>,
+    songs: ImmutableList<Song>,
     defaultName: String,
     onDismiss: () -> Unit,
     onConfirm: (String, Set<String>) -> Unit,

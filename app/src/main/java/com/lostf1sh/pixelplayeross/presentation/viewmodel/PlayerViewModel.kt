@@ -288,7 +288,9 @@ class PlayerViewModel @Inject constructor(
         .distinctUntilChanged()
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Eagerly,
+            // WhileSubscribed: upstream ticks on every playback position update, so keeping
+            // this hot with no UI attached (widget-only playback) is pure wasted work.
+            started = SharingStarted.WhileSubscribed(5000),
             initialValue = persistentListOf()
         )
 
@@ -368,15 +370,15 @@ class PlayerViewModel @Inject constructor(
         .cachedIn(viewModelScope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val currentSongArtists: StateFlow<List<Artist>> = stablePlayerState
+    val currentSongArtists: StateFlow<ImmutableList<Artist>> = stablePlayerState
         .map { it.currentSong?.id }
         .distinctUntilChanged()
         .flatMapLatest { songId ->
             val idLong = songId?.toLongOrNull()
-            if (idLong == null) flowOf(emptyList())
-            else musicRepository.getArtistsForSong(idLong)
+            if (idLong == null) flowOf<ImmutableList<Artist>>(persistentListOf())
+            else musicRepository.getArtistsForSong(idLong).map { it.toImmutableList() }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), persistentListOf())
 
     private val _sheetState = MutableStateFlow(PlayerSheetState.COLLAPSED)
     val sheetState: StateFlow<PlayerSheetState> = _sheetState.asStateFlow()
@@ -959,19 +961,19 @@ class PlayerViewModel @Inject constructor(
             initialValue = 0 // Default to Songs tab
         )
 
-    val libraryTabsFlow: StateFlow<List<String>> = userPreferencesRepository.libraryTabsOrderFlow
+    val libraryTabsFlow: StateFlow<ImmutableList<String>> = userPreferencesRepository.libraryTabsOrderFlow
         .map { orderJson ->
             if (orderJson != null) {
                 try {
-                    Json.decodeFromString<List<String>>(orderJson)
+                    Json.decodeFromString<List<String>>(orderJson).toImmutableList()
                 } catch (e: Exception) {
-                    listOf("SONGS", "ALBUMS", "ARTIST", "PLAYLISTS", "FOLDERS", "LIKED")
+                    persistentListOf("SONGS", "ALBUMS", "ARTIST", "PLAYLISTS", "FOLDERS", "LIKED")
                 }
             } else {
-                listOf("SONGS", "ALBUMS", "ARTIST", "PLAYLISTS", "FOLDERS", "LIKED")
+                persistentListOf("SONGS", "ALBUMS", "ARTIST", "PLAYLISTS", "FOLDERS", "LIKED")
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), listOf("SONGS", "ALBUMS", "ARTIST", "PLAYLISTS", "FOLDERS", "LIKED"))
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), persistentListOf("SONGS", "ALBUMS", "ARTIST", "PLAYLISTS", "FOLDERS", "LIKED"))
 
     private val _loadedTabs = MutableStateFlow(emptySet<String>())
     private var lastBlockedDirectories: Set<String>? = null
@@ -1133,7 +1135,7 @@ class PlayerViewModel @Inject constructor(
     // composable. Now a single collect + distinctUntilChanged batches all settings.
     // ---------------------------------------------------------------------------
     data class FullPlayerSlice(
-        val currentSongArtists: List<Artist> = emptyList(),
+        val currentSongArtists: ImmutableList<Artist> = persistentListOf(),
         val lyricsSyncOffset: Int = 0,
         val albumArtQuality: AlbumArtQuality = AlbumArtQuality.MEDIUM,
         val audioMetadata: PlaybackAudioMetadata = PlaybackAudioMetadata(),
@@ -1152,7 +1154,7 @@ class PlayerViewModel @Inject constructor(
         albumArtQuality,
         playbackAudioMetadata,
         showPlayerFileInfo
-    ) { artists: List<Artist>, syncOffset: Int, artQuality: AlbumArtQuality,
+    ) { artists: ImmutableList<Artist>, syncOffset: Int, artQuality: AlbumArtQuality,
         audioMeta: PlaybackAudioMetadata, showFileInfo: Boolean ->
         FullPlayerSlicePart1(artists, syncOffset, artQuality, audioMeta, showFileInfo)
     }
@@ -1174,7 +1176,7 @@ class PlayerViewModel @Inject constructor(
     }
 
     private data class FullPlayerSlicePart1(
-        val currentSongArtists: List<Artist>,
+        val currentSongArtists: ImmutableList<Artist>,
         val lyricsSyncOffset: Int,
         val albumArtQuality: AlbumArtQuality,
         val audioMetadata: PlaybackAudioMetadata,

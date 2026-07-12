@@ -96,6 +96,8 @@ import com.lostf1sh.pixelplayeross.presentation.components.ExpressiveTopBarConte
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.ArtistSettingsViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -322,7 +324,7 @@ fun ArtistSettingsScreen(
             // Examples Card
             item {
                 ExamplesCard(
-                    examples = listOf(
+                    examples = persistentListOf(
                         stringResource(R.string.presentation_batch_g_artist_ex_1_in) to stringResource(R.string.presentation_batch_g_artist_ex_1_out),
                         stringResource(R.string.presentation_batch_g_artist_ex_2_in) to stringResource(R.string.presentation_batch_g_artist_ex_2_out),
                         stringResource(R.string.presentation_batch_g_artist_ex_3_in) to stringResource(R.string.presentation_batch_g_artist_ex_3_out),
@@ -465,7 +467,7 @@ private fun InfoCard(
 
 @Composable
 private fun ExamplesCard(
-    examples: List<Pair<String, String>>
+    examples: ImmutableList<Pair<String, String>>
 ) {
     Surface(
         color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f),

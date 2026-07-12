@@ -91,14 +91,15 @@ import com.lostf1sh.pixelplayeross.presentation.viewmodel.DirectoryEntry
 import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
 import com.lostf1sh.pixelplayeross.utils.StorageInfo
 import java.io.File
+import kotlinx.collections.immutable.ImmutableList
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FileExplorerDialog(
     visible: Boolean,
     currentPath: File,
-    directoryChildren: List<DirectoryEntry>,
-    availableStorages: List<StorageInfo>,
+    directoryChildren: ImmutableList<DirectoryEntry>,
+    availableStorages: ImmutableList<StorageInfo>,
     selectedStorageIndex: Int,
     isLoading: Boolean,
     isPriming: Boolean = false,
@@ -173,8 +174,8 @@ fun FileExplorerDialog(
 @Composable
 fun FileExplorerContent(
     currentPath: File,
-    directoryChildren: List<DirectoryEntry>,
-    availableStorages: List<StorageInfo>,
+    directoryChildren: ImmutableList<DirectoryEntry>,
+    availableStorages: ImmutableList<StorageInfo>,
     selectedStorageIndex: Int,
     isLoading: Boolean,
     isPriming: Boolean,

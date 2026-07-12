@@ -47,6 +47,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
+import kotlinx.collections.immutable.ImmutableList
 
 /**
  * Data class representing a field that can have mixed values across multiple songs
@@ -70,10 +71,10 @@ private fun <T> List<T?>.toMixedValueField(): MixedValueField<T> {
 @Composable
 fun EditMultipleSongsSheet(
     visible: Boolean,
-    songs: List<Song>,
+    songs: ImmutableList<Song>,
     onDismiss: () -> Unit,
     onSave: (
-        selectedSongs: List<Song>,
+        selectedSongs: ImmutableList<Song>,
         title: String?,
         artist: String?,
         album: String?,
@@ -117,10 +118,10 @@ fun EditMultipleSongsSheet(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun EditMultipleSongsContent(
-    songs: List<Song>,
+    songs: ImmutableList<Song>,
     onDismiss: () -> Unit,
     onSave: (
-        selectedSongs: List<Song>,
+        selectedSongs: ImmutableList<Song>,
         title: String?,
         artist: String?,
         album: String?,

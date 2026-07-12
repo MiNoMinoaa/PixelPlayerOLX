@@ -26,6 +26,7 @@ import com.lostf1sh.pixelplayeross.data.preferences.UserPreferencesRepository
 import com.lostf1sh.pixelplayeross.data.stream.BulkSyncResult
 import com.lostf1sh.pixelplayeross.data.stream.CloudMusicUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -179,6 +180,7 @@ class JellyfinRepository @Inject constructor(
                 Timber.d("$TAG: Login successful for $username@$serverUrl")
                 Result.success(username)
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Timber.e(e, "$TAG: Login failed")
                 api.clearCredentials()
                 _isLoggedInFlow.value = false
@@ -270,6 +272,7 @@ class JellyfinRepository @Inject constructor(
                 Timber.d("$TAG: Synced ${entities.size} playlists")
                 Result.success(entities)
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Timber.e(e, "$TAG: Failed to sync playlists")
                 Result.failure(e)
             }
@@ -313,6 +316,7 @@ class JellyfinRepository @Inject constructor(
                 Timber.d("$TAG: Synced ${entities.size} songs for playlist $playlistId")
                 Result.success(entities.size)
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Timber.e(e, "$TAG: Failed to sync playlist songs")
                 Result.failure(e)
             }
@@ -354,6 +358,7 @@ class JellyfinRepository @Inject constructor(
                 Timber.d("$TAG: Synced ${entities.size} library songs")
                 Result.success(entities.size)
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Timber.e(e, "$TAG: Failed to sync library songs")
                 Result.failure(e)
             }
@@ -375,6 +380,7 @@ class JellyfinRepository @Inject constructor(
                 try {
                     syncUnifiedLibrarySongsFromJellyfin()
                 } catch (e: Exception) {
+                    if (e is CancellationException) throw e
                     Timber.e(e, "$TAG: Failed to sync unified library after playlist fetch failure")
                 }
                 return@withContext Result.success(
@@ -396,6 +402,7 @@ class JellyfinRepository @Inject constructor(
             try {
                 syncUnifiedLibrarySongsFromJellyfin()
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Timber.e(e, "$TAG: Failed to sync unified library")
             }
 
@@ -445,6 +452,7 @@ class JellyfinRepository @Inject constructor(
                 val jellyfinSongs = JellyfinResponseParser.parseSongs(result.getOrThrow())
                 Result.success(jellyfinSongs.map { it.toDisplaySong() })
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Timber.e(e, "$TAG: Search failed")
                 Result.failure(e)
             }
@@ -479,6 +487,7 @@ class JellyfinRepository @Inject constructor(
                 }
                 Result.failure(Exception("No lyrics found"))
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Timber.e(e, "$TAG: Failed to get lyrics for song $songId")
                 Result.failure(e)
             }

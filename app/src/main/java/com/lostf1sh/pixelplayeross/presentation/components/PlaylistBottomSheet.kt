@@ -49,13 +49,15 @@ import com.lostf1sh.pixelplayeross.presentation.viewmodel.PlayerViewModel
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.PlaylistUiState
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.PlaylistViewModel
 import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PlaylistBottomSheet(
     playlistUiState: PlaylistUiState,
-    songs: List<Song>,
+    songs: ImmutableList<Song>,
     onDismiss: () -> Unit,
     bottomBarHeight: Dp,
     playerViewModel: PlayerViewModel,
@@ -71,11 +73,11 @@ fun PlaylistBottomSheet(
 
     var searchQuery by remember { mutableStateOf("") }
     val editablePlaylists = remember(playlistUiState.playlists) {
-        playlistUiState.playlists.filterNot { it.isSmartPlaylist }
+        playlistUiState.playlists.filterNot { it.isSmartPlaylist }.toImmutableList()
     }
     val filteredPlaylists = remember(searchQuery, editablePlaylists) {
         if (searchQuery.isBlank()) editablePlaylists
-        else editablePlaylists.filter { it.name.contains(searchQuery, true) }
+        else editablePlaylists.filter { it.name.contains(searchQuery, true) }.toImmutableList()
     }
     val selectedPlaylists = remember {
         mutableStateMapOf<String, Boolean>().apply {

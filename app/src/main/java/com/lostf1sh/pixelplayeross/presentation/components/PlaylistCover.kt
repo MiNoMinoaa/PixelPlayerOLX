@@ -32,11 +32,12 @@ import com.lostf1sh.pixelplayeross.data.model.Song
 import com.lostf1sh.pixelplayeross.utils.resolvePlaylistCoverContentColor
 import com.lostf1sh.pixelplayeross.utils.shapes.RoundedStarShape
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun PlaylistCover(
     playlist: Playlist,
-    playlistSongs: List<Song>,
+    playlistSongs: ImmutableList<Song>,
     modifier: Modifier = Modifier,
     size: Dp = 48.dp
 ) {

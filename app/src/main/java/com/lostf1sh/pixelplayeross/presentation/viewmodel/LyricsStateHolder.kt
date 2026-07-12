@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.collections.immutable.toImmutableList
 
 /**
  * Callback interface for lyrics loading results.
@@ -228,7 +229,7 @@ class LyricsStateHolder @Inject constructor(
             if (forcePickResults) {
                 musicRepository.searchRemoteLyrics(song)
                     .onSuccess { (query, results) ->
-                        _searchUiState.value = LyricsSearchUiState.PickResult(query, results)
+                        _searchUiState.value = LyricsSearchUiState.PickResult(query, results.toImmutableList())
                     }
                     .onFailure { error ->
                         handleError(error)
@@ -246,7 +247,7 @@ class LyricsStateHolder @Inject constructor(
                             // Fallback to search
                             musicRepository.searchRemoteLyrics(song)
                                 .onSuccess { (query, results) ->
-                                    _searchUiState.value = LyricsSearchUiState.PickResult(query, results)
+                                    _searchUiState.value = LyricsSearchUiState.PickResult(query, results.toImmutableList())
                                 }
                                 .onFailure { searchError -> handleError(searchError) }
                         } else {
@@ -267,7 +268,7 @@ class LyricsStateHolder @Inject constructor(
             _searchUiState.value = LyricsSearchUiState.Loading
             musicRepository.searchRemoteLyricsByQuery(title, artist)
                 .onSuccess { (q, results) ->
-                    _searchUiState.value = LyricsSearchUiState.PickResult(q, results)
+                    _searchUiState.value = LyricsSearchUiState.PickResult(q, results.toImmutableList())
                 }
                 .onFailure { error -> handleError(error) }
         }

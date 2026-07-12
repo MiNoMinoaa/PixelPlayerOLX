@@ -59,6 +59,9 @@ class PixelPlayerApplication : Application(), ImageLoaderFactory, Configuration.
     @Inject
     lateinit var userPreferencesRepository: dagger.Lazy<UserPreferencesRepository>
 
+    @Inject
+    lateinit var syncManager: dagger.Lazy<com.lostf1sh.pixelplayeross.data.worker.SyncManager>
+
     private val startupScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     // ADD THE COMPANION OBJECT
@@ -99,6 +102,10 @@ class PixelPlayerApplication : Application(), ImageLoaderFactory, Configuration.
         }
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(appLifecycleObserver)
+
+        // Explicit launch site for SyncManager's background observers (storage changes,
+        // foreground catch-up sync, periodic maintenance) — see SyncManager.start().
+        syncManager.get().start()
 
         startupScope.launch {
             AlbumArtUtils.migrateLegacyCacheLocation(this@PixelPlayerApplication)
