@@ -27,8 +27,6 @@ internal fun MacrobenchmarkScope.setupBenchmarkPermissions(packageName: String =
         }
     }
 
-    executeShellCommandSafely("appops set $packageName MANAGE_EXTERNAL_STORAGE allow")
-
     if (deniedPermissions.isNotEmpty()) {
         throw IllegalStateException(
             "Cannot run benchmarks because required runtime permissions were not granted for " +
@@ -84,17 +82,18 @@ internal fun MacrobenchmarkScope.waitForTargetPackageVisible(
     }
 }
 
+// Must mirror the runtime permissions declared in app/src/main/AndroidManifest.xml —
+// `pm grant` fails for permissions the target app does not declare.
 private fun requiredRuntimePermissions(): List<String> = buildList {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         add(Manifest.permission.READ_MEDIA_AUDIO)
-        add(Manifest.permission.READ_MEDIA_IMAGES)
         add(Manifest.permission.POST_NOTIFICATIONS)
-        add(Manifest.permission.NEARBY_WIFI_DEVICES)
     } else {
         add(Manifest.permission.READ_EXTERNAL_STORAGE)
     }
 
-    if (Build.VERSION.SDK_INT in Build.VERSION_CODES.Q..Build.VERSION_CODES.R) {
+    if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) {
+        // Declared with maxSdkVersion=30 for legacy Bluetooth/Wi-Fi discovery.
         add(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
