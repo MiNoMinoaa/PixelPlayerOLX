@@ -57,6 +57,10 @@ data class NavidromeCredentials(
     val normalizedServerUrl: String
         get() = normalizedHttpUrlOrNull?.toString()?.trimEnd('/') ?: serverUrl.trim().trimEnd('/')
 
+    /** Whether Android 17's local-network runtime permission is needed for this server. */
+    val requiresLocalNetworkAccess: Boolean
+        get() = normalizedHttpUrlOrNull?.host?.let(CloudStreamSecurity::isLocalServerHost) == true
+
     /**
      * Returns a validation error for connection setup, or null when the URL is acceptable.
      */
@@ -74,12 +78,6 @@ data class NavidromeCredentials(
         return null
     }
 
-    private fun isHttpAllowedHost(host: String): Boolean {
-        return host == "localhost" ||
-            host == "127.0.0.1" ||
-            host.endsWith(".local") ||
-            host.endsWith(".ts.net") ||
-            !host.contains('.') ||
-            CloudStreamSecurity.isPrivateIpv4Literal(host)
-    }
+    private fun isHttpAllowedHost(host: String): Boolean =
+        CloudStreamSecurity.isLocalServerHost(host)
 }

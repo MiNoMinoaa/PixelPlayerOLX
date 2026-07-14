@@ -160,6 +160,22 @@ object CloudStreamSecurity {
         }
     }
 
+    /**
+     * Hosts that can reasonably identify a self-hosted server reached over the local network or a VPN.
+     * `.lan` is commonly assigned by home routers; `.home.arpa` is the reserved home-network suffix.
+     */
+    internal fun isLocalServerHost(host: String): Boolean {
+        val normalized = host.lowercase()
+        return normalized == "localhost" ||
+            normalized == "127.0.0.1" ||
+            normalized.endsWith(".local") ||
+            normalized.endsWith(".lan") ||
+            normalized.endsWith(".home.arpa") ||
+            normalized.endsWith(".ts.net") ||
+            !normalized.contains('.') ||
+            isPrivateIpv4Literal(normalized)
+    }
+
     /** Used by login-time server-URL validation to decide whether cleartext HTTP is acceptable. */
     internal fun isPrivateIpv4Literal(host: String): Boolean {
         val parts = host.split('.')

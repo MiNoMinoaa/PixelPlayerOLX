@@ -1,7 +1,9 @@
 package com.lostf1sh.pixelplayeross.data.navidrome.model
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class NavidromeCredentialsTest {
@@ -30,6 +32,20 @@ class NavidromeCredentialsTest {
         assertEquals(
             "http://192.168.1.20:4533",
             credentials.normalizedServerUrl
+        )
+    }
+
+    @Test
+    fun `connectionValidationError accepts local dns suffixes`() {
+        listOf("jellyfin.lan", "media.local", "music.home.arpa").forEach { host ->
+            val credentials = NavidromeCredentials("http://$host:4533", "user", "pass")
+
+            assertNull(credentials.connectionValidationError())
+            assertTrue(credentials.requiresLocalNetworkAccess)
+        }
+        assertFalse(
+            NavidromeCredentials("https://music.example.com", "user", "pass")
+                .requiresLocalNetworkAccess
         )
     }
 

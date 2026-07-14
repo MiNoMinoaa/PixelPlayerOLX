@@ -1,9 +1,14 @@
 package com.lostf1sh.pixelplayeross.presentation.jellyfin.auth
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -70,9 +75,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lostf1sh.pixelplayeross.R
+import com.lostf1sh.pixelplayeross.data.jellyfin.model.JellyfinCredentials
 import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
 import com.lostf1sh.pixelplayeross.ui.theme.PixelPlayerTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -107,6 +114,31 @@ fun JellyfinLoginScreen(
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var pendingLocalNetworkLogin by remember {
+        mutableStateOf<Triple<String, String, String>?>(null)
+    }
+    var localNetworkPermissionDenied by remember { mutableStateOf(false) }
+
+    val localNetworkPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        val pendingLogin = pendingLocalNetworkLogin
+        pendingLocalNetworkLogin = null
+        if (granted && pendingLogin != null) {
+            viewModel.login(pendingLogin.first, pendingLogin.second, pendingLogin.third)
+        } else if (!granted) {
+            localNetworkPermissionDenied = true
+        }
+    }
+
+    LaunchedEffect(localNetworkPermissionDenied) {
+        if (localNetworkPermissionDenied) {
+            snackbarHostState.showSnackbar(
+                context.getString(R.string.auth_local_network_permission_denied)
+            )
+            localNetworkPermissionDenied = false
+        }
+    }
 
     LaunchedEffect(loginState) {
         when (val state = loginState) {
@@ -128,6 +160,23 @@ fun JellyfinLoginScreen(
 
     val isLoading = loginState is JellyfinLoginState.Loading
     val inputShape = AbsoluteSmoothCornerShape(18.dp, 60)
+    val connect = {
+        focusManager.clearFocus()
+        val credentials = JellyfinCredentials(serverUrl, username, password)
+        val permissionMissing = Build.VERSION.SDK_INT >= 37 &&
+            credentials.requiresLocalNetworkAccess &&
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_LOCAL_NETWORK
+            ) != PackageManager.PERMISSION_GRANTED
+
+        if (permissionMissing) {
+            pendingLocalNetworkLogin = Triple(serverUrl, username, password)
+            localNetworkPermissionLauncher.launch(Manifest.permission.ACCESS_LOCAL_NETWORK)
+        } else {
+            viewModel.login(serverUrl, username, password)
+        }
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -321,9 +370,8 @@ fun JellyfinLoginScreen(
                         ),
                         keyboardActions = KeyboardActions(
                             onDone = {
-                                focusManager.clearFocus()
                                 if (serverUrl.isNotBlank() && username.isNotBlank() && password.isNotBlank()) {
-                                    viewModel.login(serverUrl, username, password)
+                                    connect()
                                 }
                             }
                         ),
@@ -372,10 +420,7 @@ fun JellyfinLoginScreen(
 
             // Login Button
             Button(
-                onClick = {
-                    focusManager.clearFocus()
-                    viewModel.login(serverUrl, username, password)
-                },
+                onClick = connect,
                 enabled = !isLoading && serverUrl.isNotBlank() && username.isNotBlank() && password.isNotBlank(),
                 shape = AbsoluteSmoothCornerShape(18.dp, 60),
                 modifier = Modifier

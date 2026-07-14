@@ -35,10 +35,24 @@ class JellyfinCredentialsTest {
             "http://100.64.12.34:8096",
             "http://musicbox:8096",
             "http://media.local",
+            "http://jellyfin.lan:8096",
+            "http://media.home.arpa:8096",
             "http://jellyfin.tailnet.ts.net:8096",
         ).forEach { url ->
             assertNull(creds(url).connectionValidationError(), "expected $url to be allowed over http")
         }
+    }
+
+    @Test
+    fun `local addresses require local network access`() {
+        listOf(
+            "http://192.168.1.50:8096",
+            "http://jellyfin.lan:8096",
+            "https://media.home.arpa:8096"
+        ).forEach { url ->
+            assertTrue(creds(url).requiresLocalNetworkAccess, "$url should require LAN access")
+        }
+        assertFalse(creds("https://jellyfin.example.com").requiresLocalNetworkAccess)
     }
 
     @Test
@@ -79,6 +93,7 @@ class JellyfinCredentialsTest {
             "192.168.1.50:8096/" to "http://192.168.1.50:8096",
             "100.64.12.34:8096/" to "http://100.64.12.34:8096",
             "jellyfin.tailnet.ts.net:8096/" to "http://jellyfin.tailnet.ts.net:8096",
+            "jellyfin.lan:8096/" to "http://jellyfin.lan:8096",
             "musicbox:8096/" to "http://musicbox:8096"
         ).forEach { (input, expected) ->
             assertEquals(expected, creds(input).normalizedServerUrl)
