@@ -1,12 +1,6 @@
 
-# PixelPlayerOSS
-
 <p align="center">
-  <img src="assets/icon.png" alt="PixelPlayerOSS icon" width="128"/>
-</p>
-
-<p align="center">
-  <strong>A local-first, FOSS Android music player built with Kotlin, Jetpack Compose, and Material 3.</strong>
+  <img src="assets/pixelplayeross-header.png" alt="PixelPlayerOSS — open-source music player for Android"/>
 </p>
 
 <p align="center">
