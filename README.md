@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="assets/pixelplayeross-header.png" alt="PixelPlayerOSS — open-source music player for Android"/>
+  <img src="assets/pixelplayeross_header.png" alt="PixelPlayerOSS — open-source music player for Android"/>
 </p>
 
 <p align="center">
