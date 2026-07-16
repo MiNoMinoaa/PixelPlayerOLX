@@ -211,9 +211,8 @@
         <provider
             android:name=".data.provider.SharedArtworkContentProvider"
             android:authorities="${applicationId}.artwork"
-            android:exported="true"
-            android:grantUriPermissions="true"
-            tools:ignore="ExportedContentProvider" />
+            android:exported="false"
+            android:grantUriPermissions="true" />
 
         <!-- Quick Settings Tiles -->
         <service

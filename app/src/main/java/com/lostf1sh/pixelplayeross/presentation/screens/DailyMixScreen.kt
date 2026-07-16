@@ -52,7 +52,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import android.os.Trace // Import Trace
+import com.lostf1sh.pixelplayeross.utils.traceSection
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.navigationBars
@@ -99,8 +99,7 @@ fun DailyMixScreen(
     playlistViewModel: PlaylistViewModel = hiltViewModel(),
     playerViewModel: PlayerViewModel,
     navController: NavController,
-) {
-    Trace.beginSection("DailyMixScreen.Composition")
+) = traceSection("DailyMixScreen.Composition") {
     val dailyMixTitle = stringResource(R.string.presentation_batch_b_daily_mix_title)
     val playItLabel = stringResource(R.string.presentation_batch_b_play_it)
     val shuffleLabel = stringResource(R.string.shortcut_shuffle_short)
@@ -370,7 +369,6 @@ fun DailyMixScreen(
 
         }
     }
-    Trace.endSection()
 }
 
 
@@ -379,9 +377,8 @@ fun DailyMixScreen(
 private fun ExpressiveDailyMixHeader(
     songs: ImmutableList<Song>,
     scrollState: LazyListState
-) {
+) = traceSection("ExpressiveDailyMixHeader.Composition") {
     val dailyMixHeaderTitle = stringResource(R.string.presentation_batch_b_daily_mix_title)
-    Trace.beginSection("ExpressiveDailyMixHeader.Composition")
     val albumArts = remember(songs) { songs.map { it.albumArtUriString }.distinct().take(3) }
     val totalDuration = remember(songs) { songs.sumOf { it.duration } }
 
@@ -521,7 +518,6 @@ private fun ExpressiveDailyMixHeader(
             }
         }
     }
-    Trace.endSection()
 }
 
 @OptIn(ExperimentalTextApi::class)

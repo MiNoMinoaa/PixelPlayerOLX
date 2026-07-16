@@ -3,7 +3,6 @@ package com.lostf1sh.pixelplayeross.presentation.viewmodel
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.os.Trace
 import android.util.LruCache
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
@@ -20,6 +19,7 @@ import com.lostf1sh.pixelplayeross.data.database.AlbumArtThemeEntity
 import com.lostf1sh.pixelplayeross.data.database.StoredColorSchemeValues
 import com.lostf1sh.pixelplayeross.data.database.toComposeColor
 import com.lostf1sh.pixelplayeross.utils.LocalArtworkUri
+import com.lostf1sh.pixelplayeross.utils.traceAsyncSection
 import com.lostf1sh.pixelplayeross.ui.theme.clearExtractedColorCache
 import com.lostf1sh.pixelplayeross.ui.theme.extractSeedColor
 import com.lostf1sh.pixelplayeross.ui.theme.generateColorSchemeFromSeed
@@ -76,32 +76,24 @@ class ColorSchemeProcessor @Inject constructor(
         paletteStyle: AlbumArtPaletteStyle,
         colorAccuracyLevel: Int = AlbumArtColorAccuracy.DEFAULT,
         forceRefresh: Boolean = false
-    ): ColorSchemePair? {
-        Trace.beginSection("ColorSchemeProcessor.getOrGenerate")
-        try {
-            val resolvedAccuracyLevel = AlbumArtColorAccuracy.clamp(colorAccuracyLevel)
-            val cacheKey = buildCacheKey(albumArtUri, paletteStyle, resolvedAccuracyLevel)
-            if (!forceRefresh) {
-                loadCachedColorScheme(
-                    albumArtUri = albumArtUri,
-                    paletteStyle = paletteStyle,
-                    colorAccuracyLevel = resolvedAccuracyLevel
-                )?.let { schemePair ->
-                    Trace.endSection()
-                    return schemePair
-                }
-            }
-
-            // 3. Generate new color scheme
-            return generateAndCacheColorScheme(
+    ): ColorSchemePair? = traceAsyncSection("ColorSchemeProcessor.getOrGenerate") {
+        val resolvedAccuracyLevel = AlbumArtColorAccuracy.clamp(colorAccuracyLevel)
+        if (!forceRefresh) {
+            loadCachedColorScheme(
                 albumArtUri = albumArtUri,
                 paletteStyle = paletteStyle,
-                colorAccuracyLevel = resolvedAccuracyLevel,
-                forceRefresh = forceRefresh
-            )
-        } finally {
-            Trace.endSection()
+                colorAccuracyLevel = resolvedAccuracyLevel
+            )?.let { schemePair ->
+                return@traceAsyncSection schemePair
+            }
         }
+
+        generateAndCacheColorScheme(
+            albumArtUri = albumArtUri,
+            paletteStyle = paletteStyle,
+            colorAccuracyLevel = resolvedAccuracyLevel,
+            forceRefresh = forceRefresh
+        )
     }
 
     suspend fun getPreviewColorScheme(
@@ -132,14 +124,13 @@ class ColorSchemeProcessor @Inject constructor(
         colorAccuracyLevel: Int,
         persistToDatabase: Boolean = true,
         forceRefresh: Boolean = false
-    ): ColorSchemePair? {
-        Trace.beginSection("ColorSchemeProcessor.generate")
+    ): ColorSchemePair? = traceAsyncSection("ColorSchemeProcessor.generate") {
         try {
             val cacheKey = buildCacheKey(albumArtUri, paletteStyle, colorAccuracyLevel)
             // Load bitmap on IO dispatcher
             val bitmap = withContext(Dispatchers.IO) {
                 loadBitmapForColorExtraction(albumArtUri, forceRefresh)
-            } ?: return null
+            } ?: return@traceAsyncSection null
 
             // Extract colors on Default dispatcher (CPU-bound)
             val schemePair = withContext(Dispatchers.Default) {
@@ -173,11 +164,9 @@ class ColorSchemeProcessor @Inject constructor(
                 }
             }
 
-            return schemePair
+            schemePair
         } catch (e: Exception) {
-            return null
-        } finally {
-            Trace.endSection()
+            null
         }
     }
 

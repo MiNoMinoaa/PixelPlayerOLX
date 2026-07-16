@@ -6,6 +6,7 @@ import com.lostf1sh.pixelplayeross.presentation.navigation.navigateSafely
 import com.lostf1sh.pixelplayeross.presentation.navigation.navigateSafelyReplacing
 
 import android.os.Trace
+import com.lostf1sh.pixelplayeross.utils.traceSection
 import android.text.format.Formatter
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -616,15 +617,15 @@ fun LibraryScreen(
 
     // The lazy loading logic is kept.
     LaunchedEffect(Unit) {
-        Trace.beginSection("LibraryScreen.InitialTabLoad")
-        playerViewModel.onLibraryTabSelected(normalizedLastTabIndex)
-        Trace.endSection()
+        traceSection("LibraryScreen.InitialTabLoad") {
+            playerViewModel.onLibraryTabSelected(normalizedLastTabIndex)
+        }
     }
 
     LaunchedEffect(currentTabIndex) {
-        Trace.beginSection("LibraryScreen.PageChangeTabLoad")
-        playerViewModel.onLibraryTabSelected(currentTabIndex)
-        Trace.endSection()
+        traceSection("LibraryScreen.PageChangeTabLoad") {
+            playerViewModel.onLibraryTabSelected(currentTabIndex)
+        }
 
         // Clear selection when switching tabs
         multiSelectionState.clearSelection()

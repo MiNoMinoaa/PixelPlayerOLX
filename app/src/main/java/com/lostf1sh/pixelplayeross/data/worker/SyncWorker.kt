@@ -4,7 +4,6 @@ import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
 import android.os.Build
-import android.os.Trace // Import Trace
 import android.provider.MediaStore
 import androidx.hilt.work.HiltWorker
 import androidx.work.Constraints
@@ -36,6 +35,7 @@ import com.lostf1sh.pixelplayeross.utils.LocalArtworkUri
 import com.lostf1sh.pixelplayeross.utils.buildLocalAudioSelection
 import com.lostf1sh.pixelplayeross.utils.normalizeMetadataTextOrEmpty
 import com.lostf1sh.pixelplayeross.utils.splitArtistsByDelimiters
+import com.lostf1sh.pixelplayeross.utils.traceAsyncSection
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.io.File
@@ -87,9 +87,8 @@ constructor(
         ) == android.content.pm.PackageManager.PERMISSION_GRANTED
     }
 
-    override suspend fun doWork(): Result =
+    override suspend fun doWork(): Result = traceAsyncSection("SyncWorker.doWork") {
             withContext(Dispatchers.IO) {
-                Trace.beginSection("SyncWorker.doWork")
                 try {
                     val syncModeName =
                             inputData.getString(INPUT_SYNC_MODE) ?: SyncMode.INCREMENTAL.name
@@ -444,10 +443,9 @@ constructor(
                 } catch (e: Exception) {
                     Timber.tag(TAG).e(e, "Error during MediaStore synchronization")
                     Result.failure()
-                } finally {
-                    Trace.endSection() // End SyncWorker.doWork
                 }
             }
+    }
 
     /** Data class to hold the result of multi-artist preprocessing. */
     private data class MultiArtistProcessResult(
@@ -792,9 +790,7 @@ constructor(
             resetExistingLocalData: Boolean,
             progressBatchSize: Int,
             onProgress: suspend (current: Int, total: Int, phaseOrdinal: Int) -> Unit
-    ): List<SongEntity> {
-        Trace.beginSection("SyncWorker.fetchMusicFromMediaStore")
-
+    ): List<SongEntity> = traceAsyncSection("SyncWorker.fetchMusicFromMediaStore") {
         val deepScan = forceMetadata
         val genreMap = fetchGenreMap() // Load genres upfront
 
@@ -924,8 +920,7 @@ constructor(
 
         if (rawDataList.isEmpty()) {
             Timber.tag(TAG).i("MediaStore cursor produced 0 raw songs after directory filtering")
-            Trace.endSection()
-            return emptyList()
+            return@traceAsyncSection emptyList()
         }
 
         // Phase 2: Identify changed songs and merge with existing data in chunks
@@ -960,8 +955,7 @@ constructor(
             "MediaStore raw=$rawSongCount, songsToProcess=$totalCount, forceProcessAll=$forceProcessAll, resetExistingLocalData=$resetExistingLocalData"
         )
         if (totalCount == 0) {
-            Trace.endSection()
-            return emptyList()
+            return@traceAsyncSection emptyList()
         }
 
         // Phase 3: Parallel processing of songs with metadata merging
@@ -1029,8 +1023,7 @@ constructor(
             songs.addAll(batchResults)
         }
 
-        Trace.endSection()
-        return songs
+        songs
     }
 
     /**

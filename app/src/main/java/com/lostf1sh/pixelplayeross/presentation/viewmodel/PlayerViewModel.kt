@@ -73,6 +73,7 @@ import com.lostf1sh.pixelplayeross.utils.LocalArtworkUri
 import com.lostf1sh.pixelplayeross.utils.LyricsUtils
 import com.lostf1sh.pixelplayeross.utils.StorageType
 import com.lostf1sh.pixelplayeross.utils.StorageUtils
+import com.lostf1sh.pixelplayeross.utils.traceSection
 import com.lostf1sh.pixelplayeross.utils.ZipShareHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -1494,326 +1495,323 @@ class PlayerViewModel @Inject constructor(
 
     // Connectivity refresh delegated to ConnectivityStateHolder
     init {
-        // Must pair with the Trace.endSection() at the bottom of this init block — an
-        // unmatched endSection pops whatever section the caller had open on this thread.
-        Trace.beginSection("PlayerViewModel.init")
-        Timber.tag("PlayerViewModel").i("init started.")
+        traceSection("PlayerViewModel.init") {
+            Timber.tag("PlayerViewModel").i("init started.")
 
 
-        viewModelScope.launch {
-            userPreferencesRepository.migrateTabOrder()
-        }
+            viewModelScope.launch {
+                userPreferencesRepository.migrateTabOrder()
+            }
 
-        viewModelScope.launch {
-            userPreferencesRepository.ensureLibrarySortDefaults()
-        }
+            viewModelScope.launch {
+                userPreferencesRepository.ensureLibrarySortDefaults()
+            }
 
-        viewModelScope.launch {
-            val legacyFavoriteIds = userPreferencesRepository.favoriteSongIdsFlow.first()
-            if (legacyFavoriteIds.isNotEmpty()) {
-                val roomFavoriteIds = musicRepository.getFavoriteSongIdsOnce()
-                if (roomFavoriteIds.isEmpty()) {
-                    legacyFavoriteIds.forEach { songId ->
-                        musicRepository.setFavoriteStatus(songId, true)
+            viewModelScope.launch {
+                val legacyFavoriteIds = userPreferencesRepository.favoriteSongIdsFlow.first()
+                if (legacyFavoriteIds.isNotEmpty()) {
+                    val roomFavoriteIds = musicRepository.getFavoriteSongIdsOnce()
+                    if (roomFavoriteIds.isEmpty()) {
+                        legacyFavoriteIds.forEach { songId ->
+                            musicRepository.setFavoriteStatus(songId, true)
+                        }
+                    }
+                    userPreferencesRepository.clearFavoriteSongIds()
+                }
+            }
+
+            viewModelScope.launch {
+                userPreferencesRepository.isFoldersPlaylistViewFlow.collect { isPlaylistView ->
+                    folderNavigationStateHolder.setFoldersPlaylistViewState(
+                        isPlaylistView = isPlaylistView,
+                        updateUiState = { mutation -> _playerUiState.update(mutation) }
+                    )
+                }
+            }
+
+            viewModelScope.launch {
+                userPreferencesRepository.foldersSourceFlow.collect { preferredSource ->
+                    val resolved = resolveFolderSourceState(preferredSource)
+                    if (resolved.source != preferredSource) {
+                        userPreferencesRepository.setFoldersSource(resolved.source)
+                    }
+
+                    _playerUiState.update { currentState ->
+                        val sourceChanged = currentState.folderSource != resolved.source ||
+                                currentState.folderSourceRootPath != resolved.rootPath
+                        currentState.copy(
+                            folderSource = resolved.source,
+                            folderSourceRootPath = resolved.rootPath,
+                            isSdCardAvailable = resolved.isSdCardAvailable,
+                            currentFolderPath = if (sourceChanged) null else currentState.currentFolderPath,
+                            currentFolder = if (sourceChanged) null else currentState.currentFolder
+                        )
                     }
                 }
-                userPreferencesRepository.clearFavoriteSongIds()
             }
-        }
 
-        viewModelScope.launch {
-            userPreferencesRepository.isFoldersPlaylistViewFlow.collect { isPlaylistView ->
-                folderNavigationStateHolder.setFoldersPlaylistViewState(
-                    isPlaylistView = isPlaylistView,
-                    updateUiState = { mutation -> _playerUiState.update(mutation) }
+            viewModelScope.launch {
+                combine(
+                    userPreferencesRepository.folderBackGestureNavigationFlow,
+                    userPreferencesRepository.isAlbumsListViewFlow,
+                ) { gestureNav, albumsList ->
+                    Pair(gestureNav, albumsList)
+                }.collect { (gestureNav, albumsList) ->
+                    _playerUiState.update {
+                        it.copy(
+                            folderBackGestureNavigationEnabled = gestureNav,
+                            isAlbumsListView = albumsList,
+                        )
+                    }
+                }
+            }
+
+            viewModelScope.launch {
+                userPreferencesRepository.blockedDirectoriesFlow
+                    .distinctUntilChanged()
+                    .collect { blocked ->
+                        if (lastBlockedDirectories == null) {
+                            lastBlockedDirectories = blocked
+                            return@collect
+                        }
+
+                        if (blocked != lastBlockedDirectories) {
+                            lastBlockedDirectories = blocked
+                            onBlockedDirectoriesChanged()
+                        }
+                    }
+            }
+
+            viewModelScope.launch {
+                combine(libraryTabsFlow, lastLibraryTabIndexFlow) { tabs, index ->
+                    tabs.getOrNull(index)?.toLibraryTabIdOrNull() ?: LibraryTabId.SONGS
+                }.collect { tabId ->
+                    _currentLibraryTabId.value = tabId
+                }
+            }
+
+            // Load initial sort options ONCE at startup.
+            viewModelScope.launch {
+                val initialSongSort = resolveSortOption(
+                    userPreferencesRepository.songsSortOptionFlow.first(),
+                    SortOption.SONGS,
+                    SortOption.SongTitleAZ
                 )
-            }
-        }
-
-        viewModelScope.launch {
-            userPreferencesRepository.foldersSourceFlow.collect { preferredSource ->
-                val resolved = resolveFolderSourceState(preferredSource)
-                if (resolved.source != preferredSource) {
-                    userPreferencesRepository.setFoldersSource(resolved.source)
-                }
-
-                _playerUiState.update { currentState ->
-                    val sourceChanged = currentState.folderSource != resolved.source ||
-                            currentState.folderSourceRootPath != resolved.rootPath
-                    currentState.copy(
-                        folderSource = resolved.source,
-                        folderSourceRootPath = resolved.rootPath,
-                        isSdCardAvailable = resolved.isSdCardAvailable,
-                        currentFolderPath = if (sourceChanged) null else currentState.currentFolderPath,
-                        currentFolder = if (sourceChanged) null else currentState.currentFolder
-                    )
-                }
-            }
-        }
-
-        viewModelScope.launch {
-            combine(
-                userPreferencesRepository.folderBackGestureNavigationFlow,
-                userPreferencesRepository.isAlbumsListViewFlow,
-            ) { gestureNav, albumsList ->
-                Pair(gestureNav, albumsList)
-            }.collect { (gestureNav, albumsList) ->
-                _playerUiState.update {
-                    it.copy(
-                        folderBackGestureNavigationEnabled = gestureNav,
-                        isAlbumsListView = albumsList,
-                    )
-                }
-            }
-        }
-
-        viewModelScope.launch {
-            userPreferencesRepository.blockedDirectoriesFlow
-                .distinctUntilChanged()
-                .collect { blocked ->
-                    if (lastBlockedDirectories == null) {
-                        lastBlockedDirectories = blocked
-                        return@collect
-                    }
-
-                    if (blocked != lastBlockedDirectories) {
-                        lastBlockedDirectories = blocked
-                        onBlockedDirectoriesChanged()
-                    }
-                }
-        }
-
-        viewModelScope.launch {
-            combine(libraryTabsFlow, lastLibraryTabIndexFlow) { tabs, index ->
-                tabs.getOrNull(index)?.toLibraryTabIdOrNull() ?: LibraryTabId.SONGS
-            }.collect { tabId ->
-                _currentLibraryTabId.value = tabId
-            }
-        }
-
-        // Load initial sort options ONCE at startup.
-        viewModelScope.launch {
-            val initialSongSort = resolveSortOption(
-                userPreferencesRepository.songsSortOptionFlow.first(),
-                SortOption.SONGS,
-                SortOption.SongTitleAZ
-            )
-            val initialAlbumSort = resolveSortOption(
-                userPreferencesRepository.albumsSortOptionFlow.first(),
-                SortOption.ALBUMS,
-                SortOption.AlbumTitleAZ
-            )
-            val initialArtistSort = resolveSortOption(
-                userPreferencesRepository.artistsSortOptionFlow.first(),
-                SortOption.ARTISTS,
-                SortOption.ArtistNameAZ
-            )
-            val initialFolderSort = resolveSortOption(
-                userPreferencesRepository.foldersSortOptionFlow.first(),
-                SortOption.FOLDERS,
-                SortOption.FolderNameAZ
-            )
-            val initialLikedSort = resolveSortOption(
-                userPreferencesRepository.likedSongsSortOptionFlow.first(),
-                SortOption.LIKED,
-                SortOption.LikedSongDateLiked
-            )
-
-            _playerUiState.update {
-                it.copy(
-                    currentSongSortOption = initialSongSort,
-                    currentAlbumSortOption = initialAlbumSort,
-                    currentArtistSortOption = initialArtistSort,
-                    currentFolderSortOption = initialFolderSort,
-                    currentFavoriteSortOption = initialLikedSort
+                val initialAlbumSort = resolveSortOption(
+                    userPreferencesRepository.albumsSortOptionFlow.first(),
+                    SortOption.ALBUMS,
+                    SortOption.AlbumTitleAZ
                 )
-            }
-            // Also update the dedicated flow for favorites to ensure consistency
-            // _currentFavoriteSortOptionStateFlow.value = initialLikedSort // Delegated to LibraryStateHolder
+                val initialArtistSort = resolveSortOption(
+                    userPreferencesRepository.artistsSortOptionFlow.first(),
+                    SortOption.ARTISTS,
+                    SortOption.ArtistNameAZ
+                )
+                val initialFolderSort = resolveSortOption(
+                    userPreferencesRepository.foldersSortOptionFlow.first(),
+                    SortOption.FOLDERS,
+                    SortOption.FolderNameAZ
+                )
+                val initialLikedSort = resolveSortOption(
+                    userPreferencesRepository.likedSongsSortOptionFlow.first(),
+                    SortOption.LIKED,
+                    SortOption.LikedSongDateLiked
+                )
 
-            sortSongs(initialSongSort, persist = false)
-            sortAlbums(initialAlbumSort, persist = false)
-            sortArtists(initialArtistSort, persist = false)
-            sortFolders(initialFolderSort, persist = false)
-            sortFavoriteSongs(initialLikedSort, persist = false)
-        }
-
-        viewModelScope.launch {
-            val isPersistent = userPreferencesRepository.persistentShuffleEnabledFlow.first()
-            if (isPersistent) {
-                // If persistent shuffle is on, read the last used shuffle state (On/Off)
-                val savedShuffle = userPreferencesRepository.isShuffleOnFlow.first()
-                // Update the UI state so the shuffle button reflects the saved setting immediately
-                playbackStateHolder.updateStablePlayerState { it.copy(isShuffleEnabled = savedShuffle) }
-            }
-        }
-
-        // launchColorSchemeProcessor() - Handled by ThemeStateHolder and on-demand calls
-
-        loadPersistedDailyMix()
-        loadSearchHistory()
-
-        viewModelScope.launch {
-            isSyncingStateFlow.collect { isSyncing ->
-                val oldSyncingLibraryState = _playerUiState.value.isSyncingLibrary
-                _playerUiState.update { it.copy(isSyncingLibrary = isSyncing) }
-
-                if (oldSyncingLibraryState && !isSyncing) {
-                    Timber.tag("PlayerViewModel").i("Sync completed. Calling resetAndLoadInitialData from isSyncingStateFlow observer.")
-                    resetAndLoadInitialData("isSyncingStateFlow observer")
-                }
-            }
-        }
-
-        viewModelScope.launch {
-            if (!isSyncingStateFlow.value && !_isInitialDataLoaded.value && libraryStateHolder.allSongs.value.isEmpty()) {
-                Timber.tag("PlayerViewModel").i("Initial check: Sync not active and initial data not loaded. Calling resetAndLoadInitialData.")
-                resetAndLoadInitialData("Initial Check")
-            }
-        }
-
-        mediaControllerFuture.addListener({
-            try {
-                mediaController = mediaControllerFuture.get()
-                // Pass controller to PlaybackStateHolder
-                playbackStateHolder.setMediaController(mediaController)
-                _isMediaControllerReady.value = true
-
-
-                setupMediaControllerListeners()
-                flushPendingRepeatMode()
-                syncShuffleStateWithSession(playbackStateHolder.stablePlayerState.value.isShuffleEnabled)
-                // Execute any pending action that was queued while the controller was connecting
-                pendingPlaybackAction?.invoke()
-                pendingPlaybackAction = null
-            } catch (e: Exception) {
-                _playerUiState.update { it.copy(isLoadingInitialSongs = false, isLoadingLibraryCategories = false) }
-                Timber.tag("PlayerViewModel").e(e, "Error setting up MediaController")
-            }
-        }, ContextCompat.getMainExecutor(context))
-
-
-        // Initialize connectivity monitoring (WiFi/Bluetooth)
-        connectivityStateHolder.initialize()
-
-        // Initialize sleep timer state holder. The song-id flow is created once and shared:
-        // building a new stateIn(...) inside the provider would spin up a permanently-hot
-        // flow on every end-of-track timer activation, none of which ever get cancelled.
-        val currentSongIdFlow = stablePlayerState.map { it.currentSong?.id }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
-        sleepTimerStateHolder.initialize(
-            scope = viewModelScope,
-            toastEmitter = { msg -> _toastEvents.emit(msg) },
-            mediaControllerProvider = { mediaController },
-            currentSongIdProvider = { currentSongIdFlow },
-            songTitleResolver = { songId -> libraryStateHolder.allSongsById.value[songId]?.title ?: "Unknown" }
-        )
-
-        // Initialize SearchStateHolder
-        searchStateHolder.initialize(viewModelScope)
-
-        // Collect SearchStateHolder flows
-        viewModelScope.launch {
-            combine(
-                searchStateHolder.searchResults,
-                searchStateHolder.selectedSearchFilter,
-                searchStateHolder.searchHistory,
-            ) { results, filter, history ->
-                Triple(results, filter, history)
-            }.collect { (results, filter, history) ->
                 _playerUiState.update {
                     it.copy(
-                        searchResults = results,
-                        selectedSearchFilter = filter,
-                        searchHistory = history,
+                        currentSongSortOption = initialSongSort,
+                        currentAlbumSortOption = initialAlbumSort,
+                        currentArtistSortOption = initialArtistSort,
+                        currentFolderSortOption = initialFolderSort,
+                        currentFavoriteSortOption = initialLikedSort
                     )
                 }
+                // Also update the dedicated flow for favorites to ensure consistency
+                // _currentFavoriteSortOptionStateFlow.value = initialLikedSort // Delegated to LibraryStateHolder
+
+                sortSongs(initialSongSort, persist = false)
+                sortAlbums(initialAlbumSort, persist = false)
+                sortArtists(initialArtistSort, persist = false)
+                sortFolders(initialFolderSort, persist = false)
+                sortFavoriteSongs(initialLikedSort, persist = false)
             }
-        }
 
-        // Initialize LibraryStateHolder
-        libraryStateHolder.initialize(viewModelScope)
-
-        // Sync library folders and loading states
-        viewModelScope.launch {
-            combine(
-                libraryStateHolder.musicFolders,
-                libraryStateHolder.isLoadingLibrary,
-                libraryStateHolder.isLoadingCategories,
-            ) { folders, loadingLibrary, loadingCategories ->
-                Triple(folders, loadingLibrary, loadingCategories)
-            }.collect { (folders, loadingLibrary, loadingCategories) ->
-                _playerUiState.update {
-                    it.copy(
-                        musicFolders = folders,
-                        isLoadingInitialSongs = loadingLibrary,
-                        isLoadingLibraryCategories = loadingCategories,
-                    )
+            viewModelScope.launch {
+                val isPersistent = userPreferencesRepository.persistentShuffleEnabledFlow.first()
+                if (isPersistent) {
+                    // If persistent shuffle is on, read the last used shuffle state (On/Off)
+                    val savedShuffle = userPreferencesRepository.isShuffleOnFlow.first()
+                    // Update the UI state so the shuffle button reflects the saved setting immediately
+                    playbackStateHolder.updateStablePlayerState { it.copy(isShuffleEnabled = savedShuffle) }
                 }
             }
-        }
 
-        // Sync sort options and storage filter
-        viewModelScope.launch {
-            combine(
-                libraryStateHolder.currentSongSortOption,
-                libraryStateHolder.currentAlbumSortOption,
-                libraryStateHolder.currentArtistSortOption,
-                libraryStateHolder.currentFolderSortOption,
-                libraryStateHolder.currentFavoriteSortOption,
-            ) { songSort, albumSort, artistSort, folderSort, favoriteSort ->
-                SortOptionsSnapshot(songSort, albumSort, artistSort, folderSort, favoriteSort)
-            }.collect { snapshot ->
-                _playerUiState.update {
-                    it.copy(
-                        currentSongSortOption = snapshot.songSort,
-                        currentAlbumSortOption = snapshot.albumSort,
-                        currentArtistSortOption = snapshot.artistSort,
-                        currentFolderSortOption = snapshot.folderSort,
-                        currentFavoriteSortOption = snapshot.favoriteSort,
-                    )
+            // launchColorSchemeProcessor() - Handled by ThemeStateHolder and on-demand calls
+
+            loadPersistedDailyMix()
+            loadSearchHistory()
+
+            viewModelScope.launch {
+                isSyncingStateFlow.collect { isSyncing ->
+                    val oldSyncingLibraryState = _playerUiState.value.isSyncingLibrary
+                    _playerUiState.update { it.copy(isSyncingLibrary = isSyncing) }
+
+                    if (oldSyncingLibraryState && !isSyncing) {
+                        Timber.tag("PlayerViewModel").i("Sync completed. Calling resetAndLoadInitialData from isSyncingStateFlow observer.")
+                        resetAndLoadInitialData("isSyncingStateFlow observer")
+                    }
                 }
             }
-        }
-        viewModelScope.launch {
-            libraryStateHolder.currentStorageFilter.collect { filter ->
-                _playerUiState.update { it.copy(currentStorageFilter = filter) }
-            }
-        }
-        viewModelScope.launch {
-            userPreferencesRepository.hideLocalMediaFlow.collect { hide ->
-                _playerUiState.update { it.copy(hideLocalMedia = hide) }
-            }
-        }
 
-
-        viewModelScope.launch {
-            // Repeat preference is only a startup restore value.
-            // Keeping a live collector here creates a feedback path:
-            // player -> DataStore -> collector -> player, which can cause
-            // repeat mode oscillation if a transient player state is persisted.
-            val savedRepeatMode = userPreferencesRepository.repeatModeFlow.first()
-            applyPreferredRepeatMode(savedRepeatMode)
-        }
-
-        viewModelScope.launch {
-            stablePlayerState
-                .map { it.isShuffleEnabled }
-                .distinctUntilChanged()
-                .collect { enabled ->
-                    syncShuffleStateWithSession(enabled)
+            viewModelScope.launch {
+                if (!isSyncingStateFlow.value && !_isInitialDataLoaded.value && libraryStateHolder.allSongs.value.isEmpty()) {
+                    Timber.tag("PlayerViewModel").i("Initial check: Sync not active and initial data not loaded. Calling resetAndLoadInitialData.")
+                    resetAndLoadInitialData("Initial Check")
                 }
+            }
+
+            mediaControllerFuture.addListener({
+                try {
+                    mediaController = mediaControllerFuture.get()
+                    // Pass controller to PlaybackStateHolder
+                    playbackStateHolder.setMediaController(mediaController)
+                    _isMediaControllerReady.value = true
+
+
+                    setupMediaControllerListeners()
+                    flushPendingRepeatMode()
+                    syncShuffleStateWithSession(playbackStateHolder.stablePlayerState.value.isShuffleEnabled)
+                    // Execute any pending action that was queued while the controller was connecting
+                    pendingPlaybackAction?.invoke()
+                    pendingPlaybackAction = null
+                } catch (e: Exception) {
+                    _playerUiState.update { it.copy(isLoadingInitialSongs = false, isLoadingLibraryCategories = false) }
+                    Timber.tag("PlayerViewModel").e(e, "Error setting up MediaController")
+                }
+            }, ContextCompat.getMainExecutor(context))
+
+
+            // Initialize connectivity monitoring (WiFi/Bluetooth)
+            connectivityStateHolder.initialize()
+
+            // Initialize sleep timer state holder. The song-id flow is created once and shared:
+            // building a new stateIn(...) inside the provider would spin up a permanently-hot
+            // flow on every end-of-track timer activation, none of which ever get cancelled.
+            val currentSongIdFlow = stablePlayerState.map { it.currentSong?.id }
+                .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+            sleepTimerStateHolder.initialize(
+                scope = viewModelScope,
+                toastEmitter = { msg -> _toastEvents.emit(msg) },
+                mediaControllerProvider = { mediaController },
+                currentSongIdProvider = { currentSongIdFlow },
+                songTitleResolver = { songId -> libraryStateHolder.allSongsById.value[songId]?.title ?: "Unknown" }
+            )
+
+            // Initialize SearchStateHolder
+            searchStateHolder.initialize(viewModelScope)
+
+            // Collect SearchStateHolder flows
+            viewModelScope.launch {
+                combine(
+                    searchStateHolder.searchResults,
+                    searchStateHolder.selectedSearchFilter,
+                    searchStateHolder.searchHistory,
+                ) { results, filter, history ->
+                    Triple(results, filter, history)
+                }.collect { (results, filter, history) ->
+                    _playerUiState.update {
+                        it.copy(
+                            searchResults = results,
+                            selectedSearchFilter = filter,
+                            searchHistory = history,
+                        )
+                    }
+                }
+            }
+
+            // Initialize LibraryStateHolder
+            libraryStateHolder.initialize(viewModelScope)
+
+            // Sync library folders and loading states
+            viewModelScope.launch {
+                combine(
+                    libraryStateHolder.musicFolders,
+                    libraryStateHolder.isLoadingLibrary,
+                    libraryStateHolder.isLoadingCategories,
+                ) { folders, loadingLibrary, loadingCategories ->
+                    Triple(folders, loadingLibrary, loadingCategories)
+                }.collect { (folders, loadingLibrary, loadingCategories) ->
+                    _playerUiState.update {
+                        it.copy(
+                            musicFolders = folders,
+                            isLoadingInitialSongs = loadingLibrary,
+                            isLoadingLibraryCategories = loadingCategories,
+                        )
+                    }
+                }
+            }
+
+            // Sync sort options and storage filter
+            viewModelScope.launch {
+                combine(
+                    libraryStateHolder.currentSongSortOption,
+                    libraryStateHolder.currentAlbumSortOption,
+                    libraryStateHolder.currentArtistSortOption,
+                    libraryStateHolder.currentFolderSortOption,
+                    libraryStateHolder.currentFavoriteSortOption,
+                ) { songSort, albumSort, artistSort, folderSort, favoriteSort ->
+                    SortOptionsSnapshot(songSort, albumSort, artistSort, folderSort, favoriteSort)
+                }.collect { snapshot ->
+                    _playerUiState.update {
+                        it.copy(
+                            currentSongSortOption = snapshot.songSort,
+                            currentAlbumSortOption = snapshot.albumSort,
+                            currentArtistSortOption = snapshot.artistSort,
+                            currentFolderSortOption = snapshot.folderSort,
+                            currentFavoriteSortOption = snapshot.favoriteSort,
+                        )
+                    }
+                }
+            }
+            viewModelScope.launch {
+                libraryStateHolder.currentStorageFilter.collect { filter ->
+                    _playerUiState.update { it.copy(currentStorageFilter = filter) }
+                }
+            }
+            viewModelScope.launch {
+                userPreferencesRepository.hideLocalMediaFlow.collect { hide ->
+                    _playerUiState.update { it.copy(hideLocalMedia = hide) }
+                }
+            }
+
+
+            viewModelScope.launch {
+                // Repeat preference is only a startup restore value.
+                // Keeping a live collector here creates a feedback path:
+                // player -> DataStore -> collector -> player, which can cause
+                // repeat mode oscillation if a transient player state is persisted.
+                val savedRepeatMode = userPreferencesRepository.repeatModeFlow.first()
+                applyPreferredRepeatMode(savedRepeatMode)
+            }
+
+            viewModelScope.launch {
+                stablePlayerState
+                    .map { it.isShuffleEnabled }
+                    .distinctUntilChanged()
+                    .collect { enabled ->
+                        syncShuffleStateWithSession(enabled)
+                    }
+            }
+
+            // Auto-hide undo bar when a new song starts playing
+            playlistDismissUndoStateHolder.observeUndoStateAgainstPlayback(
+                scope = viewModelScope,
+                currentSongIdFlow = stablePlayerState.map { it.currentSong?.id },
+                getUiState = { _playerUiState.value },
+                onHideDismissUndoBar = { hideDismissUndoBar() }
+            )
         }
-
-        // Auto-hide undo bar when a new song starts playing
-        playlistDismissUndoStateHolder.observeUndoStateAgainstPlayback(
-            scope = viewModelScope,
-            currentSongIdFlow = stablePlayerState.map { it.currentSong?.id },
-            getUiState = { _playerUiState.value },
-            onHideDismissUndoBar = { hideDismissUndoBar() }
-        )
-
-        Trace.endSection() // End PlayerViewModel.init
     }
 
     fun onMainActivityStart() {
@@ -2531,9 +2529,8 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
-    private fun setupMediaControllerListeners() {
-        Trace.beginSection("PlayerViewModel.setupMediaControllerListeners")
-        val playerCtrl = mediaController ?: return Trace.endSection()
+    private fun setupMediaControllerListeners(): Unit = traceSection("PlayerViewModel.setupMediaControllerListeners") {
+        val playerCtrl = mediaController ?: return
         playbackStateHolder.updateStablePlayerState {
             it.copy(
                 isShuffleEnabled = it.isShuffleEnabled,
@@ -2805,7 +2802,6 @@ class PlayerViewModel @Inject constructor(
             }
         }
         playerCtrl.addListener(checkNotNull(mediaControllerPlaybackListener))
-        Trace.endSection()
     }
 
 

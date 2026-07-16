@@ -1,6 +1,5 @@
 package com.lostf1sh.pixelplayeross.data.service
 
-import android.app.AlarmManager
 import android.app.BackgroundServiceStartNotAllowedException
 import android.app.ForegroundServiceStartNotAllowedException
 import android.app.PendingIntent
@@ -188,16 +187,13 @@ class MusicService : MediaLibraryService() {
     private var persistentShuffleEnabled = false
     // Holds the previous main-thread UncaughtExceptionHandler so we can restore it in onDestroy.
     private var previousMainThreadExceptionHandler: Thread.UncaughtExceptionHandler? = null
-    // --- Counted Play State ---
-    private var countedPlayActive = false
-    private var countedPlayTarget = 0
-    private var countedPlayCount = 0
-    private var countedOriginalId: String? = null
-    private var countedPlayListener: Player.Listener? = null
-    private val alarmManager by lazy {
-        getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    // Sleep timers (duration + end-of-track) and counted play, extracted for testability.
+    private val playbackTimerController by lazy {
+        PlaybackTimerController(
+            playerProvider = { mediaSession?.player ?: engine.masterPlayer },
+            alarmScheduler = AlarmManagerSleepTimerScheduler(this),
+        )
     }
-    private var endOfTrackTimerSongId: String? = null
     private var playbackSnapshotPersistJob: Job? = null
     private var playbackSnapshotUnloadWriteJob: Job? = null
     private var isRestoringPlaybackSnapshot = false
@@ -508,24 +504,29 @@ class MusicService : MediaLibraryService() {
                     hintKeys
                 )
                 val defaultResult = super.onConnect(session, controller)
-                val customCommands = listOf(
-                    MusicNotificationProvider.CUSTOM_COMMAND_CLOSE_PLAYER,
-                    MusicNotificationProvider.CUSTOM_COMMAND_LIKE,
-                    MusicNotificationProvider.CUSTOM_COMMAND_SET_FAVORITE_STATE,
-                    MusicNotificationProvider.CUSTOM_COMMAND_TOGGLE_SHUFFLE,
-                    MusicNotificationProvider.CUSTOM_COMMAND_SHUFFLE_ON,
-                    MusicNotificationProvider.CUSTOM_COMMAND_SHUFFLE_OFF,
-                    MusicNotificationProvider.CUSTOM_COMMAND_SET_SHUFFLE_STATE,
-                    MusicNotificationProvider.CUSTOM_COMMAND_CYCLE_REPEAT_MODE,
-                    MusicNotificationProvider.CUSTOM_COMMAND_COUNTED_PLAY,
-                    MusicNotificationProvider.CUSTOM_COMMAND_SET_SLEEP_TIMER_DURATION,
-                    MusicNotificationProvider.CUSTOM_COMMAND_SET_SLEEP_TIMER_END_OF_TRACK,
-                    MusicNotificationProvider.CUSTOM_COMMAND_CANCEL_SLEEP_TIMER,
-                ).map { SessionCommand(it, Bundle.EMPTY) }
-
                 val sessionCommandsBuilder = SessionCommands.Builder()
                     .addSessionCommands(defaultResult.availableSessionCommands.commands)
-                customCommands.forEach { sessionCommandsBuilder.add(it) }
+                // Custom commands mutate app state (favorites, timers, shuffle, close), so they
+                // are only advertised to our own controllers and system-trusted ones
+                // (notification, System UI, Auto/Wear companions).
+                if (isPrivilegedController(controller)) {
+                    val customCommands = listOf(
+                        MusicNotificationProvider.CUSTOM_COMMAND_CLOSE_PLAYER,
+                        MusicNotificationProvider.CUSTOM_COMMAND_LIKE,
+                        MusicNotificationProvider.CUSTOM_COMMAND_SET_FAVORITE_STATE,
+                        MusicNotificationProvider.CUSTOM_COMMAND_TOGGLE_SHUFFLE,
+                        MusicNotificationProvider.CUSTOM_COMMAND_SHUFFLE_ON,
+                        MusicNotificationProvider.CUSTOM_COMMAND_SHUFFLE_OFF,
+                        MusicNotificationProvider.CUSTOM_COMMAND_SET_SHUFFLE_STATE,
+                        MusicNotificationProvider.CUSTOM_COMMAND_CYCLE_REPEAT_MODE,
+                        MusicNotificationProvider.CUSTOM_COMMAND_COUNTED_PLAY,
+                        MusicNotificationProvider.CUSTOM_COMMAND_CANCEL_COUNTED_PLAY,
+                        MusicNotificationProvider.CUSTOM_COMMAND_SET_SLEEP_TIMER_DURATION,
+                        MusicNotificationProvider.CUSTOM_COMMAND_SET_SLEEP_TIMER_END_OF_TRACK,
+                        MusicNotificationProvider.CUSTOM_COMMAND_CANCEL_SLEEP_TIMER,
+                    ).map { SessionCommand(it, Bundle.EMPTY) }
+                    customCommands.forEach { sessionCommandsBuilder.add(it) }
+                }
                 grantArtworkUriPermissions(
                     controller.packageName,
                     listOfNotNull(session.player.currentMediaItem)
@@ -545,33 +546,43 @@ class MusicService : MediaLibraryService() {
             ): ListenableFuture<SessionResult> {
                 Timber.tag("MusicService")
                     .d("onCustomCommand received: ${customCommand.customAction}")
+                if (!isPrivilegedController(controller)) {
+                    Timber.tag(TAG).w(
+                        "Rejected custom command %s from untrusted package=%s",
+                        customCommand.customAction,
+                        controller.packageName
+                    )
+                    return Futures.immediateFuture(
+                        SessionResult(SessionError.ERROR_PERMISSION_DENIED)
+                    )
+                }
                 when (customCommand.customAction) {
                     MusicNotificationProvider.CUSTOM_COMMAND_CLOSE_PLAYER -> {
                         closeNotificationPlayer()
                     }
                     MusicNotificationProvider.CUSTOM_COMMAND_COUNTED_PLAY -> {
                         val count = args.getInt("count", 1)
-                        startCountedPlay(count)
+                        playbackTimerController.startCountedPlay(count)
                     }
                     MusicNotificationProvider.CUSTOM_COMMAND_CANCEL_COUNTED_PLAY -> {
-                        stopCountedPlay()
+                        playbackTimerController.stopCountedPlay()
                     }
                     MusicNotificationProvider.CUSTOM_COMMAND_SET_SLEEP_TIMER_DURATION -> {
                         val minutes = args.getInt(
                             MusicNotificationProvider.EXTRA_SLEEP_TIMER_MINUTES,
                             0
                         )
-                        setDurationSleepTimer(minutes)
+                        playbackTimerController.setDurationSleepTimer(minutes)
                     }
                     MusicNotificationProvider.CUSTOM_COMMAND_SET_SLEEP_TIMER_END_OF_TRACK -> {
                         val enabled = args.getBoolean(
                             MusicNotificationProvider.EXTRA_END_OF_TRACK_ENABLED,
                             true
                         )
-                        setEndOfTrackSleepTimer(enabled)
+                        playbackTimerController.setEndOfTrackSleepTimer(enabled)
                     }
                     MusicNotificationProvider.CUSTOM_COMMAND_CANCEL_SLEEP_TIMER -> {
-                        cancelSleepTimers()
+                        playbackTimerController.cancelSleepTimers()
                     }
                     MusicNotificationProvider.CUSTOM_COMMAND_TOGGLE_SHUFFLE -> {
                         val enabled = !isManualShuffleEnabled
@@ -789,83 +800,6 @@ class MusicService : MediaLibraryService() {
         }
     }
 
-    private fun createSleepTimerPendingIntent(): PendingIntent {
-        val intent = Intent(this, SleepTimerReceiver::class.java).apply {
-            action = ACTION_SLEEP_TIMER_EXPIRED
-            setPackage(packageName)
-        }
-        return PendingIntent.getBroadcast(
-            this,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
-    }
-
-    private fun cancelDurationSleepTimerInternal() {
-        alarmManager.cancel(createSleepTimerPendingIntent())
-    }
-
-    private fun setDurationSleepTimer(minutes: Int) {
-        if (minutes <= 0) {
-            cancelSleepTimers()
-            return
-        }
-        endOfTrackTimerSongId = null
-        val triggerAtMillis = System.currentTimeMillis() + (minutes * 60_000L)
-        val pendingIntent = createSleepTimerPendingIntent()
-
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (alarmManager.canScheduleExactAlarms()) {
-                    alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP,
-                        triggerAtMillis,
-                        pendingIntent,
-                    )
-                } else {
-                    alarmManager.setAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP,
-                        triggerAtMillis,
-                        pendingIntent,
-                    )
-                }
-            } else
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    triggerAtMillis,
-                    pendingIntent,
-                )
-            Timber.tag(TAG).d("Sleep timer set for %d minutes", minutes)
-        } catch (e: SecurityException) {
-            Timber.tag(TAG).w(e, "Exact alarm denied; using inexact sleep timer")
-            alarmManager.set(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
-        }
-    }
-
-    private fun setEndOfTrackSleepTimer(enabled: Boolean) {
-        if (!enabled) {
-            endOfTrackTimerSongId = null
-            Timber.tag(TAG).d("End-of-track timer disabled")
-            return
-        }
-        cancelDurationSleepTimerInternal()
-        val currentSongId = mediaSession?.player?.currentMediaItem?.mediaId
-        if (currentSongId.isNullOrBlank()) {
-            endOfTrackTimerSongId = null
-            Timber.tag(TAG).d("End-of-track timer ignored: no active song")
-            return
-        }
-        endOfTrackTimerSongId = currentSongId
-        Timber.tag(TAG).d("End-of-track timer set for mediaId=%s", currentSongId)
-    }
-
-    private fun cancelSleepTimers() {
-        cancelDurationSleepTimerInternal()
-        endOfTrackTimerSongId = null
-        Timber.tag(TAG).d("Sleep timers cancelled")
-    }
-
     private fun startTemporaryForegroundForCommand() {
         val notification = NotificationCompat.Builder(
             this,
@@ -1006,8 +940,7 @@ class MusicService : MediaLibraryService() {
                 }
                 ACTION_SLEEP_TIMER_EXPIRED -> {
                     Timber.tag(TAG).d("Sleep timer expired action received. Pausing player.")
-                    cancelDurationSleepTimerInternal()
-                    player.pause()
+                    playbackTimerController.onDurationSleepTimerExpired()
                 }
             }
         }
@@ -1199,7 +1132,7 @@ class MusicService : MediaLibraryService() {
                     }
                 }
 
-                endOfTrackTimerSongId = null
+                playbackTimerController.clearEndOfTrackTimer()
                 reportNavidromePlayback("stopped")
                 stopNavidromePlaybackReporting()
             } else {
@@ -1263,6 +1196,7 @@ class MusicService : MediaLibraryService() {
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            mediaItem?.let(::grantArtworkUriPermissionsToConnectedControllers)
             syncLocalListeningStatsFromPlayer(mediaSession?.player ?: engine.masterPlayer, forceNewSession = true)
             if (isNavidromeMediaItem(mediaItem)) {
                 reportNavidromePlayback("starting")
@@ -1273,27 +1207,7 @@ class MusicService : MediaLibraryService() {
                 stopNavidromePlaybackReporting()
             }
 
-            val eotTargetSongId = endOfTrackTimerSongId
-            if (!eotTargetSongId.isNullOrBlank()) {
-                if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
-                    val previousSongId = engine.masterPlayer.run {
-                        if (previousMediaItemIndex != C.INDEX_UNSET) {
-                            runCatching { getMediaItemAt(previousMediaItemIndex).mediaId }.getOrNull()
-                        } else {
-                            null
-                        }
-                    }
-                    if (previousSongId == eotTargetSongId) {
-                        endOfTrackTimerSongId = null
-                        engine.masterPlayer.seekTo(0L)
-                        engine.masterPlayer.pause()
-                        Timber.tag(TAG).d("Paused playback at end of track timer")
-                    }
-                } else if (mediaItem?.mediaId != eotTargetSongId) {
-                    endOfTrackTimerSongId = null
-                    Timber.tag(TAG).d("Cleared end-of-track timer after manual track change")
-                }
-            }
+            playbackTimerController.handleMediaItemTransition(mediaItem, reason)
             applyReplayGain(mediaSession?.player?.currentMediaItem)
             // Pre-fetch RG for the track after this one so it's cached when needed
             val player = engine.masterPlayer
@@ -2423,9 +2337,7 @@ class MusicService : MediaLibraryService() {
         val player = sessionToRelease?.player ?: engine.masterPlayer
 
         clearHeadsetReconnectResume()
-        cancelDurationSleepTimerInternal()
-        stopCountedPlay()
-        endOfTrackTimerSongId = null
+        playbackTimerController.release()
 
         if (preservePlaybackSnapshot) {
             persistPlaybackSnapshotOnUnload()
@@ -2555,6 +2467,29 @@ class MusicService : MediaLibraryService() {
         }
     }
 
+    /**
+     * Custom session commands mutate app state, so they are limited to our own controllers
+     * (in-app UI, media notification) and controllers the system marks as trusted
+     * (System UI, notification listeners such as Android Auto / Wear companions).
+     */
+    private fun isPrivilegedController(controller: MediaSession.ControllerInfo): Boolean {
+        return controller.packageName == packageName || controller.isTrusted
+    }
+
+    /**
+     * The artwork provider is not exported, so controllers connected before the current item
+     * changed (System UI, Android Auto, Wear) need a fresh grant for each new current item.
+     */
+    private fun grantArtworkUriPermissionsToConnectedControllers(mediaItem: MediaItem) {
+        val session = mediaSession ?: return
+        session.connectedControllers
+            .asSequence()
+            .map { it.packageName }
+            .distinct()
+            .filter { it.isNotBlank() && it != packageName }
+            .forEach { grantArtworkUriPermissions(it, listOf(mediaItem)) }
+    }
+
     private fun grantArtworkUriPermissions(
         targetPackage: String,
         mediaItems: List<MediaItem>
@@ -2649,84 +2584,6 @@ class MusicService : MediaLibraryService() {
         // ACTION_SKIP_TO_PREVIOUS/NEXT flags from PlaybackStateCompat, which causes some
         // OEM compact system players (including ColorOS Control Center) to gray out skip.
         return listOf(likeButton, closeButton, shuffleButton, repeatButton)
-    }
-
-    // ------------------------
-    // Counted Play Controls
-    // ------------------------
-    fun startCountedPlay(count: Int) {
-        val player = engine.masterPlayer
-        val currentItem = player.currentMediaItem ?: return
-
-        stopCountedPlay()  // reset previous
-
-        countedPlayTarget = count
-        countedPlayCount = 1
-        countedOriginalId = currentItem.mediaId
-        countedPlayActive = true
-
-        // Force repeat-one
-        player.repeatMode = Player.REPEAT_MODE_ONE
-
-        val listener = object : Player.Listener {
-
-            override fun onPositionDiscontinuity(
-                oldPosition: Player.PositionInfo,
-                newPosition: Player.PositionInfo,
-                reason: Int
-            ) {
-                if (!countedPlayActive) return
-
-                if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
-                    countedPlayCount++
-
-                    if (countedPlayCount > countedPlayTarget) {
-                        player.pause()
-                        stopCountedPlay()
-                        return
-                    }
-                }
-            }
-
-            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                if (!countedPlayActive) return
-
-                // If user manually changes the song -> cancel
-                if (mediaItem?.mediaId != countedOriginalId) {
-                    stopCountedPlay()
-                }
-            }
-
-            override fun onRepeatModeChanged(repeatMode: Int) {
-                // User explicitly changed repeat mode while counted play is active:
-                // cancel counted play and accept the new mode instead of fighting back.
-                if (countedPlayActive && repeatMode != Player.REPEAT_MODE_ONE) {
-                    stopCountedPlay(restoreRepeatMode = false)
-                }
-            }
-        }
-
-        countedPlayListener = listener
-        player.addListener(listener)
-    }
-
-    fun stopCountedPlay(restoreRepeatMode: Boolean = true) {
-        if (!countedPlayActive) return
-
-        countedPlayActive = false
-        countedPlayTarget = 0
-        countedPlayCount = 0
-        countedOriginalId = null
-
-        countedPlayListener?.let {
-            engine.masterPlayer.removeListener(it)
-        }
-        countedPlayListener = null
-
-        // Restore normal repeat mode (OFF) only when not triggered by a user repeat-mode change
-        if (restoreRepeatMode) {
-            engine.masterPlayer.repeatMode = Player.REPEAT_MODE_OFF
-        }
     }
 
     /**

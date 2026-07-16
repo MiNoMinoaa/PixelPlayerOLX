@@ -2,13 +2,13 @@ package com.lostf1sh.pixelplayeross.presentation.viewmodel
 
 import android.net.Uri
 import android.content.ComponentCallbacks2
-import android.os.Trace
 import androidx.compose.ui.graphics.Color
 import com.lostf1sh.pixelplayeross.data.preferences.AlbumArtColorAccuracy
 import com.lostf1sh.pixelplayeross.data.preferences.AlbumArtPaletteStyle
 import com.lostf1sh.pixelplayeross.data.preferences.ThemePreferencesRepository
 import com.lostf1sh.pixelplayeross.ui.theme.DarkColorScheme
 import com.lostf1sh.pixelplayeross.ui.theme.clearExtractedColorCache
+import com.lostf1sh.pixelplayeross.utils.traceAsyncSection
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -94,15 +94,18 @@ class ThemeStateHolder @Inject constructor(
         }
     }
 
-    suspend fun extractAndGenerateColorScheme(albumArtUriAsUri: Uri?, currentSongUriString: String?, isPreload: Boolean = false) {
-        Trace.beginSection("ThemeStateHolder.extractAndGenerateColorScheme")
+    suspend fun extractAndGenerateColorScheme(
+        albumArtUriAsUri: Uri?,
+        currentSongUriString: String?,
+        isPreload: Boolean = false
+    ): Unit = traceAsyncSection("ThemeStateHolder.extractAndGenerateColorScheme") {
         try {
             if (albumArtUriAsUri == null) {
                 if (!isPreload && currentSongUriString == null) {
                     _currentAlbumArtColorSchemePair.value = null
                     _currentAlbumArtUri.value = null
                 }
-                return
+                return@traceAsyncSection
             }
 
             val uriString = albumArtUriAsUri.toString()
@@ -122,8 +125,6 @@ class ThemeStateHolder @Inject constructor(
                 _currentAlbumArtColorSchemePair.value = null
                 _currentAlbumArtUri.value = null
             }
-        } finally {
-            Trace.endSection()
         }
     }
 

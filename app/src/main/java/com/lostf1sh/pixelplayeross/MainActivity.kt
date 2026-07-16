@@ -7,7 +7,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.os.Trace
+import com.lostf1sh.pixelplayeross.utils.traceSection
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -455,8 +455,10 @@ class MainActivity : ComponentActivity() {
 
     @androidx.annotation.OptIn(UnstableApi::class)
     @Composable
-    private fun MainAppContent(playerViewModel: PlayerViewModel, mainViewModel: MainViewModel) {
-        Trace.beginSection("MainActivity.MainAppContent")
+    private fun MainAppContent(
+        playerViewModel: PlayerViewModel,
+        mainViewModel: MainViewModel
+    ) = traceSection("MainActivity.MainAppContent") {
         val navController = rememberNavController()
         val isSyncing by mainViewModel.isSyncing.collectAsStateWithLifecycle()
         val hasCompletedInitialSync by mainViewModel.hasCompletedInitialSync.collectAsStateWithLifecycle()
@@ -556,14 +558,14 @@ class MainActivity : ComponentActivity() {
                 LoadingOverlay(syncProgress)
             }
         }
-        Trace.endSection() // End MainActivity.MainAppContent
     }
 
     @androidx.annotation.OptIn(UnstableApi::class)
     @Composable
-    private fun MainUI(playerViewModel: PlayerViewModel, navController: NavHostController) {
-        Trace.beginSection("MainActivity.MainUI")
-
+    private fun MainUI(
+        playerViewModel: PlayerViewModel,
+        navController: NavHostController
+    ) = traceSection("MainActivity.MainUI") {
         val commonNavItems = remember {
             persistentListOf(
                 BottomNavItem("Home", R.drawable.rounded_home_24, R.drawable.home_24_rounded_filled, Screen.Home),
@@ -952,8 +954,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
-        Trace.endSection()
     }
 
     @OptIn(ExperimentalMaterial3ExpressiveApi::class)

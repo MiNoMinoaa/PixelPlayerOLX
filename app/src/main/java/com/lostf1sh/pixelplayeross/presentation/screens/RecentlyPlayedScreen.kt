@@ -2,7 +2,7 @@ package com.lostf1sh.pixelplayeross.presentation.screens
 
 import com.lostf1sh.pixelplayeross.presentation.navigation.navigateSafely
 
-import android.os.Trace
+import com.lostf1sh.pixelplayeross.utils.traceSection
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -103,9 +103,7 @@ fun RecentlyPlayedScreen(
     playerViewModel: PlayerViewModel,
     playlistViewModel: PlaylistViewModel = hiltViewModel(),
     navController: NavController
-) {
-    Trace.beginSection("RecentlyPlayedScreen.Composition")
-
+) = traceSection("RecentlyPlayedScreen.Composition") {
     val context = LocalContext.current
     val queueRecentlyPlayed = stringResource(R.string.presentation_batch_b_queue_recently_played)
     val shuffleLabel = stringResource(R.string.shortcut_shuffle_short)
@@ -368,8 +366,6 @@ fun RecentlyPlayedScreen(
             )
         }
     }
-
-    Trace.endSection()
 }
 
 @Composable
