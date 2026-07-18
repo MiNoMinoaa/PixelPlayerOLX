@@ -43,3 +43,5 @@ markdown.xml
 .vscode/
 .agents/
 /AGENTS.md
+
+graphify-out/
