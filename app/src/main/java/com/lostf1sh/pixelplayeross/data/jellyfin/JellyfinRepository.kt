@@ -198,10 +198,13 @@ class JellyfinRepository @Inject constructor(
 
         val playlistsToDelete = dao.getAllPlaylistsList()
         playlistsToDelete.forEach { playlist ->
-            dao.deleteSongsByPlaylist(playlist.id)
             deleteAppPlaylistForJellyfinPlaylist(playlist.id)
         }
 
+        // Clear the whole song cache, not just per-playlist rows: library songs live
+        // under the "__library__" pseudo-playlist, which is never persisted as a
+        // playlist row, so a per-playlist loop would leave them behind forever.
+        dao.clearAllSongs()
         musicDao.clearAllJellyfinSongs()
         dao.clearAllPlaylists()
         _isLoggedInFlow.value = false
@@ -383,7 +386,7 @@ class JellyfinRepository @Inject constructor(
                 val parentIds: List<String?> =
                     if (libraryFilterIds.isEmpty()) listOf(null) else libraryFilterIds.toList()
 
-                parentIds.forEach { parentId ->
+                for (parentId in parentIds) {
                     var startIndex = 0
                     while (true) {
                         val result = api.getMusicItems(
@@ -391,7 +394,12 @@ class JellyfinRepository @Inject constructor(
                             limit = pageSize,
                             parentId = parentId
                         )
-                        val (_, items) = result.getOrNull() ?: break
+                        // A failed page fails the whole sync — treating it as end-of-list
+                        // would silently sync a partial library.
+                        val (_, items) = result.getOrElse { error ->
+                            Timber.w(error, "$TAG: Song fetch failed, keeping cached library")
+                            return@withContext Result.failure(error)
+                        }
                         if (items.isEmpty()) break
 
                         val songs = JellyfinResponseParser.parseSongs(items)

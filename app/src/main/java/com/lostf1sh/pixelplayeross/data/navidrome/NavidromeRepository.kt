@@ -235,10 +235,13 @@ class NavidromeRepository @Inject constructor(
         // Delete all Navidrome playlists from database
         val playlistsToDelete = dao.getAllPlaylistsList()
         playlistsToDelete.forEach { playlist ->
-            dao.deleteSongsByPlaylist(playlist.id)
             deleteAppPlaylistForNavidromePlaylist(playlist.id)
         }
 
+        // Clear the whole song cache, not just per-playlist rows: library songs live
+        // under the "__library__" pseudo-playlist, which is never persisted as a
+        // playlist row, so a per-playlist loop would leave them behind forever.
+        dao.clearAllSongs()
         musicDao.clearAllNavidromeSongs()
         dao.clearAllPlaylists()
         userPreferencesRepository.clearNavidromeSelectedMusicFolderIds()
@@ -460,11 +463,20 @@ class NavidromeRepository @Inject constructor(
                 }
 
                 val fetchedAlbums = if (folderFilterIds.isEmpty()) {
-                    fetchAllAlbums(pageSize)
-                } else {
-                    folderFilterIds.flatMap { folderId ->
-                        fetchAllAlbums(pageSize, musicFolderId = folderId)
+                    fetchAllAlbums(pageSize).getOrElse { error ->
+                        Timber.w(error, "$TAG: Album fetch failed, keeping cached library")
+                        return@withContext Result.failure(error)
                     }
+                } else {
+                    val albums = mutableListOf<JSONObject>()
+                    for (folderId in folderFilterIds) {
+                        albums += fetchAllAlbums(pageSize, musicFolderId = folderId)
+                            .getOrElse { error ->
+                                Timber.w(error, "$TAG: Album fetch failed for folder $folderId, keeping cached library")
+                                return@withContext Result.failure(error)
+                            }
+                    }
+                    albums
                 }
 
                 // Fetch songs for each album in parallel
@@ -538,9 +550,10 @@ class NavidromeRepository @Inject constructor(
     }
 
     /**
-     * Fetch all albums from server with pagination.
+     * Fetch all albums from server with pagination. A failed page request fails the
+     * whole fetch — treating it as end-of-list would silently sync a partial library.
      */
-    private suspend fun fetchAllAlbums(pageSize: Int, musicFolderId: String? = null): List<JSONObject> {
+    private suspend fun fetchAllAlbums(pageSize: Int, musicFolderId: String? = null): Result<List<JSONObject>> {
         val allAlbums = mutableListOf<JSONObject>()
         var offset = 0
 
@@ -552,15 +565,15 @@ class NavidromeRepository @Inject constructor(
                 musicFolderId = musicFolderId
             )
 
-            val albumJsons = albumsResult.getOrNull()
-            if (albumJsons.isNullOrEmpty()) break
+            val albumJsons = albumsResult.getOrElse { return Result.failure(it) }
+            if (albumJsons.isEmpty()) break
 
             allAlbums.addAll(albumJsons)
             offset += albumJsons.size
             if (albumJsons.size < pageSize) break
         }
 
-        return allAlbums
+        return Result.success(allAlbums)
     }
 
     /**
