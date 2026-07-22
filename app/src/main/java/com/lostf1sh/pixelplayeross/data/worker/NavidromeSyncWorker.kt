@@ -54,6 +54,8 @@ class NavidromeSyncWorker @AssistedInject constructor(
     }
 
     companion object {
+        const val WORK_NAME_ALL = "navidrome_sync_all"
+
         const val KEY_SYNC_TYPE = "sync_type"
         const val KEY_PLAYLIST_ID = "playlist_id"
         

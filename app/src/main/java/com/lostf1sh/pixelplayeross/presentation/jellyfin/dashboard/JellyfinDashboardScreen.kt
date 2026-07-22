@@ -16,10 +16,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Logout
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.CloudSync
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.SelectAll
 import androidx.compose.material.icons.rounded.Sync
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,13 +39,17 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lostf1sh.pixelplayeross.R
 import com.lostf1sh.pixelplayeross.data.database.JellyfinPlaylistEntity
+import com.lostf1sh.pixelplayeross.data.jellyfin.model.JellyfinLibrary
+import com.lostf1sh.pixelplayeross.data.jellyfin.selectedJellyfinLibraryIds
 import com.lostf1sh.pixelplayeross.data.model.Song
+import com.lostf1sh.pixelplayeross.presentation.components.CloudLibrarySelectorChoice
 import com.lostf1sh.pixelplayeross.presentation.components.SmartImage
 import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.stringResource
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -51,6 +60,10 @@ fun JellyfinDashboardScreen(
     val playlists by viewModel.playlists.collectAsStateWithLifecycle()
     val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
     val syncMessage by viewModel.syncMessage.collectAsStateWithLifecycle()
+    val libraries by viewModel.libraries.collectAsStateWithLifecycle()
+    val librariesLoadFailed by viewModel.librariesLoadFailed.collectAsStateWithLifecycle()
+    val selectedLibraryIds by viewModel.selectedLibraryIds.collectAsStateWithLifecycle()
+    val librarySelectionNeedsSync by viewModel.librarySelectionNeedsSync.collectAsStateWithLifecycle()
 
     val cardShape = AbsoluteSmoothCornerShape(
         cornerRadiusTR = 20.dp, cornerRadiusTL = 20.dp,
@@ -95,6 +108,11 @@ fun JellyfinDashboardScreen(
             isSyncing = isSyncing,
             syncMessage = syncMessage,
             username = viewModel.username,
+            libraries = libraries,
+            librariesLoadFailed = librariesLoadFailed,
+            selectedLibraryIds = selectedLibraryIds,
+            librarySelectionNeedsSync = librarySelectionNeedsSync,
+            onSelectLibraries = { viewModel.setSelectedLibraryIds(it) },
             onSyncAll = { viewModel.syncAllPlaylistsAndSongs() },
             onSyncPlaylist = { viewModel.syncPlaylistSongs(it) },
             onDeletePlaylist = { viewModel.deletePlaylist(it) },
@@ -116,6 +134,11 @@ private fun JellyfinDashboardContent(
     isSyncing: Boolean,
     syncMessage: String?,
     username: String?,
+    libraries: ImmutableList<JellyfinLibrary>,
+    librariesLoadFailed: Boolean,
+    selectedLibraryIds: Set<String>,
+    librarySelectionNeedsSync: Boolean,
+    onSelectLibraries: (Set<String>) -> Unit,
     onSyncAll: () -> Unit,
     onSyncPlaylist: (String) -> Unit,
     onDeletePlaylist: (String) -> Unit,
@@ -223,6 +246,11 @@ private fun JellyfinDashboardContent(
 
         JellyfinMenuCard(
             isSyncing = isSyncing,
+            libraries = libraries,
+            librariesLoadFailed = librariesLoadFailed,
+            selectedLibraryIds = selectedLibraryIds,
+            librarySelectionNeedsSync = librarySelectionNeedsSync,
+            onSelectLibraries = onSelectLibraries,
             onSyncAll = onSyncAll,
             onLogout = onLogout,
             cardShape = cardShape
@@ -317,10 +345,44 @@ private fun JellyfinDashboardContent(
 @Composable
 private fun JellyfinMenuCard(
     isSyncing: Boolean,
+    libraries: ImmutableList<JellyfinLibrary>,
+    librariesLoadFailed: Boolean,
+    selectedLibraryIds: Set<String>,
+    librarySelectionNeedsSync: Boolean,
+    onSelectLibraries: (Set<String>) -> Unit,
     onSyncAll: () -> Unit,
     onLogout: () -> Unit,
     cardShape: AbsoluteSmoothCornerShape
 ) {
+    var showLibrarySelector by remember { mutableStateOf(false) }
+    val musicLibraries = remember(libraries) {
+        libraries.filter { it.isMusic }.toImmutableList()
+    }
+    val effectiveSelectedIds = selectedJellyfinLibraryIds(musicLibraries, selectedLibraryIds)
+    val selectedLibraryNames = remember(musicLibraries, effectiveSelectedIds) {
+        musicLibraries.filter { it.id in effectiveSelectedIds }.map { it.name }.toImmutableList()
+    }
+    val librarySummary = when {
+        librariesLoadFailed -> stringResource(R.string.dash_libraries_load_failed)
+        musicLibraries.isEmpty() -> stringResource(R.string.dash_libraries_all)
+        effectiveSelectedIds.size == musicLibraries.size -> stringResource(R.string.dash_libraries_all)
+        else -> stringResource(
+            R.string.dash_libraries_selected_count,
+            effectiveSelectedIds.size,
+            musicLibraries.size
+        )
+    }
+
+    if (showLibrarySelector) {
+        JellyfinLibrarySelectorSheet(
+            libraries = libraries,
+            musicLibraries = musicLibraries,
+            selectedLibraryIds = selectedLibraryIds,
+            onDismiss = { showLibrarySelector = false },
+            onSelectionChange = onSelectLibraries
+        )
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -345,6 +407,17 @@ private fun JellyfinMenuCard(
                 style = MaterialTheme.typography.bodySmall,
                 fontFamily = RoundedSans,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            JellyfinLibrarySummaryPanel(
+                librarySummary = librarySummary,
+                selectedLibraryNames = selectedLibraryNames,
+                selectedCount = effectiveSelectedIds.size,
+                totalCount = musicLibraries.size,
+                loadFailed = librariesLoadFailed,
+                needsSync = librarySelectionNeedsSync,
+                enabled = !isSyncing && musicLibraries.size > 1,
+                onClick = { showLibrarySelector = true }
             )
             Spacer(modifier = Modifier.height(16.dp))
             Row(
@@ -393,6 +466,263 @@ private fun JellyfinMenuCard(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.dash_action_disconnect), fontFamily = RoundedSans)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun JellyfinLibrarySummaryPanel(
+    librarySummary: String,
+    selectedLibraryNames: ImmutableList<String>,
+    selectedCount: Int,
+    totalCount: Int,
+    loadFailed: Boolean,
+    needsSync: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    val containerColor = if (needsSync) {
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f)
+    } else {
+        MaterialTheme.colorScheme.surfaceContainer
+    }
+    val iconContainerColor = if (loadFailed) {
+        MaterialTheme.colorScheme.errorContainer
+    } else {
+        MaterialTheme.colorScheme.primaryContainer
+    }
+    val iconColor = if (loadFailed) {
+        MaterialTheme.colorScheme.onErrorContainer
+    } else {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    }
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .clickable(enabled = enabled, onClick = onClick),
+        shape = RoundedCornerShape(18.dp),
+        color = containerColor,
+        tonalElevation = if (needsSync) 3.dp else 0.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(iconContainerColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (loadFailed) Icons.Rounded.Warning else Icons.Rounded.LibraryMusic,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = iconColor
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.dash_libraries_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontFamily = RoundedSans,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = librarySummary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontFamily = RoundedSans,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                if (enabled) {
+                    AssistChip(
+                        onClick = onClick,
+                        label = {
+                            Text(
+                                stringResource(R.string.dash_libraries_change),
+                                fontFamily = RoundedSans
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Rounded.Folder,
+                                contentDescription = null,
+                                modifier = Modifier.size(AssistChipDefaults.IconSize)
+                            )
+                        }
+                    )
+                }
+            }
+
+            if (needsSync || selectedLibraryNames.isNotEmpty() || totalCount > 0) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (needsSync) {
+                        SuggestionChip(
+                            onClick = {},
+                            enabled = false,
+                            label = {
+                                Text(
+                                    stringResource(R.string.dash_libraries_sync_needed),
+                                    fontFamily = RoundedSans
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    Icons.Rounded.Sync,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SuggestionChipDefaults.IconSize)
+                                )
+                            }
+                        )
+                    }
+
+                    if (totalCount > 0) {
+                        AssistChip(
+                            onClick = {},
+                            enabled = false,
+                            label = {
+                                Text(
+                                    stringResource(
+                                        R.string.dash_libraries_selected_count,
+                                        selectedCount,
+                                        totalCount
+                                    ),
+                                    fontFamily = RoundedSans
+                                )
+                            }
+                        )
+                    }
+
+                    selectedLibraryNames.take(3).forEach { libraryName ->
+                        FilterChip(
+                            selected = true,
+                            onClick = {},
+                            label = {
+                                Text(
+                                    libraryName,
+                                    fontFamily = RoundedSans,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Rounded.CheckCircle,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                )
+                            }
+                        )
+                    }
+
+                    val hiddenCount = (selectedLibraryNames.size - 3).coerceAtLeast(0)
+                    if (hiddenCount > 0) {
+                        AssistChip(
+                            onClick = {},
+                            enabled = false,
+                            label = {
+                                Text(
+                                    stringResource(R.string.dash_libraries_more_count, hiddenCount),
+                                    fontFamily = RoundedSans
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun JellyfinLibrarySelectorSheet(
+    libraries: ImmutableList<JellyfinLibrary>,
+    musicLibraries: ImmutableList<JellyfinLibrary>,
+    selectedLibraryIds: Set<String>,
+    onDismiss: () -> Unit,
+    onSelectionChange: (Set<String>) -> Unit
+) {
+    val availableMusicIds = remember(musicLibraries) { musicLibraries.map { it.id }.toSet() }
+    val effectiveSelectedIds = selectedJellyfinLibraryIds(musicLibraries, selectedLibraryIds)
+
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.dash_libraries_title),
+                style = MaterialTheme.typography.titleLarge,
+                fontFamily = RoundedSans,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.dash_libraries_sheet_subtitle),
+                style = MaterialTheme.typography.bodyMedium,
+                fontFamily = RoundedSans,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            CloudLibrarySelectorChoice(
+                icon = Icons.Rounded.SelectAll,
+                title = stringResource(R.string.dash_libraries_all),
+                subtitle = stringResource(R.string.dash_libraries_all_subtitle),
+                checked = effectiveSelectedIds.size == musicLibraries.size,
+                enabled = true,
+                onClick = { onSelectionChange(availableMusicIds) }
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            libraries.forEach { library ->
+                if (library.isMusic) {
+                    CloudLibrarySelectorChoice(
+                        icon = Icons.Rounded.LibraryMusic,
+                        title = library.name,
+                        subtitle = stringResource(R.string.dash_libraries_folder_subtitle),
+                        checked = library.id in effectiveSelectedIds,
+                        enabled = true,
+                        onClick = {
+                            val nextIds = if (library.id in effectiveSelectedIds) {
+                                effectiveSelectedIds - library.id
+                            } else {
+                                effectiveSelectedIds + library.id
+                            }
+                            onSelectionChange(nextIds)
+                        }
+                    )
+                } else {
+                    CloudLibrarySelectorChoice(
+                        icon = Icons.Rounded.Folder,
+                        title = library.name,
+                        subtitle = stringResource(R.string.dash_libraries_not_music),
+                        checked = false,
+                        enabled = false,
+                        onClick = {}
+                    )
                 }
             }
         }

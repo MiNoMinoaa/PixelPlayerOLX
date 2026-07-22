@@ -2,6 +2,7 @@ package com.lostf1sh.pixelplayeross.data.network.jellyfin
 
 import com.lostf1sh.pixelplayeross.data.jellyfin.model.JellyfinAlbum
 import com.lostf1sh.pixelplayeross.data.jellyfin.model.JellyfinArtist
+import com.lostf1sh.pixelplayeross.data.jellyfin.model.JellyfinLibrary
 import com.lostf1sh.pixelplayeross.data.jellyfin.model.JellyfinPlaylist
 import com.lostf1sh.pixelplayeross.data.jellyfin.model.JellyfinSong
 import org.json.JSONObject
@@ -114,6 +115,18 @@ object JellyfinResponseParser {
 
     fun parseArtists(jsonArray: List<JSONObject>): List<JellyfinArtist> {
         return jsonArray.map { parseArtist(it) }
+    }
+
+    fun parseLibrary(json: JSONObject): JellyfinLibrary {
+        return JellyfinLibrary(
+            id = json.optString("Id", ""),
+            name = json.optString("Name", "Unknown Library"),
+            collectionType = json.optString("CollectionType").takeIf { it.isNotBlank() }
+        )
+    }
+
+    fun parseLibraries(jsonArray: List<JSONObject>): List<JellyfinLibrary> {
+        return jsonArray.map { parseLibrary(it) }
     }
 
     fun parsePlaylist(json: JSONObject): JellyfinPlaylist {

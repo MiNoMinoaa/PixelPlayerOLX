@@ -168,6 +168,17 @@ class JellyfinApiService @Inject constructor(
     // ─── Library / Items API ─────────────────────────────────────────────
 
     /**
+     * Get the user's media libraries (views), e.g. Music, Movies, Shows.
+     */
+    suspend fun getUserViews(): Result<List<JSONObject>> {
+        val cred = credentials ?: return Result.failure(Exception("No credentials"))
+        return requestJson("/Users/${cred.userId}/Views").map { response ->
+            val items = response.optJSONArray("Items")
+            (0 until (items?.length() ?: 0)).mapNotNull { items?.optJSONObject(it) }
+        }
+    }
+
+    /**
      * Get all music items (songs) from the user's library.
      */
     suspend fun getMusicItems(

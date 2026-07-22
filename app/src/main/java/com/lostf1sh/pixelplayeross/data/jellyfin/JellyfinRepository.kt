@@ -17,6 +17,7 @@ import com.lostf1sh.pixelplayeross.data.database.SourceType
 import com.lostf1sh.pixelplayeross.data.database.toEntity
 import com.lostf1sh.pixelplayeross.data.database.toSong
 import com.lostf1sh.pixelplayeross.data.jellyfin.model.JellyfinCredentials
+import com.lostf1sh.pixelplayeross.data.jellyfin.model.JellyfinLibrary
 import com.lostf1sh.pixelplayeross.data.jellyfin.model.JellyfinSong
 import com.lostf1sh.pixelplayeross.data.model.Song
 import com.lostf1sh.pixelplayeross.data.network.jellyfin.JellyfinApiService
@@ -193,6 +194,7 @@ class JellyfinRepository @Inject constructor(
         Timber.d("$TAG: Logging out")
         api.clearCredentials()
         prefs.edit().clear().apply()
+        userPreferencesRepository.clearJellyfinSelectedLibraryIds()
 
         val playlistsToDelete = dao.getAllPlaylistsList()
         playlistsToDelete.forEach { playlist ->
@@ -203,6 +205,31 @@ class JellyfinRepository @Inject constructor(
         musicDao.clearAllJellyfinSongs()
         dao.clearAllPlaylists()
         _isLoggedInFlow.value = false
+    }
+
+    // ─── Libraries ────────────────────────────────────────────────────────
+
+    val selectedLibraryIdsFlow: Flow<Set<String>> =
+        userPreferencesRepository.jellyfinSelectedLibraryIdsFlow
+
+    /**
+     * Fetch the user's media libraries (views) from the server. Includes
+     * non-music views so the picker can show them disabled.
+     */
+    suspend fun getLibraries(): Result<List<JellyfinLibrary>> {
+        if (!isLoggedIn) return Result.failure(Exception("Not logged in"))
+
+        return withContext(Dispatchers.IO) {
+            api.getUserViews().map { views ->
+                JellyfinResponseParser.parseLibraries(views)
+            }
+        }
+    }
+
+    suspend fun setSelectedLibraryIds(libraryIds: Set<String>) {
+        userPreferencesRepository.setJellyfinSelectedLibraryIds(
+            libraryIds.filter { it.isNotBlank() }.toSet()
+        )
     }
 
     // ─── Playlists ────────────────────────────────────────────────────────
@@ -331,17 +358,47 @@ class JellyfinRepository @Inject constructor(
                 Timber.d("$TAG: Syncing library songs from server")
                 val allSongs = mutableListOf<JellyfinSong>()
                 val pageSize = 500
-                var startIndex = 0
 
-                while (true) {
-                    val result = api.getMusicItems(startIndex = startIndex, limit = pageSize)
-                    val (_, items) = result.getOrNull() ?: break
-                    if (items.isEmpty()) break
+                val musicLibraries = getLibraries()
+                    .map { libraries -> libraries.filter { it.isMusic } }
+                    .getOrElse { error ->
+                        Timber.w(error, "$TAG: Failed to load libraries; falling back to all-library sync")
+                        emptyList()
+                    }
+                val selectedLibraryIds = selectedJellyfinLibraryIds(
+                    availableLibraries = musicLibraries,
+                    savedLibraryIds = userPreferencesRepository.jellyfinSelectedLibraryIdsFlow.first()
+                )
+                val libraryFilterIds = if (
+                    musicLibraries.isNotEmpty() &&
+                    selectedLibraryIds.isNotEmpty() &&
+                    selectedLibraryIds.size < musicLibraries.size
+                ) {
+                    selectedLibraryIds
+                } else {
+                    emptySet()
+                }
 
-                    val songs = JellyfinResponseParser.parseSongs(items)
-                    allSongs.addAll(songs)
-                    startIndex += items.size
-                    if (items.size < pageSize) break
+                // No filter → one server-wide pass (ParentId = null)
+                val parentIds: List<String?> =
+                    if (libraryFilterIds.isEmpty()) listOf(null) else libraryFilterIds.toList()
+
+                parentIds.forEach { parentId ->
+                    var startIndex = 0
+                    while (true) {
+                        val result = api.getMusicItems(
+                            startIndex = startIndex,
+                            limit = pageSize,
+                            parentId = parentId
+                        )
+                        val (_, items) = result.getOrNull() ?: break
+                        if (items.isEmpty()) break
+
+                        val songs = JellyfinResponseParser.parseSongs(items)
+                        allSongs.addAll(songs)
+                        startIndex += items.size
+                        if (items.size < pageSize) break
+                    }
                 }
 
                 if (allSongs.isEmpty()) {
@@ -709,4 +766,15 @@ class JellyfinRepository @Inject constructor(
             isFavorite = false
         )
     }
+}
+
+internal fun selectedJellyfinLibraryIds(
+    availableLibraries: List<JellyfinLibrary>,
+    savedLibraryIds: Set<String>
+): Set<String> {
+    val availableIds = availableLibraries.map { it.id }.filter { it.isNotBlank() }.toSet()
+    if (availableIds.isEmpty()) return emptySet()
+
+    val validSavedIds = savedLibraryIds.intersect(availableIds)
+    return validSavedIds.ifEmpty { availableIds }
 }

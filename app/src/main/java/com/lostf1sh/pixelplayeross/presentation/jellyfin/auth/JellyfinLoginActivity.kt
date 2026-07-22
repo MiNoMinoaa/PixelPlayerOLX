@@ -80,9 +80,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lostf1sh.pixelplayeross.R
 import com.lostf1sh.pixelplayeross.data.jellyfin.model.JellyfinCredentials
+import com.lostf1sh.pixelplayeross.presentation.components.CloudLibraryPickerItem
+import com.lostf1sh.pixelplayeross.presentation.components.CloudLibraryPickerSheet
 import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
 import com.lostf1sh.pixelplayeross.ui.theme.PixelPlayerTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.collections.immutable.toImmutableList
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 
 @AndroidEntryPoint
@@ -156,6 +159,22 @@ fun JellyfinLoginScreen(
             }
             else -> Unit
         }
+    }
+
+    (loginState as? JellyfinLoginState.SelectLibraries)?.let { selectState ->
+        CloudLibraryPickerSheet(
+            items = remember(selectState.libraries) {
+                selectState.libraries.map { library ->
+                    CloudLibraryPickerItem(
+                        id = library.id,
+                        name = library.name,
+                        selectable = library.isMusic
+                    )
+                }.toImmutableList()
+            },
+            onConfirm = { viewModel.confirmLibrarySelection(it) },
+            onDismiss = { viewModel.skipLibrarySelection() }
+        )
     }
 
     val isLoading = loginState is JellyfinLoginState.Loading

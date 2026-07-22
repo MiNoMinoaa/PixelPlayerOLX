@@ -175,6 +175,6 @@ class NavidromeDashboardViewModel @Inject constructor(
     }
 
     companion object {
-        private const val WORK_NAME_SYNC_ALL = "navidrome_sync_all"
+        private const val WORK_NAME_SYNC_ALL = NavidromeSyncWorker.WORK_NAME_ALL
     }
 }

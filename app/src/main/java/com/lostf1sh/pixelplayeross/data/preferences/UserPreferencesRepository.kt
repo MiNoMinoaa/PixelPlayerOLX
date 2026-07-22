@@ -128,6 +128,8 @@ constructor(
         val FOLDERS_SOURCE = stringPreferencesKey("folders_source")
         val NAVIDROME_SELECTED_MUSIC_FOLDER_IDS =
                 stringSetPreferencesKey("navidrome_selected_music_folder_ids")
+        val JELLYFIN_SELECTED_LIBRARY_IDS =
+                stringSetPreferencesKey("jellyfin_selected_library_ids")
         val FOLDER_BACK_GESTURE_NAVIGATION = booleanPreferencesKey("folder_back_gesture_navigation")
         val USE_SMOOTH_CORNERS = booleanPreferencesKey("use_smooth_corners")
         val KEEP_PLAYING_IN_BACKGROUND = booleanPreferencesKey("keep_playing_in_background")
@@ -1506,6 +1508,12 @@ constructor(
         }
         .distinctUntilChanged()
 
+    val jellyfinSelectedLibraryIdsFlow: Flow<Set<String>> = dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.JELLYFIN_SELECTED_LIBRARY_IDS].orEmpty()
+        }
+        .distinctUntilChanged()
+
     val folderBackGestureNavigationFlow: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[PreferencesKeys.FOLDER_BACK_GESTURE_NAVIGATION] ?: true
@@ -1553,6 +1561,22 @@ constructor(
     suspend fun clearNavidromeSelectedMusicFolderIds() {
         dataStore.edit { preferences ->
             preferences.remove(PreferencesKeys.NAVIDROME_SELECTED_MUSIC_FOLDER_IDS)
+        }
+    }
+
+    suspend fun setJellyfinSelectedLibraryIds(libraryIds: Set<String>) {
+        dataStore.edit { preferences ->
+            if (libraryIds.isEmpty()) {
+                preferences.remove(PreferencesKeys.JELLYFIN_SELECTED_LIBRARY_IDS)
+            } else {
+                preferences[PreferencesKeys.JELLYFIN_SELECTED_LIBRARY_IDS] = libraryIds
+            }
+        }
+    }
+
+    suspend fun clearJellyfinSelectedLibraryIds() {
+        dataStore.edit { preferences ->
+            preferences.remove(PreferencesKeys.JELLYFIN_SELECTED_LIBRARY_IDS)
         }
     }
 

@@ -80,9 +80,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import com.lostf1sh.pixelplayeross.R
 import com.lostf1sh.pixelplayeross.data.navidrome.model.NavidromeCredentials
+import com.lostf1sh.pixelplayeross.presentation.components.CloudLibraryPickerItem
+import com.lostf1sh.pixelplayeross.presentation.components.CloudLibraryPickerSheet
 import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
 import com.lostf1sh.pixelplayeross.ui.theme.PixelPlayerTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.collections.immutable.toImmutableList
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 
 @AndroidEntryPoint
@@ -156,6 +159,22 @@ fun NavidromeLoginScreen(
             }
             else -> Unit
         }
+    }
+
+    (loginState as? NavidromeLoginState.SelectLibraries)?.let { selectState ->
+        CloudLibraryPickerSheet(
+            items = remember(selectState.musicFolders) {
+                selectState.musicFolders.map { folder ->
+                    CloudLibraryPickerItem(
+                        id = folder.id,
+                        name = folder.name,
+                        selectable = true
+                    )
+                }.toImmutableList()
+            },
+            onConfirm = { viewModel.confirmLibrarySelection(it) },
+            onDismiss = { viewModel.skipLibrarySelection() }
+        )
     }
 
     val isLoading = loginState is NavidromeLoginState.Loading

@@ -231,6 +231,7 @@
     <string name="dash_libraries_all_subtitle">Include every library exposed by this server</string>
     <string name="dash_libraries_folder_subtitle">Include this library in the next library sync</string>
     <string name="dash_libraries_sync_needed">Sync library to apply changes</string>
+    <string name="dash_libraries_not_music">Not a music library</string>
     <string name="dash_status_syncing">Syncing</string>
     <string name="dash_action_sync_library">Sync library</string>
     <string name="dash_action_disconnect">Disconnect</string>

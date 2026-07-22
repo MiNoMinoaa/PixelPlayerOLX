@@ -15,6 +15,9 @@
     <string name="auth_username_placeholder_admin">admin</string>
     <string name="toast_welcome_user">Welcome, %1$s!</string>
     <string name="auth_local_network_permission_denied">Allow nearby devices access to connect to a server on your local network.</string>
+    <string name="auth_select_libraries_title">Choose libraries to sync</string>
+    <string name="auth_select_libraries_subtitle">This server has more than one music library. Pick which ones to sync — you can change this later from the server dashboard.</string>
+    <string name="auth_select_libraries_confirm">Save and sync</string>
 
     <!-- Navidrome / Subsonic -->
     <string name="auth_navidrome_title">Subsonic / Navidrome</string>
