@@ -23,8 +23,10 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -37,9 +39,11 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -53,6 +57,7 @@ import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -71,6 +76,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.window.core.layout.WindowSizeClass
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -111,6 +117,7 @@ import com.lostf1sh.pixelplayeross.presentation.components.DrawerDestination
 import com.lostf1sh.pixelplayeross.presentation.components.MiniPlayerBottomSpacer
 import com.lostf1sh.pixelplayeross.presentation.components.MiniPlayerHeight
 import com.lostf1sh.pixelplayeross.presentation.components.PlayerInternalNavigationBar
+import com.lostf1sh.pixelplayeross.presentation.components.PlayerNavigationRail
 import com.lostf1sh.pixelplayeross.presentation.components.UnifiedPlayerSheetV2
 import com.lostf1sh.pixelplayeross.presentation.components.calculatePlayerSheetCollapsedTargetY
 import com.lostf1sh.pixelplayeross.presentation.components.resolveNavBarOccupiedHeight
@@ -576,6 +583,11 @@ class MainActivity : ComponentActivity() {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
         var isSearchBarActive by remember { mutableStateOf(false) }
+        val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+        // Medium and expanded window widths (tablets, unfolded foldables, most
+        // landscape phones) swap the bottom bar for a navigation rail.
+        val useNavigationRail =
+            windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
 
         val routesWithHiddenNavigationBar = remember {
             setOf(
@@ -659,8 +671,14 @@ class MainActivity : ComponentActivity() {
         )
         val bottomBarPadding = animatedBottomBarPadding
         val navBarHeight = resolveNavBarSurfaceHeight(navBarStyle, systemNavBarInset, navBarCompactMode)
-        val navBarOccupiedHeight by remember(systemNavBarInset, navBarCompactMode) {
-            derivedStateOf { resolveNavBarOccupiedHeight(systemNavBarInset, navBarCompactMode) }
+        val navBarOccupiedHeight by remember(systemNavBarInset, navBarCompactMode, useNavigationRail) {
+            derivedStateOf {
+                if (useNavigationRail) {
+                    0.dp
+                } else {
+                    resolveNavBarOccupiedHeight(systemNavBarInset, navBarCompactMode)
+                }
+            }
         }
         val navBarVisibilityProgressState = animateFloatAsState(
             targetValue = if (shouldHideNavigationBar) 0f else 1f,
@@ -719,11 +737,31 @@ class MainActivity : ComponentActivity() {
                     }
                 }
         ) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                if (useNavigationRail) {
+                    AnimatedVisibility(
+                        visible = !shouldHideNavigationBar,
+                        enter = expandHorizontally() + fadeIn(),
+                        exit = shrinkHorizontally() + fadeOut()
+                    ) {
+                        val onSearchIconDoubleTap = remember(playerViewModel) {
+                            { playerViewModel.onSearchNavIconDoubleTapped() }
+                        }
+                        PlayerNavigationRail(
+                            navController = navController,
+                            navItems = commonNavItems,
+                            currentRoute = currentRoute,
+                            onSearchIconDoubleTap = onSearchIconDoubleTap
+                        )
+                    }
+                }
 
                 Scaffold(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
                 bottomBar = {
-                    if (shouldRenderNavigationBar) {
+                    if (!useNavigationRail && shouldRenderNavigationBar) {
                         val currentSongId by remember {
                             playerViewModel.stablePlayerState
                                 .map { it.currentSong?.id }
@@ -882,7 +920,7 @@ class MainActivity : ComponentActivity() {
                                 playerViewModel.playerContentExpansionFraction.value > 0.01f
                             }
                         }
-                        AnimatedVisibility(
+                        androidx.compose.animation.AnimatedVisibility(
                             visible = isExpandedOrExpanding,
                             enter = fadeIn(animationSpec = tween(durationMillis = 350)),
                             exit = fadeOut(animationSpec = tween(durationMillis = 350)),
@@ -931,7 +969,7 @@ class MainActivity : ComponentActivity() {
                             { playerViewModel.hideDismissUndoBar() }
                         }
 
-                        AnimatedVisibility(
+                        androidx.compose.animation.AnimatedVisibility(
                             visible = dismissUndoBarSlice.isVisible,
                             enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                             exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
@@ -952,6 +990,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+            }
             }
         }
     }
