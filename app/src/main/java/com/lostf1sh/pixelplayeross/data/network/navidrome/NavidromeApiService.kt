@@ -1,5 +1,6 @@
 package com.lostf1sh.pixelplayeross.data.network.navidrome
 
+import com.lostf1sh.pixelplayeross.data.navidrome.model.NavidromeAuthMethod
 import com.lostf1sh.pixelplayeross.data.navidrome.model.NavidromeCredentials
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -17,8 +18,10 @@ import javax.inject.Singleton
 /**
  * Navidrome/Subsonic API client.
  *
- * Implements the Subsonic API protocol with token-based authentication.
- * Compatible with Navidrome, Gonic, Airsonic, and other Subsonic-compatible servers.
+ * Implements the Subsonic API protocol with token-based authentication, falling back
+ * to password authentication for servers that reject tokens (see [NavidromeAuthMethod]).
+ * Compatible with Navidrome, Gonic, Airsonic, Nextcloud Music, and other
+ * Subsonic-compatible servers.
  *
  * API Reference: http://www.subsonic.org/pages/api.jsp
  */
@@ -41,6 +44,16 @@ class NavidromeApiService @Inject constructor(
     @Volatile
     private var credentials: NavidromeCredentials? = null
 
+    @Volatile
+    private var authMethod: NavidromeAuthMethod = NavidromeAuthMethod.TOKEN
+
+    /**
+     * Notified when the client switches auth method after a server rejection, so the
+     * choice can be persisted and reused on the next launch instead of re-discovered.
+     */
+    @Volatile
+    var onAuthMethodChanged: ((NavidromeAuthMethod) -> Unit)? = null
+
     private val okHttpClient: OkHttpClient = baseOkHttpClient.newBuilder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS) // Longer timeout for streaming
@@ -51,10 +64,18 @@ class NavidromeApiService @Inject constructor(
 
     /**
      * Set the server credentials for API calls.
+     *
+     * @param authMethod The auth method to start with. Pass the previously discovered
+     *   method for a known server; [NavidromeAuthMethod.TOKEN] servers that reject
+     *   tokens are detected on the first request.
      */
-    fun setCredentials(credentials: NavidromeCredentials) {
+    fun setCredentials(
+        credentials: NavidromeCredentials,
+        authMethod: NavidromeAuthMethod = NavidromeAuthMethod.TOKEN
+    ) {
         this.credentials = credentials
-        Timber.d("$TAG: Credentials set for server: ${credentials.normalizedServerUrl}, user: ${credentials.username}")
+        this.authMethod = authMethod
+        Timber.d("$TAG: Credentials set for server: ${credentials.normalizedServerUrl}, user: ${credentials.username}, auth: $authMethod")
     }
 
     /**
@@ -62,8 +83,15 @@ class NavidromeApiService @Inject constructor(
      */
     fun clearCredentials() {
         this.credentials = null
+        this.authMethod = NavidromeAuthMethod.TOKEN
         Timber.d("$TAG: Credentials cleared")
     }
+
+    /**
+     * The auth method currently in use, after any server-driven fallback.
+     */
+    val activeAuthMethod: NavidromeAuthMethod
+        get() = authMethod
 
     /**
      * Check if credentials are configured.
@@ -78,39 +106,25 @@ class NavidromeApiService @Inject constructor(
     // ─── Authentication ─────────────────────────────────────────────────
 
     /**
-     * Generate authentication parameters using the token/salt method.
-     * Token = md5(password + salt)
-     *
-     * @return Pair of (token, salt)
-     */
-    private fun generateAuthParams(password: String): Pair<String, String> {
-        val salt = UUID.randomUUID().toString().take(6)
-        val token = md5(password + salt)
-        return Pair(token, salt)
-    }
-
-    /**
-     * Compute MD5 hash of a string.
-     */
-    private fun md5(input: String): String {
-        val md = MessageDigest.getInstance("MD5")
-        val digest = md.digest(input.toByteArray(Charsets.UTF_8))
-        return digest.joinToString("") { "%02x".format(it) }
-    }
-
-    /**
      * Build a URL with authentication parameters for a Subsonic API endpoint.
      */
-    private fun buildApiUrl(endpoint: String, extraParams: Map<String, String> = emptyMap()): String {
+    private fun buildApiUrl(
+        endpoint: String,
+        extraParams: Map<String, String> = emptyMap(),
+        method: NavidromeAuthMethod = authMethod
+    ): String {
         val cred = credentials ?: throw IllegalStateException("No credentials configured")
-        val (token, salt) = generateAuthParams(cred.password)
 
         val baseUrl = "${cred.normalizedServerUrl}/rest/$endpoint.view"
 
         val urlBuilder = baseUrl.toHttpUrl().newBuilder()
             .addQueryParameter("u", cred.username)
-            .addQueryParameter("t", token)
-            .addQueryParameter("s", salt)
+
+        subsonicAuthParams(cred.password, method).forEach { (key, value) ->
+            urlBuilder.addQueryParameter(key, value)
+        }
+
+        urlBuilder
             .addQueryParameter("v", API_VERSION)
             .addQueryParameter("c", cred.clientId.ifBlank { DEFAULT_CLIENT_ID })
             .addQueryParameter("f", DEFAULT_FORMAT)
@@ -131,10 +145,14 @@ class NavidromeApiService @Inject constructor(
      * @param params Additional query parameters
      * @return The raw JSON response as a string
      */
-    private suspend fun request(endpoint: String, params: Map<String, String> = emptyMap()): Result<String> {
+    private suspend fun request(
+        endpoint: String,
+        params: Map<String, String> = emptyMap(),
+        method: NavidromeAuthMethod = authMethod
+    ): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
-                val url = buildApiUrl(endpoint, params)
+                val url = buildApiUrl(endpoint, params, method)
                 Timber.d("$TAG: >>> GET $endpoint")
 
                 val request = Request.Builder()
@@ -180,7 +198,7 @@ class NavidromeApiService @Inject constructor(
                 val error = subsonicResponse.optJSONObject("error")
                 val code = error?.optInt("code", -1) ?: -1
                 val message = error?.optString("message", "Unknown error") ?: "Unknown error"
-                return Result.failure(Exception("API Error $code: $message"))
+                return Result.failure(SubsonicApiException(code, message))
             }
 
             Result.success(subsonicResponse)
@@ -192,9 +210,32 @@ class NavidromeApiService @Inject constructor(
 
     /**
      * Make a request and parse the response.
+     *
+     * Servers that store only password hashes (Nextcloud/ownCloud Music) reject the
+     * token/salt parameters instead of checking them, so a single rejection switches
+     * this client to password auth for the rest of the session and retries once.
      */
     private suspend fun requestAndParse(endpoint: String, params: Map<String, String> = emptyMap()): Result<JSONObject> {
-        return request(endpoint, params).fold(
+        val method = authMethod
+        val result = requestParsed(endpoint, params, method)
+
+        val error = result.exceptionOrNull()
+        if (error is SubsonicApiException && shouldFallBackToPasswordAuth(error, method)) {
+            Timber.w("$TAG: Server rejected token auth (${error.message}), retrying with password auth")
+            authMethod = NavidromeAuthMethod.PASSWORD
+            onAuthMethodChanged?.invoke(NavidromeAuthMethod.PASSWORD)
+            return requestParsed(endpoint, params, NavidromeAuthMethod.PASSWORD)
+        }
+
+        return result
+    }
+
+    private suspend fun requestParsed(
+        endpoint: String,
+        params: Map<String, String>,
+        method: NavidromeAuthMethod
+    ): Result<JSONObject> {
+        return request(endpoint, params, method).fold(
             onSuccess = { parseResponse(it) },
             onFailure = { Result.failure(it) }
         )
@@ -418,12 +459,15 @@ class NavidromeApiService @Inject constructor(
      */
     fun getStreamUrl(songId: String, maxBitRate: Int = 0, format: String? = null): String {
         val cred = credentials ?: throw IllegalStateException("No credentials configured")
-        val (token, salt) = generateAuthParams(cred.password)
 
         val urlBuilder = "${cred.normalizedServerUrl}/rest/stream.view".toHttpUrl().newBuilder()
             .addQueryParameter("u", cred.username)
-            .addQueryParameter("t", token)
-            .addQueryParameter("s", salt)
+
+        subsonicAuthParams(cred.password, authMethod).forEach { (key, value) ->
+            urlBuilder.addQueryParameter(key, value)
+        }
+
+        urlBuilder
             .addQueryParameter("v", API_VERSION)
             .addQueryParameter("c", cred.clientId.ifBlank { DEFAULT_CLIENT_ID })
             .addQueryParameter("id", songId)
@@ -446,13 +490,16 @@ class NavidromeApiService @Inject constructor(
      */
     fun getCoverArtUrl(coverArtId: String, size: Int = 500): String {
         val cred = credentials ?: throw IllegalStateException("No credentials configured")
-        val (token, salt) = generateAuthParams(cred.password)
 
-        return "${cred.normalizedServerUrl}/rest/getCoverArt.view"
+        val urlBuilder = "${cred.normalizedServerUrl}/rest/getCoverArt.view"
             .toHttpUrl().newBuilder()
             .addQueryParameter("u", cred.username)
-            .addQueryParameter("t", token)
-            .addQueryParameter("s", salt)
+
+        subsonicAuthParams(cred.password, authMethod).forEach { (key, value) ->
+            urlBuilder.addQueryParameter(key, value)
+        }
+
+        return urlBuilder
             .addQueryParameter("v", API_VERSION)
             .addQueryParameter("c", cred.clientId.ifBlank { DEFAULT_CLIENT_ID })
             .addQueryParameter("id", coverArtId)
@@ -566,3 +613,57 @@ class NavidromeApiService @Inject constructor(
         return requestAndParse("unstar", params).map { true }
     }
 }
+
+/**
+ * A Subsonic API call that reached the server but came back with `status="failed"`.
+ *
+ * Error codes are defined by the Subsonic API (10 = missing parameter, 40 = wrong
+ * credentials, 41 = token auth unsupported, 70 = not found, ...).
+ */
+class SubsonicApiException(
+    val code: Int,
+    val serverMessage: String
+) : Exception("API Error $code: $serverMessage")
+
+/** Subsonic error 41: the server cannot verify salted tokens and wants `p` instead. */
+private const val SUBSONIC_ERROR_TOKEN_AUTH_UNSUPPORTED = 41
+
+/**
+ * Whether a failed call should be retried with password auth.
+ *
+ * Only error 41 qualifies: wrong credentials (40) would fail the same way again, and
+ * a server that already answered a token request has nothing to gain from the switch.
+ */
+internal fun shouldFallBackToPasswordAuth(
+    error: SubsonicApiException,
+    currentMethod: NavidromeAuthMethod
+): Boolean = currentMethod == NavidromeAuthMethod.TOKEN &&
+    error.code == SUBSONIC_ERROR_TOKEN_AUTH_UNSUPPORTED
+
+/**
+ * Build the credential query parameters for [method].
+ *
+ * TOKEN sends `t=md5(password + salt)` with the salt; PASSWORD sends the hex-encoded
+ * `p=enc:...` form, which every Subsonic server accepts and is the only form servers
+ * like Nextcloud Music can verify.
+ */
+internal fun subsonicAuthParams(
+    password: String,
+    method: NavidromeAuthMethod,
+    salt: String = randomSubsonicSalt()
+): Map<String, String> = when (method) {
+    NavidromeAuthMethod.TOKEN -> mapOf(
+        "t" to md5Hex(password + salt),
+        "s" to salt
+    )
+    NavidromeAuthMethod.PASSWORD -> mapOf(
+        "p" to "enc:" + password.toByteArray(Charsets.UTF_8).toHexString()
+    )
+}
+
+private fun randomSubsonicSalt(): String = UUID.randomUUID().toString().take(6)
+
+private fun md5Hex(input: String): String =
+    MessageDigest.getInstance("MD5").digest(input.toByteArray(Charsets.UTF_8)).toHexString()
+
+private fun ByteArray.toHexString(): String = joinToString("") { "%02x".format(it) }

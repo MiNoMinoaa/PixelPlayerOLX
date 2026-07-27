@@ -7,9 +7,12 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 /**
  * Represents authentication credentials for a Navidrome/Subsonic server.
  *
- * Navidrome supports two authentication methods:
- * 1. Password in URL (p=xxx) - not recommended for security
- * 2. Token-based authentication (t=xxx&s=xxx) - recommended
+ * Subsonic servers accept two authentication methods:
+ * 1. Token-based authentication (t=xxx&s=xxx) - preferred, and what we try first
+ * 2. Password in URL (p=enc:xxx) - used only when the server rejects tokens
+ *
+ * Which one is in play is tracked by the API client, not here; see
+ * [com.lostf1sh.pixelplayeross.data.navidrome.model.NavidromeAuthMethod].
  *
  * @property serverUrl The base URL of the Navidrome server (e.g., "https://music.example.com")
  * @property username The username for authentication
