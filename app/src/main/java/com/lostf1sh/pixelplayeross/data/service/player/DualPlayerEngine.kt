@@ -228,6 +228,16 @@ class DualPlayerEngine @Inject constructor(
     private val _activeDecoderInfo = MutableStateFlow<ActiveDecoderInfo?>(null)
     val activeDecoderInfo: StateFlow<ActiveDecoderInfo?> = _activeDecoderInfo.asStateFlow()
 
+    // One audio session shared by player A, player B and every rebuilt player.
+    //
+    // Left to itself ExoPlayer mints a session id per instance, which breaks audio effects twice
+    // over: the effect stack (the built-in equalizer *and* external DSP apps such as
+    // ViPER4Android or JamesDSP, see ExternalAudioEffectSession) only ever covers the current
+    // master player, so the incoming half of a crossfade plays unprocessed, and every player
+    // rebuild (Hi-Fi toggle, offload fallback) forces the whole stack to be torn down and
+    // re-attached to a brand new session.
+    private var sharedAudioSessionId: Int = C.AUDIO_SESSION_ID_UNSET
+
     // Audio Focus Management
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
@@ -822,6 +832,25 @@ class DualPlayerEngine @Inject constructor(
         }
     }
 
+    /**
+     * Returns the process-wide audio session id every player is pinned to, generating it on first
+     * use, or `null` when the platform refuses to allocate one (then ExoPlayer keeps its
+     * per-instance behaviour).
+     */
+    private fun sharedAudioSessionIdOrNull(): Int? {
+        if (sharedAudioSessionId == C.AUDIO_SESSION_ID_UNSET) {
+            sharedAudioSessionId = try {
+                audioManager.generateAudioSessionId()
+            } catch (e: Exception) {
+                Timber.tag("DualPlayerEngine").w(e, "Failed to generate a shared audio session id")
+                AudioManager.ERROR
+            }
+        }
+        return sharedAudioSessionId.takeIf {
+            it != AudioManager.ERROR && it != C.AUDIO_SESSION_ID_UNSET
+        }
+    }
+
     private fun buildPlayer(): ExoPlayer {
         val mediaCodecSelector = MediaCodecSelector { mimeType, requiresSecureDecoder, requiresTunnelingDecoder ->
             val decoderInfos = MediaCodecSelector.DEFAULT.getDecoderInfos(
@@ -927,6 +956,7 @@ class DualPlayerEngine @Inject constructor(
             .setMediaSourceFactory(DefaultMediaSourceFactory(resolvingFactory, extractorsFactory))
             .setLoadControl(loadControl)
             .build().apply {
+            sharedAudioSessionIdOrNull()?.let { setAudioSessionId(it) }
             setAudioAttributes(audioAttributes, false)
             val offloadPreferences = TrackSelectionParameters.AudioOffloadPreferences.Builder()
                 .setAudioOffloadMode(

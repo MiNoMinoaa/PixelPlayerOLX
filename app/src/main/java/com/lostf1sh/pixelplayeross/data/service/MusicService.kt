@@ -67,6 +67,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import com.lostf1sh.pixelplayeross.data.equalizer.EqualizerManager
+import com.lostf1sh.pixelplayeross.data.equalizer.ExternalAudioEffectSession
 import com.lostf1sh.pixelplayeross.data.model.WidgetThemeColors
 import com.lostf1sh.pixelplayeross.data.preferences.AlbumArtColorAccuracy
 import com.lostf1sh.pixelplayeross.data.preferences.AlbumArtPaletteStyle
@@ -153,6 +154,8 @@ class MusicService : MediaLibraryService() {
     lateinit var themePreferencesRepository: ThemePreferencesRepository
     @Inject
     lateinit var equalizerManager: EqualizerManager
+    @Inject
+    lateinit var externalAudioEffectSession: ExternalAudioEffectSession
     @Inject
     lateinit var colorSchemeProcessor: ColorSchemeProcessor
     @Inject
@@ -424,6 +427,15 @@ class MusicService : MediaLibraryService() {
                 if (newSessionId != 0) {
                     equalizerManager.attachToAudioSessionIfNeeded(newSessionId)
                 }
+            }
+        }
+
+        // Let external audio effect apps (ViPER4Android, JamesDSP, Wavelet, OEM effect panels)
+        // attach to our session. Independent of the built-in equalizer state: those apps must be
+        // able to process our output even when every built-in effect is switched off.
+        serviceScope.launch {
+            engine.activeAudioSessionId.collect { sessionId ->
+                externalAudioEffectSession.open(sessionId)
             }
         }
 
@@ -982,6 +994,7 @@ class MusicService : MediaLibraryService() {
             mediaSession = null
         }
         equalizerManager.release()
+        externalAudioEffectSession.close()
         engine.release()
         controller.release()
         serviceScope.cancel()

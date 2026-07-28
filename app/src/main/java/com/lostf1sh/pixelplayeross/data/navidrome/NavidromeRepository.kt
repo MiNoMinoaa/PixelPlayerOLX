@@ -18,6 +18,7 @@ import com.lostf1sh.pixelplayeross.data.database.SongEntity
 import com.lostf1sh.pixelplayeross.data.database.SourceType
 import com.lostf1sh.pixelplayeross.data.database.toSong
 import com.lostf1sh.pixelplayeross.data.model.Song
+import com.lostf1sh.pixelplayeross.data.navidrome.model.NavidromeAuthMethod
 import com.lostf1sh.pixelplayeross.data.navidrome.model.NavidromeCredentials
 import com.lostf1sh.pixelplayeross.data.navidrome.model.NavidromeMusicFolder
 import com.lostf1sh.pixelplayeross.data.navidrome.model.NavidromeSong
@@ -73,6 +74,7 @@ class NavidromeRepository @Inject constructor(
         private const val KEY_SERVER_URL = "server_url"
         private const val KEY_USERNAME = "username"
         private const val KEY_PASSWORD = "password"
+        private const val KEY_AUTH_METHOD = "auth_method"
         private const val KEY_LAST_FULL_SYNC = "last_full_sync"
 
         // Negative offsets prevent collisions with MediaStore IDs.
@@ -121,6 +123,15 @@ class NavidromeRepository @Inject constructor(
     val isLoggedInFlow: StateFlow<Boolean> = _isLoggedInFlow.asStateFlow()
 
     init {
+        // Remember a server-driven switch to password auth so later launches start with
+        // the method that works instead of spending a rejected request rediscovering it.
+        // Only for the saved server: a fallback during a login attempt to some other
+        // server must not rewrite the stored account's method (login() saves its own).
+        api.onAuthMethodChanged = { method ->
+            if (api.getServerUrl() == prefs.getString(KEY_SERVER_URL, null)) {
+                prefs.edit { putString(KEY_AUTH_METHOD, method.name) }
+            }
+        }
         initFromSavedCredentials()
     }
 
@@ -143,7 +154,10 @@ class NavidromeRepository @Inject constructor(
                 _isLoggedInFlow.value = false
                 return
             }
-            api.setCredentials(credentials)
+            api.setCredentials(
+                credentials,
+                NavidromeAuthMethod.fromStorageKey(prefs.getString(KEY_AUTH_METHOD, null))
+            )
             _isLoggedInFlow.value = true
             Timber.d("$TAG: Restored credentials for $username@${credentials.normalizedServerUrl}")
         }
@@ -193,7 +207,9 @@ class NavidromeRepository @Inject constructor(
                     api.clearCredentials()
                     return@withContext Result.failure(IllegalArgumentException(validationError))
                 }
-                api.setCredentials(credentials)
+                // Start from token auth on every login: the server may have changed, and
+                // ping() downgrades to password auth by itself if tokens are rejected.
+                api.setCredentials(credentials, NavidromeAuthMethod.TOKEN)
 
                 // Test connection
                 val pingResult = api.ping()
@@ -209,6 +225,7 @@ class NavidromeRepository @Inject constructor(
                     putString(KEY_SERVER_URL, credentials.normalizedServerUrl)
                         .putString(KEY_USERNAME, username)
                         .putString(KEY_PASSWORD, password)
+                        .putString(KEY_AUTH_METHOD, api.activeAuthMethod.name)
                 }
 
                 _isLoggedInFlow.value = true
