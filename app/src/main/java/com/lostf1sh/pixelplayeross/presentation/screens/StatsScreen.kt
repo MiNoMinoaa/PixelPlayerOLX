@@ -348,7 +348,7 @@ fun StatsScreen(
                 Column(
                     modifier = Modifier
                         .background(backgroundColor)
-                        .padding(bottom = 8.dp) // Reduced padding below tabs
+                        .padding(bottom = 8.dp)
                 ) {
                     CollapsibleCommonTopBar(
                         title = stringResource(R.string.presentation_batch_g_stats_title),
@@ -402,7 +402,6 @@ private fun StatsHeroSection(
             .height(IntrinsicSize.Min),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Time Card - Primary Container
         HeroCard(
             title = stringResource(R.string.presentation_batch_g_stats_hero_listening),
             value = if (hasData) formatListeningDurationCompact(summary?.totalDurationMs ?: 0L) else "--",
@@ -413,7 +412,6 @@ private fun StatsHeroSection(
                 .fillMaxHeight()
         )
 
-        // Plays Card - Tertiary Container
         HeroCard(
             title = stringResource(R.string.presentation_batch_g_stats_hero_plays),
             value = if (hasData) "${summary?.totalPlayCount ?: 0}" else "--",
@@ -456,7 +454,6 @@ private fun HeroCard(
     }
 }
 
-// Empty state component with M3 Expressive styling
 @Composable
 private fun StatsEmptyState(
     icon: ImageVector,
@@ -695,7 +692,7 @@ private fun ListeningHabitsCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp), // Consistent with Hero
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Column(
@@ -1051,7 +1048,7 @@ private fun ListeningTimelineSection(
             )
             Text(
                 text = timelineSupportingCopy(selectedMetric = selectedMetric, range = range),
-                style = MaterialTheme.typography.bodyMedium, // Increased size
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -1813,7 +1810,7 @@ private fun TopArtistsCard(
     val supportingColor = contentColor.copy(alpha = 0.76f)
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp), // Consistent with Hero
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
         Column(
@@ -1930,7 +1927,7 @@ private fun TopAlbumsCard(
     val supportingColor = contentColor.copy(alpha = 0.76f)
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp), // Consistent with Hero
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
         Column(
@@ -2479,7 +2476,6 @@ private fun TrackDistributionDonut(
             val diameter = (size.minDimension - (arcInset * 2f)).coerceAtLeast(0f)
             val radius = (diameter - strokePx).coerceAtLeast(0f) / 2f
             val gapAngle = if (slices.size > 1 && radius > 0f) {
-                // Round caps extend ~stroke/2 at both ends, so centerline gap must include that.
                 val centerlineGapPx = visualGapPx + strokePx
                 ((centerlineGapPx / radius) * (180f / PI.toFloat())).coerceIn(1f, 24f)
             } else {

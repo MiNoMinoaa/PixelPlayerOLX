@@ -82,13 +82,11 @@ fun LibrarySortBottomSheet(
     val selectedColor = MaterialTheme.colorScheme.secondaryContainer
     val unselectedColor = MaterialTheme.colorScheme.surfaceContainerLow
 
-    // Animate background color
     val boxBackgroundColor by animateColorAsState(
         targetValue = if (viewToggleChecked) MaterialTheme.colorScheme.tertiary else unselectedColor,
         label = "boxBackgroundColorAnimation"
     )
 
-    // Animate corner radius
     val boxCornerRadius by animateDpAsState(
         targetValue = if (viewToggleChecked) 18.dp else 50.dp,
         label = "boxCornerRadiusAnimation"
@@ -116,7 +114,6 @@ fun LibrarySortBottomSheet(
                 modifier = Modifier.padding(start = 2.dp, top = 0.dp, bottom = 16.dp)
             )
 
-            // Convert to nullable list to handle potential runtime nulls, then filter
             @Suppress("UNCHECKED_CAST")
             val safeOptions = remember(options) {
                 (options as List<SortOption?>).filterNotNull()
@@ -174,7 +171,6 @@ fun LibrarySortBottomSheet(
                     }
 
                     Surface(
-                        //shape = MaterialTheme.shapes.extraLarge,
                         color = containerColor,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -437,7 +433,6 @@ internal fun LibrarySheetToggleCard(
                         Icon(
                             imageVector = Icons.Rounded.Check,
                             contentDescription = stringResource(R.string.presentation_batch_g_cd_switch_on),
-                            //tint = MaterialTheme.colorScheme.onTertiaryContainer,
                             modifier = Modifier.size(SwitchDefaults.IconSize),
                         )
                     }

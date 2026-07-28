@@ -79,7 +79,6 @@ fun GenreCategoriesGrid(
         context = kotlin.coroutines.EmptyCoroutineContext
     ).value
 
-    // Persistence: Collect from ViewModel
     val isGridView by playerViewModel.isGenreGridView.collectAsStateWithLifecycle()
     val navBarCompactMode by playerViewModel.navBarCompactMode.collectAsStateWithLifecycle()
 
@@ -118,11 +117,8 @@ fun GenreCategoriesGrid(
                     style = MaterialTheme.typography.titleLarge
                 )
                 
-                // Toggle Button with persistence and styling
-                // "Round to Square (12dp) when selected" logic:
-                // Assuming List View is the "Selected" / "Alternative" state.
                 val shape = androidx.compose.animation.core.animateFloatAsState(
-                    targetValue = if (!isGridView) 12f else 50f, // 12dp for List, 50% (Circle) for Grid
+                    targetValue = if (!isGridView) 12f else 50f,
                     label = "shapeAnimation"
                 )
                 
@@ -172,11 +168,10 @@ private fun GenreCard(
 
     val shape = RoundedCornerShape(20.dp)
 
-    // Layout Modifier Logic
     val cardModifier = if (isGridView) {
         Modifier.aspectRatio(1.2f)
     } else {
-        Modifier.fillMaxWidth().height(100.dp) // Fixed height for list view, full width
+        Modifier.fillMaxWidth().height(100.dp)
     }
 
     Card(
@@ -217,7 +212,6 @@ private fun GenreCard(
                 )
             }
 
-            // Imagen del género en esquina inferior derecha
             Box(
                 modifier = Modifier
                     .size(90.dp) 
@@ -235,7 +229,6 @@ private fun GenreCard(
                 )
             }
 
-            // Nombre del género en esquina superior izquierda
             Column(
                 modifier = Modifier
                     .align(Alignment.TopStart)

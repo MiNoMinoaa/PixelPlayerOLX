@@ -51,7 +51,6 @@ data class BluetoothAudioDeviceState(
 class ConnectivityStateHolder @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    // WiFi State
     private val _isWifiEnabled = MutableStateFlow(false)
     val isWifiEnabled: StateFlow<Boolean> = _isWifiEnabled.asStateFlow()
 
@@ -64,7 +63,6 @@ class ConnectivityStateHolder @Inject constructor(
     private val _isOnline = MutableStateFlow(false)
     val isOnline: StateFlow<Boolean> = _isOnline.asStateFlow()
 
-    // Bluetooth State
     private val _isBluetoothEnabled = MutableStateFlow(false)
     val isBluetoothEnabled: StateFlow<Boolean> = _isBluetoothEnabled.asStateFlow()
 
@@ -81,7 +79,6 @@ class ConnectivityStateHolder @Inject constructor(
     /**
      * Manually refresh local connection info (e.g. WiFi SSID).
      */
-    // System services
     private val connectivityManager: ConnectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     private val wifiManager: WifiManager? =
@@ -92,7 +89,6 @@ class ConnectivityStateHolder @Inject constructor(
     private val audioManager: android.media.AudioManager =
         context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
 
-    // Callbacks and receivers
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private var wifiStateReceiver: BroadcastReceiver? = null
     private var bluetoothStateReceiver: BroadcastReceiver? = null
@@ -108,7 +104,6 @@ class ConnectivityStateHolder @Inject constructor(
         if (isInitialized) return
         isInitialized = true
 
-        // Initial state check
         val activeNetwork = connectivityManager.activeNetwork
         val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
         updateWifiRadioState()
@@ -122,13 +117,10 @@ class ConnectivityStateHolder @Inject constructor(
 
         updateBluetoothEnabledState()
 
-        // Register WiFi network callback
         networkCallback = object : ConnectivityManager.NetworkCallback() {
-            // Track all valid networks to handle rapid switching
             private val availableNetworks = mutableSetOf<Network>()
 
             override fun onAvailable(network: Network) {
-                // Network is available, but waiting for capability check
             }
 
             override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
@@ -169,7 +161,6 @@ class ConnectivityStateHolder @Inject constructor(
             .build()
         connectivityManager.registerNetworkCallback(request, networkCallback!!)
 
-        // Register receivers
         wifiStateReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 if (intent?.action == WifiManager.WIFI_STATE_CHANGED_ACTION) {
@@ -218,7 +209,6 @@ class ConnectivityStateHolder @Inject constructor(
             }
         )
 
-        // Audio Device Callback
         audioDeviceCallback = object : android.media.AudioDeviceCallback() {
             override fun onAudioDevicesAdded(addedDevices: Array<out android.media.AudioDeviceInfo>?) {
                 updateAudioDevices()
@@ -240,7 +230,6 @@ class ConnectivityStateHolder @Inject constructor(
         _wifiName.value = if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R && hasFineLocationPermission()) {
             readConnectedWifiSsid()
         } else {
-            // On Android 12+ we intentionally avoid SSID reads unless already permitted.
             "WiFi Connected"
         }
     }

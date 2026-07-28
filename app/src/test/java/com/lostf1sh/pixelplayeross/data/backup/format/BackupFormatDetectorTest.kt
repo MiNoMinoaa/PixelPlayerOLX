@@ -9,7 +9,6 @@ class BackupFormatDetectorTest {
 
     @Test
     fun `detects v3 PXPL ZIP format`() {
-        // PXPL magic + ZIP header (PK\x03\x04)
         val header = byteArrayOf(
             'P'.code.toByte(), 'X'.code.toByte(), 'P'.code.toByte(), 'L'.code.toByte(),
             0x50, 0x4B, 0x03, 0x04
@@ -19,7 +18,6 @@ class BackupFormatDetectorTest {
 
     @Test
     fun `detects v2 PXPL GZIP format`() {
-        // PXPL magic + GZIP magic (1f 8b)
         val header = byteArrayOf(
             'P'.code.toByte(), 'X'.code.toByte(), 'P'.code.toByte(), 'L'.code.toByte(),
             0x1f, 0x8b.toByte(), 0x08, 0x00

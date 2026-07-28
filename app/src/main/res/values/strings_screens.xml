@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Navigation / misc -->
     <string name="nav_error_genre_id_missing">Error: Genre ID missing</string>
     <string name="easter_egg_thank_you">Thank you for using PixelPlayerOSS!</string>
 
-    <!-- Word delimiter config -->
     <string name="word_delimiter_section_title">Current Word Delimiters</string>
     <string name="word_delimiter_section_subtitle">These keywords split artist names when surrounded by spaces. Matched case-insensitively. Tap to remove.</string>
     <string name="word_delimiter_empty">No word delimiters configured</string>
@@ -20,7 +18,6 @@
     <string name="word_delimiter_toast_reset">Word delimiters reset to defaults</string>
     <string name="action_reset">Reset</string>
 
-    <!-- Delimiter config (path separators) -->
     <string name="delimiter_section_title">Current Delimiters</string>
     <string name="delimiter_section_subtitle">Tap a delimiter to remove it. At least one delimiter is required.</string>
     <string name="delimiter_add_title">Add New Delimiter</string>
@@ -36,10 +33,8 @@
     <string name="delimiter_label_space">Space</string>
     <string name="cd_add_path_delimiter">Add delimiter</string>
 
-    <!-- Accounts -->
     <string name="accounts_unable_open_screen">Unable to open this screen right now.</string>
 
-    <!-- Setup (subset; more keys follow in same file) -->
     <string name="setup_welcome_prefix">Welcome to </string>
     <string name="setup_beta_symbol">β</string>
     <string name="setup_beta_label">Beta</string>
@@ -87,7 +82,6 @@
     <string name="toast_grant_all_permissions">Please grant all required permissions.</string>
     <string name="toast_grant_storage_first">Grant storage permissions first</string>
 
-    <!-- Content descriptions -->
     <string name="cd_expand_menu">Expand menu</string>
     <string name="cd_next_step">Next</string>
     <string name="cd_finish">Finish</string>
@@ -96,7 +90,6 @@
     <string name="cd_add_word_delimiter">Add word delimiter</string>
     <string name="cd_reset_defaults">Reset defaults</string>
 
-    <!-- Setup (additional literals) -->
     <string name="setup_excluded_folders_title">Excluded folders</string>
     <string name="setup_excluded_folders_description">All folders are scanned by default. Pick any locations you want to ignore when building your library.</string>
     <string name="setup_choose_folders_ignore">Choose folders to ignore</string>
@@ -127,11 +120,9 @@
     <string name="setup_nav_floating_pill_description">Floating pill with rounded corners</string>
     <string name="setup_nav_full_width_description">Standard full-width bar</string>
 
-    <!-- Delete song (Material dialog from ViewModel) -->
     <string name="dialog_delete_song_title">Delete song?</string>
     <string name="dialog_delete_song_message">\"%1$s\" by %2$s\n\nThis song will be permanently deleted from your device and cannot be recovered.</string>
 
-    <!-- Home / detail shared -->
     <string name="home_your_mix_title">Your\nMix</string>
     <string name="home_empty_placeholder_title">No data to show yet</string>
     <string name="home_empty_placeholder_subtitle">Your mix will appear here when PixelPlayerOSS finds songs or syncs a source.</string>
@@ -148,7 +139,6 @@
     <string name="mashup_cd_play_pause">Play/Pause</string>
     <string name="cd_song_cover">Song cover</string>
 
-    <!-- Crash report dialog -->
     <string name="crash_report_title">Oops! Something went wrong</string>
     <string name="crash_report_subtitle">The app crashed during your last session. Help us fix this by sharing the crash report.</string>
     <string name="crash_report_date_line">Date: %1$s</string>
@@ -161,7 +151,6 @@
     <string name="action_copy">Copy</string>
     <string name="action_share">Share</string>
 
-    <!-- Search screen -->
     <string name="search_placeholder">Search…</string>
     <string name="cd_search_icon">Search</string>
     <string name="cd_clear_search_query">Clear search</string>
@@ -175,11 +164,9 @@
     <string name="search_try_different_or_filters">Try a different search term or check your filters.</string>
     <string name="search_no_results_found">No results found.</string>
 
-    <!-- Genre browse -->
     <string name="browse_by_genre">Browse by genre</string>
     <string name="no_genres_available">No genres available.</string>
 
-    <!-- About -->
     <string name="about_app_name">PixelPlayerOSS</string>
     <string name="about_tagline">Local-first music, self-hosted streaming, and Material 3 craft in one FOSS player.</string>
     <string name="about_version_format">Version v%1$s</string>
@@ -209,7 +196,6 @@
     <string name="cd_contributor_avatar">Avatar of %1$s</string>
     <string name="cd_contributor_icon">Icon of %1$s</string>
 
-    <!-- Streaming / cloud dashboards -->
     <string name="screen_subsonic_dashboard_title">Subsonic</string>
     <string name="dash_playlists_synced_count">%1$d playlists synced</string>
     <string name="dash_title_playlists">Playlists</string>

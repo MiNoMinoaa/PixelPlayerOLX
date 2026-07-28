@@ -36,7 +36,7 @@ class DuplicateFinderTest {
     fun `same title and artist within tolerance are grouped ignoring case and whitespace`() {
         val songs = listOf(
             song("1", "Bohemian Rhapsody", "Queen", 354_000),
-            song("2", "bohemian  rhapsody", "queen", 355_000), // different case/spacing, +1s
+            song("2", "bohemian  rhapsody", "queen", 355_000),
             song("3", "Something Else", "Queen", 200_000),
         )
         val groups = DuplicateFinder.findDuplicates(songs)
@@ -48,7 +48,7 @@ class DuplicateFinderTest {
     fun `same name but durations beyond tolerance are not merged`() {
         val songs = listOf(
             song("studio", "Live Wire", "AC/DC", 300_000),
-            song("live", "Live Wire", "AC/DC", 360_000), // +60s -> different recording
+            song("live", "Live Wire", "AC/DC", 360_000),
         )
         assertTrue(DuplicateFinder.findDuplicates(songs).isEmpty())
     }
@@ -64,7 +64,7 @@ class DuplicateFinderTest {
         )
         val groups = DuplicateFinder.findDuplicates(songs)
         assertEquals(2, groups.size)
-        assertEquals(3, groups[0].songs.size) // Trio first (larger)
+        assertEquals(3, groups[0].songs.size)
         assertEquals(2, groups[1].songs.size)
     }
 }

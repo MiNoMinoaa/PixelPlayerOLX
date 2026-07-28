@@ -68,7 +68,6 @@ internal class QueueItemDismissGestureHandler(
     fun onHorizontalDrag(dragAmount: Float) {
         if (isDismissing) return
         accumulatedDragX += dragAmount
-        // Only allow end-to-start (negative / left) swipes
         if (accumulatedDragX > 0f) {
             accumulatedDragX = 0f
             scope.launch { offsetAnimatable.snapTo(0f) }
@@ -79,7 +78,6 @@ internal class QueueItemDismissGestureHandler(
             QueueDismissDragPhase.TENSION -> {
                 val tensionThresholdPx = 60f * density.density
                 if (abs(accumulatedDragX) < tensionThresholdPx) {
-                    // Dampened feedback: max 20dp visual offset while in tension zone
                     val maxTensionOffsetPx = 20f * density.density
                     val dragFraction = (abs(accumulatedDragX) / tensionThresholdPx).coerceIn(0f, 1f)
                     val tensionOffset = maxTensionOffsetPx * dragFraction
@@ -142,7 +140,6 @@ internal class QueueItemDismissGestureHandler(
         val dismissThreshold = itemWidthPx * 0.40f
 
         if (abs(accumulatedDragX) > dismissThreshold) {
-            // Dismiss: animate off-screen to the left
             isDismissing = true
             performAppCompatHapticFeedback(
                 hapticView,
@@ -158,13 +155,11 @@ internal class QueueItemDismissGestureHandler(
                     )
                 )
                 onDismiss()
-                // Reset after dismiss callback
                 offsetAnimatable.snapTo(0f)
                 isDismissing = false
                 isInDismissZone = false
             }
         } else {
-            // Spring back
             isInDismissZone = false
             scope.launch {
                 offsetAnimatable.animateTo(

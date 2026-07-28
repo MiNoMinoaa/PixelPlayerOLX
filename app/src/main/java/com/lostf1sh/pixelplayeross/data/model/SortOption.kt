@@ -8,7 +8,6 @@ enum class SortDirection {
     Descending
 }
 
-// Sealed class for Sort Options
 @Immutable
 sealed class SortOption(
     val storageKey: String,
@@ -17,7 +16,6 @@ sealed class SortOption(
     val methodKey: String = storageKey,
     val direction: SortDirection? = null
 ) {
-    // Song Sort Options
     object SongDefaultOrder : SortOption("song_default_order", "Default Order")
     object SongTitleAZ : SortOption(
         storageKey = "song_title_az",
@@ -90,7 +88,6 @@ sealed class SortOption(
         direction = SortDirection.Ascending
     )
 
-    // Album Sort Options
     object AlbumTitleAZ : SortOption(
         storageKey = "album_title_az",
         displayName = "Title (A-Z)",
@@ -155,7 +152,6 @@ sealed class SortOption(
         direction = SortDirection.Descending
     )
 
-    // Artist Sort Options
     object ArtistNameAZ : SortOption(
         storageKey = "artist_name_az",
         displayName = "Name (A-Z)",
@@ -185,7 +181,6 @@ sealed class SortOption(
         direction = SortDirection.Ascending
     )
 
-    // Playlist Sort Options
     object PlaylistNameAZ : SortOption(
         storageKey = "playlist_name_az",
         displayName = "Name (A-Z)",
@@ -215,7 +210,6 @@ sealed class SortOption(
         direction = SortDirection.Ascending
     )
 
-    // Liked Sort Options (similar to Songs)
     object LikedSongTitleAZ : SortOption(
         storageKey = "liked_title_az",
         displayName = "Title (A-Z)",
@@ -273,7 +267,6 @@ sealed class SortOption(
         direction = SortDirection.Ascending
     )
 
-    // Folder Sort Options
     object FolderNameAZ : SortOption(
         storageKey = "folder_name_az",
         displayName = "Name (A-Z)",
@@ -445,7 +438,6 @@ sealed class SortOption(
                 return matched
             }
 
-            // Legacy values used display names; fall back to matching within the allowed group.
             return sanitized.firstOrNull { option -> option.displayName == rawValue } ?: fallback
         }
     }

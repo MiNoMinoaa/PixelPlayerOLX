@@ -21,8 +21,6 @@ import kotlin.math.pow
 @Singleton
 class ReplayGainManager @Inject constructor() {
 
-    // LRU cache: filePath -> ReplayGainValues
-    // Avoids re-reading tags on repeat, resume, or rapid track changes.
     private val cache = object : LinkedHashMap<String, ReplayGainValues?>(64, 0.75f, true) {
         override fun removeEldestEntry(eldest: Map.Entry<String, ReplayGainValues?>) = size > 200
     }
@@ -30,11 +28,10 @@ class ReplayGainManager @Inject constructor() {
     companion object {
         private const val TAG = "ReplayGainManager"
 
-        // Standard ReplayGain tag keys (TagLib uses uppercase property map keys)
         private val TRACK_GAIN_KEYS = listOf(
             "REPLAYGAIN_TRACK_GAIN",
-            "REPLAYGAIN_TRACK_GAIN_DB",  // Some taggers use this variant
-            "R128_TRACK_GAIN"            // Opus R128 normalization
+            "REPLAYGAIN_TRACK_GAIN_DB",
+            "R128_TRACK_GAIN"
         )
 
         private val ALBUM_GAIN_KEYS = listOf(
@@ -43,8 +40,6 @@ class ReplayGainManager @Inject constructor() {
             "R128_ALBUM_GAIN"
         )
 
-        // Pre-amp to apply when no ReplayGain tag is found (dB)
-        // 0.0 means no change
         const val DEFAULT_PRE_AMP_DB = 0.0f
     }
 
@@ -69,7 +64,6 @@ class ReplayGainManager @Inject constructor() {
     fun readReplayGain(filePath: String): ReplayGainValues? {
         if (filePath.isBlank()) return null
 
-        // Return cached value if available — avoids expensive JNI tag read on repeat/resume
         synchronized(cache) { cache[filePath] }?.let {
             Timber.tag(TAG).d("Cache hit for ${File(filePath).name}")
             return it
@@ -113,7 +107,7 @@ class ReplayGainManager @Inject constructor() {
     fun gainDbToVolume(gainDb: Float, preAmpDb: Float = DEFAULT_PRE_AMP_DB): Float {
         val totalGainDb = gainDb + preAmpDb
         val linear = 10f.pow(totalGainDb / 20f)
-        return linear.coerceIn(0f, 2f)  // allow up to +6 dB boost for quiet tracks
+        return linear.coerceIn(0f, 2f)
     }
 
     /**
@@ -154,7 +148,7 @@ class ReplayGainManager @Inject constructor() {
      */
     private fun parseGainString(raw: String): Float? {
         val cleaned = raw.trim()
-            .replace(Regex("[dD][bB]"), "")  // Remove "dB" suffix
+            .replace(Regex("[dD][bB]"), "")
             .trim()
         return cleaned.toFloatOrNull()
     }

@@ -26,7 +26,6 @@ class ModuleSchemaValidator @Inject constructor(
     fun validate(section: BackupSection, payload: String): BackupValidationResult {
         val errors = mutableListOf<ValidationError>()
 
-        // Basic JSON structure check
         val jsonElement = try {
             JsonParser.parseString(payload)
         } catch (e: Exception) {
@@ -45,7 +44,6 @@ class ModuleSchemaValidator @Inject constructor(
             }
         }
 
-        // Most modules are JSON arrays
         if (section != BackupSection.QUICK_FILL && section != BackupSection.EQUALIZER) {
             if (!jsonElement.isJsonArray) {
                 errors.add(ValidationError("NOT_ARRAY", "Module '${section.key}' should be a JSON array.", module = section.key))
@@ -58,10 +56,8 @@ class ModuleSchemaValidator @Inject constructor(
             }
         }
 
-        // Per-module validation
         when (section) {
             BackupSection.PLAYLISTS -> {
-                // Already handled above for object/legacy compatibility.
             }
             BackupSection.FAVORITES -> validateFavorites(jsonElement.asJsonArray, errors)
             BackupSection.LYRICS -> validateLyrics(jsonElement.asJsonArray, errors)
@@ -73,7 +69,6 @@ class ModuleSchemaValidator @Inject constructor(
             BackupSection.GLOBAL_SETTINGS,
             BackupSection.QUICK_FILL,
             BackupSection.EQUALIZER -> {
-                // These are PreferenceBackupEntry arrays; validate basic structure
                 validatePreferenceEntries(jsonElement, section.key, errors)
             }
         }
@@ -92,7 +87,6 @@ class ModuleSchemaValidator @Inject constructor(
         errors: MutableList<ValidationError>
     ) {
         if (jsonElement.isJsonArray) {
-            // Legacy v1/v2 playlists module: PreferenceBackupEntry array.
             validatePreferenceEntries(jsonElement, BackupSection.PLAYLISTS.key, errors)
             return
         }

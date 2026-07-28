@@ -44,7 +44,6 @@ class EqualizerManager @Inject constructor() {
             _virtualizerEnabled.value ||
             _loudnessEnhancerEnabled.value
     
-    // Normalized band levels (-15 to +15 for UI)
     private val _bandLevels = MutableStateFlow(List(NUM_BANDS) { 0 })
     val bandLevels: StateFlow<List<Int>> = _bandLevels.asStateFlow()
     
@@ -72,13 +71,11 @@ class EqualizerManager @Inject constructor() {
     private val _loudnessEnhancerStrength = MutableStateFlow(0)
     val loudnessEnhancerStrength: StateFlow<Int> = _loudnessEnhancerStrength.asStateFlow()
     
-    // Actual millibel range from the device's equalizer
     private var minEqLevel: Short = -1500
     private var maxEqLevel: Short = 1500
 
     private var loudnessEnhancer: android.media.audiofx.LoudnessEnhancer? = null
 
-    // Global device capabilities (Checking existence of effect UUIDs)
     private var isBassBoostSupportedGlobal = false
     private var isVirtualizerSupportedGlobal = false
     private var effectsDisabledForProcess = false
@@ -96,8 +93,6 @@ class EqualizerManager @Inject constructor() {
             Timber.tag(TAG).d("Global Support Check - BassBoost: $isBassBoostSupportedGlobal, Virtualizer: $isVirtualizerSupportedGlobal")
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Failed to query global audio effects")
-            // Fallback to assuming false until proven otherwise? Or true? 
-            // Better false to avoid broken UI, but unlikely to fail.
         }
     }
 
@@ -152,7 +147,6 @@ class EqualizerManager @Inject constructor() {
         release()
         
         try {
-            // Initialize Equalizer
             equalizer = try {
                 Equalizer(0, audioSessionId).apply {
                     minEqLevel = bandLevelRange[0]
@@ -160,8 +154,6 @@ class EqualizerManager @Inject constructor() {
                     enabled = _isEnabled.value
                 }
             } catch (e: Exception) {
-                // Some OEM/route combinations do not expose an effect engine for this session.
-                // Disable effects for this process to avoid repeated hard failures and log spam.
                 effectsDisabledForProcess = true
                 effectsDisableReason = "${e.javaClass.simpleName}: ${e.message ?: "unknown"}"
                 _isEnabled.value = false
@@ -178,7 +170,6 @@ class EqualizerManager @Inject constructor() {
                 return
             }
             
-            // Retry loop for effects that might fail initially
             val maxRetries = 3
             var retryCount = 0
             
@@ -221,7 +212,6 @@ class EqualizerManager @Inject constructor() {
                 markVirtualizerUnavailable("No effect engine was created for audio session $audioSessionId after $maxRetries attempts")
             }
 
-            // Initialize Loudness Enhancer (usually robust, but let's be safe)
             loudnessEnhancer = try {
                 android.media.audiofx.LoudnessEnhancer(audioSessionId).apply {
                     setTargetGain(_loudnessEnhancerStrength.value.coerceIn(0, MAX_LOUDNESS_GAIN_MB))
@@ -234,7 +224,6 @@ class EqualizerManager @Inject constructor() {
             
             currentAudioSessionId = audioSessionId
             
-            // Apply current band levels with proper mapping
             val deviceBandCount = equalizer?.numberOfBands?.toInt() ?: 0
             Timber.tag(TAG).d("Device supports $deviceBandCount bands, UI has ${_bandLevels.value.size} bands")
             applyBandLevels(_bandLevels.value)
@@ -289,7 +278,6 @@ class EqualizerManager @Inject constructor() {
         
         applyBandLevel(bandIndex, clampedLevel)
         
-        // Switch to custom preset when manually adjusting
         _currentPresetName.value = "custom"
     }
     
@@ -441,7 +429,6 @@ class EqualizerManager @Inject constructor() {
         _currentPresetName.value = preset.name
         _bandLevels.value = preset.bandLevels
         
-        // Apply if already attached
         if (equalizer != null) {
             if (!hasAnyEnabledEffects) {
                 releaseIfUnused()
@@ -499,26 +486,19 @@ class EqualizerManager @Inject constructor() {
         
         if (deviceBandCount <= 0) return
         
-        // Map UI bands (10) to device bands (typically 5)
-        // If device has fewer bands than UI, we need to average/map appropriately
         val uiBandCount = levels.size
         
         if (deviceBandCount >= uiBandCount) {
-            // Device has same or more bands than UI - apply directly
             levels.forEachIndexed { index, level ->
                 applyBandLevelDirect(index, level)
             }
         } else {
-            // Device has fewer bands than UI - map UI bands to device bands
-            // Calculate how many UI bands map to each device band
             val ratio = uiBandCount.toFloat() / deviceBandCount.toFloat()
             
             for (deviceBand in 0 until deviceBandCount) {
-                // Calculate which UI bands this device band covers
                 val startUiBand = (deviceBand * ratio).toInt()
                 val endUiBand = ((deviceBand + 1) * ratio).toInt().coerceAtMost(uiBandCount)
                 
-                // Average the UI band levels for this device band
                 var sum = 0
                 var count = 0
                 for (uiBand in startUiBand until endUiBand) {
@@ -538,7 +518,6 @@ class EqualizerManager @Inject constructor() {
         val eq = equalizer ?: return
         if (bandIndex >= eq.numberOfBands) return
         
-        // Convert normalized level (-15 to +15) to device millibel range
         val range = maxEqLevel - minEqLevel
         val millibelLevel = (minEqLevel + (normalizedLevel + 15) * range / 30).toShort()
         
@@ -551,7 +530,6 @@ class EqualizerManager @Inject constructor() {
     }
     
     private fun applyBandLevel(bandIndex: Int, normalizedLevel: Int) {
-        // This now triggers a full reapply to ensure proper mapping
         val currentLevels = _bandLevels.value.toMutableList()
         if (bandIndex < currentLevels.size) {
             currentLevels[bandIndex] = normalizedLevel.coerceIn(MIN_LEVEL, MAX_LEVEL)
@@ -565,7 +543,7 @@ class EqualizerManager @Inject constructor() {
     fun getBandFrequencies(): List<Int> {
         val eq = equalizer ?: return listOf(31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000)
         return (0 until eq.numberOfBands).map { band ->
-            eq.getCenterFreq(band.toShort()) / 1000 // Convert milliHz to Hz
+            eq.getCenterFreq(band.toShort()) / 1000
         }
     }
     

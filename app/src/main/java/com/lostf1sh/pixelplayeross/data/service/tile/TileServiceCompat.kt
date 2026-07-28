@@ -11,8 +11,6 @@ internal fun TileService.startActivityAndCollapseCompat(
     intent: Intent,
     requestCode: Int
 ) {
-    // The PendingIntent overload only exists on Android 14+, while older releases
-    // still require the deprecated Intent overload.
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
         val pendingIntent = PendingIntent.getActivity(
             this,

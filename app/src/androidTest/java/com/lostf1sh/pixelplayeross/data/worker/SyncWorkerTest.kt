@@ -34,10 +34,9 @@ class SyncWorkerTest {
     private lateinit var mockContentResolver: android.content.ContentResolver
 
 
-    // Test WorkerFactory para inyectar el DAO (y potencialmente el ContentResolver mockeado)
     class TestSyncWorkerFactory(
         private val dao: MusicDao,
-        private val resolver: android.content.ContentResolver? = null // Opcional si no se mockea a nivel de worker
+        private val resolver: android.content.ContentResolver? = null
     ) : WorkerFactory() {
         override fun createWorker(
             appContext: Context,
@@ -45,10 +44,6 @@ class SyncWorkerTest {
             workerParameters: WorkerParameters
         ): ListenableWorker? {
             return if (workerClassName == SyncWorker::class.java.name) {
-                // Si SyncWorker tomara ContentResolver directamente:
-                // SyncWorker(appContext, workerParameters, dao, resolver ?: appContext.contentResolver)
-                // Como SyncWorker obtiene el resolver de appContext, no necesitamos pasarlo explícitamente aquí
-                // a menos que queramos un mock muy específico a nivel de constructor del worker.
                 SyncWorker(
                     appContext = appContext,
                     workerParams = workerParameters,
@@ -69,10 +64,10 @@ class SyncWorkerTest {
         context = ApplicationProvider.getApplicationContext()
         database = Room.inMemoryDatabaseBuilder(context, PixelPlayerDatabase::class.java)
             .addCallback(PixelPlayerDatabase.createRuntimeArtifactsCallback())
-            .allowMainThreadQueries() // Para tests, está bien.
+            .allowMainThreadQueries()
             .build()
         musicDao = database.musicDao()
-        mockContentResolver = mockk() // Mockear el ContentResolver
+        mockContentResolver = mockk()
     }
 
     @After
@@ -89,7 +84,6 @@ class SyncWorkerTest {
             MediaStore.Audio.Media.MIME_TYPE, MediaStore.Audio.Media.TRACK, MediaStore.Audio.Media.YEAR,
             MediaStore.Audio.Media.DATE_ADDED, MediaStore.Audio.Media.DATE_MODIFIED
         ))
-        // Añadir filas de ejemplo
         cursor.addRow(arrayOf<Any?>(1L, "Test Song 1", "Test Artist 1", 101L, "Test Album 1", 201L, null, 180000L, "/sdcard/Music/song1.mp3", "audio/mpeg", 1, 2024, 100L, 101L))
         cursor.addRow(arrayOf<Any?>(2L, "Test Song 2", "Test Artist 2", 102L, "Test Album 2", 202L, null, 240000L, "/sdcard/Music/song2.mp3", "audio/mpeg", 2, 2024, 100L, 101L))
         return cursor
@@ -114,13 +108,12 @@ class SyncWorkerTest {
     }
 
     private fun createMockGenreCursor(): MatrixCursor {
-        return MatrixCursor(arrayOf(MediaStore.Audio.GenresColumns.NAME)) // Vacío por defecto, o añadir filas si se testea género.
+        return MatrixCursor(arrayOf(MediaStore.Audio.GenresColumns.NAME))
     }
 
 
     @Test
     fun testSyncWorker_success_whenMediaStoreHasData() = runBlocking {
-        // Configurar mocks para ContentResolver
         every { mockContentResolver.query(any(), any(), any(), any(), any()) } answers {
             when (firstArg<Uri>().toString()) {
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() -> createMockSongCursor()
@@ -131,21 +124,19 @@ class SyncWorkerTest {
         }
 
 
-        // Crear una instancia del Contexto que devuelva nuestro ContentResolver mockeado
         val testContext = object : ContextWrapper(context) {
             override fun getContentResolver(): android.content.ContentResolver {
                 return mockContentResolver
             }
         }
 
-        val worker = TestListenableWorkerBuilder<SyncWorker>(testContext) // Usar testContext
+        val worker = TestListenableWorkerBuilder<SyncWorker>(testContext)
             .setWorkerFactory(TestSyncWorkerFactory(musicDao))
             .build()
 
         val result = worker.doWork()
         assertThat(result).isEqualTo(ListenableWorker.Result.success())
 
-        // Verificar datos en la base de datos
         val songsInDb = musicDao.getSongs(emptyList(), false).first()
         assertThat(songsInDb).hasSize(2)
         assertThat(songsInDb.find { it.id == 1L }?.title).isEqualTo("Test Song 1")
@@ -161,8 +152,7 @@ class SyncWorkerTest {
 
     @Test
     fun testSyncWorker_success_whenMediaStoreIsEmpty() = runBlocking {
-        // Configurar mocks para ContentResolver para devolver cursores vacíos
-        every { mockContentResolver.query(any(), any(), any(), any(), any()) } returns MatrixCursor(arrayOf()) // Devuelve cursor vacío para todas las consultas
+        every { mockContentResolver.query(any(), any(), any(), any(), any()) } returns MatrixCursor(arrayOf())
 
         val testContext = object : ContextWrapper(context) {
             override fun getContentResolver(): android.content.ContentResolver {
@@ -182,5 +172,4 @@ class SyncWorkerTest {
     }
 }
 
-// Wrapper simple para Context para poder mockear getContentResolver
 open class ContextWrapper(base: Context) : android.content.ContextWrapper(base)

@@ -110,12 +110,10 @@ fun NavBarCornerRadiusContent(
 
     val haptic = LocalHapticFeedback.current
 
-    // Sync if initial value changes externally (though unlikely in this flow, good practice)
     LaunchedEffect(initialRadius) {
         sliderValue = initialRadius.safeRadius()
     }
     
-    // Update hasBeenAdjusted when sliderValue changes relative to default
     LaunchedEffect(sliderValue) {
         hasBeenAdjusted = sliderValue != DEFAULT_NAV_BAR_CORNER_RADIUS
     }
@@ -173,7 +171,6 @@ fun NavBarCornerRadiusContent(
                 .padding(bottom = if (isFullWidth) 0.dp else paddingValues.calculateBottomPadding())
         ) {
             
-            // Content
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -201,7 +198,6 @@ fun NavBarCornerRadiusContent(
                 )
             }
 
-            // Controls Area
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -209,7 +205,6 @@ fun NavBarCornerRadiusContent(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 
-                // Controls
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -271,7 +266,6 @@ fun NavBarCornerRadiusContent(
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
 
-                            // Slider
                             Box(modifier = Modifier.weight(1f)) {
                                 Slider(
                                     value = sliderValue,
@@ -315,7 +309,6 @@ fun NavBarCornerRadiusContent(
                     }
                 }
 
-                // Placeholder
                 val bottomPadding = paddingValues.calculateBottomPadding()
                 val previewHeight = resolveNavBarSurfaceHeight(
                     navBarStyle = if (isFullWidth) NavBarStyle.FULL_WIDTH else NavBarStyle.DEFAULT,
@@ -326,17 +319,17 @@ fun NavBarCornerRadiusContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(previewHeight)
-                        .padding(horizontal = if (isFullWidth) 0.dp else bottomPadding), // Full Width: No horizontal padding
+                        .padding(horizontal = if (isFullWidth) 0.dp else bottomPadding),
                     color = MaterialTheme.colorScheme.onBackground,
                     shape = if (isFullWidth) {
                         AbsoluteSmoothCornerShape(
-                            cornerRadiusTL = sliderValue.dp, // Customize TOP
+                            cornerRadiusTL = sliderValue.dp,
                             smoothnessAsPercentTL = 60,
-                            cornerRadiusTR = sliderValue.dp, // Customize TOP
+                            cornerRadiusTR = sliderValue.dp,
                             smoothnessAsPercentTR = 60,
-                            cornerRadiusBL = 0.dp, // Fixed BOTTOM
+                            cornerRadiusBL = 0.dp,
                             smoothnessAsPercentBL = 60,
-                            cornerRadiusBR = 0.dp, // Fixed BOTTOM
+                            cornerRadiusBR = 0.dp,
                             smoothnessAsPercentBR = 60
                         )
                     } else {

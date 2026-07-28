@@ -97,7 +97,6 @@ fun SettingsScreen(
         settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
 
-    // Animation effects
     val transitionState = remember { MutableTransitionState(false) }
     LaunchedEffect(true) { transitionState.targetState = true }
 
@@ -216,7 +215,7 @@ fun SettingsScreen(
                         it != SettingsCategory.DEVICE_CAPABILITIES
                     }
 
-                    val totalItems = mainCategories.size + 3 // Device + Accounts + About
+                    val totalItems = mainCategories.size + 3
                     fun shapeFor(index: Int) =
                         when {
                             totalItems == 1 -> RoundedCornerShape(24.dp)
@@ -280,7 +279,6 @@ fun SettingsScreen(
                     )
                 }
 
-                // for player active:
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }
@@ -291,7 +289,6 @@ fun SettingsScreen(
                 onBackClick = onNavigationIconClick
         )
 
-        // Block interaction during transition
         var isTransitioning by remember { mutableStateOf(true) }
         LaunchedEffect(Unit) {
             kotlinx.coroutines.delay(com.lostf1sh.pixelplayeross.presentation.navigation.TRANSITION_DURATION.toLong())
@@ -387,7 +384,6 @@ fun ExpressiveCategoryItem(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(16.dp).fillMaxSize()
         ) {
-            // Icon Container
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -468,7 +464,7 @@ private fun getCategoryColors(category: SettingsCategory, isDark: Boolean): Pair
             SettingsCategory.BACKUP_RESTORE -> Color(0xFF3B4869) to Color(0xFFD9E2FF)
             SettingsCategory.DEVELOPER -> Color(0xFF324F34) to Color(0xFFCBEFD0) 
             SettingsCategory.EQUALIZER -> Color(0xFF6E4E13) to Color(0xFFFFDEAC) 
-            SettingsCategory.DEVICE_CAPABILITIES -> Color(0xFF004D61) to Color(0xFFACEFEE) // Custom teal/cyan mix
+            SettingsCategory.DEVICE_CAPABILITIES -> Color(0xFF004D61) to Color(0xFFACEFEE)
             SettingsCategory.ABOUT -> Color(0xFF3F474D) to Color(0xFFDEE3EB) 
         }
     } else {

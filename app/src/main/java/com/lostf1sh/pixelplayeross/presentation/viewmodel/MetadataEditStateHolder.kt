@@ -70,9 +70,6 @@ class MetadataEditStateHolder @Inject constructor(
         
         Timber.tag("MetadataEditStateHolder").d("Starting saveMetadata for: ${song.title}")
 
-        // CRITICAL FIX: Preserve existing embedded artwork if the user didn't provide a new one.
-        // Editing text metadata might strip the artwork if the underlying tagging library
-        // overwrites the file structure. Explicitly re-saving the existing artwork prevents this.
         val finalCoverArtUpdate = if (coverArtUpdate == null) {
             val existingMetadata = try {
                  com.lostf1sh.pixelplayeross.data.media.AudioMetadataReader.read(java.io.File(song.path))
@@ -94,8 +91,6 @@ class MetadataEditStateHolder @Inject constructor(
 
         val trimmedLyrics = newLyrics.trim()
         val normalizedLyrics = trimmedLyrics.takeIf { it.isNotBlank() }
-        // We parse lyrics here just to ensure they are valid or to have them ready, 
-        // essentially mirroring logic in ViewModel
         val parsedLyrics = normalizedLyrics?.let { LyricsUtils.parseLyrics(it) }
         val resolvedSongId = resolveSongIdForMetadataEdit(song)
 
@@ -133,7 +128,6 @@ class MetadataEditStateHolder @Inject constructor(
                 result.updatedAlbumArtUri ?: song.albumArtUriString
             }
             
-            // Update Repository (Lyrics)
             if (normalizedLyrics != null) {
                 musicRepository.updateLyrics(resolvedSongId, normalizedLyrics)
             } else {
@@ -152,30 +146,21 @@ class MetadataEditStateHolder @Inject constructor(
                 albumArtUriString = refreshedAlbumArtUri,
             )
 
-            // CRITICAL: Fetch the authoritative song object from the repository (MediaStore/DB).
-            // When metadata changes (especially album/artist), MediaStore might re-index the song
-            // and assign it a NEW album ID, resulting in a NEW albumArtUri.
-            // Using the 'updatedSong' copy above might retain a STALE albumArtUri.
             val freshSongFromRepo = try {
                 musicRepository.getSong(song.id).first() ?: updatedSong
             } catch (e: Exception) {
                 updatedSong
             }
 
-            // Ensure we use the refreshed artwork URI we just generated/cleared.
-            // The repository emission may be stale for a split second.
             val freshSong = freshSongFromRepo.copy(
                 albumArtUriString = refreshedAlbumArtUri
             )
 
-            // Force cache invalidation if album art might have changed
             val uriToInvalidate = if (coverArtUpdate?.isDeletion == true) song.albumArtUriString else refreshedAlbumArtUri
             if (uriToInvalidate != null) {
-                // Invalidate Coil/Glide caches for the affected URI (old or new)
                 imageCacheManager.invalidateCoverArtCaches(uriToInvalidate)
             }
             
-            // Force regenerate palette
             themeStateHolder.forceRegenerateColorScheme(refreshedAlbumArtUri)
 
             MetadataEditResult(
@@ -199,21 +184,7 @@ class MetadataEditStateHolder @Inject constructor(
         if (fileInfo.exists && fileInfo.canWrite) {
             val success = FileDeletionUtils.deleteFile(context, song.path)
             if (success) {
-                // Remove from DB happens in ViewModel call logic or should happen here?
-                // VM's deleteFromDevice calls removeSong -> toggleFavorite(false) -> updates lists.
-                // It does NOT explicitly call repository.deleteSong() because MediaStore/FileObserver handles it?
-                // Or maybe explicit deletion IS needed but VM logic (Line 3687) says "removeSong(song)".
-                // removeSong(3698) toggles favorites and updates _masterAllSongs. It implies memory update.
-                // FileDeletionUtils deletes the physical file. The MediaScanner should eventually pick it up, 
-                // but for immediate UI responsiveness, manual update is good.
-                // Also, MusicRepository.deleteById(id) exists.
-                // ViewModel did NOT call musicRepository.deleteById(). It relied on "removeSong" which is UI state only? 
-                // Wait, removeSong updates UI state. Does it update DB?
-                // Line 3698: toggleFavoriteSpecificSong(song, true)?? Wait.
                 
-                // Let's stick to returning success and letting ViewModel handle UI updates for now, 
-                // or if we want to be thorough, we call repository delete.
-                // But if ViewModel wasn't doing it, I won't add it to change behavior.
                 true
             } else {
                 false

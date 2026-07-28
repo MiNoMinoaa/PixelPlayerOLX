@@ -13,8 +13,6 @@ import androidx.compose.ui.unit.sp
 import com.lostf1sh.pixelplayeross.R
 
 
-// Title typography uses the bundled variable font so it never depends on a
-// downloadable-font provider at runtime.
 @OptIn(ExperimentalTextApi::class)
 val MontserratFamily = FontFamily(
     androidx.compose.ui.text.font.Font(
@@ -68,7 +66,6 @@ val ExpTitleTypography = Typography(
         fontFamily = MontserratFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 50.sp,
-        //textGeometricTransform = TextGeometricTransform(scaleX = 1f),
         letterSpacing = (-0.02).em,
         lineHeight = 0.95.em,
         platformStyle = PlatformTextStyle(includeFontPadding = false)
@@ -84,7 +81,6 @@ val ExpTitleTypography = Typography(
     )
 )
 
-// Bundled variable font with rounded axis for a soft title style.
 private const val RoundedSansFlexRond = 100f
 
 @OptIn(ExperimentalTextApi::class)
@@ -131,8 +127,6 @@ val RoundedSans = FontFamily(
     ),
 )
 
-// Typography - Use friendly and modern fonts.
-// Consider adding custom fonts in res/font for a more unique look.
 val Typography = Typography(
     displayLarge = TextStyle(
         fontFamily = RoundedSans,

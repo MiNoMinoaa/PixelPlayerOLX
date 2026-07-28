@@ -71,7 +71,6 @@ class NavidromeDashboardViewModel @Inject constructor(
     init {
         observeSyncWorker()
         loadMusicFolders()
-        // Auto sync full library (songs + playlists) if it's been more than 24 hours
         val lastSync = repository.lastFullSyncTime
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastSync > NavidromeRepository.SYNC_THRESHOLD_MS) {
@@ -126,7 +125,6 @@ class NavidromeDashboardViewModel @Inject constructor(
                     _musicFoldersLoadFailed.value = false
                 }
                 .onFailure {
-                    // Music-folder discovery is optional; sync falls back to the server-wide library.
                     _musicFolders.value = persistentListOf()
                     _musicFoldersLoadFailed.value = true
                 }

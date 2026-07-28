@@ -81,7 +81,6 @@ class GridWidget2x2 : GlanceAppWidget() {
                 Column(
                     modifier = GlanceModifier.fillMaxSize()
                 ) {
-                    // Top
                     Row(
                         modifier = GlanceModifier
                             .defaultWeight()
@@ -93,14 +92,13 @@ class GridWidget2x2 : GlanceAppWidget() {
                                 .fillMaxHeight(),
                             bitmapData = albumArtBitmapData,
                             albumArtUri = albumArtUri,
-                            size = albumArtSize, // Used for optimization and placeholder size
+                            size = albumArtSize,
                             context = context,
                             cornerRadius = itemCornerRadius
                         )
 
                         Spacer(GlanceModifier.width(6.dp))
 
-                        // Play/Pause Button
                         PlayPauseButton(
                             modifier = GlanceModifier
                                 .defaultWeight()
@@ -115,13 +113,11 @@ class GridWidget2x2 : GlanceAppWidget() {
 
                     Spacer(GlanceModifier.height(6.dp))
 
-                    // Bottom
                     Row(
                         modifier = GlanceModifier
                             .defaultWeight()
                             .fillMaxWidth()
                     ) {
-                        // Previous Button
                         PreviousButton(
                             modifier = GlanceModifier
                                 .defaultWeight()
@@ -134,7 +130,6 @@ class GridWidget2x2 : GlanceAppWidget() {
 
                         Spacer(GlanceModifier.width(6.dp))
 
-                        // Next Button
                         NextButton(
                             modifier = GlanceModifier
                                 .defaultWeight()

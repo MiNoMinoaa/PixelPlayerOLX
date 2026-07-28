@@ -996,6 +996,5 @@ private fun openUrl(context: Context, url: String) {
     try {
         context.startActivity(intent)
     } catch (_: ActivityNotFoundException) {
-        // Ignore if no handler is available.
     }
 }

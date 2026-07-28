@@ -112,7 +112,7 @@ fun ArtistSettingsScreen(
 
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val minTopBarHeight = 64.dp + statusBarHeight
-    val maxTopBarHeight = 180.dp // Adjusted for a less intrusive header
+    val maxTopBarHeight = 180.dp
 
     val minTopBarHeightPx = with(density) { minTopBarHeight.toPx() }
     val maxTopBarHeightPx = with(density) { maxTopBarHeight.toPx() }
@@ -177,7 +177,6 @@ fun ArtistSettingsScreen(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(top = currentTopBarHeightDp + 8.dp, bottom = 100.dp)
         ) {
-            // Rescan Required Warning
             item {
                 AnimatedVisibility(
                     visible = uiState.rescanRequired,
@@ -191,7 +190,6 @@ fun ArtistSettingsScreen(
                 }
             }
 
-            // Multi-Artist Parsing Section
             item {
                 SettingsSection(
                     title = stringResource(R.string.presentation_batch_g_artist_section_multi_parsing),
@@ -207,7 +205,6 @@ fun ArtistSettingsScreen(
                         modifier = Modifier.clip(shape = RoundedCornerShape(24.dp)),
                         verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        // Configure Character Delimiters
                         SettingsItem(
                             title = stringResource(R.string.presentation_batch_g_artist_item_char_delimiters),
                             subtitle = stringResource(
@@ -233,7 +230,6 @@ fun ArtistSettingsScreen(
                             }
                         )
 
-                        // Configure Word Delimiters
                         SettingsItem(
                             title = stringResource(R.string.presentation_batch_g_artist_item_word_delimiters),
                             subtitle = if (uiState.wordDelimiters.isEmpty()) {
@@ -265,7 +261,6 @@ fun ArtistSettingsScreen(
                             }
                         )
 
-                        // Extract from title toggle
                         SwitchSettingItem(
                             title = stringResource(R.string.presentation_batch_g_artist_extract_from_title),
                             subtitle = stringResource(R.string.presentation_batch_g_artist_extract_from_title_sub),
@@ -283,7 +278,6 @@ fun ArtistSettingsScreen(
                 }
             }
 
-            // Library Organization Section
             item {
                 SettingsSection(
                     title = stringResource(R.string.presentation_batch_g_artist_section_library_org),
@@ -313,7 +307,6 @@ fun ArtistSettingsScreen(
                 }
             }
 
-            // Info Card
             item {
                 InfoCard(
                     title = stringResource(R.string.presentation_batch_g_artist_info_title),
@@ -321,7 +314,6 @@ fun ArtistSettingsScreen(
                 )
             }
 
-            // Examples Card
             item {
                 ExamplesCard(
                     examples = persistentListOf(

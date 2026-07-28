@@ -142,7 +142,6 @@ fun RecentlyPlayedSection(
             }
         }
 
-        // Exactly three stacked rows (staggered look with variable-width pills).
         Box(
             modifier = Modifier
                 .fillMaxWidth()

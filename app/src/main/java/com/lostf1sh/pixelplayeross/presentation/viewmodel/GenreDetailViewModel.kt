@@ -18,8 +18,6 @@ import kotlinx.coroutines.withContext
 import com.lostf1sh.pixelplayeross.di.DispatcherProvider
 import javax.inject.Inject
 
-// --- Model Types for Sectioned Display ---
-
 enum class SortOption { ARTIST, ALBUM, TITLE }
 
 data class AlbumData(
@@ -90,7 +88,7 @@ sealed class GenreDetailListItem {
 data class GenreDetailUiState(
     val genre: Genre? = null,
     val songs: List<Song> = emptyList(),
-    val sortedSongs: List<Song> = emptyList(), // Sorted copy reserved for playback logic
+    val sortedSongs: List<Song> = emptyList(),
     val displaySections: List<SectionData> = emptyList(),
     val flattenedItems: List<GenreDetailListItem> = emptyList(),
     val sortOption: SortOption = SortOption.ARTIST,
@@ -133,8 +131,6 @@ class GenreDetailViewModel @Inject constructor(
             _uiState.update { it.copy(isLoadingGenreName = true, isLoadingSongs = true, error = null) }
 
             try {
-                // Step 1: Fast load of the Genre object to stabilize the UI theme as early as possible.
-                // This prevents a major recomposition (theme switch) mid-animation.
                 val initialGenre = withContext(dispatchers.default) {
                     val genres = musicRepository.getGenres().first()
                     genres.find { it.id.equals(genreId, ignoreCase = true) }
@@ -144,7 +140,6 @@ class GenreDetailViewModel @Inject constructor(
                     _uiState.update { it.copy(genre = initialGenre, isLoadingGenreName = false) }
                 }
 
-                // Step 2: Heavy data processing for songs and sections
                 val result = withContext(dispatchers.default) {
                     val genres = musicRepository.getGenres().first()
                     val genre = initialGenre ?: genres.find { it.id.equals(genreId, ignoreCase = true) }

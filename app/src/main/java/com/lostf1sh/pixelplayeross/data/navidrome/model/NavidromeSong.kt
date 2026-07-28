@@ -39,7 +39,7 @@ data class NavidromeSong(
     val album: String,
     val albumId: String? = null,
     val coverArt: String? = null,
-    val duration: Long, // milliseconds
+    val duration: Long,
     val trackNumber: Int = 0,
     val discNumber: Int = 0,
     val year: Int = 0,

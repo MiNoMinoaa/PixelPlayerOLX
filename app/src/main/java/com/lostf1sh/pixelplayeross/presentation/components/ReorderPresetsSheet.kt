@@ -114,10 +114,8 @@ fun ReorderPresetsSheet(
         )
     }
     
-    // Data class for preset items
     data class PresetItem(val preset: EqualizerPreset, val isPinned: Boolean)
 
-    // Initial state: Pinned presets (in order) + Unpinned presets (rest)
     val initialList = remember(allAvailablePresets, pinnedPresetsNames) {
         val pinned = pinnedPresetsNames.mapNotNull { name -> 
             allAvailablePresets.find { it.name == name }?.let { PresetItem(it, true) }
@@ -140,7 +138,6 @@ fun ReorderPresetsSheet(
         lazyListState = listState
     )
     
-    // Helper to toggle pin
     fun togglePin(item: PresetItem) {
         val newItem = item.copy(isPinned = !item.isPinned)
         val index = localItems.indexOf(item)
@@ -151,7 +148,6 @@ fun ReorderPresetsSheet(
         }
     }
 
-    // Fullscreen dialog with animation
     val transitionState = remember { MutableTransitionState(false) }
     transitionState.targetState = visible
 
@@ -255,7 +251,6 @@ fun ReorderPresetsSheet(
                                 .fillMaxSize(),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            // Description
                             Text(
                                 text = stringResource(R.string.presentation_batch_e_presets_drag_hint),
                                 style = MaterialTheme.typography.bodyMedium,
@@ -263,7 +258,6 @@ fun ReorderPresetsSheet(
                                 modifier = Modifier.padding(horizontal = 18.dp)
                             )
 
-                            // Preset list
                             LazyColumn(
                                 state = listState,
                                 modifier = Modifier
@@ -320,7 +314,6 @@ fun ReorderPresetsSheet(
                                                 modifier = Modifier.padding(start = 12.dp, end = 8.dp, top = 14.dp, bottom = 14.dp),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                // Drag Handle
                                                 Box(
                                                     modifier = Modifier
                                                         .size(32.dp)
@@ -354,7 +347,6 @@ fun ReorderPresetsSheet(
                                                     color = contentColor
                                                 )
 
-                                                // Visibility Toggle
                                                 IconButton(
                                                     onClick = { togglePin(item) },
                                                 ) {

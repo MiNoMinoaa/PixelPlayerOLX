@@ -23,15 +23,6 @@ import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.toPath
 import com.lostf1sh.pixelplayeross.R
 
-// The play triangle is modeled as two quads so that each can morph into one of the two
-// pause bars via androidx.graphics.shapes' Morph. Geometry matches the Material icon
-// paths, normalized from their 24x24 viewport: play_arrow is the triangle (8,5) (8,19)
-// (19,12); pause is the bars 6..10 and 14..18 spanning y 5..19.
-//
-// In the play state the halves overlap around the split line (left ends at 0.58, right
-// starts at 0.54) with their seam edges collinear with the triangle's edges, and the seam
-// vertices use zero corner rounding — so the union of the two fills reads as one clean
-// triangle with rounding only on its real corners. The halves separate mid-morph.
 private val ICON_CORNER = CornerRounding(radius = 0.07f)
 private val SEAM_CORNER = CornerRounding.Unrounded
 
@@ -39,12 +30,10 @@ private fun quad(vertices: FloatArray, roundings: List<CornerRounding>) =
     RoundedPolygon(vertices, perVertexRounding = roundings)
 
 private val LEFT_MORPH = Morph(
-    // Left half of the triangle (vertices: TL, seam-top, seam-bottom, BL)...
     quad(
         floatArrayOf(0.333f, 0.208f, 0.58f, 0.365f, 0.58f, 0.635f, 0.333f, 0.792f),
         listOf(ICON_CORNER, SEAM_CORNER, SEAM_CORNER, ICON_CORNER)
     ),
-    // ...into the left pause bar.
     quad(
         floatArrayOf(0.25f, 0.208f, 0.417f, 0.208f, 0.417f, 0.792f, 0.25f, 0.792f),
         listOf(ICON_CORNER, ICON_CORNER, ICON_CORNER, ICON_CORNER)
@@ -52,13 +41,10 @@ private val LEFT_MORPH = Morph(
 )
 
 private val RIGHT_MORPH = Morph(
-    // Right half of the triangle (the apex is split into two near-coincident vertices so
-    // both quads have four corners; the rounding blends them into a single rounded tip)...
     quad(
         floatArrayOf(0.54f, 0.34f, 0.792f, 0.485f, 0.792f, 0.515f, 0.54f, 0.66f),
         listOf(SEAM_CORNER, ICON_CORNER, ICON_CORNER, SEAM_CORNER)
     ),
-    // ...into the right pause bar.
     quad(
         floatArrayOf(0.583f, 0.208f, 0.75f, 0.208f, 0.75f, 0.792f, 0.583f, 0.792f),
         listOf(ICON_CORNER, ICON_CORNER, ICON_CORNER, ICON_CORNER)
@@ -98,13 +84,9 @@ fun MorphingPlayPauseIcon(
             .size(size)
             .semantics { contentDescription = contentDesc }
     ) {
-        // progress is read here, in the draw phase, so spring frames only invalidate
-        // drawing and never recompose the (hot) playback-controls composition.
         val fraction = progress.coerceIn(0f, 1f)
         LEFT_MORPH.toPath(fraction, leftAndroidPath)
         RIGHT_MORPH.toPath(fraction, rightAndroidPath)
-        // Both halves go into one path and one draw call: with non-zero winding the
-        // overlap unions away, and there is no anti-aliased seam between two fills.
         glyphPath.reset()
         glyphPath.addPath(leftPath)
         glyphPath.addPath(rightPath)

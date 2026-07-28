@@ -29,8 +29,6 @@ class SmartPlaylistRuleTest {
 
     @Test
     fun `legacy bare SMART source is detected but resolves to no specific rule`() {
-        // The bare "SMART" marker (no rule key) predates per-rule keys: it must still be
-        // recognised as a smart playlist, but cannot resolve to a concrete rule.
         assertTrue(isSmartPlaylistSource(SMART_PLAYLIST_SOURCE_LEGACY))
         assertNull(SmartPlaylistRule.fromPlaylistSource(SMART_PLAYLIST_SOURCE_LEGACY))
     }

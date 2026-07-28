@@ -16,7 +16,6 @@ import javax.inject.Singleton
 @Singleton
 class QueueStateHolder @Inject constructor() {
 
-    // Original queue order before shuffle (for restoring when unshuffling)
     private var _originalQueueOrder: List<Song> = emptyList()
     val originalQueueOrder: List<Song> get() = _originalQueueOrder
 

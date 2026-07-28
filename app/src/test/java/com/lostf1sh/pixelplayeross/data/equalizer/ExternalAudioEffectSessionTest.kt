@@ -33,7 +33,6 @@ class ExternalAudioEffectSessionTest {
         session.open(42)
         session.open(42)
 
-        // Re-announcing would make effect apps tear down and rebuild their engine mid-playback.
         verify(exactly = 1) { context.sendBroadcast(any<Intent>()) }
     }
 
@@ -42,7 +41,6 @@ class ExternalAudioEffectSessionTest {
         session.open(42)
         session.open(43)
 
-        // open(42), close(42), open(43)
         verify(exactly = 3) { context.sendBroadcast(any<Intent>()) }
     }
 

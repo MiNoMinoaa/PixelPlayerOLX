@@ -7,7 +7,7 @@ import kotlinx.parcelize.Parcelize
 @Immutable
 @Parcelize
 data class Album(
-    val id: Long, // MediaStore.Audio.Albums._ID
+    val id: Long,
     val title: String,
     val artist: String,
     val year: Int,
@@ -33,11 +33,11 @@ data class Album(
 @Immutable
 @Parcelize
 data class Artist(
-    val id: Long, // MediaStore.Audio.Artists._ID
+    val id: Long,
     val name: String,
     val songCount: Int,
-    val imageUrl: String? = null, // Deezer artist image URL (from API)
-    val customImageUri: String? = null // User-defined custom artist image (local file path)
+    val imageUrl: String? = null,
+    val customImageUri: String? = null
 ) : Parcelable {
     companion object {
         fun empty() = Artist(

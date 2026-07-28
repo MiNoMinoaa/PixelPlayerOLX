@@ -22,13 +22,9 @@ class NavidromeStreamProxy @Inject constructor(
     okHttpClient: OkHttpClient
 ) : CloudStreamProxy<String>(okHttpClient) {
 
-    // Dynamically determine allowed hosts from the configured server URL.
-    // We allow both HTTP and HTTPS for self-hosted servers.
     override val allowedHostSuffixes: Set<String>
         get() = repository.serverUrl?.toHttpUrlOrNull()?.host?.let { setOf(it) } ?: emptySet()
 
-    // Stream URLs with authentication tokens are valid for a limited time.
-    // Set cache expiration to 30 minutes to match typical token validity.
     override val cacheExpirationMs = 30L * 60 * 1000
 
     override val proxyTag = "NavidromeStreamProxy"
@@ -55,7 +51,6 @@ class NavidromeStreamProxy @Inject constructor(
         }
     }
 
-    // Navidrome URIs may use host or path: navidrome://songId or navidrome:///songId
     override fun extractIdFromUri(uri: Uri): String? =
         uri.host ?: uri.path?.removePrefix("/")
 

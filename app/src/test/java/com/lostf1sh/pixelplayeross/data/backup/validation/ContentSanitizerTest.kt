@@ -56,7 +56,6 @@ class ContentSanitizerTest {
     fun `sanitizeUrl truncates overly long URL to max length`() {
         val url = "https://example.com/" + "a".repeat(3000)
         val result = sanitizer.sanitizeUrl(url)
-        // sanitizeUrl delegates to sanitizeString which truncates to maxLength (2000)
         assertEquals(2000, result.length)
         assertTrue(result.startsWith("https://"))
     }

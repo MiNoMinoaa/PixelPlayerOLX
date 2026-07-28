@@ -109,7 +109,6 @@ fun MultiSelectionBottomSheet(
     val context = LocalContext.current
     val sheetState = rememberModalSheetState(skipPartiallyExpanded = true)
     
-    // Compute if all selected songs are liked
     val allAreLiked by remember(selectedSongs, favoriteSongIds) {
         derivedStateOf {
             selectedSongs.isNotEmpty() && selectedSongs.all { favoriteSongIds.contains(it.id) }
@@ -160,7 +159,6 @@ fun MultiSelectionBottomSheet(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
             ) {
-                // Header with stacked album arts and count - row anchored left
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -168,8 +166,6 @@ fun MultiSelectionBottomSheet(
                     horizontalArrangement = Arrangement.spacedBy(0.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Stacked album arts
-                    // Stacked album arts - use calculated width to avoid overlap
                     val stackedImageSize = 66.dp
                     val stackedOverlap = 33.dp
                     val stackedCount = selectedSongs.take(4).size
@@ -186,7 +182,6 @@ fun MultiSelectionBottomSheet(
                     
                     Spacer(modifier = Modifier.width(16.dp))
                     
-                    // Song count and label
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -203,7 +198,6 @@ fun MultiSelectionBottomSheet(
                         Spacer(
                             modifier = Modifier
                                 .height(4.dp)
-                                //.fillMaxWidth()
                         )
                         Text(
                             text = stringResource(R.string.multi_selection_selected),
@@ -213,7 +207,6 @@ fun MultiSelectionBottomSheet(
                         )
                     }
 
-                    //Batch edit button
                     FilledTonalIconButton(
                         modifier = Modifier
                             .fillMaxHeight()
@@ -236,13 +229,11 @@ fun MultiSelectionBottomSheet(
                 
                 Spacer(modifier = Modifier.height(20.dp))
                 
-                // Actions list
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth(),
                     contentPadding = PaddingValues(bottom = 32.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // Row 1: Play, Favorite, Share
                     item {
                         Row(
                             modifier = Modifier
@@ -272,15 +263,12 @@ fun MultiSelectionBottomSheet(
                                     )
                                 }
                             )
-                            // Like/Unlike toggle button
-                            // If all are liked -> clicking will unlike all
-                            // If any is not liked -> clicking will like all
                             FilledIconButton(
                                 modifier = Modifier
                                     .weight(0.25f)
                                     .fillMaxHeight(),
                                 onClick = {
-                                    onToggleLikeAll(!allAreLiked) // true = like all, false = unlike all
+                                    onToggleLikeAll(!allAreLiked)
                                     onDismiss()
                                 },
                                 shape = favoriteButtonShape,
@@ -324,7 +312,6 @@ fun MultiSelectionBottomSheet(
                         }
                     }
                     
-                    // Row 2: Add to Queue, Play Next
                     item {
                         Row(
                             modifier = Modifier
@@ -381,7 +368,6 @@ fun MultiSelectionBottomSheet(
                         }
                     }
                     
-                    // Row 3: Add to Playlist, Delete
                     item {
                         Row(
                             modifier = Modifier
@@ -457,7 +443,6 @@ private fun StackedAlbumArts(
     val imageSize = 66.dp
     val overlap = 33.dp
     val borderWidth = 3.dp
-    // Use surfaceContainerLow as it matches the bottom sheet background
     val borderColor = MaterialTheme.colorScheme.surfaceContainerLow
     
     Box(
@@ -472,10 +457,8 @@ private fun StackedAlbumArts(
                     .offset { IntOffset(offsetX.dp.roundToPx(), 0) }
                     .zIndex((songs.size - index).toFloat())
                     .size(imageSize)
-                    // "Border" created by background color
                     .background(borderColor, CircleShape)
             ) {
-                // Inner image, inset by border width
                 Box(
                     modifier = Modifier
                         .matchParentSize()

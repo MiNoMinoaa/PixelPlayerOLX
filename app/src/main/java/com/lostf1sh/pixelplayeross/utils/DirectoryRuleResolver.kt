@@ -10,8 +10,6 @@ class DirectoryRuleResolver(
     allowed: Set<String>,
     blocked: Set<String>
 ) {
-    // Normalize paths: remove trailing slashes to ensure consistent matching
-    // We assume paths are absolute and start with /
     private val allowedRoots = allowed.mapNotNull { normalize(it) }.toSet()
     private val blockedRoots = blocked.mapNotNull { normalize(it) }.toSet()
 
@@ -20,10 +18,6 @@ class DirectoryRuleResolver(
     fun isBlocked(path: String): Boolean {
         if (!hasRules) return false
         
-        // Logic: Find the most specific (longest) rule that matches the path.
-        // If the longest matching rule is a "blocked" rule, then it's blocked.
-        // If it's an "allowed" rule (nesting exception), or no rule matches, it's allowed.
-
         var deepestBlockLen = -1
         var deepestAllowLen = -1
 
@@ -35,8 +29,6 @@ class DirectoryRuleResolver(
             }
         }
 
-        // Optimization: If no block rule matches, we don't need to check allow rules
-        // (unless we deny by default, but here default is allow)
         if (deepestBlockLen == -1) return false
 
         for (root in allowedRoots) {
@@ -57,8 +49,6 @@ class DirectoryRuleResolver(
 
     private fun isParentOrSame(root: String, path: String): Boolean {
         if (!path.startsWith(root, ignoreCase = true)) return false
-        // It starts with root. Check if it's exactly root or a subdirectory (slash after root)
-        // Check needs to safeguard bounds
         if (path.length == root.length) return true
         return path[root.length] == '/'
     }

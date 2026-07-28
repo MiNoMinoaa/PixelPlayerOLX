@@ -82,13 +82,11 @@ fun PlaylistBottomSheet(
     val selectedPlaylists = remember {
         mutableStateMapOf<String, Boolean>().apply {
             if (songs.size == 1) {
-                // Single song: pre-select playlists containing it
                 val songId = songs.first().id
                 filteredPlaylists.forEach {
                     put(it.id, it.songIds.contains(songId))
                 }
             } else {
-                // Multiple songs: start empty (additive only)
                 filteredPlaylists.forEach {
                     put(it.id, false)
                 }
@@ -106,7 +104,7 @@ fun PlaylistBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        contentWindowInsets = { BottomSheetDefaults.modalWindowInsets } // Handle insets such as the keyboard
+        contentWindowInsets = { BottomSheetDefaults.modalWindowInsets }
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             val playlistCreatedToast = stringResource(R.string.playlist_created_songs_added_toast)
@@ -166,7 +164,6 @@ fun PlaylistBottomSheet(
                         start = 10.dp,
                         end = 10.dp
                     ),
-                    //currentPage = pagerState.currentPage,
                     onMainActionClick = {
                         showCreatePlaylistDialog = true
                     },
@@ -193,7 +190,7 @@ fun PlaylistBottomSheet(
                     navController = null,
                     playerViewModel = playerViewModel,
                     isAddingToPlaylist = true,
-                    currentSong = songs.firstOrNull() ?: Song.emptySong(), // Fallback safe
+                    currentSong = songs.firstOrNull() ?: Song.emptySong(),
                     filteredPlaylists = filteredPlaylists,
                     selectedPlaylists = selectedPlaylists
                 )
@@ -202,10 +199,9 @@ fun PlaylistBottomSheet(
                     CreatePlaylistDialogRedesigned(
                         onDismiss = { showCreatePlaylistDialog = false },
                         onCreate = { name ->
-                            // Pass all selected songs to the new playlist
                             playlistViewModel.createPlaylist(name, songIds = songs.map { it.id })
                             showCreatePlaylistDialog = false
-                            onDismiss() // Close sheet after creation + add
+                            onDismiss()
                             playerViewModel.sendToast(playlistCreatedToast)
                         }
                     )
@@ -230,7 +226,6 @@ fun PlaylistBottomSheet(
                             currentPlaylistId
                         )
                     } else {
-                         // Batch add
                          val selectedPlaylistIds = selectedPlaylists.filter { it.value }.keys.toList()
                          if (selectedPlaylistIds.isNotEmpty()) {
                              playlistViewModel.addSongsToPlaylists(

@@ -6,7 +6,7 @@ import androidx.compose.runtime.Immutable
 data class Genre(
     val id: String,
     val name: String,
-    val iconResId: Int? = null, // Optional: For a Material symbol or drawable
+    val iconResId: Int? = null,
     val lightColorHex: String? = null,
     val onLightColorHex: String? = null,
     val darkColorHex: String? = null,

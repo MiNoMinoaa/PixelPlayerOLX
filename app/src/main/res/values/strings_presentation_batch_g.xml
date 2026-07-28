@@ -241,7 +241,6 @@ Backslash (\) can be used to escape character delimiters.</string>
     <string name="presentation_batch_g_lyrics_offset_plus_point_one">+.1</string>
     <string name="presentation_batch_g_lyrics_offset_plus_half">+.5</string>
     <string name="presentation_batch_g_lyrics_offset_zero">0s</string>
-    <!-- Formatted with getString(..., floatSeconds) -->
     <string name="presentation_batch_g_lyrics_offset_seconds_fmt">%1$+.1fs</string>
     <string name="presentation_batch_g_genre_sort_title">Sort &amp; Play</string>
     <string name="presentation_batch_g_genre_sort_shuffle">Shuffle</string>

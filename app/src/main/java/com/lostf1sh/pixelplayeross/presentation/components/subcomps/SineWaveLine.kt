@@ -45,7 +45,6 @@ fun SineWaveLine(
 ) {
     val density = LocalDensity.current
 
-    // Only allocate an infinite transition when animation is enabled.
     val currentPhase = if (animate == true) {
         val infiniteTransition = rememberInfiniteTransition(label = "SineWaveAnimation")
         val animatedPhase by infiniteTransition.animateFloat(
@@ -67,20 +66,16 @@ fun SineWaveLine(
         val h = size.height
         val centerY = h / 2f
 
-        // Convert dp to px inside the draw scope for efficiency
         val strokePx = with(density) { strokeWidth.toPx() }
         val ampPx = with(density) { amplitude.toPx() }
 
         if (w <= 0f || samples < 2) return@Canvas
 
-        // Build the sine path using the current phase (animated or static)
         val path = Path().apply {
             val step = w / (samples - 1)
-            // Use currentPhase for the starting point
             moveTo(0f, centerY + (ampPx * sin(currentPhase)))
             for (i in 1 until samples) {
                 val x = i * step
-                // theta runs 0..(2π * waves)
                 val theta = (x / w) * (2f * PI.toFloat() * waves) + currentPhase
                 val y = centerY + ampPx * sin(theta)
                 lineTo(x, y)

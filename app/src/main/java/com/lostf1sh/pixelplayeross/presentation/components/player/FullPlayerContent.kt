@@ -198,8 +198,7 @@ fun FullPlayerContent(
     carouselStyle: String,
     loadingTweaks: FullPlayerLoadingTweaks,
     isSheetDragGestureActive: Boolean = false,
-    playerViewModel: PlayerViewModel, // For stable state like totalDuration and lyrics
-    // State Providers
+    playerViewModel: PlayerViewModel,
     currentPositionProvider: () -> Long,
     isPlayingProvider: () -> Boolean,
     playWhenReadyProvider: () -> Boolean,
@@ -208,9 +207,7 @@ fun FullPlayerContent(
     isShuffleEnabledProvider: () -> Boolean,
     totalDurationProvider: () -> Long,
     lyricsProvider: () -> Lyrics? = { null }, 
-    // State
     isOutputConnecting: Boolean = false,
-    // Event Handlers
     onPlayPause: () -> Unit,
     onSeek: (Long) -> Unit,
     onNext: () -> Unit,
@@ -231,16 +228,13 @@ fun FullPlayerContent(
         }
     }
 
-    val song = currentSong ?: retainedSong ?: return // Keep the player visible while transitioning
+    val song = currentSong ?: retainedSong ?: return
     var showSongInfoBottomSheet by remember { mutableStateOf(false) }
     var showLyricsSheet by remember { mutableStateOf(false) }
     var showArtistPicker by rememberSaveable { mutableStateOf(false) }
     
     val lyricsSearchUiState by playerViewModel.lyricsSearchUiState.collectAsStateWithLifecycle()
 
-    // Single subscription — replaces 11 independent collectAsStateWithLifecycle calls.
-    // distinctUntilChanged in the ViewModel ensures this only emits when something
-    // actually changed, batching multiple rapid updates into one recomposition.
     val fullPlayerSlice by playerViewModel.fullPlayerSlice.collectAsStateWithLifecycle()
     val currentSongArtists = fullPlayerSlice.currentSongArtists
     val lyricsSyncOffset = fullPlayerSlice.lyricsSyncOffset
@@ -299,8 +293,6 @@ fun FullPlayerContent(
         }
     )
 
-    // totalDurationValue is derived from stablePlayerState, so it's fine.
-    // OPTIMIZATION: Use passed provider instead of collecting flow
     val totalDurationValue = totalDurationProvider()
 
     val playerOnBaseColor = LocalMaterialTheme.current.onPrimaryContainer
@@ -321,14 +313,11 @@ fun FullPlayerContent(
         LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
 
-    // Logic for the Lyrics button in the expanded player
     val onLyricsClick = {
         val lyrics = lyricsProvider()
         if (lyrics?.synced.isNullOrEmpty() && lyrics?.plain.isNullOrEmpty()) {
-            // If there are no lyrics, show the dialog to search
             showFetchLyricsDialog = true
         } else {
-            // If there are lyrics, show the sheet directly
             showLyricsSheet = true
         }
     }
@@ -341,9 +330,8 @@ fun FullPlayerContent(
         ) {
             FetchLyricsDialog(
                 uiState = lyricsSearchUiState,
-                currentSong = song, // Use 'song' which is derived from args/retained
+                currentSong = song,
                 onConfirm = { forcePick ->
-                    // The user confirms, start the search
                     playerViewModel.fetchLyricsForCurrentSong(forcePick)
                 },
                 onPickResult = { result ->
@@ -353,7 +341,6 @@ fun FullPlayerContent(
                     playerViewModel.searchLyricsManually(title, artist)
                 },
                 onDismiss = {
-                    // The user cancels or closes the dialog
                     showFetchLyricsDialog = false
                     playerViewModel.resetLyricsSearchState()
                 },
@@ -364,7 +351,6 @@ fun FullPlayerContent(
         }
     }
 
-    // Observer to react to the lyrics search result
     LaunchedEffect(lyricsSearchUiState) {
         when (val state = lyricsSearchUiState) {
             is LyricsSearchUiState.Success -> {
@@ -614,7 +600,6 @@ fun FullPlayerContent(
 
             awaitEachGesture {
                 val down = awaitFirstDown(requireUnconsumed = false)
-                // Check condition AFTER the down event occurs
                 val isFullyExpanded = currentSheetState == PlayerSheetState.EXPANDED && expansionFractionProvider() >= 0.99f
 
                 if (!isFullyExpanded) {
@@ -624,11 +609,9 @@ fun FullPlayerContent(
                 val bottomGestureBoundaryY =
                     (size.height.toFloat() - queueGestureBottomExclusionPx).coerceAtLeast(0f)
                 if (down.position.y >= bottomGestureBoundaryY) {
-                    // Let the system Home/back gesture win near the bottom edge.
                     return@awaitEachGesture
                 }
 
-                // Proceed with gesture logic
                 var dragConsumedByQueue = false
                 val velocityTracker = VelocityTracker()
                 var totalDrag = 0f
@@ -658,13 +641,11 @@ fun FullPlayerContent(
                     totalDrag < -(queueDragActivationThresholdPx * 2f) &&
                     velocity < quickFlickVelocityThreshold
                 ) {
-                    // Treat short/fast upward flick as queue-open intent.
                     onQueueRelease(totalDrag, velocity)
                 }
             }
         },
         topBar = {
-            // MD3: TopAppBar slides in for portrait; slides up and fades out for landscape
             AnimatedVisibility(
                 visible = !isLandscape,
                 enter = fadeIn(animationSpec = tween(350, easing = FastOutSlowInEasing)) +
@@ -681,7 +662,6 @@ fun FullPlayerContent(
                 TopAppBar(
                     modifier = Modifier.graphicsLayer {
                         val fraction = expansionFractionProvider()
-                        // TopBar should always fade in smoothly, ignoring delayAll to avoid empty UI
                         val startThreshold = 0f
                         val endThreshold = 1f
                         alpha = ((fraction - startThreshold) / (endThreshold - startThreshold)).coerceIn(0f, 1f)
@@ -718,13 +698,10 @@ fun FullPlayerContent(
                     navigationIcon = {
                         Box(
                             modifier = Modifier
-                                // Total width = 14dp of padding + 42dp of the button
                                 .width(56.dp)
                                 .height(42.dp),
-                            // 2. Align the content (the button) to the end (right) and centered vertically
                             contentAlignment = Alignment.CenterEnd
                         ) {
-                            // 3. Your original circular button, unchanged
                             Box(
                                 modifier = Modifier
                                     .size(42.dp)
@@ -748,7 +725,6 @@ fun FullPlayerContent(
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Queue Button — full circle, matching the collapse button
                             Box(
                                 modifier = Modifier
                                     .size(42.dp)
@@ -772,7 +748,6 @@ fun FullPlayerContent(
             }
         }
     ) { paddingValues ->
-        // MD3: on orientation change, start at alpha=0 then fade in the new layout to avoid measuring both layouts at once and causing misalignment
         var contentVisible by remember(isLandscape) { mutableStateOf(false) }
         LaunchedEffect(isLandscape) { contentVisible = true }
         val contentAlpha by animateFloatAsState(
@@ -892,11 +867,6 @@ private fun FullPlayerAlbumCoverSection(
 ) {
     val shouldDelay = loadingTweaks.delayAll || loadingTweaks.delayAlbumCarousel
     val shouldApplyPausedScale = !isPlayingProvider() && !playWhenReadyProvider()
-    // Use a short deterministic tween instead of spring(StiffnessLow). The original
-    // spring took ~1s to settle, producing ~60 frames of graphicsLayer invalidations
-    // that overlapped with any subsequent sheet-collapse gesture. A 260 ms tween
-    // finishes well before the user can start the next gesture, keeping the album
-    // art's "pause squish" visible but removing the long tail of frame work.
     val albumArtScale by animateFloatAsState(
         targetValue = if (shouldApplyPausedScale) 0.95f else 1f,
         animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
@@ -1461,7 +1431,6 @@ private fun SongMetadataDisplaySection(
                 }
             }
         } else {
-            // Portrait Mode: Just the Lyrics button (Queue is in TopBar)
             FilledIconButton(
                 modifier = Modifier
                     .size(width = 48.dp, height = 48.dp),
@@ -1567,7 +1536,6 @@ private fun PlayerProgressBarSection(
     }
     val durationForCalc = displayDurationValue.coerceAtLeast(1L)
     
-    // Pass isVisible to rememberSmoothProgress
     val (smoothProgressState, _) = rememberSmoothProgress(
         isPlayingProvider = isPlayingProvider,
         currentPositionProvider = currentPositionProvider,
@@ -1578,21 +1546,15 @@ private fun PlayerProgressBarSection(
     )
 
     var sliderDragValue by remember { mutableStateOf<Float?>(null) }
-    // Held seek target (fraction) — mirrors PlayerSeekBar so the slider stays where the user
-    // dropped it until real playback catches up. Fraction-based so it survives duration drift.
     var targetSeekFraction by remember { mutableFloatStateOf(-1f) }
     var lastSeekFinishedTime by remember { mutableLongStateOf(0L) }
 
-    // Reset seek state on song change to avoid stale position from previous song.
     LaunchedEffect(songId) {
         sliderDragValue = null
         targetSeekFraction = -1f
         lastSeekFinishedTime = 0L
     }
 
-    // Release the held target once smooth progress catches up (within 4%) or after a 5 s
-    // safety net — same thresholds as the LyricsSheet PlayerSeekBar. Re-keying on songId
-    // restarts the snapshotFlow so the new song's progress drives the catch-up cleanly.
     LaunchedEffect(songId) {
         snapshotFlow { smoothProgressState.value }.collect { progress ->
             if (sliderDragValue != null) return@collect
@@ -1611,7 +1573,6 @@ private fun PlayerProgressBarSection(
         derivedStateOf { shouldRunRealtimeUpdates && isPlayingProvider() }
     }
 
-    // Always drive the thumb from smoothed progress to avoid visual jumps from 500ms raw ticks.
     val animatedProgressState = remember(smoothProgressState) {
         derivedStateOf {
             when {
@@ -1621,9 +1582,6 @@ private fun PlayerProgressBarSection(
             }
         }
     }
-
-    // No LaunchedEffect/snapshotFlow needed anymore. 
-    // smoothProgressState is already 60fps animated.
 
     val effectivePositionState = remember(durationForCalc, animatedProgressState, isVisible, displayDurationValue) {
         derivedStateOf {
@@ -1666,11 +1624,6 @@ private fun PlayerProgressBarSection(
                 .fillMaxWidth()
                 .heightIn(min = 70.dp)
         ) {
-            // Isolated Slider Component
-            // Wrapped in a Box with detectVerticalDragGestures to prevent the outer
-            // playerSheetVerticalDragGesture from intercepting slider touches. If the
-            // user's drag has a vertical component, the inner handler absorbs it (consuming
-            // the events) so the sheet-collapse gesture never activates in this area.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1698,7 +1651,6 @@ private fun PlayerProgressBarSection(
                 )
             }
 
-            // Isolated Time Labels
             EfficientTimeLabels(
                 positionState = effectivePositionState,
                 duration = displayDurationValue,
@@ -2029,16 +1981,10 @@ private fun PlayerSongInfo(
                 .fillMaxWidth()
             .graphicsLayer {
                 val fraction = expansionFractionProvider()
-                alpha = fraction // Or apply specific fade logic if desired
+                alpha = fraction
                 translationY = (1f - fraction) * 24f
             }
     ) {
-        // We pass 1f to AutoScrollingTextOnDemand because the alpha/translation is now handled by the parent Column graphicsLayer
-        // and we want it "fully rendered" but hidden/moved by the layer.
-        // Actually, AutoScrollingTextOnDemand uses expansionFraction to start scrolling only when fully expanded?
-        // Let's check AutoScrollingTextOnDemand. Assuming it uses it for scrolling trigger.
-        // If we want to avoid recomposition, we might need to pass the provider or just 1f if scrolling logic handles itself.
-        // For now, let's pass the current value from provider for logic correctness, but ideally this component should be optimized too.
         AutoScrollingTextOnDemand(
             text = title,
             style = titleStyle,
@@ -2153,19 +2099,19 @@ private fun MetadataPlaceholder(
             modifier = Modifier
                 .weight(1f)
                 .align(Alignment.CenterVertically),
-            verticalArrangement = Arrangement.spacedBy(6.dp) //2.dp
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             PlaceholderBox(
                 modifier = Modifier
                     .fillMaxWidth(0.72f)
-                    .height(27.dp), //30.dp
+                    .height(27.dp),
                 cornerRadius = 8.dp,
                 color = color
             )
             PlaceholderBox(
                 modifier = Modifier
                     .fillMaxWidth(0.46f)
-                    .height(17.dp), //20.dp
+                    .height(17.dp),
                 cornerRadius = 8.dp,
                 color = onColor
             )
@@ -2234,7 +2180,6 @@ private fun ProgressPlaceholder(
                 cornerRadius = 3.dp,
                 color = onColor.copy(alpha = 0.15f)
             )
-            // Keep active segment in the layout tree but invisible to avoid visual noise.
             PlaceholderBox(
                 modifier = Modifier
                     .fillMaxWidth(0.34f)
@@ -2243,7 +2188,6 @@ private fun ProgressPlaceholder(
                 cornerRadius = 3.dp,
                 color = color
             )
-            // Keep thumb slot aligned but fully transparent.
             PlaceholderBox(
                 modifier = Modifier
                     .padding(start = 92.dp)

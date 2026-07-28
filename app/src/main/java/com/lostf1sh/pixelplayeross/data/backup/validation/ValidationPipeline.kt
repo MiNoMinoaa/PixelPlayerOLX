@@ -33,7 +33,6 @@ class ValidationPipeline @Inject constructor(
     ): BackupValidationResult {
         val errors = mutableListOf<ValidationError>()
 
-        // Checksum verification (if manifest available)
         if (manifest != null && !manifestValidator.verifyChecksum(section.key, payload, manifest)) {
             errors.add(ValidationError(
                 "CHECKSUM_MISMATCH",
@@ -43,7 +42,6 @@ class ValidationPipeline @Inject constructor(
             return BackupValidationResult.Invalid(errors)
         }
 
-        // Schema validation
         val schemaResult = moduleSchemaValidator.validate(section, payload)
         if (schemaResult is BackupValidationResult.Invalid) {
             errors.addAll(schemaResult.errors)

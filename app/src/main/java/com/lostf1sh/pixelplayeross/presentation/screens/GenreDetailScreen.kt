@@ -84,8 +84,6 @@ import kotlin.math.roundToInt
 import androidx.compose.ui.res.stringResource
 import kotlinx.collections.immutable.toImmutableList
 
-// --- Data Models & Helpers ---
-
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -103,7 +101,6 @@ fun GenreDetailScreen(
     val playlistUiState by playlistViewModel.uiState.collectAsStateWithLifecycle()
     val libraryGenres by playerViewModel.genres.collectAsStateWithLifecycle()
     
-    // Defer heavy list rendering until navigation transition settles
     var isTransitionFinished by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         kotlinx.coroutines.delay(300)
@@ -118,7 +115,7 @@ fun GenreDetailScreen(
 
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val systemNavBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val minTopBarHeight = 58.dp + statusBarHeight // Reduced by 6dp from 64.dp
+    val minTopBarHeight = 58.dp + statusBarHeight
     val maxTopBarHeight = 200.dp
     val minTopBarHeightPx = with(density) { minTopBarHeight.toPx() }
     val maxTopBarHeightPx = with(density) { maxTopBarHeight.toPx() }
@@ -142,7 +139,6 @@ fun GenreDetailScreen(
                 val delta = available.y
                 val isScrollingDown = delta < 0
 
-                // If scrolling up (content going down) and list is not at top, don't expand yet
                 if (!isScrollingDown && (lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 0)) {
                     return Offset.Zero
                 }
@@ -155,7 +151,6 @@ fun GenreDetailScreen(
                     coroutineScope.launch { topBarHeight.snapTo(newHeight) }
                 }
 
-                // Make sure we consume scroll only if we actually resized the bar
                 val canConsumeScroll = !(isScrollingDown && newHeight == minTopBarHeightPx)
                 return if (canConsumeScroll) Offset(0f, consumed) else Offset.Zero
             }
@@ -163,13 +158,11 @@ fun GenreDetailScreen(
             override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
                 val currentHeight = topBarHeight.value
                 if (currentHeight > minTopBarHeightPx && currentHeight < maxTopBarHeightPx) {
-                    // Decide target based on proximity and velocity
                     val targetHeight = if (available.y > 500f) {
-                        maxTopBarHeightPx // Flinging down -> Expand
+                        maxTopBarHeightPx
                     } else if (available.y < -500f) {
-                        minTopBarHeightPx // Flinging up -> Collapse
+                        minTopBarHeightPx
                     } else {
-                        // Snap to nearest
                         if (currentHeight > (minTopBarHeightPx + maxTopBarHeightPx) / 2) maxTopBarHeightPx else minTopBarHeightPx
                     }
                     
@@ -185,7 +178,6 @@ fun GenreDetailScreen(
         }
     }
 
-    // Colors
     val defaultContainer = MaterialTheme.colorScheme.surfaceVariant
     val defaultOnContainer = MaterialTheme.colorScheme.onSurfaceVariant
     val themeGenre = uiState.genre
@@ -207,8 +199,6 @@ fun GenreDetailScreen(
     val startColor = themeColor.container
     val contentColor = themeColor.onContainer
     
-    // Optimization: Calculate a fast display name for the title while the full Genre object is loading.
-    // This prevents the "Genre" placeholder from flashing during the navigation transition.
     val initialDisplayName = remember(decodedGenreId) {
         decodedGenreId
             .replace("_", " ")
@@ -232,7 +222,6 @@ fun GenreDetailScreen(
     val toastAddedToQueue = stringResource(R.string.toast_added_to_queue)
     val toastPlayingNext = stringResource(R.string.toast_playing_next)
 
-    // FAB Logic
     var showSortSheet by remember { mutableStateOf(false) }
     var showSongOptionsSheet by remember { mutableStateOf<Song?>(null) }
     var showPlaylistBottomSheet by remember { mutableStateOf(false) }
@@ -253,10 +242,8 @@ fun GenreDetailScreen(
         label = "fabPadding"
     )
 
-    // Capture Neutral Colors from the App Theme (before overriding)
     val baseColorScheme = MaterialTheme.colorScheme
 
-    // Dynamic Theme
     val genreColorScheme = remember(themeGenre, decodedGenreId, darkMode, genrePaletteStyle) {
         com.lostf1sh.pixelplayeross.ui.theme.GenreThemeUtils.getGenreDetailColorScheme(
             genre = themeGenre,
@@ -271,18 +258,14 @@ fun GenreDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .nestedScroll(nestedScrollConnection)
-                .background(MaterialTheme.colorScheme.background) // Uses new theme background
+                .background(MaterialTheme.colorScheme.background)
         ) {
-            // Optimization: Cache Dp conversions
             val currentTopBarHeightDp = with(density) { topBarHeight.value.toDp() }
 
-            // Optimization: Use fixed padding and offset instead of dynamic contentPadding 
-            // to avoid triggered remeasures of the entire list on every pixel of scroll.
-            
             LazyColumn(
                 state = lazyListState,
                 contentPadding = PaddingValues(
-                    top = minTopBarHeight + 8.dp, // FIXED padding
+                    top = minTopBarHeight + 8.dp,
                     start = 8.dp,
                     end = if (showScrollBar) 24.dp else 8.dp,
                     bottom = fabBottomPadding + 148.dp
@@ -290,13 +273,10 @@ fun GenreDetailScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .offset {
-                        // Offset the entire list down by the current "expansion" of the top bar
                         val extraHeight = (topBarHeight.value - minTopBarHeightPx).roundToInt()
                         IntOffset(0, extraHeight)
                     }
             ) {
-                // Optimization: Limit rendered items during the navigation transition 
-                // to ensure the slide-in animation remains smooth.
                 val displayItems = if (isTransitionFinished || uiState.flattenedItems.size < 20) {
                     uiState.flattenedItems
                 } else {
@@ -306,7 +286,7 @@ fun GenreDetailScreen(
                 items(
                     items = displayItems,
                     key = { it.key },
-                    contentType = { it::class } // CRITICAL: Content type for optimized recycling
+                    contentType = { it::class }
                 ) { item ->
                     when (item) {
                         is GenreDetailListItem.ArtistHeader -> {
@@ -356,22 +336,19 @@ fun GenreDetailScreen(
                 }
             }
 
-            // Only show scrollbar when the top bar is mostly collapsed to avoid visual conflict
             if (showScrollBar) {
                 ExpressiveScrollBar(
                     listState = lazyListState,
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
                         .padding(
-                            top = minTopBarHeight + 12.dp, // Stable padding for performance
-                            bottom = fabBottomPadding + 112.dp // Stable padding
+                            top = minTopBarHeight + 12.dp,
+                            bottom = fabBottomPadding + 112.dp
                         ),
                     dragLabelProvider = genreFastScrollLabelProvider
                 )
             }
 
-            // Collapsible Top Bar with Gradient (On Top of List, High Z-Index)
-            // This ensures the gradient is ON TOP of the scrolling content, so content scrolls BEHIND it.
             GenreCollapsibleTopBar(
                 title = genreDisplayName,
                 collapseFraction = collapseFraction,
@@ -383,12 +360,11 @@ fun GenreDetailScreen(
                 collapsedContentColor = MaterialTheme.colorScheme.onSurface
             )
         
-            // FAB
             Box(
                  modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(bottom = fabBottomPadding + 26.dp, end = 16.dp)
-                    .zIndex(10f) // Ensure FAB is above everything
+                    .zIndex(10f)
             ) {
                  MediumFloatingActionButton(
                     onClick = { showSortSheet = true },
@@ -404,7 +380,6 @@ fun GenreDetailScreen(
                 }
             }
         
-            // Sorting/Options Bottom Sheet
             if (showSortSheet) {
                 GenreSortBottomSheet(
                     onDismiss = { showSortSheet = false },
@@ -446,8 +421,6 @@ fun GenreDetailScreen(
                 )
             }
 
-            // Quick Fill Dialog
-            // QuickFillDialog with Base Theme (Independent of Genre Theme)
             MaterialTheme(colorScheme = baseColorScheme) {
                 QuickFillDialog(
                     visible = showQuickFillDialog,
@@ -465,7 +438,6 @@ fun GenreDetailScreen(
                 )
             }
         
-            // Song Options Bottom Sheet
             showSongOptionsSheet?.let { song ->
                 val isFavorite = favoriteSongIds.contains(song.id)
 
@@ -555,13 +527,12 @@ fun GenreDetailScreen(
                         playlistUiState = playlistUiState,
                         songs = persistentListOf(song),
                         onDismiss = { showPlaylistBottomSheet = false },
-                        bottomBarHeight = 0.dp, // Or calculate if needed
+                        bottomBarHeight = 0.dp,
                         playerViewModel = playerViewModel
                     )
                 }
             }
         
-            // Loading/Error States
             if (uiState.isLoadingSongs) {
                 ContainedLoadingIndicator(modifier = Modifier.align(Alignment.Center))
             }
@@ -614,7 +585,6 @@ private fun GenreDetailListItem.fastScrollLabel(sortOption: SortOption): String?
         }
     }
 
-// --- Top Bar Component ---
 @Composable
 fun GenreCollapsibleTopBar(
     title: String,
@@ -633,10 +603,8 @@ fun GenreCollapsibleTopBar(
         fraction = solidAlpha
     )
 
-    // Optimization: Pre-calculate alpha values
     val gradientAlpha = 0.8f * (1f - solidAlpha)
     
-    // Optimization: Reuse gradient brush to avoid allocation on every pixel scroll
     val verticalGradient = remember(startColor, gradientAlpha) {
         Brush.verticalGradient(
             colors = listOf(
@@ -691,10 +659,6 @@ fun GenreCollapsibleTopBar(
     }
 }
 
-
-// --- Section Extensions ---
-
-// --- Item Composables for Flattened List ---
 
 @Composable
 fun GenreArtistHeader(
@@ -866,7 +830,6 @@ fun GenreSongItemWrapper(
     val isLastAlbumInSection = item.isLastAlbumInSection
     val useArtistStyle = item.useArtistStyle
 
-    // Optimization: Cache shapes to avoid reallocation during scroll
     val songItemShape = remember(isFirstInAlbum, isLastInAlbum) {
         when {
             isFirstInAlbum && isLastInAlbum -> RoundedCornerShape(16.dp)
@@ -899,7 +862,6 @@ fun GenreSongItemWrapper(
         Column {
             if (!isFirstInAlbum) Spacer(Modifier.height(2.dp))
             
-            // Optimization: De-reference stable state values to avoid observing the whole object
             val isCurrent = stablePlayerState.currentSong?.id == song.id
             val isPlaying = stablePlayerState.isPlaying
 

@@ -84,12 +84,10 @@ import kotlin.math.sign
 import kotlin.math.sqrt
 import kotlin.random.Random
 
-// --- Data Models ---
-
 enum class BrickType {
     Normal,
     Hard,
-    Solid // Unbreakable
+    Solid
 }
 
 private data class BrickState(
@@ -106,15 +104,13 @@ private data class Particle(
     val color: Color,
     val radius: Float,
     val alpha: Float = 1f,
-    val life: Float = 1.0f // 1.0 to 0.0
+    val life: Float = 1.0f
 )
 
 private const val EasterEggPrefsName = "pixelplayer_easter_egg"
 private const val EasterEggHighScoreKey = "brick_breaker_high_score"
 private const val FixedPhysicsStepSeconds = 1f / 180f
 private const val MaxPhysicsStepsPerFrame = 8
-
-// --- Composable ---
 
 @Composable
 fun BrickBreakerOverlay(
@@ -132,14 +128,11 @@ fun BrickBreakerOverlay(
         context.getSharedPreferences(EasterEggPrefsName, Context.MODE_PRIVATE)
     }
 
-    // Game Physics Constants
     val baseBallVelocity = 800f
 
-    // Game State
     var areaSize by remember { mutableStateOf(IntSize.Zero) }
     var paddleX by remember { mutableFloatStateOf(0f) }
 
-    // Dynamic Difficulty Props
     var level by remember { mutableIntStateOf(1) }
     var currentSpeedMult by remember { mutableFloatStateOf(1f) }
     var paddleWidthPx by remember { mutableFloatStateOf(0f) }
@@ -164,7 +157,6 @@ fun BrickBreakerOverlay(
     val bricks = remember { mutableStateListOf<BrickState>() }
     val particles = remember { mutableStateListOf<Particle>() }
 
-    // Initialization of dimensions
     LaunchedEffect(areaSize) {
         if (areaSize != IntSize.Zero && paddleWidthPx == 0f) {
             paddleWidthPx = areaSize.width * 0.25f
@@ -220,7 +212,6 @@ fun BrickBreakerOverlay(
         bricks.clear()
         particles.clear()
 
-        // Difficulty scaling
         currentSpeedMult = 1f + (lvl - 1) * 0.1f
         val widthFactor = (0.25f - (lvl * 0.02f)).coerceAtLeast(0.10f)
         paddleWidthPx = areaSize.width * widthFactor
@@ -233,7 +224,6 @@ fun BrickBreakerOverlay(
         val totalPaddingX = padding * (cols + 1)
         val brickWidth = max((areaSize.width - totalPaddingX) / cols, 10f)
 
-        // Generate grid
         for (row in 0 until rows) {
             for (col in 0 until cols / 2) {
                 val shouldSkip = Random.nextFloat() < (0.1f * (lvl * 0.5f)).coerceAtMost(0.3f)
@@ -249,14 +239,12 @@ fun BrickBreakerOverlay(
 
                     val hits = if (type == BrickType.Hard) 2 else 1
 
-                    // Distinct Material 3 Colors
                     val baseColor = when(type) {
                         BrickType.Solid -> colorScheme.outlineVariant
                         BrickType.Hard -> colorScheme.secondary
                         else -> colorScheme.primaryContainer
                     }
 
-                    // Left Side Brick
                     val leftX = padding + col * (brickWidth + padding)
                     val topY = topOffset + row * (brickHeight + padding)
 
@@ -268,7 +256,6 @@ fun BrickBreakerOverlay(
                         color = baseColor
                     ))
 
-                    // Right Side Mirror Brick
                     val mirrorCol = cols - 1 - col
                     val mirrorLeftX = padding + mirrorCol * (brickWidth + padding)
 
@@ -321,7 +308,6 @@ fun BrickBreakerOverlay(
                 resetGame(true)
                 isInitialized = true
             } else {
-                // Resize logic: update paddle constraints without resetting game progress
                 val widthFactor = (0.25f - (level * 0.02f)).coerceAtLeast(0.10f)
                 paddleWidthPx = areaSize.width * widthFactor
                 paddleX = paddleX.coerceIn(0f, areaSize.width - paddleWidthPx)
@@ -333,7 +319,6 @@ fun BrickBreakerOverlay(
         }
     }
 
-    // Game Loop
     LaunchedEffect(ballLaunched, hasWon, isGameOver, areaSize) {
         if (areaSize == IntSize.Zero || isGameOver || hasWon) return@LaunchedEffect
 
@@ -501,7 +486,6 @@ fun BrickBreakerOverlay(
         }
     }
 
-    // --- UI Structure ---
     Surface(
         modifier = modifier.fillMaxSize(),
         color = colorScheme.surface
@@ -509,8 +493,6 @@ fun BrickBreakerOverlay(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            // ... (Header and Stats logic remains similar) ...
-            // 1. Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -569,7 +551,6 @@ fun BrickBreakerOverlay(
                 }
             }
 
-            // 2. Stats Dashboard
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -604,13 +585,12 @@ fun BrickBreakerOverlay(
                 }
             }
 
-            // 3. Game Area
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
                     .padding(16.dp)
-                    .clip(RoundedCornerShape(24.dp)) // Uniform radius
+                    .clip(RoundedCornerShape(24.dp))
                     .background(colorScheme.surfaceContainerLow)
                     .onSizeChanged { areaSize = it }
             ) {
@@ -653,14 +633,12 @@ fun BrickBreakerOverlay(
                     val paddleTop = areaSize.height - paddleBottomInset - paddleHeightPx
                     val paddleRect = Rect(paddleX, paddleTop, paddleX + paddleWidthPx, paddleTop + paddleHeightPx)
 
-                    // Draw Bricks
                     bricks.forEach { brick ->
                         if (brick.hitsRemaining > 0 || brick.type == BrickType.Solid) {
                             drawBrick(brick)
                         }
                     }
                     
-                    // Draw Particles
                     particles.forEach { p ->
                         drawCircle(
                             color = p.color.copy(alpha = p.alpha * p.life),
@@ -669,7 +647,6 @@ fun BrickBreakerOverlay(
                         )
                     }
 
-                    // Draw Paddle (Flat, Pill Shape)
                     drawRoundRect(
                         color = colorScheme.primary,
                         topLeft = paddleRect.topLeft,
@@ -677,7 +654,6 @@ fun BrickBreakerOverlay(
                         cornerRadius = CornerRadius(paddleRect.height / 2, paddleRect.height / 2)
                     )
 
-                    // Draw Ball
                     drawCircle(
                         color = colorScheme.onSurface,
                         radius = ballRadius,
@@ -685,7 +661,6 @@ fun BrickBreakerOverlay(
                     )
                 }
 
-                // ... (Overlays remain same) ...
                  if (!hasGameStarted) {
                     PreLaunchMenu(
                         highScore = highScore,
@@ -787,7 +762,6 @@ fun BrickBreakerOverlay(
                 }
             }
             
-            // Dynamic Bottom Section
              if (isMiniPlayerVisible) {
                 Spacer(Modifier.height(MiniPlayerHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 8.dp))
             } else {
@@ -824,8 +798,6 @@ fun BrickBreakerOverlay(
         }
     }
 }
-
-// --- Helper Components & Extensions ---
 
 @Composable
 private fun GameStat(label: String, value: String, isLives: Boolean = false) {
@@ -927,7 +899,6 @@ private fun PreLaunchMenu(
 private fun DrawScope.drawBrick(brick: BrickState) {
     val cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx())
 
-    // Solid Flat Color
     drawRoundRect(
         color = brick.color,
         topLeft = brick.rect.topLeft,
@@ -936,7 +907,6 @@ private fun DrawScope.drawBrick(brick: BrickState) {
     )
 
     if (brick.type == BrickType.Solid) {
-        // Simple subtle logic for solid bricks to distinguish them
          drawCircle(
             color = Color.Black.copy(alpha = 0.2f),
             radius = 4.dp.toPx(),

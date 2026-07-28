@@ -11,15 +11,12 @@ import timber.log.Timber
 class ReleaseTree : Timber.Tree() {
     
     override fun isLoggable(tag: String?, priority: Int): Boolean {
-        // Only log WARN and above in release builds
         return priority >= Log.WARN
     }
     
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
-        // Skip if not loggable (redundant but explicit)
         if (priority < Log.WARN) return
         
-        // Use Android's Log directly (stripped in release by R8 if configured)
         when (priority) {
             Log.WARN -> Log.w(tag, message, t)
             Log.ERROR -> Log.e(tag, message, t)

@@ -170,17 +170,15 @@ class MainActivity : ComponentActivity() {
     private var isUIVisiblyReady = false
     private var mediaControllerFuture: ListenableFuture<MediaController>? = null
     @Inject
-    lateinit var userPreferencesRepository: UserPreferencesRepository // Inject here
+    lateinit var userPreferencesRepository: UserPreferencesRepository
     @Inject
     lateinit var themePreferencesRepository: ThemePreferencesRepository
     @Inject
     lateinit var syncManager: SyncManager
-    // For handling shortcut navigation - using StateFlow so composables can observe changes
     private val _pendingPlaylistNavigation = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
     private val _pendingShuffleAll = kotlinx.coroutines.flow.MutableStateFlow(false)
 
     private val requestAllFilesAccessLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { _ ->
-        // Handle the result in onResume
     }
 
     @OptIn(ExperimentalPermissionsApi::class)
@@ -202,11 +200,8 @@ class MainActivity : ComponentActivity() {
         }
         super.onCreate(savedInstanceState)
 
-        // MD3 Optimization: Release Splash Screen immediately to render UI skeleton.
-        // Data loading is handled via optimistic UI and smooth transitions.
         splashScreen.setKeepOnScreenCondition { false }
 
-        // READ BENCHMARK SIGNAL
         val isBenchmarkMode = intent.getBooleanExtra("is_benchmark", false)
         val shouldBenchmarkRebuildDatabase =
             isBenchmarkMode && intent.getBooleanExtra("benchmark_rebuild_database", false)
@@ -233,11 +228,9 @@ class MainActivity : ComponentActivity() {
             }
             val isSetupComplete by mainViewModel.isSetupComplete.collectAsStateWithLifecycle()
             
-            // Crash report dialog state
             var showCrashReportDialog by remember { mutableStateOf(false) }
             var crashLogData by remember { mutableStateOf<CrashLogData?>(null) }
             
-            // Permissions Logic
             val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 listOf(Manifest.permission.READ_MEDIA_AUDIO, Manifest.permission.POST_NOTIFICATIONS)
             } else {
@@ -245,7 +238,6 @@ class MainActivity : ComponentActivity() {
             }
             @OptIn(ExperimentalPermissionsApi::class)
             val permissionState = rememberMultiplePermissionsState(permissions = permissions)
-            // Determine if we need to show Setup based on completion OR missing permissions
             val permissionsValid = permissionState.allPermissionsGranted
             val showSetupScreen = remember(isSetupComplete, permissionsValid, isBenchmarkMode) {
                 when {
@@ -255,7 +247,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // Sync Trigger: When we are NOT showing setup (meaning permissions are good and setup is done)
             LaunchedEffect(showSetupScreen) {
                 if (showSetupScreen == false) {
                      LogUtils.i(this, "Setup complete/skipped and permissions valid. Starting sync.")
@@ -263,7 +254,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // Check for crash log when app starts
             LaunchedEffect(Unit) {
                 if (!isBenchmarkMode && CrashHandler.hasCrashLog()) {
                     crashLogData = CrashHandler.getCrashLog()
@@ -282,7 +272,6 @@ class MainActivity : ComponentActivity() {
                 )
 
                 LaunchedEffect(Unit) {
-                    // Delay slightly to ensure first frame layout is done behind Splash
                     delay(100)
                     contentVisible = true
                 }
@@ -298,10 +287,8 @@ class MainActivity : ComponentActivity() {
                             targetState = showSetupScreen,
                             transitionSpec = {
                                 if (targetState) {
-                                    // Transition to Setup
                                     fadeIn(animationSpec = tween(400)) togetherWith fadeOut(animationSpec = tween(400))
                                 } else {
-                                    // Transition from Setup to Main App
                                     scaleIn(initialScale = 0.95f, animationSpec = tween(450)) + fadeIn(animationSpec = tween(450)) togetherWith
                                             slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(450)) + fadeOut(animationSpec = tween(450))
                                 }
@@ -310,7 +297,6 @@ class MainActivity : ComponentActivity() {
                         ) { shouldShowSetup ->
                             if (shouldShowSetup) {
                                 SetupScreen(onSetupComplete = {
-                                    // Repository-backed setup completion updates the gate automatically.
                                 })
                             } else {
                                 MainAppContent(playerViewModel, mainViewModel)
@@ -318,7 +304,6 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    // Show crash report dialog if needed
                     if (showCrashReportDialog && crashLogData != null) {
                         CrashReportDialog(
                             crashLog = crashLogData!!,
@@ -344,14 +329,12 @@ class MainActivity : ComponentActivity() {
         if (intent == null) return
 
         when {
-            // Handle shuffle all shortcut / tile
             intent.action == MainActivityIntentContract.ACTION_SHUFFLE_ALL -> {
                 Timber.tag("TileDebug").d("handleIntent: ACTION_SHUFFLE_ALL received")
                 playerViewModel.triggerShuffleAllFromTile()
-                intent.action = null // Clear action to prevent re-triggering
+                intent.action = null
             }
             
-            // Handle playlist shortcut
             intent.action == MainActivityIntentContract.ACTION_OPEN_PLAYLIST -> {
                 intent.getStringExtra(MainActivityIntentContract.EXTRA_PLAYLIST_ID)?.let { playlistId ->
                     _pendingPlaylistNavigation.value = playlistId
@@ -471,7 +454,6 @@ class MainActivity : ComponentActivity() {
         val hasCompletedInitialSync by mainViewModel.hasCompletedInitialSync.collectAsStateWithLifecycle()
         val syncProgress by mainViewModel.syncProgress.collectAsStateWithLifecycle()
 
-        // Surface a failed library sync to the user (the progress flow silently reverts to idle).
         val context = LocalContext.current
         LaunchedEffect(Unit) {
             mainViewModel.syncFailed.collect {
@@ -483,22 +465,18 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // isMediaControllerReady used below for playlist navigation gate
         val isMediaControllerReady by playerViewModel.isMediaControllerReady.collectAsStateWithLifecycle()
         
-        // Observe pending playlist navigation
         val pendingPlaylistNav by _pendingPlaylistNavigation.collectAsStateWithLifecycle()
         var processedPlaylistId by remember { mutableStateOf<String?>(null) }
         
         LaunchedEffect(pendingPlaylistNav, isMediaControllerReady) {
             val playlistId = pendingPlaylistNav
-            // Only process if we have a new playlist ID that hasn't been processed yet
             if (playlistId != null && playlistId != processedPlaylistId && isMediaControllerReady) {
                 processedPlaylistId = playlistId
-                // Wait for navigation graph to be ready (retry with delay)
                 var success = false
                 var attempts = 0
-                while (!success && attempts < 50) { // 5 seconds max
+                while (!success && attempts < 50) {
                     try {
                         success = navController.navigateSafely(Screen.PlaylistDetail.createRoute(playlistId))
                         if (success) {
@@ -513,38 +491,24 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             } else if (playlistId == null) {
-                // Reset so the same playlist can be opened again
                 processedPlaylistId = null
             }
         }
 
-        // State controlling whether the loading indicator may be shown after a delay
         var canShowLoadingIndicator by remember { mutableStateOf(false) }
-        // Track when the loading indicator was first shown for minimum display time
         var loadingShownTimestamp by remember { mutableStateOf(0L) }
-        val minimumDisplayDuration = 1500L // Show loading for at least 1.5 seconds
+        val minimumDisplayDuration = 1500L
 
-        // First-install gate: until the first library sync has ever completed
-        // (lastSyncTimestamp == 0), keep the preparing overlay up while the sync runs.
-        // Deliberately NOT conditioned on the library being empty: the scanner inserts
-        // songs in batches mid-scan, so an emptiness check drops the indicator after the
-        // first batch lands while the scan is still running — leaving the user on a
-        // half-filled home screen with no feedback (the bug this replaces).
         val shouldPotentiallyShowLoading = isSyncing && !hasCompletedInitialSync
 
         LaunchedEffect(shouldPotentiallyShowLoading) {
             if (shouldPotentiallyShowLoading) {
-                // Wait a short period before allowing the loading indicator to be shown
-                // Adjust this value as needed (e.g. 300-500 ms)
                 delay(300L)
-                // Re-check the condition after the delay,
-                // since the state may have changed.
                 if (mainViewModel.isSyncing.value && !mainViewModel.hasCompletedInitialSync.value) {
                     canShowLoadingIndicator = true
                     loadingShownTimestamp = System.currentTimeMillis()
                 }
             } else {
-                // Ensure minimum display time before hiding
                 if (canShowLoadingIndicator && loadingShownTimestamp > 0) {
                     val elapsed = System.currentTimeMillis() - loadingShownTimestamp
                     val remaining = minimumDisplayDuration - elapsed
@@ -560,7 +524,6 @@ class MainActivity : ComponentActivity() {
         Box(modifier = Modifier.fillMaxSize()) {
             MainUI(playerViewModel, navController)
 
-            // Show the LoadingOverlay only if the conditions are met AND the delay has passed
             if (canShowLoadingIndicator) {
                 LoadingOverlay(syncProgress)
             }
@@ -584,8 +547,6 @@ class MainActivity : ComponentActivity() {
         val currentRoute = navBackStackEntry?.destination?.route
         var isSearchBarActive by remember { mutableStateOf(false) }
         val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-        // Medium and expanded window widths (tablets, unfolded foldables, most
-        // landscape phones) swap the bottom bar for a navigation rail.
         val useNavigationRail =
             windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
 
@@ -782,10 +743,6 @@ class MainActivity : ComponentActivity() {
                             label = "NavBarDefaultTopCornerRadius"
                         )
 
-                        // Shape is now resolved per quantized radius in the draw phase
-                        // (see the Surface graphicsLayer below) instead of being
-                        // re-remembered every animation frame.
-
                         var componentHeightPx by remember { mutableStateOf(0) }
                         val density = LocalDensity.current
                         val shadowOverflowPx = remember(navBarElevation, density) {
@@ -816,9 +773,6 @@ class MainActivity : ComponentActivity() {
                                     .padding(bottom = bottomBarPadding)
                                     .onSizeChanged { componentHeightPx = it.height }
                                     .graphicsLayer {
-                                        // Slide-down hide: covers both the player-expansion
-                                        // hide and the route-based hide as a pure translation,
-                                        // so child items never resize or get clipped/squished.
                                         val expansionHide = if (showPlayerContentArea) {
                                             playerViewModel.playerContentExpansionFraction.value.coerceIn(0f, 1f)
                                         } else {
@@ -832,9 +786,6 @@ class MainActivity : ComponentActivity() {
                                     .height(navBarHeight)
                                     .padding(horizontal = horizontalPadding)
                                     .graphicsLayer {
-                                        // Animated corner shape resolved in the draw phase:
-                                        // animating the radius re-clips this layer only — no
-                                        // recomposition and no layout pass for the bar.
                                         val fraction = playerViewModel.playerContentExpansionFraction.value
                                         val topDp = when {
                                             navBarStyle == NavBarStyle.DEFAULT -> animatedDefaultTopCornerRadius.value
@@ -998,7 +949,6 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     @Composable
     private fun LoadingOverlay(syncProgress: SyncProgress) {
-        // Animate progress smoothly instead of jumping in steps
         val animatedProgress by androidx.compose.animation.core.animateFloatAsState(
             targetValue = syncProgress.progress,
             animationSpec = androidx.compose.animation.core.spring(
@@ -1056,7 +1006,6 @@ class MainActivity : ComponentActivity() {
         playerViewModel.onMainActivityStart()
 
         if (intent.getBooleanExtra("is_benchmark", false)) {
-            // Benchmark mode no longer loads dummy data - uses real library data instead
         }
 
         val sessionToken = SessionToken(this, ComponentName(this, MusicService::class.java))

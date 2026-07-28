@@ -82,8 +82,6 @@ internal fun MacrobenchmarkScope.waitForTargetPackageVisible(
     }
 }
 
-// Must mirror the runtime permissions declared in app/src/main/AndroidManifest.xml —
-// `pm grant` fails for permissions the target app does not declare.
 private fun requiredRuntimePermissions(): List<String> = buildList {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         add(Manifest.permission.READ_MEDIA_AUDIO)
@@ -93,7 +91,6 @@ private fun requiredRuntimePermissions(): List<String> = buildList {
     }
 
     if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) {
-        // Declared with maxSdkVersion=30 for legacy Bluetooth/Wi-Fi discovery.
         add(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 

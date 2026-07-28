@@ -18,7 +18,7 @@ interface MusicRepository {
      * Returns the list of audio files (songs) filtered by allowed directories.
      * @return Flow that emits a complete list of Song objects.
      */
-    fun getAudioFiles(): Flow<List<Song>> // Existing Flow for reactive updates
+    fun getAudioFiles(): Flow<List<Song>>
 
     /**
      * Returns paginated songs for efficient display of large libraries.
@@ -139,7 +139,7 @@ interface MusicRepository {
     fun getAlbums(
         storageFilter: com.lostf1sh.pixelplayeross.data.model.StorageFilter = com.lostf1sh.pixelplayeross.data.model.StorageFilter.ALL,
         minTracks: Int = 1
-    ): Flow<List<Album>> // Existing Flow for reactive updates
+    ): Flow<List<Album>>
 
     /**
      * Returns the filtered list of artists.
@@ -147,7 +147,7 @@ interface MusicRepository {
      */
     fun getArtists(
         storageFilter: com.lostf1sh.pixelplayeross.data.model.StorageFilter = com.lostf1sh.pixelplayeross.data.model.StorageFilter.ALL
-    ): Flow<List<Artist>> // Existing Flow for reactive updates
+    ): Flow<List<Artist>>
 
     /**
      * Returns the complete list of songs once.
@@ -229,17 +229,16 @@ interface MusicRepository {
      */
     suspend fun getAllUniqueAudioDirectories(): Set<String>
 
-    fun getAllUniqueAlbumArtUris(): Flow<List<Uri>> // New, for theme prefetch
+    fun getAllUniqueAlbumArtUris(): Flow<List<Uri>>
 
-    suspend fun invalidateCachesDependentOnAllowedDirectories() // New, for theme prefetch
+    suspend fun invalidateCachesDependentOnAllowedDirectories()
 
     fun searchSongs(query: String, titleOnly: Boolean = false): Flow<List<Song>>
     fun searchAlbums(query: String, minTracks: Int = 1): Flow<List<Album>>
     fun searchArtists(query: String): Flow<List<Artist>>
-    suspend fun searchPlaylists(query: String): List<Playlist> // Keep suspend, since there's no Flow yet
+    suspend fun searchPlaylists(query: String): List<Playlist>
     fun searchAll(query: String, filterType: SearchFilterType): Flow<List<SearchResultItem>>
 
-    // Search History
     suspend fun addSearchHistoryItem(query: String)
     suspend fun getRecentSearchHistory(limit: Int): List<SearchHistoryItem>
     suspend fun deleteSearchHistoryItemByQuery(query: String)

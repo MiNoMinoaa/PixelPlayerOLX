@@ -170,7 +170,6 @@ fun DelimiterConfigScreen(
             contentPadding = PaddingValues(top = currentTopBarHeightDp + 8.dp, start = 16.dp, end = 16.dp, bottom = 100.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Current Delimiters
             item {
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
@@ -223,7 +222,6 @@ fun DelimiterConfigScreen(
                 }
             }
 
-            // Add New Delimiter
             item {
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
@@ -326,7 +324,6 @@ fun DelimiterConfigScreen(
                 }
             }
 
-            // Default Delimiters Reference
             item {
                 Surface(
                     color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f),

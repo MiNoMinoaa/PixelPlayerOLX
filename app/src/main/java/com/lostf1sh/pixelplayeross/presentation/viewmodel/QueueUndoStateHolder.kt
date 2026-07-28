@@ -23,8 +23,6 @@ class QueueUndoStateHolder @Inject constructor() {
     ) {
         val controller = mediaController ?: return
         
-        // Find index in CONTROLLER to ensure we remove the correct item,
-        // even if the UI state is slightly out of sync with the player.
         var indexToRemove = -1
         for (i in 0 until controller.mediaItemCount) {
             if (controller.getMediaItemAt(i).mediaId == songId) {

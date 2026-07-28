@@ -16,7 +16,6 @@
     <string name="cd_repeat">Repeat</string>
     <string name="widget_wavy_progress_bar_desc">Progress bar, %1$d percent</string>
 
-    <!-- Lyrics more bottom sheet -->
     <string name="lyrics_more_appearance">Appearance</string>
     <string name="lyrics_more_alignment">Alignment</string>
     <string name="lyrics_more_controls">Controls</string>
@@ -32,13 +31,11 @@
     <string name="cd_lyrics_align_center">Align lyrics center</string>
     <string name="cd_lyrics_align_right">Align lyrics right</string>
 
-    <!-- No internet -->
     <string name="no_internet_dialog_title">No internet connection</string>
     <string name="no_internet_dialog_message">This content requires an internet connection. Please check your network settings and try again.</string>
     <string name="offline_screen_title">You\'re offline</string>
     <string name="offline_screen_message">Please check your internet connection and try again to access this content.</string>
 
-    <!-- Equalizer preset dialogs -->
     <string name="equalizer_save_custom_preset_title">Save custom preset</string>
     <string name="equalizer_save_custom_preset_body">Enter a name for your custom equalizer preset.</string>
     <string name="equalizer_preset_name_label">Preset name</string>
@@ -55,7 +52,6 @@
     <string name="song_field_genre">Genre</string>
     <string name="song_field_composer">Composer</string>
 
-    <!-- Edit song metadata sheet -->
     <string name="edit_song_info_dialog_title">Editing song metadata</string>
     <string name="edit_song_info_dialog_body">Editing a song\'s metadata can affect how it\'s displayed and organized in your library. Changes are permanent and may not be reversible.</string>
     <string name="edit_song_got_it">Got it</string>
@@ -85,7 +81,6 @@
     <string name="edit_song_apply_cover_art">Apply cover art</string>
     <string name="edit_song_unable_to_load_image">Unable to load the selected image</string>
 
-    <!-- Song info bottom sheet -->
     <string name="song_info_share_chooser_title">Share song file via</string>
     <string name="cd_play_song_action">Play song</string>
     <string name="cd_share_song_file">Share song file</string>
@@ -135,7 +130,6 @@
     <string name="song_info_tab_info_badge">INFO</string>
     <string name="cd_details_tab">Details</string>
 
-    <!-- Multi-selection bottom sheet -->
     <string name="multi_selection_songs_count_upper">%1$d SONGS</string>
     <string name="multi_selection_selected">selected</string>
     <string name="cd_play_all">Play all</string>

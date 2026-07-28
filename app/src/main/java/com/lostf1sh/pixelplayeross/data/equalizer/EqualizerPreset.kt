@@ -13,11 +13,10 @@ import kotlinx.serialization.Serializable
 data class EqualizerPreset(
     val name: String,
     val displayName: String,
-    val bandLevels: List<Int>, // 5 bands, values from -15 to +15
+    val bandLevels: List<Int>,
     val isCustom: Boolean = false
 ) {
     companion object {
-        // Standard 10-band ISO frequencies
         val BAND_FREQUENCIES = listOf("31Hz", "62Hz", "125Hz", "250Hz", "500Hz", "1kHz", "2kHz", "4kHz", "8kHz", "16kHz")
         
         val FLAT = EqualizerPreset(
@@ -29,37 +28,37 @@ data class EqualizerPreset(
         val ROCK = EqualizerPreset(
             name = "rock",
             displayName = "ROCK",
-            bandLevels = listOf(5, 4, 3, 1, -1, -1, 1, 3, 4, 5) // Deep bass, mid cut, sparkly highs
+            bandLevels = listOf(5, 4, 3, 1, -1, -1, 1, 3, 4, 5)
         )
         
         val POP = EqualizerPreset(
             name = "pop",
             displayName = "POP",
-            bandLevels = listOf(-1, 2, 4, 5, 5, 4, 2, 1, 2, 2) // Vocal focus (mids)
+            bandLevels = listOf(-1, 2, 4, 5, 5, 4, 2, 1, 2, 2)
         )
         
         val HIP_HOP = EqualizerPreset(
             name = "hip_hop",
             displayName = "HIP HOP",
-            bandLevels = listOf(6, 8, 4, 1, -1, -1, 1, 1, 3, 4) // Heavy sub-bass
+            bandLevels = listOf(6, 8, 4, 1, -1, -1, 1, 1, 3, 4)
         )
         
         val JAZZ = EqualizerPreset(
             name = "jazz",
             displayName = "JAZZ",
-            bandLevels = listOf(3, 2, 1, 2, -1, -1, 0, 2, 3, 4) // Warmth
+            bandLevels = listOf(3, 2, 1, 2, -1, -1, 0, 2, 3, 4)
         )
         
         val CLASSICAL = EqualizerPreset(
             name = "classical",
             displayName = "CLASSICAL",
-            bandLevels = listOf(4, 3, 2, 1, -1, -1, 0, 2, 4, 4) // Balanced "V" shape
+            bandLevels = listOf(4, 3, 2, 1, -1, -1, 0, 2, 4, 4)
         )
         
         val ELECTRONIC = EqualizerPreset(
             name = "electronic",
             displayName = "ELECTRONIC",
-            bandLevels = listOf(5, 6, 2, 0, -1, 1, 0, 2, 6, 7) // Punchy bass and sharp highs
+            bandLevels = listOf(5, 6, 2, 0, -1, 1, 0, 2, 6, 7)
         )
         
         val BASS_BOOST = EqualizerPreset(
@@ -77,7 +76,7 @@ data class EqualizerPreset(
         val VOCAL = EqualizerPreset(
             name = "vocal",
             displayName = "VOCAL",
-            bandLevels = listOf(-3, -2, -1, 2, 5, 6, 5, 3, 1, 0) // Midrange boost
+            bandLevels = listOf(-3, -2, -1, 2, 5, 6, 5, 3, 1, 0)
         )
         
         fun custom(bandLevels: List<Int>) = EqualizerPreset(

@@ -127,7 +127,6 @@ class ArtistDetailViewModel @Inject constructor(
                         val albumSections = buildAlbumSections(songs)
                         val orderedSongs = albumSections.flatMap { it.songs }
 
-                        // 1) Resolve effective image URL (custom > Deezer, may fetch from API)
                         val effectiveUrl = try {
                             artistImageRepository.getEffectiveArtistImageUrl(
                                 artistId = artist.id,
@@ -138,10 +137,6 @@ class ArtistDetailViewModel @Inject constructor(
                             artist.effectiveImageUrl
                         }
 
-                        // 2) Pre-warm the color scheme BEFORE emitting isLoading = false.
-                        //    getOrGenerateColorScheme checks the in-memory LRU first (≈0 ms if cached),
-                        //    then the DB cache (fast), and only generates from scratch ~on first visit.
-                        //    Either way, the scheme is ready before the screen first renders.
                         val newScheme = if (!effectiveUrl.isNullOrBlank()) {
                             try {
                                 themeStateHolder.getOrGenerateColorScheme(effectiveUrl)
@@ -151,8 +146,6 @@ class ArtistDetailViewModel @Inject constructor(
                             }
                         } else null
 
-                        // 3) Atomically publish state + pre-warmed color scheme.
-                        //    Both flows update before the Compose frame runs, so no intermediate null frame.
                         _artistColorScheme.value = newScheme
                         _uiState.value = ArtistDetailUiState(
                             artist = artist.copy(
@@ -193,7 +186,6 @@ class ArtistDetailViewModel @Inject constructor(
                 if (!internalPath.isNullOrBlank()) {
                     val oldEffectiveUrl = _uiState.value.effectiveImageUrl
 
-                    // Regenerate palette from the new image url — invalidate old and warm-up new
                     if (!oldEffectiveUrl.isNullOrBlank() && oldEffectiveUrl != internalPath) {
                         themeStateHolder.forceRegenerateColorScheme(oldEffectiveUrl)
                     }
@@ -207,7 +199,6 @@ class ArtistDetailViewModel @Inject constructor(
 
                     _artistColorScheme.value = newScheme
                     _uiState.update { state ->
-                        // Cache-busting: add timestamp to internalPath to force Coil to reload
                         val effectiveUrlWithBust = "$internalPath?t=${System.currentTimeMillis()}"
                         state.copy(
                             effectiveImageUrl = effectiveUrlWithBust,
@@ -231,11 +222,9 @@ class ArtistDetailViewModel @Inject constructor(
                 val oldEffectiveUrl = _uiState.value.effectiveImageUrl
                 artistImageRepository.clearCustomArtistImage(context, artist.id)
 
-                // Fall back to Deezer URL
                 val deezerUrl = artistImageRepository.getArtistImageUrl(artist.name, artist.id)
                 val newEffectiveUrl = deezerUrl.takeIf { !it.isNullOrBlank() }
 
-                // Invalidate old custom image palette
                 if (!oldEffectiveUrl.isNullOrBlank()) {
                     themeStateHolder.forceRegenerateColorScheme(oldEffectiveUrl)
                 }

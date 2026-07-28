@@ -10,7 +10,6 @@ import androidx.core.view.ViewCompat
 @Immutable
 data class AppHapticsConfig(
     val enabled: Boolean = true,
-    // Reserved for future per-category/intensity controls.
     val intensityScale: Float = 1f
 )
 

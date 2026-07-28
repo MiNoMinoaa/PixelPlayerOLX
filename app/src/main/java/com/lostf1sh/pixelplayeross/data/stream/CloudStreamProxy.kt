@@ -43,7 +43,6 @@ import java.util.concurrent.TimeUnit
 abstract class CloudStreamProxy<K : Any>(
     private val okHttpClient: OkHttpClient
 ) {
-    // ─── Subclass Configuration ────────────────────────────────────────
 
     protected abstract val allowedHostSuffixes: Set<String>
     protected abstract val cacheExpirationMs: Long
@@ -67,26 +66,17 @@ abstract class CloudStreamProxy<K : Any>(
     /** Resolve the actual streaming URL for the given song ID */
     protected abstract suspend fun resolveStreamUrl(id: K): String?
 
-    // ─── Server State ──────────────────────────────────────────────────
-
     private var server: EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? = null
     private var actualPort: Int = 0
     private val proxyScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var startJob: Job? = null
 
-    // The injected client's short read timeout suits REST calls, not long-lived audio
-    // streams: OkHttp applies readTimeout per socket read, so a single slow window
-    // mid-stream would kill playback. Use a generous (but finite, so stalled upstreams
-    // can't pin proxy threads forever) timeout for the streaming fetches instead.
     private val streamingClient: OkHttpClient by lazy {
         okHttpClient.newBuilder()
             .readTimeout(STREAM_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .build()
     }
 
-    // Per-session secret embedded in proxy URLs. Without it, any other app on the
-    // device could stream the user's cloud library just by hitting the loopback
-    // port with a valid song ID. Regenerated on every server (re)start.
     @Volatile
     private var sessionToken: String = ""
 
@@ -99,8 +89,6 @@ abstract class CloudStreamProxy<K : Any>(
     private companion object {
         const val STREAM_READ_TIMEOUT_SECONDS = 60L
     }
-
-    // ─── Public API ────────────────────────────────────────────────────
 
     fun isReady(): Boolean = actualPort > 0
 
@@ -150,10 +138,6 @@ abstract class CloudStreamProxy<K : Any>(
         startJob = proxyScope.launch {
             try {
                 sessionToken = generateSessionToken()
-                // Bind to port 0 and let the OS assign the port. Probing a free port with
-                // a throwaway ServerSocket and binding afterwards is a TOCTOU race: another
-                // process can grab the port in between, leaving actualPort pointing at a
-                // server that never bound (or at someone else's socket).
                 val createdServer = createServer(0)
                 createdServer.start(wait = false)
                 server = createdServer
@@ -179,8 +163,6 @@ abstract class CloudStreamProxy<K : Any>(
         Timber.d("$proxyTag stopped")
     }
 
-    // ─── Overridable Hooks ─────────────────────────────────────────────
-
     /** Extract the raw ID string from a parsed URI. Override for custom URI layouts. */
     protected open fun extractIdFromUri(uri: Uri): String? = uri.host
 
@@ -190,8 +172,6 @@ abstract class CloudStreamProxy<K : Any>(
      * URL caches and server access logs).
      */
     protected open fun upstreamHeaders(): Map<String, String> = emptyMap()
-
-    // ─── Internal ──────────────────────────────────────────────────────
 
     private fun generateSessionToken(): String {
         val bytes = ByteArray(16)
@@ -347,7 +327,6 @@ abstract class CloudStreamProxy<K : Any>(
                             msg.contains("Broken pipe") ||
                             msg.contains("JobCancellationException")
                         ) {
-                            // Client disconnected, normal behavior
                         } else {
                             Timber.w(e, "$proxyTag stream failed")
                         }

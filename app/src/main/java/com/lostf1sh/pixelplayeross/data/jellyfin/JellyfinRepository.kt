@@ -86,10 +86,6 @@ class JellyfinRepository @Inject constructor(
     private fun createCredentialPrefs(): SharedPreferences = try {
         createEncryptedPrefs()
     } catch (e: Exception) {
-        // Most failures here are a pref file that no longer matches the Keystore master
-        // key (e.g. data restored onto a new device). Delete the undecryptable file and
-        // retry: the user has to log in again, but the token stays encrypted instead of
-        // silently degrading to plaintext storage.
         Timber.e(e, "$TAG: EncryptedSharedPreferences unreadable, deleting and recreating")
         context.deleteSharedPreferences(PREFS_NAME)
         try {
@@ -106,8 +102,6 @@ class JellyfinRepository @Inject constructor(
     init {
         initFromSavedCredentials()
     }
-
-    // ─── Authentication ──────────────────────────────────────────────────
 
     private fun initFromSavedCredentials() {
         val serverUrl = prefs.getString(KEY_SERVER_URL, null)
@@ -154,7 +148,6 @@ class JellyfinRepository @Inject constructor(
                     return@withContext Result.failure(IllegalArgumentException(validationError))
                 }
 
-                // Authenticate and get token
                 val authResult = api.authenticateByName(
                     credentials.normalizedServerUrl, username, password
                 )
@@ -169,7 +162,6 @@ class JellyfinRepository @Inject constructor(
                 val fullCredentials = credentials.copy(accessToken = accessToken, userId = userId)
                 api.setCredentials(fullCredentials)
 
-                // Save credentials (password is never persisted — token is sufficient)
                 prefs.edit()
                     .putString(KEY_SERVER_URL, fullCredentials.normalizedServerUrl)
                     .putString(KEY_USERNAME, username)
@@ -201,16 +193,11 @@ class JellyfinRepository @Inject constructor(
             deleteAppPlaylistForJellyfinPlaylist(playlist.id)
         }
 
-        // Clear the whole song cache, not just per-playlist rows: library songs live
-        // under the "__library__" pseudo-playlist, which is never persisted as a
-        // playlist row, so a per-playlist loop would leave them behind forever.
         dao.clearAllSongs()
         musicDao.clearAllJellyfinSongs()
         dao.clearAllPlaylists()
         _isLoggedInFlow.value = false
     }
-
-    // ─── Libraries ────────────────────────────────────────────────────────
 
     val selectedLibraryIdsFlow: Flow<Set<String>> =
         userPreferencesRepository.jellyfinSelectedLibraryIdsFlow
@@ -234,8 +221,6 @@ class JellyfinRepository @Inject constructor(
             libraryIds.filter { it.isNotBlank() }.toSet()
         )
     }
-
-    // ─── Playlists ────────────────────────────────────────────────────────
 
     suspend fun syncPlaylists(): Result<List<JellyfinPlaylistEntity>> {
         if (!isLoggedIn) return Result.failure(Exception("Not logged in"))
@@ -382,7 +367,6 @@ class JellyfinRepository @Inject constructor(
                     emptySet()
                 }
 
-                // No filter → one server-wide pass (ParentId = null)
                 val parentIds: List<String?> =
                     if (libraryFilterIds.isEmpty()) listOf(null) else libraryFilterIds.toList()
 
@@ -394,8 +378,6 @@ class JellyfinRepository @Inject constructor(
                             limit = pageSize,
                             parentId = parentId
                         )
-                        // A failed page fails the whole sync — treating it as end-of-list
-                        // would silently sync a partial library.
                         val (_, items) = result.getOrElse { error ->
                             Timber.w(error, "$TAG: Song fetch failed, keeping cached library")
                             return@withContext Result.failure(error)
@@ -417,7 +399,6 @@ class JellyfinRepository @Inject constructor(
                 val uniqueSongs = allSongs.distinctBy { it.id }
                 val entities = uniqueSongs.map { song -> song.toEntity(LIBRARY_PLAYLIST_ID) }
 
-                // Replace all library songs (atomic — see JellyfinDao.replaceLibrarySongs)
                 dao.replaceLibrarySongs(entities)
 
                 Timber.d("$TAG: Synced ${entities.size} library songs")
@@ -501,8 +482,6 @@ class JellyfinRepository @Inject constructor(
         }
     }
 
-    // ─── Search ────────────────────────────────────────────────────────────
-
     suspend fun searchSongs(query: String, limit: Int = 30): Result<List<Song>> {
         if (!isLoggedIn) return Result.failure(Exception("Not logged in"))
 
@@ -530,8 +509,6 @@ class JellyfinRepository @Inject constructor(
         }
     }
 
-    // ─── Media URLs ────────────────────────────────────────────────────────
-
     fun getStreamUrl(songId: String, maxBitRate: Int = 0): String {
         return api.getStreamUrl(songId, maxBitRate)
     }
@@ -540,8 +517,6 @@ class JellyfinRepository @Inject constructor(
         if (itemId.isNullOrBlank()) return null
         return api.getImageUrl(itemId, maxWidth = size)
     }
-
-    // ─── Lyrics ────────────────────────────────────────────────────────────
 
     suspend fun getLyrics(songId: String): Result<String> {
         return withContext(Dispatchers.IO) {
@@ -559,8 +534,6 @@ class JellyfinRepository @Inject constructor(
         }
     }
 
-    // ─── Unified Library Sync ──────────────────────────────────────────────
-
     suspend fun syncUnifiedLibrarySongsFromJellyfin() {
         val jellyfinSongs = dao.getAllJellyfinSongsList()
         val existingUnifiedIds = musicDao.getAllJellyfinSongIds()
@@ -572,8 +545,6 @@ class JellyfinRepository @Inject constructor(
             return
         }
 
-        // When on, "Group by Album Artist" makes the album's display artist the album artist;
-        // either way the effective album artist is captured on the song for the Artists tab.
         val groupByAlbumArtist = userPreferencesRepository.groupByAlbumArtistFlow.first()
 
         val songs = ArrayList<SongEntity>(jellyfinSongs.size)
@@ -587,8 +558,6 @@ class JellyfinRepository @Inject constructor(
             val primaryArtistName = artistNames.firstOrNull() ?: "Unknown Artist"
             val primaryArtistId = toUnifiedArtistId(primaryArtistName)
 
-            // Effective album artist (Jellyfin AlbumArtist, else primary track artist), registered
-            // as a real artist row so songs.album_artist_id can join to it.
             val effectiveAlbumArtistName = jellyfinSong.albumArtist
                 ?.trim()
                 ?.takeIf { it.isNotBlank() }
@@ -690,8 +659,6 @@ class JellyfinRepository @Inject constructor(
         )
     }
 
-    // ─── Utility Methods ───────────────────────────────────────────────────
-
     private fun parseArtistNames(rawArtist: String): List<String> =
         CloudMusicUtils.parseArtistNames(rawArtist)
 
@@ -711,8 +678,6 @@ class JellyfinRepository @Inject constructor(
     private fun toUnifiedArtistId(artistName: String): Long {
         return -(JELLYFIN_ARTIST_ID_OFFSET + artistName.lowercase().hashCode().toLong().absoluteValue)
     }
-
-    // ─── App Playlist Management ───────────────────────────────────────────
 
     private suspend fun updateAppPlaylistForJellyfinPlaylist(
         jellyfinPlaylistId: String,

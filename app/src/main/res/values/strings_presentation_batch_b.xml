@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- AccountsScreen -->
     <string name="presentation_batch_b_accounts_linked_services">Linked Services</string>
     <string name="presentation_batch_b_accounts_connected_hero_title">Connected Accounts</string>
     <string name="presentation_batch_b_accounts_connected_hero_body">Manage linked providers and keep each integration under your control.</string>
@@ -13,7 +12,6 @@
     <string name="presentation_batch_b_accounts_no_linked_body">Connect a provider to manage it from this screen.</string>
     <string name="presentation_batch_b_accounts_connect_service">Connect %1$s</string>
 
-    <!-- PlaylistDetailScreen -->
     <string name="presentation_batch_b_sort_songs">Sort Songs</string>
     <string name="presentation_batch_b_more_options">More Options</string>
     <string name="presentation_batch_b_play_it">Play it</string>
@@ -37,10 +35,8 @@
     <string name="presentation_batch_b_rename_playlist_dialog_title">Rename Playlist</string>
     <string name="presentation_batch_b_new_name">New name</string>
 
-    <!-- DailyMixScreen -->
     <string name="presentation_batch_b_daily_mix_title">Daily Mix</string>
 
-    <!-- QuickFillScreen -->
     <string name="presentation_batch_b_quick_fill_select_songs">Select Songs</string>
     <string name="presentation_batch_b_quick_fill_choose_genre">Choose Genre</string>
     <string name="presentation_batch_b_search_songs_label">Search songs</string>
@@ -55,7 +51,6 @@
     <string name="presentation_batch_b_genre_name_label">Genre Name</string>
     <string name="presentation_batch_b_select_icon">Select Icon</string>
 
-    <!-- RecentlyPlayedScreen -->
     <string name="presentation_batch_b_recently_played_title">Recently Played</string>
     <string name="presentation_batch_b_play_latest">Play latest</string>
     <string name="presentation_batch_b_recent_empty_title">No recent plays in %1$s</string>
@@ -64,13 +59,11 @@
     <string name="presentation_batch_b_date_today">Today</string>
     <string name="presentation_batch_b_date_yesterday">Yesterday</string>
 
-    <!-- NavBarCornerRadiusScreen -->
     <string name="presentation_batch_b_navbar_adjust_title">Adjust Corner Radius</string>
     <string name="presentation_batch_b_navbar_adjust_subtitle">Match the navbar shape\'s corners with your device\'s physical corners for a seamless look.</string>
     <string name="presentation_batch_b_corner_radius_label">Corner Radius</string>
     <string name="presentation_batch_b_corner_dp_format">%1$d dp</string>
 
-    <!-- GenreDetailScreen -->
     <string name="presentation_batch_b_genre_shuffle_label">%1$s Shuffle</string>
 
     <plurals name="presentation_batch_b_songs_dot_duration">

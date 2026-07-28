@@ -15,11 +15,11 @@ data class Song(
      * For accurate display of all artists, use the [artists] list and [displayArtist] property.
      */
     val artist: String,
-    val artistId: Long, // Primary artist ID for backward compatibility
-    val artists: List<ArtistRef> = emptyList(), // All artists for multi-artist support
+    val artistId: Long,
+    val artists: List<ArtistRef> = emptyList(),
     val album: String,
     val albumId: Long,
-    val albumArtist: String? = null, // Album artist from metadata
+    val albumArtist: String? = null,
     val path: String,
     val contentUriString: String,
     val albumArtUriString: String?,
@@ -35,8 +35,8 @@ data class Song(
     val mimeType: String?,
     val bitrate: Int?,
     val sampleRate: Int?,
-    val navidromeId: String? = null, // Navidrome song ID
-    val jellyfinId: String? = null, // Jellyfin item ID
+    val navidromeId: String? = null,
+    val jellyfinId: String? = null,
 ) : Parcelable {
     /**
      * Returns the display string for artists.

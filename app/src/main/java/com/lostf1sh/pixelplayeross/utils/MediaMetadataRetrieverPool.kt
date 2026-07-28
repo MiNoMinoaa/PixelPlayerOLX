@@ -41,7 +41,6 @@ object MediaMetadataRetrieverPool {
         try {
             retriever.release()
         } catch (_: Exception) {
-            // Ignore release errors
         } finally {
             createdCount.decrementAndGet()
         }
@@ -69,7 +68,6 @@ object MediaMetadataRetrieverPool {
      * Clears all pooled retrievers. Call this when the app is low on memory.
      */
     fun clear() {
-        // No-op: retrievers are released immediately after each use.
     }
     
     /**

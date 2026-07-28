@@ -45,7 +45,6 @@ fun LyricsSyncControls(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        // -0.5s
         SyncButton(
             text = stringResource(R.string.presentation_batch_g_lyrics_offset_minus_half),
             onClick = { onOffsetChange(offsetMillis - 500) },
@@ -53,7 +52,6 @@ fun LyricsSyncControls(
             containerColor = accentColor,
             contentColor = onAccentColor
         )
-        // -0.1s
         SyncButton(
             text = stringResource(R.string.presentation_batch_g_lyrics_offset_minus_point_one),
             onClick = { onOffsetChange(offsetMillis - 100) },
@@ -61,7 +59,6 @@ fun LyricsSyncControls(
             containerColor = accentColor,
             contentColor = onAccentColor
         )
-        // Center Display / Reset
         SyncButton(
             text = if (offsetMillis == 0) {
                 stringResource(R.string.presentation_batch_g_lyrics_offset_zero)
@@ -69,13 +66,12 @@ fun LyricsSyncControls(
                 stringResource(R.string.presentation_batch_g_lyrics_offset_seconds_fmt, offsetMillis / 1000f)
             },
             onClick = { onOffsetChange(0) },
-            weight = 1.3f, // Slightly wider
+            weight = 1.3f,
             containerColor = if (offsetMillis != 0) accentColor else backgroundColor,
             contentColor = if (offsetMillis != 0) onAccentColor else onBackgroundColor,
             enabled = offsetMillis != 0,
             fontSize = 12.sp
         )
-        // +0.1s
         SyncButton(
             text = stringResource(R.string.presentation_batch_g_lyrics_offset_plus_point_one),
             onClick = { onOffsetChange(offsetMillis + 100) },
@@ -83,7 +79,6 @@ fun LyricsSyncControls(
             containerColor = accentColor,
             contentColor = onAccentColor
         )
-        // +0.5s
         SyncButton(
             text = stringResource(R.string.presentation_batch_g_lyrics_offset_plus_half),
             onClick = { onOffsetChange(offsetMillis + 500) },
@@ -117,7 +112,7 @@ private fun androidx.compose.foundation.layout.RowScope.SyncButton(
             disabledContainerColor = containerColor,
             disabledContentColor = contentColor
         ),
-        contentPadding = PaddingValues(0.dp) // Tight padding
+        contentPadding = PaddingValues(0.dp)
     ) {
         Text(
             text = text,

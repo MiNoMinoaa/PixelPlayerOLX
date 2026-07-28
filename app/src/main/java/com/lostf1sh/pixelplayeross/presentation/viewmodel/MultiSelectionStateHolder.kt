@@ -24,8 +24,6 @@ import kotlinx.collections.immutable.toImmutableList
 @Singleton
 class MultiSelectionStateHolder @Inject constructor() {
 
-    // Internal mutable state - uses List to preserve selection order
-    // LinkedHashSet behavior is enforced via toggle logic
     private val _selectedSongs = MutableStateFlow<ImmutableList<Song>>(persistentListOf())
     
     /**
@@ -62,11 +60,9 @@ class MultiSelectionStateHolder @Inject constructor() {
         val currentIds = _selectedSongIds.value.toMutableSet()
         
         if (currentIds.contains(song.id)) {
-            // Remove from selection
             currentList.removeAll { it.id == song.id }
             currentIds.remove(song.id)
         } else {
-            // Add to selection (preserving order)
             currentList.add(song)
             currentIds.add(song.id)
         }
@@ -85,7 +81,6 @@ class MultiSelectionStateHolder @Inject constructor() {
         val currentIds = _selectedSongIds.value
         val currentList = _selectedSongs.value.toMutableList()
         
-        // Add songs that aren't already selected
         songs.forEach { song ->
             if (!currentIds.contains(song.id)) {
                 currentList.add(song)

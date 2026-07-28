@@ -21,8 +21,8 @@ class BackupFileValidator @Inject constructor(
     private val formatDetector: BackupFormatDetector
 ) {
     companion object {
-        const val MAX_BACKUP_SIZE_BYTES = 50L * 1024 * 1024 // 50 MB
-        const val MAX_ZIP_RATIO = 100 // max decompressed/compressed ratio
+        const val MAX_BACKUP_SIZE_BYTES = 50L * 1024 * 1024
+        const val MAX_ZIP_RATIO = 100
         private const val MAX_TOTAL_DECOMPRESSED_BYTES = 256L * 1024 * 1024
     }
 
@@ -30,11 +30,8 @@ class BackupFileValidator @Inject constructor(
         val errors = mutableListOf<ValidationError>()
         val docFile = DocumentFile.fromSingleUri(context, uri)
         val fileName = docFile?.name
-        // DocumentFile.length() returns 0 when the provider doesn't report a size — treat
-        // that as unknown rather than "0 bytes" so downstream checks don't trust it.
         val fileSize = docFile?.length()?.takeIf { it > 0L }
 
-        // Check URI accessibility
         val format = try {
             context.contentResolver.openInputStream(uri)?.use { input ->
                 val header = formatDetector.readHeader(input)
@@ -54,13 +51,11 @@ class BackupFileValidator @Inject constructor(
             return BackupValidationResult.Invalid(errors)
         }
 
-        // Check file size
         if (fileSize != null && fileSize > MAX_BACKUP_SIZE_BYTES) {
             errors.add(ValidationError("FILE_TOO_LARGE", "Backup file exceeds the ${MAX_BACKUP_SIZE_BYTES / (1024 * 1024)}MB limit."))
             return BackupValidationResult.Invalid(errors)
         }
 
-        // Check file name extension (if available)
         if (fileName != null && !fileName.endsWith(".pxpl", ignoreCase = true) &&
             !fileName.endsWith(".gz", ignoreCase = true)) {
             errors.add(ValidationError("FILE_EXTENSION", "File extension is not .pxpl. The file may not be a valid backup.", severity = Severity.WARNING))
@@ -71,7 +66,6 @@ class BackupFileValidator @Inject constructor(
             return BackupValidationResult.Invalid(errors)
         }
 
-        // For ZIP format: validate zip structure safety
         if (format == BackupFormatDetector.Format.PXPL_V3_ZIP) {
             validateZipSafety(uri, fileSize, BackupFormatDetector.PXPL_MAGIC_SIZE, errors)
         }
@@ -103,13 +97,11 @@ class BackupFileValidator @Inject constructor(
                     while (entry != null) {
                         val name = entry.name
 
-                        // Path traversal check
                         if (name.contains("..") || name.startsWith("/") || name.startsWith("\\")) {
                             errors.add(ValidationError("ZIP_PATH_TRAVERSAL", "Suspicious zip entry path: $name"))
                             return
                         }
 
-                        // Only allow .json files and manifest
                         if (!name.endsWith(".json")) {
                             errors.add(ValidationError("ZIP_UNEXPECTED_ENTRY", "Unexpected file in backup: $name", severity = Severity.WARNING))
                         }

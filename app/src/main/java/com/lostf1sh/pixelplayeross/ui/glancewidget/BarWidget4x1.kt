@@ -116,7 +116,6 @@ class BarWidget4x1 : GlanceAppWidget() {
 
                 Spacer(GlanceModifier.width(8.dp))
 
-                // Previous Button
                 PreviousButton(
                     modifier = GlanceModifier.size(40.dp),
                     backgroundColor = colors.prevNextBackground,
@@ -126,7 +125,6 @@ class BarWidget4x1 : GlanceAppWidget() {
 
                 Spacer(GlanceModifier.width(6.dp))
 
-                // Play/Pause Button
                 PlayPauseButton(
                     modifier = GlanceModifier.size(40.dp),
                     isPlaying = isPlaying,
@@ -137,7 +135,6 @@ class BarWidget4x1 : GlanceAppWidget() {
 
                 Spacer(GlanceModifier.width(6.dp))
 
-                // Next Button
                 NextButton(
                     modifier = GlanceModifier.size(40.dp),
                     backgroundColor = colors.prevNextBackground,

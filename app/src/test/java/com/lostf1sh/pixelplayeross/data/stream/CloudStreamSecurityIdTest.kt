@@ -51,7 +51,6 @@ class CloudStreamSecurityIdTest {
     fun `public ipv4 literals and non-ip hosts are not flagged private`() {
         listOf("8.8.8.8", "1.2.3.4", "172.15.0.1", "172.32.0.1", "203.0.113.7", "100.63.255.255", "100.128.0.1")
             .forEach { assertFalse(CloudStreamSecurity.isPrivateIpv4Literal(it), "$it should be public") }
-        // Not dotted-quad IPv4 at all.
         assertFalse(CloudStreamSecurity.isPrivateIpv4Literal("example.com"))
         assertFalse(CloudStreamSecurity.isPrivateIpv4Literal("256.1.1.1"))
         assertFalse(CloudStreamSecurity.isPrivateIpv4Literal("1.2.3"))

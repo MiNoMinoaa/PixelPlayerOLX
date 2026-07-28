@@ -166,7 +166,6 @@ private fun DashboardContent(
             .fillMaxSize()
             .padding(paddingValues)
     ) {
-        // Sync status banner
         AnimatedVisibility(
             visible = syncMessage != null,
             enter = slideInVertically(
@@ -229,7 +228,6 @@ private fun DashboardContent(
             }
         }
 
-        // User info header
         username?.let { name ->
             Card(
                 modifier = Modifier
@@ -299,7 +297,6 @@ private fun DashboardContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Playlists header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -326,7 +323,6 @@ private fun DashboardContent(
             }
         }
 
-        // Playlist list
         if (playlists.isEmpty() && !isSyncing) {
             Box(
                 modifier = Modifier
@@ -883,7 +879,6 @@ private fun SongCard(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Album art
             Box(
                 modifier = Modifier
                     .size(48.dp)
@@ -958,7 +953,6 @@ private fun PlaylistCard(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Playlist cover
             Box(
                 modifier = Modifier
                     .size(56.dp)

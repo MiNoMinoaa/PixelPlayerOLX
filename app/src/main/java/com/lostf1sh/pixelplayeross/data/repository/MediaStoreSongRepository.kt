@@ -131,13 +131,8 @@ class MediaStoreSongRepository @Inject constructor(
             MediaStore.Audio.Media.DATE_ADDED,
             MediaStore.Audio.Media.DATE_MODIFIED,
             MediaStore.Audio.Media.MIME_TYPE,
-            MediaStore.Audio.Media.ALBUM_ARTIST, // Valid on API 30+, fallback needed if minSdk < 30
-            // Genre is difficult in MediaStore.Audio.Media, usually requires separate query.
-            // keeping it simple for now, maybe null or fetch separately.
+            MediaStore.Audio.Media.ALBUM_ARTIST,
         )
-
-        // Handling API version differences for columns if necessary
-        // Assuming minSdk is high enough or columns exist (ALBUM_ARTIST is API 30+, need check if app supports lower)
 
         val selection = buildString {
             append(baseSelection)
@@ -176,7 +171,7 @@ class MediaStoreSongRepository @Inject constructor(
                 val dateAddedCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED)
                 val dateModifiedCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
                 val mimeTypeCol = cursor.getColumnIndex(MediaStore.Audio.Media.MIME_TYPE)
-                val albumArtistCol = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ARTIST) // Can be -1
+                val albumArtistCol = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ARTIST)
 
                 val resolver = DirectoryRuleResolver(
                     allowedDirs.map(::normalizePath).toSet(),
@@ -187,7 +182,6 @@ class MediaStoreSongRepository @Inject constructor(
                 while (cursor.moveToNext()) {
                     val path = cursor.getString(pathCol)
 
-                    // Directory Filtering
                     if (isFilterActive) {
                         val lastSlashIndex = path.lastIndexOf('/')
                         val parentPath = if (lastSlashIndex != -1) path.substring(0, lastSlashIndex) else ""
@@ -199,7 +193,6 @@ class MediaStoreSongRepository @Inject constructor(
                     val id = cursor.getLong(idCol)
                     val albumId = cursor.getLong(albumIdCol)
 
-                    // Album art (individual / cached per song)
                     val albumArtUriString = AlbumArtUtils.getAlbumArtUri(
                         appContext = context,
                         path = path,
@@ -207,20 +200,16 @@ class MediaStoreSongRepository @Inject constructor(
                         forceRefresh = false
                     )
 
-                    // Artists parsing (supports character + word delimiters like "feat.", "ft.", "x")
                     val rawArtist = cursor.getString(artistCol).normalizeMetadataTextOrEmpty()
                     val rawTitle = cursor.getString(titleCol).normalizeMetadataTextOrEmpty()
 
-                    // Split artist field by both character and word delimiters
                     val splitArtists = rawArtist.splitArtistsByDelimiters(artistDelimiters, wordDelimiters)
                     val allArtistNames = splitArtists.toMutableList()
 
-                    // Extract featured artists from title (e.g., "Song (feat. Artist)")
                     val displayTitle: String
                     if (extractFromTitle) {
                         val (cleanedTitle, titleArtists) = rawTitle.extractArtistsFromTitle(artistDelimiters, wordDelimiters)
                         displayTitle = cleanedTitle
-                        // Add title artists that aren't already in the artist field
                         titleArtists.forEach { ta ->
                             if (allArtistNames.none { it.equals(ta, ignoreCase = true) }) {
                                 allArtistNames.add(ta)
@@ -302,8 +291,6 @@ class MediaStoreSongRepository @Inject constructor(
                                 if (audioIdCol != -1) {
                                     while (membersCursor.moveToNext()) {
                                         val songId = membersCursor.getLong(audioIdCol)
-                                        // If a song has multiple genres, this simple map keeps the last one found.
-                                        // Could be improved to join them if needed.
                                         genreMap[songId] = genreName
                                     }
                                 }

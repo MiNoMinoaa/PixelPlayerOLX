@@ -30,7 +30,6 @@ class BackupWriter @Inject constructor(
             val totalSteps = modulePayloads.size + 1
             var currentStep = 0
 
-            // Compute checksums and module info
             val modulesInfo = mutableMapOf<String, BackupModuleInfo>()
             val payloadBytes = mutableMapOf<String, ByteArray>()
 
@@ -48,18 +47,14 @@ class BackupWriter @Inject constructor(
             val manifestJson = gson.toJson(finalManifest)
 
             context.contentResolver.openOutputStream(uri)?.use { rawOutput ->
-                // Write PXPL magic bytes first
                 rawOutput.write(BackupFormatDetector.PXPL_MAGIC)
 
-                // Write ZIP archive
                 ZipOutputStream(rawOutput).use { zip ->
-                    // Write manifest
                     zip.putNextEntry(ZipEntry(BackupManifest.MANIFEST_FILENAME))
                     zip.write(manifestJson.toByteArray(Charsets.UTF_8))
                     zip.closeEntry()
                     onProgress(++currentStep, totalSteps)
 
-                    // Write each module payload
                     payloadBytes.forEach { (key, bytes) ->
                         zip.putNextEntry(ZipEntry("$key.json"))
                         zip.write(bytes)
@@ -77,7 +72,6 @@ class BackupWriter @Inject constructor(
     }
 
     private fun countJsonArrayEntries(json: String): Int {
-        // Quick heuristic: count top-level array elements
         return try {
             val trimmed = json.trim()
             if (trimmed.startsWith("[")) {

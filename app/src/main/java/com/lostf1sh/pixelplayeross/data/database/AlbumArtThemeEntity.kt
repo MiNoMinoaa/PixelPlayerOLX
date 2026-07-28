@@ -5,8 +5,6 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-// For simplicity, we store colors as hexadecimal Strings.
-// Stores the color values for ONE scheme (either light or dark)
 data class StoredColorSchemeValues(
     val primary: String,
     val onPrimary: String,

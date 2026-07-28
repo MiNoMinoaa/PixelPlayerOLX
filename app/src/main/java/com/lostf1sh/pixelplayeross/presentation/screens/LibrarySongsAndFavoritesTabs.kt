@@ -119,7 +119,6 @@ fun LibraryFavoritesTab(
             items.indexOfFirst { it?.id == currentSongId }
         }
     }
-    // New action just triggers the ViewModel request
     val locateCurrentSongAction: (() -> Unit)? = remember(currentSongId) {
         if (currentSongId == null) {
             null
@@ -129,7 +128,6 @@ fun LibraryFavoritesTab(
             }
         }
     }
-    // Scroll Handler from ViewModel
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(playerViewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {

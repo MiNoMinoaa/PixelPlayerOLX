@@ -104,7 +104,7 @@ class ArtistSettingsViewModel @Inject constructor(
 
     fun removeDelimiter(delimiter: String) {
         val current = _uiState.value.artistDelimiters
-        if (current.size <= 1) return // Keep at least one delimiter
+        if (current.size <= 1) return
         
         viewModelScope.launch {
             userPreferencesRepository.setArtistDelimiters(current - delimiter)

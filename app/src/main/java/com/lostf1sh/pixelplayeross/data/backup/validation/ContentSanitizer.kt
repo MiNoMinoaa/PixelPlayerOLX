@@ -8,7 +8,6 @@ class ContentSanitizer @Inject constructor() {
 
     companion object {
         const val DEFAULT_MAX_LENGTH = 10_000
-        // Control characters except tab (\t), newline (\n), carriage return (\r)
         private val CONTROL_CHAR_REGEX = Regex("[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]")
     }
 
@@ -23,7 +22,6 @@ class ContentSanitizer @Inject constructor() {
 
     fun sanitizeUrl(url: String, maxLength: Int = 2000): String {
         val sanitized = sanitizeString(url, maxLength)
-        // Only allow http/https URLs
         if (sanitized.isNotEmpty() &&
             !sanitized.startsWith("https://") &&
             !sanitized.startsWith("http://")) {

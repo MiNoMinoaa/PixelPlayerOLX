@@ -31,7 +31,6 @@ class LegacyPayloadAdapter @Inject constructor() {
         val modules = mutableMapOf<String, String>()
         val modulesInfo = mutableMapOf<String, BackupModuleInfo>()
 
-        // Handle preferences split for v1 (combined) vs v2 (separate)
         if (formatVersion == 1) {
             val preferences = root.getAsJsonArray("preferences")
             if (preferences != null && preferences.size() > 0) {

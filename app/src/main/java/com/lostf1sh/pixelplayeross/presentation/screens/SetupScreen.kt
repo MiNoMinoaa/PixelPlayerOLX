@@ -191,7 +191,6 @@ fun SetupScreen(
         }
     }
 
-    // Re-check permissions when the screen is resumed
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -305,8 +304,6 @@ fun SetupScreen(
     ) { paddingValues ->
         HorizontalPager(
             state = pagerState,
-            // Keep setup progression deterministic; free swiping was allowing users
-            // to jump across optional pages after the first permission dialog.
             userScrollEnabled = false,
             modifier = Modifier
                 .fillMaxSize()
@@ -424,7 +421,6 @@ fun SetupScreen(
         )
     }
 
-    // Overlay for Corner Radius Customization
     AnimatedVisibility(
         visible = showCornerRadiusOverlay,
         enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
@@ -690,7 +686,6 @@ fun WelcomePage() {
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
-        // Placeholder for vector art
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -735,7 +730,7 @@ fun WelcomePage() {
                 .padding(horizontal = 8.dp)
                 .padding(bottom = 4.dp),
                 animate = true,
-                color = MaterialTheme.colorScheme.primary, //Container.copy(alpha = 0.9f),
+                color = MaterialTheme.colorScheme.primary,
                 alpha = 0.95f,
                 strokeWidth = 4.dp,
                 amplitude = 4.dp,
@@ -768,7 +763,6 @@ fun MediaPermissionPage(
         R.drawable.rounded_playlist_play_24
     )
 
-    // Sync the granted state with the ViewModel
     val isGranted = uiState.mediaPermissionGranted || permissionState.allPermissionsGranted
 
     LaunchedEffect(permissionState.allPermissionsGranted) {
@@ -807,7 +801,6 @@ fun NotificationsPermissionPage(
         R.drawable.rounded_skip_previous_24
     )
 
-    // Sync the granted state with the ViewModel
     val isGranted = uiState.notificationsPermissionGranted || permissionState.allPermissionsGranted
 
     LaunchedEffect(permissionState.allPermissionsGranted) {
@@ -1332,7 +1325,6 @@ fun LibraryLayoutPage(
             )
         }
 
-        // Preview Section
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1342,7 +1334,6 @@ fun LibraryLayoutPage(
             LibraryHeaderPreview(isCompact = isCompact)
         }
         
-        // Controls Section
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
@@ -1432,7 +1423,6 @@ fun LibraryHeaderPreview(isCompact: Boolean) {
                 label = "HeaderPreviewAnim"
             ) { compact ->
                 if (compact) {
-                    // Compact Mode Preview
                     Box(modifier = Modifier.fillMaxSize()) {
                         Row(
                             modifier = Modifier
@@ -1450,7 +1440,6 @@ fun LibraryHeaderPreview(isCompact: Boolean) {
                         }
                     }
                 } else {
-                    // Standard Mode Preview
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -1952,13 +1941,8 @@ fun LibraryNavigationPillSetupShow(
 
     val pillRadius = 26.dp
     val innerRadius = 4.dp
-    // Radius for when it's expanded/selected (fully round)
     val expandedRadius = 60.dp
 
-    // Arrow corner animation (inner):
-    // Depends on 'isExpanded':
-    // - true: becomes round (expandedRadius/pillRadius), separating visually.
-    // - false: stays straight (innerRadius), appearing attached to the title.
     val animatedArrowCorner by animateFloatAsState(
         targetValue = if (isExpanded) pillRadius.value else innerRadius.value,
         label = "ArrowCornerAnimation"
@@ -1969,7 +1953,6 @@ fun LibraryNavigationPillSetupShow(
         label = "ArrowRotation"
     )
 
-    // IntrinsicSize.Min on the Row + fillMaxHeight on the children ensures equal height
     Row(
         modifier = Modifier
             .padding(start = 4.dp)
@@ -2033,11 +2016,10 @@ fun LibraryNavigationPillSetupShow(
             }
         }
 
-        // --- PART 2: ARROW (changes shape based on state) ---
         Surface(
             shape = RoundedCornerShape(
-                topStart = animatedArrowCorner.dp, // Animates between 4.dp and 26.dp
-                bottomStart = animatedArrowCorner.dp, // Animates between 4.dp and 26.dp
+                topStart = animatedArrowCorner.dp,
+                bottomStart = animatedArrowCorner.dp,
                 topEnd = pillRadius,
                 bottomEnd = pillRadius
             ),
@@ -2047,8 +2029,8 @@ fun LibraryNavigationPillSetupShow(
                 .fillMaxHeight()
                 .clip(
                     RoundedCornerShape(
-                        topStart = animatedArrowCorner.dp, // Animates between 4.dp and 26.dp
-                        bottomStart = animatedArrowCorner.dp, // Animates between 4.dp and 26.dp
+                        topStart = animatedArrowCorner.dp,
+                        bottomStart = animatedArrowCorner.dp,
                         topEnd = pillRadius,
                         bottomEnd = pillRadius
                     )
@@ -2098,25 +2080,20 @@ fun SetupBottomBar(
     isNextButtonEnabled: Boolean,
     isFinishButtonEnabled: Boolean
 ) {
-    // --- Animations for morphing and rotation ---
     val morphAnimationSpec = tween<Float>(durationMillis = 600, easing = FastOutSlowInEasing)
-    // Slower, subtler animation for the rotation
     val rotationAnimationSpec = tween<Float>(durationMillis = 900, easing = FastOutSlowInEasing)
 
-    // 1. Determine the corner percentages for the target shape
     val targetShapeValues = when (pagerState.currentPage % 3) {
-        0 -> listOf(50f, 50f, 50f, 50f) // Circle (50% on all corners)
-        1 -> listOf(26f, 26f, 26f, 26f) // Rounded square
-        else -> listOf(18f, 50f, 18f, 50f) // "Leaf" shape
+        0 -> listOf(50f, 50f, 50f, 50f)
+        1 -> listOf(26f, 26f, 26f, 26f)
+        else -> listOf(18f, 50f, 18f, 50f)
     }
 
-    // 2. Animate each corner individually toward the target value
     val animatedTopStart by animateFloatAsState(targetShapeValues[0], morphAnimationSpec, label = "TopStart")
     val animatedTopEnd by animateFloatAsState(targetShapeValues[1], morphAnimationSpec, label = "TopEnd")
     val animatedBottomStart by animateFloatAsState(targetShapeValues[2], morphAnimationSpec, label = "BottomStart")
     val animatedBottomEnd by animateFloatAsState(targetShapeValues[3], morphAnimationSpec, label = "BottomEnd")
 
-    // 3. Animate the button rotation so it spins 360 degrees on each page change.
     val animatedRotation by animateFloatAsState(
         targetValue = pagerState.currentPage * 360f,
         animationSpec = rotationAnimationSpec,
@@ -2157,7 +2134,6 @@ fun SetupBottomBar(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // --- KEY CHANGE: animated text ---
                 AnimatedContent(
                     targetState = pagerState.currentPage,
                     modifier = Modifier
@@ -2205,7 +2181,6 @@ fun SetupBottomBar(
                     MaterialTheme.colorScheme.onPrimaryContainer
                 }
 
-                // 4. Apply the animated shape and rotation to the button
                 MediumExtendedFloatingActionButton(
                     onClick = if (isLastPage) onFinishClicked else onNextClicked,
                     shape = AbsoluteSmoothCornerShape(
@@ -2225,7 +2200,6 @@ fun SetupBottomBar(
                         .rotate(animatedRotation)
                         .padding(end = 0.dp)
                 ) {
-                    // 5. Apply a counter-rotation to the button content (the icon)
                     AnimatedContent(
                         modifier = Modifier.rotate(-animatedRotation),
                         targetState = pagerState.currentPage < pagerState.pageCount - 1,
@@ -2261,7 +2235,7 @@ fun NavBarLayoutPage(
     onCustomizeRadius: () -> Unit,
     onSkip: () -> Unit
 ) {
-    val isDefault = uiState.navBarStyle != "full_width" // Default or null is default
+    val isDefault = uiState.navBarStyle != "full_width"
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -2292,7 +2266,6 @@ fun NavBarLayoutPage(
             )
         }
 
-        // Preview Section
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -2302,7 +2275,6 @@ fun NavBarLayoutPage(
             NavBarPreview(isDefault = isDefault)
         }
         
-        // Controls Section
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
@@ -2344,7 +2316,7 @@ fun NavBarLayoutPage(
                     }
                     
                     AnimatedVisibility(
-                        visible = true, // Always visible now
+                        visible = true,
                         enter =   androidx.compose.animation.expandVertically() + fadeIn(),
                         exit = androidx.compose.animation.shrinkVertically() + fadeOut()
                     ) {
@@ -2385,11 +2357,10 @@ fun NavBarLayoutPage(
 @Composable
 fun NavBarPreview(isDefault: Boolean) {
     val gradientColors = listOf(
-        MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.5f), // Lighter top
-        MaterialTheme.colorScheme.surfaceContainer, // Darker bottom
+        MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.5f),
+        MaterialTheme.colorScheme.surfaceContainer,
     )
     
-    // Simulate the bottom of a screen
     Card(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
@@ -2397,21 +2368,19 @@ fun NavBarPreview(isDefault: Boolean) {
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp) // Taller to show bottom part clearly
+            .height(200.dp)
             .padding(horizontal = 8.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            // Content placeholder
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                 // Fake content lines
                  repeat(3) {
                      Box(
                          modifier = Modifier
@@ -2423,7 +2392,6 @@ fun NavBarPreview(isDefault: Boolean) {
                  }
             }
             
-            // Navbar
             Box(
                 modifier = Modifier.align(Alignment.BottomCenter)
             ) {
@@ -2436,7 +2404,6 @@ fun NavBarPreview(isDefault: Boolean) {
                     label = "NavbarPreviewAnim"
                 ) { default ->
                     if (default) {
-                        // Default Pill Style
                          Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -2466,16 +2433,14 @@ fun NavBarPreview(isDefault: Boolean) {
                             }
                         }
                     } else {
-                        // Full Width Style
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(80.dp),
                             color = MaterialTheme.colorScheme.surfaceContainer,
                             tonalElevation = 6.dp,
-                            // Simulated rounded top corners for preview if desired, or simplified
                             shape = AbsoluteSmoothCornerShape(
-                                cornerRadiusTL = 28.dp, // Default preview radius
+                                cornerRadiusTL = 28.dp,
                                 smoothnessAsPercentTL = 60,
                                 cornerRadiusTR = 28.dp,
                                 smoothnessAsPercentTR = 60,

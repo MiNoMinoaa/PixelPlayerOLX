@@ -87,10 +87,10 @@ fun GenreGradientTopBar(
             }
         },
         colors = topAppBarColors(
-            containerColor = Color.Transparent, // Background is handled by the gradient brush
+            containerColor = Color.Transparent,
             scrolledContainerColor = Color.Transparent,
-            titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer, // Or a color that contrasts well with your typical gradient
-            navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer // Same as title
+            titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
         )
     )
 }
@@ -118,7 +118,7 @@ fun HomeGradientTopBar(
 
     TopAppBar(
         modifier = Modifier.background(surfaceContainerHigh.copy(alpha = animatedAlpha)),
-        title = { /* nada, usamos solo acciones */ },
+        title = { },
         navigationIcon = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

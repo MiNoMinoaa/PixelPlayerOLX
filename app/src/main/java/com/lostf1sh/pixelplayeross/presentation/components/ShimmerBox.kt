@@ -14,7 +14,6 @@ import androidx.compose.ui.graphics.Brush
 
 @Composable
 fun ShimmerBox(modifier: Modifier = Modifier) {
-    // Use MaterialTheme colors for proper dark/light mode support
     val baseColor = MaterialTheme.colorScheme.surfaceContainerHigh
     val highlightColor = MaterialTheme.colorScheme.surfaceContainerHighest
     

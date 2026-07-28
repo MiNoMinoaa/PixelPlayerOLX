@@ -50,30 +50,25 @@ object SourceType {
             entity = AlbumEntity::class,
             parentColumns = ["id"],
             childColumns = ["album_id"],
-            onDelete = ForeignKey.CASCADE // If an album is deleted, its songs are too
+            onDelete = ForeignKey.CASCADE
         ),
         ForeignKey(
             entity = ArtistEntity::class,
             parentColumns = ["id"],
             childColumns = ["artist_id"],
-            onDelete = ForeignKey.SET_NULL // If an artist is deleted, the song's artist_id is set to null
-                                          // or you could choose CASCADE if songs shouldn't exist without an artist.
-                                          // SET_NULL is more flexible if songs can belong to "Unknown Artist".
+            onDelete = ForeignKey.SET_NULL
         )
     ]
 )
 data class SongEntity(
     @PrimaryKey val id: Long,
     @ColumnInfo(name = "title") val title: String,
-    @ColumnInfo(name = "artist_name") val artistName: String, // Display string (combined or primary)
-    @ColumnInfo(name = "artist_id") val artistId: Long, // Primary artist ID for backward compatibility
-    @ColumnInfo(name = "album_artist") val albumArtist: String? = null, // Album artist from metadata
-    // Id of the *effective* album artist (album_artist when present, else the primary track
-    // artist). Source-independent and computed at sync time so the "Group by Album Artist"
-    // Artists tab can collapse on it at runtime without a re-sync. 0 = unresolved.
+    @ColumnInfo(name = "artist_name") val artistName: String,
+    @ColumnInfo(name = "artist_id") val artistId: Long,
+    @ColumnInfo(name = "album_artist") val albumArtist: String? = null,
     @ColumnInfo(name = "album_artist_id", defaultValue = "0") val albumArtistId: Long = 0L,
     @ColumnInfo(name = "album_name") val albumName: String,
-    @ColumnInfo(name = "album_id") val albumId: Long, // index = true removed
+    @ColumnInfo(name = "album_id") val albumId: Long,
     @ColumnInfo(name = "content_uri_string") val contentUriString: String,
     @ColumnInfo(name = "album_art_uri_string") val albumArtUriString: String?,
     @ColumnInfo(name = "duration") val duration: Long,
@@ -87,8 +82,8 @@ data class SongEntity(
     @ColumnInfo(name = "year", defaultValue = "0") val year: Int = 0,
     @ColumnInfo(name = "date_added", defaultValue = "0") val dateAdded: Long = System.currentTimeMillis(),
     @ColumnInfo(name = "mime_type") val mimeType: String? = null,
-    @ColumnInfo(name = "bitrate") val bitrate: Int? = null, // bits per second
-    @ColumnInfo(name = "sample_rate") val sampleRate: Int? = null, // Hz
+    @ColumnInfo(name = "bitrate") val bitrate: Int? = null,
+    @ColumnInfo(name = "sample_rate") val sampleRate: Int? = null,
     @ColumnInfo(name = "artists_json") val artistsJson: String? = null,
     @ColumnInfo(name = "source_type", defaultValue = "0") val sourceType: Int = SourceType.LOCAL,
     @ColumnInfo(name = "media_store_date_added", defaultValue = "0") val mediaStoreDateAdded: Long = 0L,
@@ -109,7 +104,7 @@ private fun SongEntity.toSongInternal(artists: List<ArtistRef>): Song {
         album = this.albumName.normalizeMetadataTextOrEmpty(),
         albumId = this.albumId,
         albumArtist = this.albumArtist?.normalizeMetadataText(),
-        path = this.filePath, // Map the file path
+        path = this.filePath,
         contentUriString = this.contentUriString,
         albumArtUriString = LocalArtworkUri.resolveSongArtworkUri(
             storedUri = this.albumArtUriString,
@@ -197,9 +192,6 @@ fun List<SongEntity>.toSongs(): List<Song> {
     return this.map { it.toSong() }
 }
 
-// The Song model uses id as a String, but the entity needs it as a Long (from MediaStore)
-// The Song model has no filePath, so it can't be mapped from there directly.
-// filePath and parentDirectoryPath are populated from MediaStore in the SyncWorker.
 fun Song.toEntity(filePathFromMediaStore: String, parentDirFromMediaStore: String): SongEntity {
     return SongEntity(
         id = this.id.toLong(),
@@ -237,8 +229,6 @@ data class SongSummary(
     val duration: Long
 )
 
-// Overload or alternative if the paths aren't available or aren't needed when converting from Model to Entity
-// (less likely to be used if the entity always requires the paths)
 fun Song.toEntityWithoutPaths(): SongEntity {
     return SongEntity(
         id = this.id.toLong(),

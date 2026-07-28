@@ -65,7 +65,6 @@ fun LyricsFloatingToolbar(
     onBackgroundColor: Color,
     accentColor: Color,
     onAccentColor: Color,
-    // Draw-phase lambda: 0f = fully visible, 1f = dismissed. Read inside graphicsLayer to avoid recomposition per frame.
     backProgressProvider: () -> Float = { 0f }
 ) {
     if (showSyncedLyrics == null) return
@@ -79,7 +78,6 @@ fun LyricsFloatingToolbar(
         val backInteractionSource = remember { MutableInteractionSource() }
         val isBackPressed by backInteractionSource.collectIsPressedAsState()
 
-        // Animate scale on press: shrinks on press, springs back on release.
         val backPressScale by animateFloatAsState(
             targetValue = if (isBackPressed) 0.82f else 1f,
             animationSpec = spring(
@@ -91,7 +89,6 @@ fun LyricsFloatingToolbar(
 
         IconButton(
             modifier = Modifier.graphicsLayer {
-                // Combine press scale with predictive back gesture scale.
                 val gestureScale = lerp(1f, 0.7f, backProgressProvider())
                 val combined = backPressScale * gestureScale
                 scaleX = combined

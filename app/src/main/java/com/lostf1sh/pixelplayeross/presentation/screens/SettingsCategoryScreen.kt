@@ -204,7 +204,6 @@ fun SettingsCategoryScreen(
     val paletteRegenerateTargets by playerViewModel.paletteRegenerationTargets.collectAsStateWithLifecycle()
     val explorerRoot = settingsViewModel.explorerRoot()
 
-    // Local State
     var showExplorerSheet by remember { mutableStateOf(false) }
     var refreshRequested by remember { mutableStateOf(false) }
     var syncRequestObservedRunning by remember { mutableStateOf(false) }
@@ -288,8 +287,6 @@ fun SettingsCategoryScreen(
         }.toImmutableList()
     }
 
-    // TopBar Animations (identical to SettingsScreen)
-    // TopBar Animations (identical to SettingsScreen)
     val density = LocalDensity.current
     val coroutineScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
@@ -299,7 +296,7 @@ fun SettingsCategoryScreen(
     
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val minTopBarHeight = 64.dp + statusBarHeight
-    val maxTopBarHeight = if (isLongTitle) 200.dp else 180.dp //for 2 lines use 220 and make text use \n
+    val maxTopBarHeight = if (isLongTitle) 200.dp else 180.dp
 
     val minTopBarHeightPx = with(density) { minTopBarHeight.toPx() }
     val maxTopBarHeightPx = with(density) { maxTopBarHeight.toPx() }
@@ -410,7 +407,7 @@ fun SettingsCategoryScreen(
                                     label = stringResource(R.string.setcat_min_song_duration),
                                     value = minSongDurationDraft,
                                     valueRange = 0f..120000f,
-                                    steps = 23, // 0, 5, 10, 15, ... 120 seconds (24 positions, 23 steps)
+                                    steps = 23,
                                     onValueChange = { minSongDurationDraft = it },
                                     onValueChangeFinished = {
                                         val selectedDuration = minSongDurationDraft.toInt()
@@ -424,7 +421,7 @@ fun SettingsCategoryScreen(
                                     label = stringResource(R.string.setcat_min_tracks_per_album),
                                     value = minTracksPerAlbumDraft,
                                     valueRange = 1f..5f,
-                                    steps = 3, // 1, 2, 3, 4, 5
+                                    steps = 3,
                                     onValueChange = { minTracksPerAlbumDraft = it },
                                     onValueChangeFinished = {
                                         val selectedTracks = minTracksPerAlbumDraft.toInt()
@@ -438,7 +435,7 @@ fun SettingsCategoryScreen(
                                     label = stringResource(R.string.setcat_album_art_cache_limit),
                                     value = albumArtCacheLimitDraft,
                                     valueRange = 50f..1500f,
-                                    steps = 28, // 50, 100, 150, ... 1500 (30 stops)
+                                    steps = 28,
                                     onValueChange = { albumArtCacheLimitDraft = it },
                                     onValueChangeFinished = {
                                         val selectedLimit = albumArtCacheLimitDraft.toInt()
@@ -971,11 +968,8 @@ fun SettingsCategoryScreen(
                             }
                         }
                         SettingsCategory.EQUALIZER -> {
-                             // Equalizer has its own screen, so this block is unreachable via standard navigation
-                             // but required for exhaustiveness.
                         }
                         SettingsCategory.DEVICE_CAPABILITIES -> {
-                             // Device Capabilities has its own screen
                         }
 
                     }
@@ -995,7 +989,6 @@ fun SettingsCategoryScreen(
             maxLines = titleMaxLines
         )
 
-        // Block interaction during transition
         var isTransitioning by remember { mutableStateOf(true) }
         LaunchedEffect(Unit) {
             kotlinx.coroutines.delay(com.lostf1sh.pixelplayeross.presentation.navigation.TRANSITION_DURATION.toLong())
@@ -1018,7 +1011,6 @@ fun SettingsCategoryScreen(
 
     BackupTransferProgressDialogHost(progress = dataTransferProgress)
 
-    // Dialogs
     FileExplorerDialog(
         visible = showExplorerSheet,
         currentPath = currentPath,
@@ -1210,7 +1202,6 @@ fun SettingsCategoryScreen(
         )
     }
     
-     // Dialogs logic (copied)
     if (showClearLyricsDialog) {
         AlertDialog(
             icon = { Icon(Icons.Outlined.Warning, null) },
@@ -1311,7 +1302,6 @@ fun SettingsCategoryScreen(
     if (showImportFlow) {
         val restorePlan = uiState.restorePlan
         if (restorePlan != null && importFileUri != null) {
-            // Step 2: Module selection from inspected backup
             ImportModuleSelectionDialog(
                 plan = restorePlan,
                 inProgress = uiState.isDataTransferInProgress,
@@ -1332,7 +1322,6 @@ fun SettingsCategoryScreen(
                 }
             )
         } else {
-            // Step 1: File selection with backup history
             ImportFileSelectionDialog(
                 backupHistory = uiState.backupHistory,
                 isInspecting = uiState.isInspectingBackup,

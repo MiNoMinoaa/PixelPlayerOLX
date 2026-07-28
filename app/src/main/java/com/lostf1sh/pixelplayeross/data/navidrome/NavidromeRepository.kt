@@ -68,7 +68,7 @@ class NavidromeRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     companion object {
-        const val SYNC_THRESHOLD_MS = 24 * 60 * 60 * 1000L // 24 hours
+        const val SYNC_THRESHOLD_MS = 24 * 60 * 60 * 1000L
         private const val TAG = "NavidromeRepo"
         private const val PREFS_NAME = "navidrome_prefs"
         private const val KEY_SERVER_URL = "server_url"
@@ -77,7 +77,6 @@ class NavidromeRepository @Inject constructor(
         private const val KEY_AUTH_METHOD = "auth_method"
         private const val KEY_LAST_FULL_SYNC = "last_full_sync"
 
-        // Negative offsets prevent collisions with MediaStore IDs.
         private const val NAVIDROME_SONG_ID_OFFSET = 9_000_000_000_000L
         private const val NAVIDROME_ALBUM_ID_OFFSET = 10_000_000_000_000L
         private const val NAVIDROME_ARTIST_ID_OFFSET = 11_000_000_000_000L
@@ -105,10 +104,6 @@ class NavidromeRepository @Inject constructor(
     private fun createCredentialPrefs(): SharedPreferences = try {
         createEncryptedPrefs()
     } catch (e: Exception) {
-        // Most failures here are a pref file that no longer matches the Keystore master
-        // key (e.g. data restored onto a new device). Delete the undecryptable file and
-        // retry: the user has to log in again, but credentials stay encrypted instead of
-        // silently degrading to plaintext storage.
         Timber.e(e, "$TAG: EncryptedSharedPreferences unreadable, deleting and recreating")
         context.deleteSharedPreferences(PREFS_NAME)
         try {
@@ -123,10 +118,6 @@ class NavidromeRepository @Inject constructor(
     val isLoggedInFlow: StateFlow<Boolean> = _isLoggedInFlow.asStateFlow()
 
     init {
-        // Remember a server-driven switch to password auth so later launches start with
-        // the method that works instead of spending a rejected request rediscovering it.
-        // Only for the saved server: a fallback during a login attempt to some other
-        // server must not rewrite the stored account's method (login() saves its own).
         api.onAuthMethodChanged = { method ->
             if (api.getServerUrl() == prefs.getString(KEY_SERVER_URL, null)) {
                 prefs.edit { putString(KEY_AUTH_METHOD, method.name) }
@@ -134,8 +125,6 @@ class NavidromeRepository @Inject constructor(
         }
         initFromSavedCredentials()
     }
-
-    // ─── Authentication ──────────────────────────────────────────────────
 
     /**
      * Initialize API from saved credentials.
@@ -207,11 +196,8 @@ class NavidromeRepository @Inject constructor(
                     api.clearCredentials()
                     return@withContext Result.failure(IllegalArgumentException(validationError))
                 }
-                // Start from token auth on every login: the server may have changed, and
-                // ping() downgrades to password auth by itself if tokens are rejected.
                 api.setCredentials(credentials, NavidromeAuthMethod.TOKEN)
 
-                // Test connection
                 val pingResult = api.ping()
                 if (pingResult.isFailure) {
                     api.clearCredentials()
@@ -220,7 +206,6 @@ class NavidromeRepository @Inject constructor(
                     )
                 }
 
-                // Save credentials
                 prefs.edit {
                     putString(KEY_SERVER_URL, credentials.normalizedServerUrl)
                         .putString(KEY_USERNAME, username)
@@ -249,15 +234,11 @@ class NavidromeRepository @Inject constructor(
         api.clearCredentials()
         prefs.edit { clear() }
 
-        // Delete all Navidrome playlists from database
         val playlistsToDelete = dao.getAllPlaylistsList()
         playlistsToDelete.forEach { playlist ->
             deleteAppPlaylistForNavidromePlaylist(playlist.id)
         }
 
-        // Clear the whole song cache, not just per-playlist rows: library songs live
-        // under the "__library__" pseudo-playlist, which is never persisted as a
-        // playlist row, so a per-playlist loop would leave them behind forever.
         dao.clearAllSongs()
         musicDao.clearAllNavidromeSongs()
         dao.clearAllPlaylists()
@@ -282,8 +263,6 @@ class NavidromeRepository @Inject constructor(
         userPreferencesRepository.setNavidromeSelectedMusicFolderIds(folderIds.filter { it.isNotBlank() }.toSet())
     }
 
-    // ─── Playlists ────────────────────────────────────────────────────────
-
     /**
      * Sync user playlists from server.
      */
@@ -306,9 +285,6 @@ class NavidromeRepository @Inject constructor(
                 val jsonObjects = result.getOrThrow()
                 val playlists = NavidromeResponseParser.parsePlaylists(jsonObjects)
 
-                // CRITICAL BUG FIX: If we have local playlists but the server returns an empty list,
-                // do NOT proceed with syncing or deleting. This is likely a transient error or empty response.
-                // We only delete stale playlists if we actually got some data back to compare with.
                 if (playlists.isEmpty() && jsonObjects.isNotEmpty()) {
                     Timber.w("$TAG: Parser returned empty playlists but JSON response had items. Parsing error suspected. Aborting.")
                     return@withContext Result.failure(Exception("Playlist parsing error"))
@@ -336,14 +312,9 @@ class NavidromeRepository @Inject constructor(
                     )
                 }
 
-                // Remove stale playlists
-                // CRITICAL: Only remove if we successfully fetched at least one playlist OR the fetch was a success but the user has none.
-                // Avoid clearing all if it's a transient network error that wasn't caught.
                 val localPlaylists = dao.getAllPlaylistsList()
                 val remoteIds = entities.map { it.id }.toSet()
                 
-                // FIXED: If entities is empty, we already handled the protection (localCount > 0) above.
-                // However, we must ensure we ONLY delete playlists if the API response was TRULY empty (jsonObjects is empty).
                 val stalePlaylists = if (entities.isNotEmpty() || jsonObjects.isEmpty()) {
                     localPlaylists.filter { it.id !in remoteIds }
                 } else {
@@ -359,7 +330,6 @@ class NavidromeRepository @Inject constructor(
                     }
                 }
 
-                // Insert updated playlists
                 entities.forEach { dao.insertPlaylist(it) }
 
                 if (stalePlaylists.isNotEmpty()) {
@@ -399,8 +369,6 @@ class NavidromeRepository @Inject constructor(
                 val songJsons = res.second
                 val songs = NavidromeResponseParser.parseSongs(songJsons)
 
-                // CRITICAL BUG FIX: If the server returns empty songs (e.g. failure to parse or server error)
-                // but counts are positive, we do NOT empty our local cache.
                 if (songs.isEmpty() && songJsons.isNotEmpty()) {
                     Timber.w("$TAG: FAILED to parse songs for playlist $playlistId even though JSON has data. Aborting.")
                     return@withContext Result.failure(Exception("Parsing error"))
@@ -415,13 +383,9 @@ class NavidromeRepository @Inject constructor(
                     dao.deleteSongsByPlaylist(playlistId)
                     dao.insertSongs(entities)
                     
-                    // Update app playlist only if we have data
                     val playlistName = dao.getPlaylistById(playlistId)?.name ?: "Playlist"
                     updateAppPlaylistForNavidromePlaylist(playlistId, playlistName, entities)
                 } else if (songJsons.isEmpty()) {
-                    // This is a TRULY empty playlist on the server.
-                    // We should ONLY clear it if we actually got a successful empty list response,
-                    // not a parse error.
                     Timber.d("$TAG: Playlist $playlistId is empty on server, clearing local cache")
                     dao.deleteSongsByPlaylist(playlistId)
                     val playlistName = dao.getPlaylistById(playlistId)?.name ?: "Playlist"
@@ -429,10 +393,6 @@ class NavidromeRepository @Inject constructor(
                 } else {
                     Timber.w("$TAG: songJsons was not empty (${songJsons.size}) but entities was empty. Parsing issue?")
                 }
-
-                // NOTE: Unified library sync is now handled by the caller (e.g., syncAllPlaylistsAndSongs)
-                // to avoid multiple redundant syncs. If you need immediate sync for single playlist,
-                // call syncUnifiedLibrarySongsFromNavidrome() after this method.
 
                 Timber.d("$TAG: Synced ${entities.size} songs for playlist $playlistId")
                 Result.success(entities.size)
@@ -496,7 +456,6 @@ class NavidromeRepository @Inject constructor(
                     albums
                 }
 
-                // Fetch songs for each album in parallel
                 val totalAlbums = fetchedAlbums.size
                 val concurrencyLimit = 5
                 val semaphore = Semaphore(concurrencyLimit)
@@ -545,14 +504,12 @@ class NavidromeRepository @Inject constructor(
                     0.95f, 
                     context.getString(R.string.dash_status_saving_songs_format, allSongs.size)
                 )
-                // Deduplicate by song ID
                 val uniqueSongs = allSongs.distinctBy { it.id }
 
                 val entities = uniqueSongs.map { song ->
                     song.toEntity(LIBRARY_PLAYLIST_ID)
                 }
 
-                // Replace all library songs (atomic — see NavidromeDao.replaceLibrarySongs)
                 dao.replaceLibrarySongs(entities)
 
                 Timber.d("$TAG: Synced ${entities.size} library songs from ${fetchedAlbums.size} albums")
@@ -604,9 +561,7 @@ class NavidromeRepository @Inject constructor(
             var failedPlaylistCount = 0
 
             onProgress?.invoke(0.05f, context.getString(R.string.dash_status_syncing_library))
-            // Sync library songs (all albums)
             val libResult = syncLibrarySongs { progress, message ->
-                // Map library sync progress (0-1) to 0.05-0.4 range
                 onProgress?.invoke(0.05f + (progress * 0.35f), message)
             }
             libResult.fold(
@@ -615,9 +570,7 @@ class NavidromeRepository @Inject constructor(
             )
 
             onProgress?.invoke(0.4f, context.getString(R.string.dash_status_fetching_playlists))
-            // Sync playlists
             val playlistResult = syncPlaylists().getOrElse {
-                // Playlists failed but library songs may have synced
                 try {
                     syncUnifiedLibrarySongsFromNavidrome()
                 } catch (e: Exception) {
@@ -655,7 +608,6 @@ class NavidromeRepository @Inject constructor(
             }
 
             onProgress?.invoke(0.95f, context.getString(R.string.dash_status_updating_local))
-            // Sync to unified library once after everything is synced
             try {
                 syncUnifiedLibrarySongsFromNavidrome()
             } catch (e: Exception) {
@@ -709,8 +661,6 @@ class NavidromeRepository @Inject constructor(
         }
     }
 
-    // ─── Search ────────────────────────────────────────────────────────────
-
     /**
      * Search for songs on the server.
      */
@@ -750,8 +700,6 @@ class NavidromeRepository @Inject constructor(
         }
     }
 
-    // ─── Media URLs ────────────────────────────────────────────────────────
-
     /**
      * Get the streaming URL for a song.
      *
@@ -775,21 +723,17 @@ class NavidromeRepository @Inject constructor(
         return api.getCoverArtUrl(coverArtId, size)
     }
 
-    // ─── Lyrics ────────────────────────────────────────────────────────────
-
     /**
      * Get lyrics for a song.
      */
     suspend fun getLyrics(songId: String): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
-                // Try OpenSubsonic extension first
                 var result = api.getLyricsBySongId(songId)
                 if (result.isSuccess && !result.getOrNull().isNullOrBlank()) {
                     return@withContext result
                 }
 
-                // Fallback to standard lyrics API
                 val songEntity = dao.getSongByNavidromeId(songId)
                 if (songEntity != null) {
                     result = api.getLyrics(songEntity.artist, songEntity.title)
@@ -807,8 +751,6 @@ class NavidromeRepository @Inject constructor(
         }
     }
 
-    // ─── Unified Library Sync ──────────────────────────────────────────────
-
     /**
      * Sync Navidrome songs to the unified music library.
      */
@@ -823,8 +765,6 @@ class NavidromeRepository @Inject constructor(
             return
         }
 
-        // When on, "Group by Album Artist" makes the album's display artist the album artist;
-        // either way the effective album artist is captured on the song for the Artists tab.
         val groupByAlbumArtist = userPreferencesRepository.groupByAlbumArtistFlow.first()
 
         val songs = ArrayList<SongEntity>(navidromeSongs.size)
@@ -838,8 +778,6 @@ class NavidromeRepository @Inject constructor(
             val primaryArtistName = artistNames.firstOrNull() ?: "Unknown Artist"
             val primaryArtistId = toUnifiedArtistId(primaryArtistName)
 
-            // Effective album artist (Subsonic albumArtist tag, else primary track artist),
-            // registered as a real artist row so songs.album_artist_id can join to it.
             val effectiveAlbumArtistName = navidromeSong.albumArtist
                 ?.trim()
                 ?.takeIf { it.isNotBlank() }
@@ -943,8 +881,6 @@ class NavidromeRepository @Inject constructor(
         )
     }
 
-    // ─── Utility Methods ───────────────────────────────────────────────────
-
     private fun parseArtistNames(rawArtist: String): List<String> =
         CloudMusicUtils.parseArtistNames(rawArtist)
 
@@ -964,8 +900,6 @@ class NavidromeRepository @Inject constructor(
     private fun toUnifiedArtistId(artistName: String): Long {
         return -(NAVIDROME_ARTIST_ID_OFFSET + artistName.lowercase().hashCode().toLong().absoluteValue)
     }
-
-    // ─── App Playlist Management ───────────────────────────────────────────
 
     private fun getAppPlaylistIdForNavidrome(navidromePlaylistId: String): String {
         return "$NAVIDROME_PLAYLIST_PREFIX$navidromePlaylistId"
@@ -1025,8 +959,6 @@ class NavidromeRepository @Inject constructor(
         }
     }
 
-    // ─── Playback Reporting ──────────────────────────────────────────────
-
     suspend fun reportPlayback(
         navidromeId: String,
         positionMs: Long,
@@ -1042,10 +974,6 @@ class NavidromeRepository @Inject constructor(
             playbackRate = playbackRate,
             ignoreScrobble = ignoreScrobble
         )
-        // Fallback to standard scrobble if reportPlayback is not supported.
-        // PS: The latest release of Navidrome currently doesn't support the
-        // standard OpenSubsonic API (reportPlayback) at the time of writing
-        // See: (https://github.com/navidrome/navidrome/pull/5442), so this is required.
         if (result.isFailure && result.exceptionOrNull()?.message?.contains("404") == true) {
             if (state == "playing" || state == "starting") {
                 return api.scrobble(id = navidromeId, submission = false)
@@ -1058,8 +986,6 @@ class NavidromeRepository @Inject constructor(
         if (!isLoggedIn) return Result.failure(Exception("Not logged in"))
         return api.scrobble(id = navidromeId, submission = submission)
     }
-
-    // ─── Delete ────────────────────────────────────────────────────────────
 
     suspend fun deletePlaylist(playlistId: String) {
         if (playlistId == LIBRARY_PLAYLIST_ID) return
@@ -1104,8 +1030,6 @@ internal fun selectedNavidromeMusicFolderIds(
     val validSavedIds = savedFolderIds.intersect(availableIds)
     return validSavedIds.ifEmpty { availableIds }
 }
-
-// ─── Extension Functions ────────────────────────────────────────────────────
 
 /**
  * Convert a NavidromeSong to a Song model.

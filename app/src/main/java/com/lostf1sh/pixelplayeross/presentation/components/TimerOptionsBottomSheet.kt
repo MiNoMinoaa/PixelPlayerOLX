@@ -54,7 +54,7 @@ import androidx.compose.ui.res.stringResource
 import com.lostf1sh.pixelplayeross.R
 import androidx.compose.ui.text.style.TextOverflow
 
-val predefinedTimes = listOf(0, 5, 10, 15, 20, 30, 45, 60) // 0 represents 'Off'
+val predefinedTimes = listOf(0, 5, 10, 15, 20, 30, 45, 60)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -79,15 +79,13 @@ fun TimerOptionsBottomSheet(
     val isSwitchEnabled = isEndOfTrackTimerActive
 
     var counterSliderPosition by remember { mutableStateOf(1f) }
-    var isTimerMode by remember { mutableStateOf(true) } // true = timer mode, false = counter mode
+    var isTimerMode by remember { mutableStateOf(true) }
 
-    // Animate background color
     val boxBackgroundColor by animateColorAsState(
         targetValue = if (isSwitchEnabled) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.surfaceContainerHigh,
         label = "boxBackgroundColorAnimation"
     )
 
-    // Animate corner radius
     val boxCornerRadius by animateDpAsState(
         targetValue = if (isSwitchEnabled) 18.dp else 50.dp,
         label = "boxCornerRadiusAnimation"
@@ -104,7 +102,6 @@ fun TimerOptionsBottomSheet(
             else -> 0f
         }
         counterSliderPosition = playCount
-        // Restore counter mode if play count was previously set
         if (playCount > 1f) {
             isTimerMode = false
         }
@@ -137,7 +134,6 @@ fun TimerOptionsBottomSheet(
             }
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Predefined times replaced by Slider
             Spacer(modifier = Modifier.height(8.dp))
 
             Column(modifier = Modifier.fillMaxWidth()) {
@@ -176,7 +172,7 @@ fun TimerOptionsBottomSheet(
                             isTimerMode = true
                         },
                         valueRange = 0f..(predefinedTimes.size - 1).toFloat(),
-                        steps = predefinedTimes.size - 2, // Number of discrete intervals
+                        steps = predefinedTimes.size - 2,
                         enabled = isTimerMode || counterSliderPosition == 1f,
                         onValueChangeFinished = {
                             val selectedIndexOnFinish = timerSliderPosition.roundToInt()
@@ -280,7 +276,6 @@ fun TimerOptionsBottomSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // End of track option
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -296,8 +291,8 @@ fun TimerOptionsBottomSheet(
                             cornerRadiusBR = boxCornerRadius,
                             smoothnessAsPercentTR = 60
                         )
-                    ) // Apply animated corner radius for clipping
-                    .background(color = boxBackgroundColor)   // Apply animated background color
+                    )
+                    .background(color = boxBackgroundColor)
                     .clickable(
                         enabled = isTimerMode || counterSliderPosition == 1f,
                         onClick = {
@@ -316,7 +311,7 @@ fun TimerOptionsBottomSheet(
                         modifier = Modifier
                             .weight(1f)
                             .padding(end = 8.dp),
-                        color = if (isSwitchEnabled) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.onSurface // Adjust text color for contrast
+                        color = if (isSwitchEnabled) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.onSurface
                     )
                     Switch(
                         checked = isSwitchEnabled,
@@ -366,7 +361,7 @@ fun TimerOptionsBottomSheet(
                         bottomEnd = 8.dp
                     ),
                     modifier = Modifier
-                        .weight(1f) // Give buttons equal space if desired
+                        .weight(1f)
                         .height(buttonHeight)
                 ) {
                     Text(stringResource(R.string.sleep_timer_ui_custom_time))
@@ -400,20 +395,18 @@ fun TimerOptionsBottomSheet(
     }
 
     if (showCustomTimePicker) {
-        val initialHour = 0    // Default to 0 hours for a duration
-        val initialMinute = 15 // Default to 15 minutes for a duration
+        val initialHour = 0
+        val initialMinute = 15
 
         val timePickerState = rememberTimePickerState(
             initialHour = initialHour,
             initialMinute = initialMinute,
-            is24Hour = true // Consistent with your previous setting (24-hour format)
+            is24Hour = true
         )
 
         AlertDialog(
             onDismissRequest = {
-                showCustomTimePicker = false // Dismiss the M3 dialog
-                // No need to call onDismiss() for the bottom sheet here,
-                // as that's handled by the confirm button or if the user specifically dismisses the bottom sheet.
+                showCustomTimePicker = false
             },
             title = { Text(stringResource(R.string.sleep_timer_ui_set_custom_duration)) },
             text = {
@@ -426,11 +419,11 @@ fun TimerOptionsBottomSheet(
                         val minute = timePickerState.minute
                         val totalMinutes = hour * 60 + minute
 
-                        if (totalMinutes > 0) { // Ensure some time is set
-                            onSetPredefinedTimer(totalMinutes) // Your existing callback
+                        if (totalMinutes > 0) {
+                            onSetPredefinedTimer(totalMinutes)
                         }
-                        showCustomTimePicker = false // Dismiss the M3 dialog
-                        onDismiss() // Dismiss the bottom sheet after setting time, as per original logic
+                        showCustomTimePicker = false
+                        onDismiss()
                     }
                 ) {
                     Text(stringResource(R.string.ok))
@@ -439,7 +432,7 @@ fun TimerOptionsBottomSheet(
             dismissButton = {
                 TextButton(
                     onClick = {
-                        showCustomTimePicker = false // Dismiss the M3 dialog
+                        showCustomTimePicker = false
                     }
                 ) {
                     Text(stringResource(R.string.cancel), maxLines = 1, overflow = TextOverflow.Ellipsis)

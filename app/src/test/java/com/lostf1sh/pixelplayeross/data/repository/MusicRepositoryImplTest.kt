@@ -3,10 +3,10 @@ package com.lostf1sh.pixelplayeross.data.repository
 import android.content.Context
 import com.lostf1sh.pixelplayeross.data.database.MusicDao
 import com.lostf1sh.pixelplayeross.data.database.SearchHistoryDao
-import com.lostf1sh.pixelplayeross.data.database.SongEntity // Necesario para datos de prueba
+import com.lostf1sh.pixelplayeross.data.database.SongEntity
 import com.lostf1sh.pixelplayeross.data.database.AlbumEntity
 import com.lostf1sh.pixelplayeross.data.database.ArtistEntity
-import com.lostf1sh.pixelplayeross.data.model.Song // Para verificar el mapeo
+import com.lostf1sh.pixelplayeross.data.model.Song
 import com.lostf1sh.pixelplayeross.data.preferences.PlaylistPreferencesRepository
 import com.lostf1sh.pixelplayeross.data.preferences.UserPreferencesRepository
 import com.lostf1sh.pixelplayeross.data.database.FavoritesDao
@@ -23,7 +23,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-// import com.google.common.truth.Truth.assertThat
 
 
 @ExperimentalCoroutinesApi
@@ -31,8 +30,8 @@ class MusicRepositoryImplTest {
 
     private lateinit var musicRepository: MusicRepositoryImpl
     private val mockMusicDao: MusicDao = mockk()
-    private val mockSearchHistoryDao: SearchHistoryDao = mockk(relaxed = true) // relaxed para evitar mockear todos los métodos de historial
-    private val mockContext: Context = mockk(relaxed = true) // relaxed para getAllUniqueAudioDirectories si no se testea a fondo aquí
+    private val mockSearchHistoryDao: SearchHistoryDao = mockk(relaxed = true)
+    private val mockContext: Context = mockk(relaxed = true)
     private val mockUserPreferencesRepository: UserPreferencesRepository = mockk()
     private val mockPlaylistPreferencesRepository: PlaylistPreferencesRepository = mockk(relaxed = true)
     private val mockLyricsRepository: LyricsRepository = mockk(relaxed = true)
@@ -44,13 +43,11 @@ class MusicRepositoryImplTest {
 
     @BeforeEach
     fun setUp() {
-        Dispatchers.setMain(testDispatcher) // Usar el dispatcher de prueba para Main
-        // Mockear los flows de preferencias por defecto, pueden ser sobrescritos por test
+        Dispatchers.setMain(testDispatcher)
         coEvery { mockUserPreferencesRepository.allowedDirectoriesFlow } returns flowOf(emptySet())
         coEvery { mockUserPreferencesRepository.blockedDirectoriesFlow } returns flowOf(setOf("/dummy"))
         coEvery { mockUserPreferencesRepository.initialSetupDoneFlow } returns flowOf(true)
         coEvery { mockUserPreferencesRepository.isFolderFilterActiveFlow } returns flowOf(false)
-        // Populate artists
         val dummyArtists = listOf(
             ArtistEntity(101L, "ArtistName1", 5, null),
             ArtistEntity(102L, "ArtistName2", 3, null)
@@ -64,12 +61,11 @@ class MusicRepositoryImplTest {
         }
         every { mockMusicDao.getArtistsWithSongCountsFiltered(any(), any(), any()) } returns flowOf(emptyList())
 
-        // Logic-based DAO stubs
         every { mockMusicDao.getSongs(any(), eq(true)) } answers {
             val allowedParams = firstArg<List<String>>()
-            if (allowedParams.isEmpty()) flowOf(emptyList()) else flowOf(emptyList()) // Placeholder, can be improved if needed
+            if (allowedParams.isEmpty()) flowOf(emptyList()) else flowOf(emptyList())
         }
-        every { mockMusicDao.getSongs(any(), eq(false)) } returns flowOf(emptyList()) // Placeholder
+        every { mockMusicDao.getSongs(any(), eq(false)) } returns flowOf(emptyList())
         every { mockMusicDao.getAlbums(any(), eq(true), any(), any()) } answers {
             val allowedParams = firstArg<List<String>>()
             if (allowedParams.isEmpty()) flowOf(emptyList()) else flowOf(emptyList())
@@ -79,7 +75,6 @@ class MusicRepositoryImplTest {
         every { mockMusicDao.getArtists(any(), eq(true)) } answers {
              val allowedParams = firstArg<List<String>>()
              if (allowedParams.isNotEmpty()) {
-                 // 101L is allowed (Artist1Name), 102L is forbidden (Artist2Name)
                  flowOf(dummyArtists.filter { it.id == 101L })
              } else {
                  flowOf(emptyList())
@@ -106,10 +101,9 @@ class MusicRepositoryImplTest {
 
     @AfterEach
     fun tearDown() {
-        Dispatchers.resetMain() // Limpiar el dispatcher de Main
+        Dispatchers.resetMain()
     }
 
-    // --- Pruebas para getAudioFiles ---
     @Test
     fun `getAudioFiles returns songs from DAO, filtered by allowed directories`() = runTest(testDispatcher) {
         val songEntities = listOf(
@@ -119,14 +113,13 @@ class MusicRepositoryImplTest {
         )
         val allowedDirs = setOf("/allowed/path")
 
-        // Mock filter behavior:
         val filteredSongs = songEntities.filter { it.filePath.startsWith("/allowed/path") }
         every { mockMusicDao.getAllSongs(any(), eq(true)) } returns flowOf(filteredSongs)
         every { mockMusicDao.getAllSongs(any(), eq(false)) } returns flowOf(songEntities)
         
-        every { mockUserPreferencesRepository.allowedDirectoriesFlow } returns flowOf(allowedDirs) // No es suspend
-        every { mockUserPreferencesRepository.blockedDirectoriesFlow } returns flowOf(setOf("/dummy")) // Trigger filter
-        every { mockUserPreferencesRepository.initialSetupDoneFlow } returns flowOf(true) // No es suspend
+        every { mockUserPreferencesRepository.allowedDirectoriesFlow } returns flowOf(allowedDirs)
+        every { mockUserPreferencesRepository.blockedDirectoriesFlow } returns flowOf(setOf("/dummy"))
+        every { mockUserPreferencesRepository.initialSetupDoneFlow } returns flowOf(true)
         every { mockUserPreferencesRepository.isFolderFilterActiveFlow } returns flowOf(true)
         coEvery { mockMusicDao.getDistinctParentDirectories() } returns listOf("/allowed/path", "/forbidden/path")
 
@@ -143,7 +136,6 @@ class MusicRepositoryImplTest {
             createSongEntity(1L, "Song A", "Artist 1", "Pop", "/any/path/songA.mp3", "/any/path"),
             createSongEntity(2L, "Song B", "Artist 1", "Pop", "/other/path/songB.mp3", "/other/path")
         )
-        // Stubs removed, relying on setUp
 
 
 
@@ -156,12 +148,10 @@ class MusicRepositoryImplTest {
         val songEntities = listOf(
              createSongEntity(1L, "Song A", "Artist 1", "Pop", "/allowed/path/songA.mp3", "/allowed/path")
         )
-        // Stubs removed
         val result = musicRepository.getAudioFiles().first()
         assertTrue(result.isEmpty())
     }
 
-    // --- Pruebas para getAlbums ---
     @Test
     fun `getAlbums returns albums from DAO, filtered by songs in allowed directories`() = runTest(testDispatcher) {
         val songEntities = listOf(
@@ -171,14 +161,12 @@ class MusicRepositoryImplTest {
             createSongEntity(4L, "S4", "A3", "G", "/allowed/s4.mp3", "/allowed").copy(albumId = 203L)
         )
         val allAlbumEntities = listOf(
-            AlbumEntity(201L, "Album1", "ArtistName1", 101L, "art_uri1", 10, 0L, 2023), // El songCount original del DAO
+            AlbumEntity(201L, "Album1", "ArtistName1", 101L, "art_uri1", 10, 0L, 2023),
             AlbumEntity(202L, "Album2", "ArtistName2", 102L, "art_uri2", 5, 0L, 2022),
             AlbumEntity(203L, "Album3", "ArtistName3", 103L, "art_uri3", 3, 0L, 2021)
         )
         val allowedDirs = setOf("/allowed")
 
-        // Mock getSongs logic to return filtered list for getAlbums internal call to getAudioFiles()
-        // Filtered logic: Only S1, S2, S4 are in allowed directories
         val filteredSongs = songEntities.filter { it.filePath.startsWith("/allowed") }
         every { mockMusicDao.getSongs(any(), eq(true)) } returns flowOf(filteredSongs)
         val expectedAlbums = allAlbumEntities.map { album ->
@@ -201,7 +189,6 @@ class MusicRepositoryImplTest {
         assertEquals(1, result.find { it.id == 203L }?.songCount)
     }
 
-    // --- Pruebas para getArtists ---
     @Test
     fun `getArtists returns artists from DAO, filtered by songs in allowed directories`() = runTest(testDispatcher) {
         val songEntities = listOf(
@@ -210,14 +197,11 @@ class MusicRepositoryImplTest {
             createSongEntity(3L, "S3", "Artist1Name", "G", "/allowed/s3.mp3", "/allowed")
         )
         val allArtistEntities = listOf(
-            ArtistEntity(101L, "Artist1Name", 20), // El trackCount original del DAO
+            ArtistEntity(101L, "Artist1Name", 20),
             ArtistEntity(102L, "Artist2Name", 10)
         )
         val allowedDirs = setOf("/allowed")
 
-        // Mock getSongs logic to return filtered list for getArtists internal call to getAudioFiles()
-        // Filtered logic: Only S1 and S3 are in allowed directories
-        // Filtered logic: Only S1 and S3 are in allowed directories
         val filteredSongs = songEntities.filter { it.filePath.startsWith("/allowed") }
         every { mockMusicDao.getSongs(any(), eq(true)) } returns flowOf(filteredSongs)
         val expectedArtists = allArtistEntities.map { 
@@ -319,18 +303,8 @@ class MusicRepositoryImplTest {
                 mockSearchHistoryDao.insert(any())
             }
         }
-        // TODO: Añadir más tests para el historial si es necesario
     }
 
-    // TODO: Añadir tests para:
-    // - getSongsForAlbum, getSongsForArtist, getSongsByIds
-    // - searchSongs, searchAlbums, searchArtists, searchAll (verificando la lógica de combine y filtrado)
-    // - getAllUniqueAlbumArtUris
-    // - getMusicByGenre
-    // - getAllUniqueAudioDirectories (si se mantiene la lógica de MediaStore, necesitará mockear ContentResolver)
-    // - invalidateCachesDependentOnAllowedDirectories (verificar que hace lo esperado, o nada si es obsoleta)
-
-    // Helper method to create SongEntity with defaults to avoid positional argument hell
     private fun createSongEntity(
         id: Long,
         title: String,
@@ -343,9 +317,9 @@ class MusicRepositoryImplTest {
             id = id,
             title = title,
             artistName = artistName,
-            artistId = 101L, // Default
-            albumName = "Album1", // Default
-            albumId = 201L, // Default
+            artistId = 101L,
+            albumName = "Album1",
+            albumId = 201L,
             contentUriString = "uri_$id",
             albumArtUriString = "art_$id",
             duration = 180,

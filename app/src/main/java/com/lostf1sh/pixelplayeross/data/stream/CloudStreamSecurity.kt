@@ -120,15 +120,8 @@ object CloudStreamSecurity {
 
         if (httpUrl.username.isNotEmpty() || httpUrl.password.isNotEmpty()) return false
 
-        // Loopback is never a valid upstream — the proxy itself lives there.
         if (host in FORBIDDEN_HOSTS) return false
 
-        // The proxy may only ever talk to the user's configured server. An empty allowlist
-        // means no server is configured (or its URL failed to parse, e.g. right after
-        // logout while stream URLs are still cached) — deny instead of falling open.
-        // Private-IP and .local hosts (common for self-hosted servers) are allowed when,
-        // and only when, they match the configured server; the URL path is server-supplied
-        // data and must never influence host-safety decisions.
         if (allowedHostSuffixes.isEmpty()) return false
         if (!hostMatchesAllowedSuffix(host, allowedHostSuffixes)) return false
 

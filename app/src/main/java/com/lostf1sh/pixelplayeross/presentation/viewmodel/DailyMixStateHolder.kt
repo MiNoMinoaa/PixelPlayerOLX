@@ -74,12 +74,10 @@ class DailyMixStateHolder @Inject constructor(
             if (allSongs.isNotEmpty()) {
                 val favoriteIds = favoriteSongIdsFlow.first()
 
-                // Generate daily mix
                 val mix = dailyMixManager.generateDailyMix(allSongs, favoriteIds)
                 _dailyMixSongs.value = mix.toImmutableList()
                 userPreferencesRepository.saveDailyMixSongIds(mix.map { it.id })
 
-                // Generate your mix
                 val yourMix = dailyMixManager.generateYourMix(allSongs, favoriteIds)
                 _yourMixSongs.value = yourMix.toImmutableList()
                 userPreferencesRepository.saveYourMixSongIds(yourMix.map { it.id })
@@ -94,7 +92,6 @@ class DailyMixStateHolder @Inject constructor(
      * instead of combining with the full allSongs flow.
      */
     fun loadPersistedDailyMix() {
-        // Load Daily Mix
         scope?.launch {
             val dailyMixIds = userPreferencesRepository.dailyMixSongIdsFlow.first()
             if (dailyMixIds.isNotEmpty() && _dailyMixSongs.value.isEmpty()) {
@@ -102,7 +99,6 @@ class DailyMixStateHolder @Inject constructor(
                     musicRepository.getSongsByIds(dailyMixIds).first()
                 }
                 if (songs.isNotEmpty()) {
-                    // Maintain persisted order
                     val songMap = songs.associateBy { it.id }
                     val orderedSongs = dailyMixIds.mapNotNull { songMap[it] }
                     _dailyMixSongs.value = orderedSongs.toImmutableList()
@@ -110,7 +106,6 @@ class DailyMixStateHolder @Inject constructor(
             }
         }
 
-        // Load Your Mix
         scope?.launch {
             val yourMixIds = userPreferencesRepository.yourMixSongIdsFlow.first()
             if (yourMixIds.isNotEmpty() && _yourMixSongs.value.isEmpty()) {

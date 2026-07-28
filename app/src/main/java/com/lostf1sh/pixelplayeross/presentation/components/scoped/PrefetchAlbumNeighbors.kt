@@ -71,9 +71,6 @@ fun PrefetchAlbumNeighbors(
 
     LaunchedEffect(pagerState, queue, anchorIndex, requestTargetSize) {
         snapshotFlow { 
-            // If the user is manually scrolling, follow the PagerState.
-            // If the Pager is idle, prioritize the provided anchorIndex (which is tied to the current song)
-            // to avoid fetching neighbors of a stale index after a queue shift.
             if (pagerState.isScrollInProgress) pagerState.currentPage 
             else anchorIndex ?: pagerState.currentPage 
         }
@@ -98,7 +95,7 @@ fun PrefetchAlbumNeighbors(
                             .networkCachePolicy(coil.request.CachePolicy.ENABLED)
                             .allowHardware(true)
                             .build()
-                        imageLoader.enqueue(req) // fire-and-forget
+                        imageLoader.enqueue(req)
                     }
                 }
             }

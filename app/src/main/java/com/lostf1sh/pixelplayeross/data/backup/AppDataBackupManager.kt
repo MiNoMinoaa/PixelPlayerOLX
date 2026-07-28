@@ -109,7 +109,6 @@ data class AppDataBackupPayload(
     val availableSections: Set<String> = emptySet(),
     val globalSettings: List<PreferenceBackupEntry>? = null,
     val playlists: List<PreferenceBackupEntry>? = null,
-    // Legacy field from JSON v1 backups
     val preferences: List<PreferenceBackupEntry>? = null,
     val favorites: List<FavoritesEntity>? = null,
     val lyrics: List<LyricsEntity>? = null,

@@ -241,7 +241,6 @@ fun JellyfinLoginScreen(
         ) {
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Jellyfin Icon
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -283,7 +282,6 @@ fun JellyfinLoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Info Card
             Card(
                 shape = AbsoluteSmoothCornerShape(20.dp, 60),
                 colors = CardDefaults.cardColors(
@@ -437,7 +435,6 @@ fun JellyfinLoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Login Button
             Button(
                 onClick = connect,
                 enabled = !isLoading && serverUrl.isNotBlank() && username.isNotBlank() && password.isNotBlank(),

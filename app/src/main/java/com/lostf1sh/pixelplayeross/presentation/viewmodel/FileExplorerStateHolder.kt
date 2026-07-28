@@ -89,14 +89,12 @@ class FileExplorerStateHolder(
     private var visibleRoot: File = initialRoot
     private var rootCanonicalPath: String = normalizePath(visibleRoot)
 
-    // Available storages (Internal, SD Card, USB)
     private val _availableStorages = MutableStateFlow<ImmutableList<StorageInfo>>(persistentListOf())
     val availableStorages: StateFlow<ImmutableList<StorageInfo>> = _availableStorages.asStateFlow()
 
     private val _selectedStorageIndex = MutableStateFlow(0)
     val selectedStorageIndex: StateFlow<Int> = _selectedStorageIndex.asStateFlow()
 
-    // Cache for "Raw" entries (without selection state)
     private val directoryChildrenCache = ConcurrentHashMap<String, List<RawDirectoryEntry>>()
     private val prefetchedDirectoryKeys = ConcurrentHashMap.newKeySet<String>()
     private val resolvedDirectoryKeys = ConcurrentHashMap.newKeySet<String>()
@@ -124,7 +122,6 @@ class FileExplorerStateHolder(
     private val _isCurrentDirectoryResolved = MutableStateFlow(false)
     val isCurrentDirectoryResolved: StateFlow<Boolean> = _isCurrentDirectoryResolved.asStateFlow()
 
-    // Combined flow for UI consumption
     private val _currentDirectoryChildren = MutableStateFlow<ImmutableList<DirectoryEntry>>(persistentListOf())
     val currentDirectoryChildren: StateFlow<ImmutableList<DirectoryEntry>> = _currentDirectoryChildren.asStateFlow()
 
@@ -143,10 +140,8 @@ class FileExplorerStateHolder(
     }
 
     init {
-        // Load available storages
         refreshAvailableStorages()
 
-        // Observer for preferences
         combine(
             userPreferencesRepository.allowedDirectoriesFlow,
             userPreferencesRepository.blockedDirectoriesFlow
@@ -159,7 +154,6 @@ class FileExplorerStateHolder(
             }
             .launchIn(scope)
 
-        // Combiner to produce final UI list with isBlocked state
         combine(
             _rawCurrentDirectoryChildren,
             _allowedDirectories,
@@ -189,7 +183,6 @@ class FileExplorerStateHolder(
 
     fun refreshAvailableStorages() {
         _availableStorages.value = StorageUtils.getAvailableStorages(context).toImmutableList()
-        // Ensure selected index is valid
         if (_selectedStorageIndex.value >= _availableStorages.value.size) {
             _selectedStorageIndex.value = 0
         }
@@ -202,12 +195,10 @@ class FileExplorerStateHolder(
         _selectedStorageIndex.value = index
         val selectedStorage = storages[index]
 
-        // Update the visible root
         visibleRoot = selectedStorage.path
         rootCanonicalPath = normalizePath(visibleRoot)
         _currentPath.value = visibleRoot
 
-        // Load the new storage root
         loadDirectory(visibleRoot, updatePath = true, forceRefresh = false)
     }
 
@@ -282,21 +273,15 @@ class FileExplorerStateHolder(
 
         val isEffectivelyBlocked = DirectoryRuleResolver(currentAllowed, currentBlocked).isBlocked(path)
 
-        // Check if explicitly blocked in the set (ignoring resolver logic for a moment)
         val isExplicitlyBlocked = currentBlocked.contains(path)
 
         if (isEffectivelyBlocked) {
-            // Unblock operation
             currentBlocked.remove(path)
 
             if (isExplicitlyBlocked) {
-                // Clean up: Remove any explicit "Allow" rules that are children of this path
-                // (since we are unblocking the parent, children are now implicitly allowed)
                 currentAllowed.removeAll { it.startsWith("$path/") }
             }
 
-            // Crucial: Only add to "Allowed" if it is STILL blocked by a parent.
-            // If it's not blocked by any parent, we don't need to add it to allowed (Global Allow).
             val resolver = DirectoryRuleResolver(currentAllowed, currentBlocked)
             if (resolver.isBlocked(path)) {
                currentAllowed.add(path)
@@ -304,7 +289,6 @@ class FileExplorerStateHolder(
                currentAllowed.remove(path)
             }
 
-            // Optimistic Update directly to flows to prevent race conditions on rapid toggles
             _allowedDirectories.value = currentAllowed
             _blockedDirectories.value = currentBlocked
             
@@ -312,19 +296,11 @@ class FileExplorerStateHolder(
             return
         }
 
-        // Block Operation
-        // Remove any explicit "Block" rules that are children (they are redundant now)
         currentBlocked.removeAll { it.startsWith("$path/") }
-        // Remove any explicit "Allow" rules that are inside (they are overridden unless we want nested allow?)
-        // Wait, usually we want to Keep nested allows if we support "Block Music, Allow Music/Favorites".
-        // DirectoryRuleResolver supports nesting. 
-        // But the previous code removed them: `currentAllowed.removeAll { ... }`
-        // Let's stick to previous behavior of clearing conflicting rules to avoid confusion.
         currentAllowed.removeAll { it == path || it.startsWith("$path/") }
         
         currentBlocked.add(path)
 
-        // Optimistic Update
         _allowedDirectories.value = currentAllowed
         _blockedDirectories.value = currentBlocked
 

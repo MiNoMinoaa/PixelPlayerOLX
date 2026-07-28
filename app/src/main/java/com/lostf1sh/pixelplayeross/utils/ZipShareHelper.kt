@@ -27,7 +27,7 @@ object ZipShareHelper {
     
     private const val ZIP_CACHE_DIR = "shared_zips"
     private const val BUFFER_SIZE = 8192
-    private const val MAX_RECOMMENDED_SIZE_BYTES = 100 * 1024 * 1024L // 100MB warning threshold
+    private const val MAX_RECOMMENDED_SIZE_BYTES = 100 * 1024 * 1024L
     
     /**
      * Creates a ZIP file containing all provided songs and shares it.
@@ -47,20 +47,16 @@ object ZipShareHelper {
                 return@withContext Result.failure(IllegalArgumentException("No songs to share"))
             }
             
-            // Create cache directory for ZIP files
             val zipDir = File(context.cacheDir, ZIP_CACHE_DIR)
             if (!zipDir.exists()) {
                 zipDir.mkdirs()
             }
             
-            // Clean up old ZIP files (older than 1 hour)
             cleanupOldZips(zipDir)
             
-            // Generate unique filename
             val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
             val zipFile = File(zipDir, "PixelPlayerOSS_Songs_$timestamp.zip")
             
-            // Create ZIP file
             ZipOutputStream(BufferedOutputStream(FileOutputStream(zipFile))).use { zipOut ->
                 val totalSongs = songs.size
                 val usedNames = mutableSetOf<String>()
@@ -70,7 +66,6 @@ object ZipShareHelper {
                         val songUri = song.contentUriString.toUri()
                         context.contentResolver.openInputStream(songUri)?.use { inputStream ->
                             BufferedInputStream(inputStream, BUFFER_SIZE).use { bufferedIn ->
-                                // Generate unique filename (handle duplicates)
                                 val baseName = sanitizeFileName(song.title)
                                 val extension = getFileExtension(song.path)
                                 var fileName = "$baseName.$extension"
@@ -81,7 +76,6 @@ object ZipShareHelper {
                                 }
                                 usedNames.add(fileName.lowercase())
                                 
-                                // Add entry to ZIP
                                 zipOut.putNextEntry(ZipEntry(fileName))
                                 
                                 val buffer = ByteArray(BUFFER_SIZE)
@@ -95,22 +89,18 @@ object ZipShareHelper {
                         }
                     } catch (e: Exception) {
                         Timber.w(e, "Failed to add song to ZIP: ${song.title}")
-                        // Continue with other songs
                     }
                     
-                    // Report progress
                     onProgress?.invoke((index + 1).toFloat() / totalSongs)
                 }
             }
             
-            // Get shareable URI via FileProvider
             val zipUri = FileProvider.getUriForFile(
                 context,
                 "${context.packageName}.provider",
                 zipFile
             )
             
-            // Share the ZIP file
             withContext(Dispatchers.Main) {
                 shareZipFile(context, zipUri, songs.size)
             }
@@ -142,7 +132,6 @@ object ZipShareHelper {
                     totalSize += inputStream.available().toLong()
                 }
             } catch (e: Exception) {
-                // Ignore and continue
             }
         }
         totalSize
@@ -206,10 +195,9 @@ object ZipShareHelper {
     }
     
     private fun sanitizeFileName(name: String): String {
-        // Remove or replace characters that are invalid in filenames
         return name.replace(Regex("[\\\\/:*?\"<>|]"), "_")
             .replace(Regex("\\s+"), "_")
-            .take(100) // Limit filename length
+            .take(100)
     }
     
     private fun getFileExtension(path: String): String {

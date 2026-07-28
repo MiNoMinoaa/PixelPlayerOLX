@@ -10,7 +10,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.animateIntAsState // Added
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,9 +25,9 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset // Added
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize // Added
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -49,7 +49,7 @@ import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton // Added
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -65,7 +65,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf // Added
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -73,7 +73,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale // Added
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -87,11 +87,10 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign // Added
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.input.pointer.pointerInput
- // Added
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -114,7 +113,7 @@ import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.SurroundSound
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.material.icons.rounded.Check // Added import for Switch check icon
+import androidx.compose.material.icons.rounded.Check
 import androidx.media3.common.util.UnstableApi
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.foundation.pager.HorizontalPager
@@ -131,10 +130,10 @@ import androidx.compose.ui.graphics.toArgb
 import com.lostf1sh.pixelplayeross.presentation.components.WavyArcSlider
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.TextButton
-import androidx.compose.material.icons.rounded.Edit // Added
-import androidx.compose.material.icons.rounded.ExpandMore // Added
-import androidx.compose.material.icons.rounded.Save // Added
-import androidx.compose.material.icons.filled.Star // Added
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.Save
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Surface
 import com.lostf1sh.pixelplayeross.presentation.components.CustomPresetsSheet
 import com.lostf1sh.pixelplayeross.presentation.components.ReorderPresetsSheet
@@ -163,13 +162,11 @@ fun EqualizerScreen(
 ) {
     val uiState by equalizerViewModel.uiState.collectAsStateWithLifecycle()
 
-    // Sheet States
     var showCustomPresetsSheet by remember { mutableStateOf(false) }
     var showReorderSheet by remember { mutableStateOf(false) }
     var showSaveDialog by remember { mutableStateOf(false) }
     var renameTarget by remember { mutableStateOf<EqualizerPreset?>(null) }
     
-    // Handlers
     if (showSaveDialog) {
         SavePresetDialog(
             onDismiss = { showSaveDialog = false },
@@ -208,7 +205,6 @@ fun EqualizerScreen(
         onDismiss = { showReorderSheet = false }
     )
     
-    // Transition animations
     val transitionState = remember { MutableTransitionState(false) }
     LaunchedEffect(true) { transitionState.targetState = true }
     
@@ -301,11 +297,10 @@ fun EqualizerScreen(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            // Preset Tabs
             item(key = "preset_tabs") {
                 val visiblePresets = remember(uiState.accessiblePresets) {
                     val defaultPresets = uiState.accessiblePresets.filter { !it.isCustom }
-                    (defaultPresets + EqualizerPreset.custom(List(10) { 0 })).toImmutableList() // Always show "Custom" tab at end
+                    (defaultPresets + EqualizerPreset.custom(List(10) { 0 })).toImmutableList()
                 }
                 
                 PresetTabsRow(
@@ -318,7 +313,6 @@ fun EqualizerScreen(
                 )
             }
             
-            // Band Sliders
             item(key = "band_sliders") {
                 BandSlidersSection(
                     bandLevels = uiState.bandLevels,
@@ -338,15 +332,14 @@ fun EqualizerScreen(
                 )
             }
             
-            // Effect Controls
             item(key = "effect_controls") {
                 EffectControlsSection(
                     bassBoostEnabled = uiState.bassBoostEnabled,
-                    bassBoostStrength = uiState.bassBoostStrength, // Now Float
+                    bassBoostStrength = uiState.bassBoostStrength,
                     virtualizerEnabled = uiState.virtualizerEnabled,
-                    virtualizerStrength = uiState.virtualizerStrength, // Now Float
+                    virtualizerStrength = uiState.virtualizerStrength,
                     loudnessEnabled = uiState.loudnessEnhancerEnabled,
-                    loudnessStrength = uiState.loudnessEnhancerStrength, // Now Float
+                    loudnessStrength = uiState.loudnessEnhancerStrength,
                     isBassBoostSupported = uiState.isBassBoostSupported,
                     isVirtualizerSupported = uiState.isVirtualizerSupported,
                     isLoudnessEnhancerSupported = uiState.isLoudnessEnhancerSupported,
@@ -365,7 +358,6 @@ fun EqualizerScreen(
                 )
             }
             
-            // Volume Control
             item(key = "volume_control") {
                 val volume by equalizerViewModel.systemVolume.collectAsStateWithLifecycle()
                 VolumeControlCard(
@@ -383,7 +375,6 @@ fun EqualizerScreen(
             expandedTitleStartPadding = 20.dp,
             collapsedTitleStartPadding = 72.dp,
             actions = {
-                // View Mode Toggle
                 FilledIconButton(
                     onClick = { equalizerViewModel.cycleViewMode() },
                     colors = IconButtonDefaults.filledIconButtonColors(
@@ -403,7 +394,6 @@ fun EqualizerScreen(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                // Power toggle
                 val isEnabled = uiState.isEnabled
                 val powerButtonCorner by animateIntAsState(
                     targetValue = if (isEnabled) 50 else 12,
@@ -447,15 +437,12 @@ private fun PresetTabsRow(
     val showTabIndicator = false
     val selectedIndex = remember(presets, selectedPreset) {
         if (selectedPreset.isCustom || selectedPreset.name == "custom") {
-             presets.indexOfLast { it.name == "Custom" || it.name == "custom" } // Match the placeholder
+             presets.indexOfLast { it.name == "Custom" || it.name == "custom" }
         } else {
              presets.indexOfFirst { it.name == selectedPreset.name }.coerceAtLeast(0)
         }
     }.coerceAtLeast(0)
     val coroutineScope = rememberCoroutineScope()
-    
-    // We don't use a Pager, so we need a manual scroll state if we wanted to auto-scroll.
-    // Standard ScrollableTabRow handles scrolling to selected index automatically.
     
     PrimaryScrollableTabRow(
         selectedTabIndex = selectedIndex,
@@ -467,15 +454,13 @@ private fun PresetTabsRow(
                  TabRowDefaults.PrimaryIndicator(
                     modifier = Modifier.tabIndicatorOffset(selectedTabIndex = selectedIndex),
                     height = 3.dp,
-                    width = 20.dp, // Fixed width for expressive dot? Or default width? Library used default.
-                    // Library code: Modifier.tabIndicatorOffset(selectedTabIndex = pagerState.currentPage), height = 3.dp
-                    // Let's stick to default width (match content) but custom height/color.
+                    width = 20.dp,
                     shape = RoundedCornerShape(3.dp),
                     color = MaterialTheme.colorScheme.primary
                  )
             }
         },
-        modifier = Modifier.fillMaxWidth().height(56.dp) // Reduced height? Standard is often 48-64. 56 is good.
+        modifier = Modifier.fillMaxWidth().height(56.dp)
     ) {
         presets.forEachIndexed { index, preset ->
             val isPinnedCustom = preset.isCustom
@@ -498,19 +483,14 @@ private fun PresetTabsRow(
                         Icon(
                             imageVector = Icons.Filled.Star,
                             contentDescription = stringResource(R.string.presentation_batch_d_eq_custom_preset_cd),
-                            modifier = Modifier.size(10.dp), // Slightly smaller
+                            modifier = Modifier.size(10.dp),
                             tint = if (selectedIndex == index) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary 
-                            // Note: TabAnimation handles content color usually, but Icon tint might need explicit handling or use LocalContentColor.
-                            // TabAnimation uses: selectedContentColor = contentColor.
-                            // So if I don't set tint, it will use LocalContentColor which is animated. 
-                            // So remove manual tint or use LocalContentColor.current.
                         )
                     }
                 }
             }
         }
         
-        // Edit Button as a specific Tab (unselectable)
         TabAnimation(
             index = -1,
             title = stringResource(R.string.presentation_batch_d_eq_edit_tab_title),
@@ -622,7 +602,6 @@ private fun BandSlidersSection(
                 }
                 
                 if (editingPresetName != null) {
-                    // Update Option
                     Surface(
                         color = MaterialTheme.colorScheme.primaryContainer,
                         shape = CircleShape,
@@ -647,7 +626,6 @@ private fun BandSlidersSection(
                         }
                     }
 
-                    // Save New Option
                     Surface(
                         color = MaterialTheme.colorScheme.tertiaryContainer,
                         shape = CircleShape,
@@ -723,7 +701,6 @@ private fun BandSlidersSection(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Page Indicator
                     Row(
                         modifier = Modifier
                             .fillMaxWidth(),
@@ -757,7 +734,7 @@ private fun GraphBandSliders(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(290.dp) // Slightly taller for graph headroom
+            .height(290.dp)
     ) {
         val density = LocalDensity.current
         
@@ -775,7 +752,6 @@ private fun GraphBandSliders(
                         .weight(1f)
                         .fillMaxHeight()
                 ) {
-                    // Value Text (Top)
                     Text(
                         text = if (level > 0) "+$level" else "$level",
                         style = MaterialTheme.typography.labelSmall,
@@ -803,7 +779,6 @@ private fun GraphBandSliders(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Frequency
                     Text(
                         text = frequencies.getOrElse(index) { "" }.replace("Hz", "").replace("k", "k"),
                         style = MaterialTheme.typography.labelSmall,
@@ -815,7 +790,6 @@ private fun GraphBandSliders(
             }
         }
         
-        // Graph Canvas Overlay
         if (isEnabled) {
             val primaryColor = MaterialTheme.colorScheme.primary
             
@@ -823,10 +797,9 @@ private fun GraphBandSliders(
                 val widthPerBand = size.width / bandLevels.size
                 val path = Path()
                 
-                // Constants from CustomVerticalSlider
                 val sliderTopPadding = 20.dp.toPx()
                 val sliderBottomPadding = 24.dp.toPx()
-                val thumbSize = 16.dp.toPx() // Updated to 16dp
+                val thumbSize = 16.dp.toPx()
                 val verticalPadding = 4.dp.toPx()
                 val availableHeight = size.height - sliderTopPadding - sliderBottomPadding
                 val trackHeight = availableHeight - thumbSize - (verticalPadding * 2)
@@ -857,14 +830,12 @@ private fun GraphBandSliders(
                         path.cubicTo(cp1X, cp1Y, cp2X, cp2Y, p2.x, p2.y)
                     }
                     
-                    // Draw Line
                     drawPath(
                         path = path,
                         color = primaryColor,
                         style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
                     )
                     
-                    // Draw Fill
                     val fillPath = Path()
                     fillPath.addPath(path)
                     fillPath.lineTo(points.last().x, size.height - sliderBottomPadding)
@@ -903,7 +874,6 @@ private fun VerticalBandSlider(
             .width(56.dp)
             .fillMaxHeight()
     ) {
-        // Level indicator
         Box(
             modifier = Modifier
                 .size(38.dp)
@@ -925,7 +895,6 @@ private fun VerticalBandSlider(
         
         Spacer(modifier = Modifier.height(8.dp))
         
-        // Custom vertical slider
         CustomVerticalSlider(
             value = level.toFloat(),
             onValueChange = { onLevelChanged(it.roundToInt()) },
@@ -937,14 +906,12 @@ private fun VerticalBandSlider(
             activeTrackColor = if (isEnabled) MaterialTheme.colorScheme.primary 
                               else MaterialTheme.colorScheme.onSurfaceVariant,
             inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            thumbColor = if (isEnabled) MaterialTheme.colorScheme.onPrimary // Contrast for thick slider
+            thumbColor = if (isEnabled) MaterialTheme.colorScheme.onPrimary
                         else MaterialTheme.colorScheme.onSurfaceVariant
-            // Default params used: trackThickness = Unspecified (fill), thumbSize = 24.dp
         )
         
         Spacer(modifier = Modifier.height(8.dp))
         
-        // Frequency label
         Text(
             text = frequency,
             style = MaterialTheme.typography.labelSmall,
@@ -977,14 +944,11 @@ private fun CustomVerticalSlider(
     val thumbSizePx = with(density) { thumbSize.toPx() }
     val thumbRadiusPx = thumbSizePx / 2
     
-    // Geometry correction: Adding padding so thumb doesn't touch the absolute container edges
     val verticalPaddingDp = 4.dp
     val verticalPaddingPx = with(density) { verticalPaddingDp.toPx() }
     
-    // Normalize value to 0..1 range
     val normalizedValue = ((value - valueRange.start) / (valueRange.endInclusive - valueRange.start)).coerceIn(0f, 1f)
     
-    // Track previous integer value for haptic feedback
     var lastHapticValue by remember { mutableIntStateOf(value.roundToInt()) }
     var isInteracting by remember { mutableStateOf(false) }
     var dragNormalizedValue by remember { mutableFloatStateOf(normalizedValue) }
@@ -995,7 +959,6 @@ private fun CustomVerticalSlider(
         }
     }
     
-    // Create the Path
     val starShape = remember { com.lostf1sh.pixelplayeross.utils.shapes.RoundedStarShape(sides = 8, curve = 0.1) }
     val finalShape = thumbShape ?: starShape
     
@@ -1012,7 +975,6 @@ private fun CustomVerticalSlider(
         }
     }
 
-    // Colors for "inside" look
     val actualActiveTrackColor = if (enabled) activeTrackColor else activeTrackColor.copy(alpha = 0.3f)
     val actualInactiveTrackColor = inactiveTrackColor
     val actualThumbColor = if (enabled) thumbColor else MaterialTheme.colorScheme.onSurfaceVariant
@@ -1023,12 +985,10 @@ private fun CustomVerticalSlider(
     ) {
         val heightPx = with(density) { maxHeight.toPx() }
         
-        // Usable track height (center of thumb travels within this range, respecting padding)
         val trackHeight = heightPx - thumbSizePx - (verticalPaddingPx * 2)
         val safeTrackHeight = trackHeight.coerceAtLeast(1f)
         val displayNormalizedValue = if (isInteracting) dragNormalizedValue else normalizedValue
         
-        // thumb Y position (center)
         val thumbCenterY = heightPx - verticalPaddingPx - thumbRadiusPx - (displayNormalizedValue * safeTrackHeight)
         
         androidx.compose.foundation.Canvas(
@@ -1084,32 +1044,27 @@ private fun CustomVerticalSlider(
         ) {
             val centerX = size.width / 2
             
-            // Determine track drawing width
             val trackWidth = if (trackThickness != androidx.compose.ui.unit.Dp.Unspecified) {
                 with(density) { trackThickness.toPx() }
             } else {
                 size.width
             }
-            // If explicit thickness, center it. If fill, left is 0.
             val trackLeft = if (trackThickness != androidx.compose.ui.unit.Dp.Unspecified) {
                 centerX - (trackWidth / 2)
             } else {
                 0f
             }
             
-            // 1. Draw Inactive Track
             drawRoundRect(
                 color = actualInactiveTrackColor,
                 topLeft = androidx.compose.ui.geometry.Offset(trackLeft, 0f), 
-                size = androidx.compose.ui.geometry.Size(trackWidth, size.height), // Use height not size.width
+                size = androidx.compose.ui.geometry.Size(trackWidth, size.height),
                 cornerRadius = androidx.compose.ui.geometry.CornerRadius(trackWidth / 2)
             )
             
-            // 2. Draw Active Track
-            // Cap at thumb center
             drawCircle(
                 color = actualActiveTrackColor,
-                radius = trackWidth / 2, // Use trackWidth
+                radius = trackWidth / 2,
                 center = androidx.compose.ui.geometry.Offset(centerX, thumbCenterY)
             )
             
@@ -1137,12 +1092,10 @@ private fun CustomVerticalSlider(
                 )
             }
 
-            // 3. Draw Thumb
             translate(
                 left = centerX - thumbRadiusPx, 
                 top = thumbCenterY - thumbRadiusPx
             ) {
-                // Rotate thumb based on normalized value (0 at bottom -> 360 at top)
                 rotate(
                     degrees = displayNormalizedValue * 360f,
                     pivot = androidx.compose.ui.geometry.Offset(thumbRadiusPx, thumbRadiusPx)
@@ -1160,11 +1113,11 @@ private fun CustomVerticalSlider(
 @Composable
 private fun EffectControlsSection(
     bassBoostEnabled: Boolean,
-    bassBoostStrength: Float, // Int -> Float
+    bassBoostStrength: Float,
     virtualizerEnabled: Boolean,
-    virtualizerStrength: Float, // Int -> Float
+    virtualizerStrength: Float,
     loudnessEnabled: Boolean,
-    loudnessStrength: Float, // Int -> Float
+    loudnessStrength: Float,
     isBassBoostSupported: Boolean,
     isVirtualizerSupported: Boolean,
     isLoudnessEnhancerSupported: Boolean,
@@ -1172,11 +1125,11 @@ private fun EffectControlsSection(
     isVirtualizerDismissed: Boolean = false,
     isLoudnessDismissed: Boolean = false,
     onBassBoostEnabledChange: (Boolean) -> Unit,
-    onBassBoostStrengthChange: (Float) -> Unit, // Int -> Float
+    onBassBoostStrengthChange: (Float) -> Unit,
     onVirtualizerEnabledChange: (Boolean) -> Unit,
-    onVirtualizerStrengthChange: (Float) -> Unit, // Int -> Float
+    onVirtualizerStrengthChange: (Float) -> Unit,
     onLoudnessEnabledChange: (Boolean) -> Unit,
-    onLoudnessStrengthChange: (Float) -> Unit, // Int -> Float
+    onLoudnessStrengthChange: (Float) -> Unit,
     onDismissBassBoost: () -> Unit,
     onDismissVirtualizer: () -> Unit,
     onDismissLoudness: () -> Unit
@@ -1185,22 +1138,17 @@ private fun EffectControlsSection(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
-            .height(androidx.compose.foundation.layout.IntrinsicSize.Max) // Ensure equal heights
+            .height(androidx.compose.foundation.layout.IntrinsicSize.Max)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Bass Boost
         if (isBassBoostSupported) {
             EffectCard(
                 title = stringResource(R.string.presentation_batch_d_eq_bass_boost),
-                value = bassBoostStrength, // Already Float
-                valueRange = 0f..1000f, // Keeping range as is, assuming VM handles 0-100 normalization? 
-                // Wait, if VM stores 0-100 Float, but repo uses 0-1000 Int.
-                // If I incorrectly changed VM to store 0-100 Float, I must match UI ranges.
-                // Originally ranges were 0..1000. 
-                // Let's assume VM exposes raw 0..1000 as Float to match slider requirements.
+                value = bassBoostStrength,
+                valueRange = 0f..1000f,
                 isEnabled = bassBoostEnabled,
-                onValueChange = { onBassBoostStrengthChange(it) }, // Pass Float directly
+                onValueChange = { onBassBoostStrengthChange(it) },
                 onEnabledChange = onBassBoostEnabledChange
             )
         } else if (!isBassBoostDismissed) {
@@ -1210,7 +1158,6 @@ private fun EffectControlsSection(
             )
         }
         
-        // Virtualizer
         if (isVirtualizerSupported) {
             EffectCard(
                 title = stringResource(R.string.presentation_batch_d_eq_virtualizer),
@@ -1227,7 +1174,6 @@ private fun EffectControlsSection(
             )
         }
 
-        // Loudness Enhancer
         if (isLoudnessEnhancerSupported) {
             EffectCard(
                 title = stringResource(R.string.presentation_batch_d_eq_loudness),
@@ -1256,7 +1202,7 @@ private fun EffectCard(
     onEnabledChange: (Boolean) -> Unit
 ) {
     Card(
-        modifier = Modifier.width(150.dp).fillMaxHeight(), // Match parent intrinsic height
+        modifier = Modifier.width(150.dp).fillMaxHeight(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
@@ -1265,7 +1211,7 @@ private fun EffectCard(
         Column(
             modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp) // Reduced spacing
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
 
             Box(
@@ -1276,8 +1222,8 @@ private fun EffectCard(
             ) {
                 Box(
                     modifier = Modifier
-                        .requiredSize(150.dp) // Force render size
-                        .offset(y = (5).dp), // Shift UP slightly to center clearer
+                        .requiredSize(150.dp)
+                        .offset(y = (5).dp),
                     contentAlignment = Alignment.Center
                 ) {
                     WavyArcSlider(
@@ -1291,7 +1237,6 @@ private fun EffectCard(
                         waveAmplitude = 3.dp
                     )
                     
-                    // Percentage Text
                     val percentage = ((value - valueRange.start) / (valueRange.endInclusive - valueRange.start) * 100).toInt()
                     Text(
                         text = stringResource(R.string.ui_format_percent_d, percentage),
@@ -1323,7 +1268,7 @@ private fun UnsupportedEffectCard(
     onDismiss: () -> Unit
 ) {
      Card(
-        modifier = Modifier.width(150.dp).fillMaxHeight(), // Match parent intrinsic height
+        modifier = Modifier.width(150.dp).fillMaxHeight(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
         ),
@@ -1379,7 +1324,7 @@ private fun UnsupportedEffectRow(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f) // Subtle warning
+            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
         ),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -1531,7 +1476,6 @@ private fun VolumeControlCard(
                     Slider(
                         value = volume,
                         onValueChange = { newValue ->
-                            // Subtle haptic feedback on each 5% change
                             val currentPercent = (newValue * 100).roundToInt()
                             val lastPercent = (lastHapticValue * 100).roundToInt()
                             if (currentPercent / 5 != lastPercent / 5) {
@@ -1580,12 +1524,11 @@ private fun HybridBandSliders(
     val bandBassLow = stringResource(R.string.presentation_batch_d_eq_band_bass_low)
     val bandMidHigh = stringResource(R.string.presentation_batch_d_eq_band_mid_high)
     Column(modifier = Modifier.fillMaxWidth()) {
-        // 1. Static Compact Graph
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(220.dp) // Enlarged from 140.dp
-                .padding(horizontal = 4.dp) // Reduced outer padding
+                .height(220.dp)
+                .padding(horizontal = 4.dp)
                 .clip(RoundedCornerShape(24.dp))
                 .background(MaterialTheme.colorScheme.surfaceContainerLow)
                 .padding(16.dp)
@@ -1600,7 +1543,6 @@ private fun HybridBandSliders(
              Box(modifier = Modifier.fillMaxSize().padding(top = 24.dp)) {
                  HybridFrequencyResponseGraph(bandLevels, isEnabled)
                  
-                 // Draw simplistic X axis labels
                 Row(
                     modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).offset(y = 4.dp), 
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -1619,12 +1561,9 @@ private fun HybridBandSliders(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 2. Tabs & Sliders
-        // Calculate pages (max 3 per page)
         val itemsPerPage = 3
         val pageCount = (bandLevels.size + itemsPerPage - 1) / itemsPerPage
         
-        // Dynamic Tabs
         val tabs = if (pageCount == 4) {
             listOf(bandBass, bandLowMids, bandHighMids, bandTreble)
         } else if (pageCount == 2) {
@@ -1636,12 +1575,10 @@ private fun HybridBandSliders(
         val pagerState = rememberPagerState(pageCount = { pageCount })
         val coroutineScope = rememberCoroutineScope()
         
-        // Use pagerState.currentPage as the source of truth to avoid feedback loops
         val selectedTabIndex = pagerState.currentPage
         val showBandPageTabIndicator = false
 
         Column(modifier = Modifier.padding(horizontal = 0.dp)) {
-            // Tabs Row (Matching PresetTabsRow style)
             PrimaryScrollableTabRow(
                 selectedTabIndex = selectedTabIndex,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -1690,13 +1627,12 @@ private fun HybridBandSliders(
                  userScrollEnabled = true,
                  verticalAlignment = Alignment.Top
              ) { page ->
-                 // Content for this page
                  val start = page * itemsPerPage
                  val end = minOf(start + itemsPerPage, bandLevels.size)
                  val indices = start until end
                  
                  Column(
-                     verticalArrangement = Arrangement.spacedBy(16.dp), // Reduced from 24.dp
+                     verticalArrangement = Arrangement.spacedBy(16.dp),
                      modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
@@ -1733,7 +1669,6 @@ private fun HybridHorizontalSlider(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Frequency Label
         Column(modifier = Modifier.width(36.dp)) {
             val freqVal = frequency.replace("Hz", "").replace("k", "k")
             Text(
@@ -1748,7 +1683,6 @@ private fun HybridHorizontalSlider(
             )
         }
 
-        // Horizontal Slider (Thick Track)
         Box(modifier = Modifier.weight(1f)) {
             androidx.compose.material3.Slider(
                 value = level.toFloat(),
@@ -1773,7 +1707,6 @@ private fun HybridHorizontalSlider(
             )
         }
 
-        // Value Label
         Text(
             text = (if (level > 0) "+$level" else "$level") + "dB",
             style = MaterialTheme.typography.titleMedium,
@@ -1798,12 +1731,9 @@ private fun HybridFrequencyResponseGraph(
         val widthPerBand = size.width / bandLevels.size
         val path = Path()
         
-        // Graph Metrics
         val trackHeight = size.height * 0.7f 
         val topOffset = size.height * 0.15f
         
-        // Draw Grid Lines (Horizontal)
-        // Range -15 to +15. Grid at -10, -5, 0, 5, 10
         val gridLevels = listOf(-10, -5, 0, 5, 10)
         gridLevels.forEach { lvl ->
             val normalized = ((lvl - (-15f)) / (15f - -15f)).coerceIn(0f, 1f)
@@ -1845,14 +1775,12 @@ private fun HybridFrequencyResponseGraph(
                 path.cubicTo(cp1X, cp1Y, cp2X, cp2Y, p2.x, p2.y)
             }
             
-            // Draw Line
             drawPath(
                 path = path,
                 color = if (isEnabled) primaryColor else primaryColor.copy(alpha=0.5f),
                 style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
             )
             
-            // Draw Dots
             points.forEach { point ->
                 drawCircle(
                     color = Color.White,

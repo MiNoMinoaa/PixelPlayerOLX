@@ -10,7 +10,7 @@ import androidx.glance.unit.ColorProvider
 import com.lostf1sh.pixelplayeross.data.model.PlayerInfo
 
 object AlbumArtBitmapCache {
-    private const val CACHE_SIZE_BYTES = 4 * 1024 * 1024 // 4 MiB
+    private const val CACHE_SIZE_BYTES = 4 * 1024 * 1024
     private val lruCache = object : LruCache<String, Bitmap>(CACHE_SIZE_BYTES) {
         override fun sizeOf(key: String, value: Bitmap): Int {
             return value.byteCount

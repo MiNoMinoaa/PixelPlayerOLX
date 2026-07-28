@@ -42,7 +42,6 @@ fun ScreenWrapper(
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     
-    // Lifecycle State
     var isResumed by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
@@ -57,25 +56,14 @@ fun ScreenWrapper(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
     
-    // Initial Check
     val currentState = lifecycleOwner.lifecycle.currentStateAsState().value
     if (currentState.isAtLeast(Lifecycle.State.RESUMED)) {
         isResumed = true
     }
 
-    // Visible entries is the public Navigation API designed for transition-aware stacking.
-    // It stays stable while entries are entering / exiting, unlike the restricted currentBackStack.
     val visibleEntries by navController.visibleEntries.collectAsStateWithLifecycle()
     val myEntry = lifecycleOwner as? androidx.navigation.NavBackStackEntry
     val myIndex = visibleEntries.indexOfFirst { it.id == myEntry?.id }
-    // topIndex is the topmost visible entry that has actually reached STARTED. visibleEntries
-    // is filtered by each entry's maxLifecycle (the ceiling the NavController targets), so a
-    // mid-transition incoming entry can appear here while its real lifecycle state is still
-    // CREATED — the started-state filter is what excludes it, and it is not redundant. Read
-    // that state snapshot-aware via currentStateAsState() (not the non-snapshot
-    // Lifecycle.currentState getter) so topIndex recomposes when an entry's state changes on
-    // its own, e.g. a transition completing without visibleEntries re-emitting. key(entry.id)
-    // keeps each per-entry lifecycle observer bound to a stable entry across recompositions.
     var topIndex = -1
     for ((index, entry) in visibleEntries.withIndex()) {
         val isStarted = key(entry.id) {
@@ -84,10 +72,6 @@ fun ScreenWrapper(
         if (isStarted) topIndex = index
     }
 
-    // currentBackStackEntry updates synchronously with navigate()/popBackStack(), so it
-    // identifies the destination the user is moving TO. The incoming screen during a pop
-    // shares STARTED state with the outgoing one for a few frames; without this check the
-    // dim overlay would flash onto the screen the user is navigating back to.
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val isNavigationTarget = myEntry != null && currentBackStackEntry?.id == myEntry.id
     val myRoute = myEntry?.destination?.route
@@ -97,12 +81,6 @@ fun ScreenWrapper(
     }
     val shouldRunDepthEffects = !isMainRootScreen || hasVisibleNonMainRootScreen
 
-    // Dim Logic:
-    // If I am BACKGROUND (myIndex < topIndex) -> Dim.
-    // If I am TOP (myIndex == topIndex) -> Clear.
-    // If I am EXITING (myIndex > topIndex, effectively in front during pop) -> Clear.
-    // If I am the navigation target (incoming during a pop) -> Clear.
-    // Created entries are on their way out, so we keep them clear instead of dimming them for a frame.
     val shouldDim = remember(visibleEntries, myEntry, myIndex, topIndex, isNavigationTarget) {
         !isNavigationTarget &&
             myIndex != -1 &&
@@ -111,8 +89,6 @@ fun ScreenWrapper(
             myEntry?.lifecycle?.currentState != Lifecycle.State.CREATED
     }
 
-    // Declarative Animations
-    // Radius: If NOT Resumed -> 32dp. (Background OR Popped)
     val targetRadius = if (shouldRunDepthEffects && !isResumed) 32f else 0f
     val cornerRadius by animateFloatAsState(
         targetValue = targetRadius,
@@ -120,7 +96,6 @@ fun ScreenWrapper(
         label = "cornerRadius"
     )
 
-    // Dim: If strictly behind Top -> 0.4f. Else -> 0f.
     val targetDim = if (shouldRunDepthEffects && shouldDim) 0.4f else 0f
     val dimAlpha by animateFloatAsState(
         targetValue = targetDim,
@@ -131,13 +106,6 @@ fun ScreenWrapper(
     Box(
         modifier = modifier
             .fillMaxSize()
-            // Keep both the graphicsLayer modifier AND its compositingStrategy stable across
-            // the full lifecycle of the screen. Toggling the strategy between Auto and
-            // Offscreen mid-transition (when cornerRadius crosses the threshold) causes the
-            // RenderNode's rendering mode to flip for one frame, producing a subtle flash on
-            // the outgoing screen right as the animation starts. Main root tab switches are
-            // the exception: Home/Search/Library keep the same slide/fade transition, but skip
-            // the expensive offscreen depth layer while no deeper screen is visible.
             .graphicsLayer {
                 compositingStrategy = if (shouldRunDepthEffects) {
                     CompositingStrategy.Offscreen
@@ -155,10 +123,6 @@ fun ScreenWrapper(
     ) {
         content()
 
-        // Dim Layer Overlay
-        // Always composed with alpha-driven visibility instead of a conditional node.
-        // Conditionally adding/removing this Box when dimAlpha crosses 0 added a node to
-        // the composition tree mid-transition and contributed to the outgoing-screen flash.
         Box(
             modifier = Modifier
                 .fillMaxSize()

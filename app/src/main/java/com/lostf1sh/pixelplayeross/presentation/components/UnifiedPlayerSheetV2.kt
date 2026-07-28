@@ -115,14 +115,12 @@ fun UnifiedPlayerSheetV2(
     val lifecycleOwner = LocalLifecycleOwner.current
     val latestContext by rememberUpdatedState(context)
 
-    // MediaStore write-permission launcher (for metadata editing without MANAGE_EXTERNAL_STORAGE)
     val writePermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         playerViewModel.onWritePermissionResult(result.resultCode == android.app.Activity.RESULT_OK)
     }
 
-    // MediaStore delete-permission launcher (system delete confirmation dialog)
     val deletePermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
@@ -157,9 +155,6 @@ fun UnifiedPlayerSheetV2(
     val infrequentPlayerState = infrequentPlayerStateReference.value
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
 
-    // Keyed on the State instance: an unkeyed remember would keep a lambda closing over a
-    // stale State object if collectAsStateWithLifecycle ever returns a new one (e.g. after
-    // a lifecycle-driven recomposition with a fresh collector).
     val currentPositionState = playerViewModel.currentPlaybackPosition.collectAsStateWithLifecycle()
     val positionToDisplayProvider = remember(currentPositionState) {
         { currentPositionState.value }
@@ -260,8 +255,6 @@ fun UnifiedPlayerSheetV2(
         playerViewModel = playerViewModel
     )
 
-    // FullPlayerVisualState now holds lazy getters that read from the Animatable
-    // inside graphicsLayer (draw-phase), avoiding per-frame recomposition.
     val fullPlayerVisualState = rememberFullPlayerVisualState(
         expansionFraction = playerContentExpansionFraction,
         initialOffsetY = initialFullPlayerOffsetY
@@ -273,9 +266,6 @@ fun UnifiedPlayerSheetV2(
     )
     val shouldRenderFullPlayer = fullPlayerCompositionPolicy.shouldRenderFullPlayer
 
-    // Battery: tell the PlaybackStateHolder when the slider-bearing UI is
-    // actually rendered. When it isn't (mini-player only), the position
-    // ticker drops from 250 ms to 1 s — slider precision isn't needed.
     DisposableEffect(shouldRenderFullPlayer) {
         playerViewModel.setSliderUiMounted(shouldRenderFullPlayer)
         onDispose { playerViewModel.setSliderUiMounted(false) }
@@ -296,8 +286,6 @@ fun UnifiedPlayerSheetV2(
     }
 
     LaunchedEffect(sheetCollapsedTargetY, sheetMotionController) {
-        // Keep the mini player anchored to the latest collapsed target whenever
-        // the navbar height/visibility changes under it.
         sheetMotionController.syncToExpansion(sheetCollapsedTargetY)
     }
 
@@ -498,8 +486,6 @@ fun UnifiedPlayerSheetV2(
     val miniReadyAlpha = sheetThemeState.miniReadyAlpha
     val miniAppearScale = sheetThemeState.miniAppearScale
     val playerAreaBackground = sheetThemeState.playerAreaBackground
-    // Elevation is only visible in the mini/collapsed state (expansion < 0.18).
-    // miniReadyAlpha fades the shadow in during the initial song-appear animation.
     val isDragging = sheetBackAndDragState.isDragging
     val visualCardShadowElevation by remember(showQueueSheet, miniReadyAlpha, isDragging) {
         derivedStateOf {
@@ -584,10 +570,6 @@ fun UnifiedPlayerSheetV2(
                                 alpha = miniReadyAlpha
                                 transformOrigin = TransformOrigin(0.5f, 1f)
                             }
-                            // outerLayout:
-                            // Measures downstream chain with innerWidth and targetHeightPx.
-                            // Places child at startPaddingPx to center it horizontally.
-                            // Reports full screen width to parent to satisfy fillMaxWidth() constraints.
                             .layout { measurable, constraints ->
                                 val targetHeightPx = playerContentAreaHeightPxProvider()
                                     .toInt().coerceAtLeast(0)
@@ -610,11 +592,6 @@ fun UnifiedPlayerSheetV2(
                                     placeable.placeRelative(startPaddingPx, 0)
                                 }
                             }
-                            // Always apply Modifier.shadow with the dynamic elevation
-                            // (0.dp renders nothing). Keeping the modifier chain
-                            // structurally stable avoids the costly relayout/redraw
-                            // restructure when the elevation crosses 0.dp during
-                            // expand/collapse or right after play/pause.
                             .shadow(
                                 elevation = visualCardShadowElevation,
                                 shape = sheetInteractionState.playerShadowShape,
@@ -625,10 +602,6 @@ fun UnifiedPlayerSheetV2(
                                 shape = sheetInteractionState.playerShadowShape
                             )
                             .clip(sheetInteractionState.playerShadowShape)
-                            // innerLayout:
-                            // Measures the actual player content with full screen height targetContentHeightPx
-                            // so that it can render correctly, while reporting targetHeightPx to the outer
-                            // clip/background/shadow so that they are perfectly constrained to the miniplayer card bounds.
                             .layout { measurable, constraints ->
                                 val targetContentHeightPx = containerHeight.roundToPx()
                                 val placeable = measurable.measure(

@@ -49,7 +49,6 @@ internal fun rememberSheetVisualState(
     hasCurrentSong: Boolean,
     swipeDismissProgress: Float
 ): SheetVisualState {
-    // Compute in px to be read inside graphicsLayer (draw phase) — zero relayout per drag frame.
     val density = LocalDensity.current
     val baseBottomPadding = remember(containerHeight, sheetCollapsedTargetY, density) {
         val targetYDp = with(density) { sheetCollapsedTargetY.toDp() }
@@ -79,9 +78,6 @@ internal fun rememberSheetVisualState(
         }
     }
 
-    // Lambda provider: read inside .offset { } block (layout phase) — avoids recomposition
-    // at ~60fps during drag gestures. The lambda captures Animatable refs and reads them at
-    // layout time, same pattern as the horizontal padding providers above.
     val predictiveBackCollapseProgressState = rememberUpdatedState(predictiveBackCollapseProgress)
     val visualSheetTranslationYProvider: () -> Float = remember(
         currentSheetTranslationY,
@@ -135,11 +131,6 @@ internal fun rememberSheetVisualState(
         }
     }
 
-    // isPlaying and hasCurrentSong are only used in the fallback branch when
-    // !showPlayerContentArea. Reading them via rememberUpdatedState keeps the
-    // shape provider lambda stable across play/pause toggles — so the
-    // PlayerSheetDynamicShape instance (and the modifier chain that consumes it)
-    // is not recreated on every isPlaying flip.
     val isPlayingState = rememberUpdatedState(isPlaying)
     val hasCurrentSongState = rememberUpdatedState(hasCurrentSong)
     val playerContentActualBottomRadiusProvider: () -> Dp = remember(
@@ -207,8 +198,6 @@ internal fun rememberSheetVisualState(
         with(density) { actualCollapsedStateHorizontalPadding.toPx() }
     }
 
-    // Draw-phase lambda providers for horizontal padding — read inside graphicsLayer to avoid
-    // per-frame relayout. The lambda captures Animatable/Float refs and reads them at draw time.
     val currentHorizontalPaddingStartPxProvider: () -> Float = remember(
         showPlayerContentArea,
         collapsedStateHorizontalPaddingPx,

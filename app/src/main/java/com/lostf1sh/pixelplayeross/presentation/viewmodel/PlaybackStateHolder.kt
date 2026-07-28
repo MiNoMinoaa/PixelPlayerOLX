@@ -42,20 +42,7 @@ class PlaybackStateHolder @Inject constructor(
     companion object {
         private const val TAG = "PlaybackStateHolder"
         private const val DURATION_MISMATCH_TOLERANCE_MS = 1500L
-        // Cap how long we trust a pending seek override against an out-of-date player position.
-        // The override exists to mask the few ticks between seekTo() and the player actually
-        // reporting the new position. If we never see drift converge within this window we
-        // assume the seek will not land and fall back to the reported position rather than
-        // pinning the UI on a stale value forever.
         private const val PAUSED_OVERRIDE_MAX_AGE_MS = 4_000L
-        // Tick rates:
-        //  - SLIDER_TICK_MS (250): keeps the player sheet's slider/time display visibly smooth.
-        //    We tried 500 ms once to lower Compose recomposition pressure, but the smooth-progress
-        //    sampler polls instead of interpolating, so a 500 ms source made the slider stutter
-        //    in half-second jumps. Used only when the player sheet is open (slider visible).
-        //  - MINIPLAYER_TICK_MS (1000): mini-player + lock screen / notification only need
-        //    second-level precision. Drops position-polling-driven CPU wakes 4x → 1x per second.
-        //  - BACKGROUND_TICK_MS (1000): screen off, no slider visible.
         private const val SLIDER_TICK_MS = 250L
         private const val MINIPLAYER_TICK_MS = 1000L
         private const val BACKGROUND_TICK_MS = 1000L
@@ -68,31 +55,23 @@ class PlaybackStateHolder @Inject constructor(
         private const val SHUFFLE_TOGGLE_COOLDOWN_MS = 400L
     }
 
-    // Written on the main thread in initialize(), read from coroutines on other
-    // dispatchers — @Volatile so those readers can't observe a stale null.
     @Volatile
     private var scope: CoroutineScope? = null
 
-    // MediaController
     var mediaController: MediaController? = null
         private set
     private val mediaControllerStack = mutableListOf<MediaController>()
 
-    // Player State
     private val _stablePlayerState = MutableStateFlow(StablePlayerState())
     val stablePlayerState: StateFlow<StablePlayerState> = _stablePlayerState.asStateFlow()
     private val _currentPosition = MutableStateFlow(0L)
     val currentPosition: StateFlow<Long> = _currentPosition.asStateFlow()
 
-    // True while the full player sheet (slider visible) is mounted. Set by the
-    // sheet via DisposableEffect. Controls whether the position ticker runs at
-    // slider-smooth resolution (250 ms) or mini-player resolution (1 s).
     private val _sliderUiMounted = MutableStateFlow(false)
     fun setSliderUiMounted(mounted: Boolean) {
         _sliderUiMounted.value = mounted
     }
 
-    // Internal State
     private var isSeeking = false
     private var activePositionOccurrenceMediaId: String? = null
     private var activePositionOccurrenceToken: Long = 0L
@@ -208,7 +187,6 @@ class PlaybackStateHolder @Inject constructor(
     fun updateStablePlayerState(update: (StablePlayerState) -> StablePlayerState) {
         _stablePlayerState.update { current ->
             val updated = update(current)
-            // Auto-populate index from MediaController if not explicitly set by the update
             if (updated.currentMediaItemIndex == -1) {
                 if (dualPlayerEngine.isUsingWindowedQueue()) {
                     updated.copy(currentMediaItemIndex = dualPlayerEngine.getCurrentAbsoluteIndex())
@@ -297,18 +275,9 @@ class PlaybackStateHolder @Inject constructor(
             pausedPositionOverrideMediaId == safeMediaId &&
                 pausedPositionOverrideToken == activeToken
         val pausedOverrideActive = pausedOverride != null
-        // Stale override fallback: if the player never converges on a freshly-issued seek
-        // we don't want to pin the UI on the requested position forever. After this window
-        // we trust the reported position again.
         val overrideIsStale = pausedOverrideActive &&
             pausedPositionOverrideSetAtMs > 0L &&
             SystemClock.elapsedRealtime() - pausedPositionOverrideSetAtMs > PAUSED_OVERRIDE_MAX_AGE_MS
-        // The `reported >= preferred` shortcut is only safe for the cold-start seed (where
-        // preferred represents "where playback should start" and the player passing it means
-        // the seed has served its purpose). Applying the same shortcut to an active paused
-        // override broke backward seeks — the player still reports the pre-seek (larger)
-        // position for a tick or two after seekTo(), wiping the override before the seek
-        // had landed and snapping the UI back to the old position.
         val coldStartPassed = !pausedOverrideActive && safeReportedPosition >= preferredPosition
         if (drift <= DURATION_MISMATCH_TOLERANCE_MS || overrideIsStale || coldStartPassed) {
             if (pausedOverrideOwnsThisToken) {
@@ -370,10 +339,6 @@ class PlaybackStateHolder @Inject constructor(
         return activePositionOccurrenceToken
     }
     
-    /* -------------------------------------------------------------------------- */
-    /*                               Playback Controls                            */
-    /* -------------------------------------------------------------------------- */
-
     fun playPause() {
         val controller = activeLocalPlayer()
         if (controller.isPlaying) {
@@ -391,8 +356,6 @@ class PlaybackStateHolder @Inject constructor(
         val player = activeLocalPlayer()
         val currentMediaId = player.currentMediaItem?.mediaId
         rememberPausedPositionOverride(currentMediaId, targetPosition)
-        // Mark the seek before dispatching so the engine's HAL-reset heuristic does
-        // not misinterpret the resulting STATE_BUFFERING as an audio HAL underflow.
         dualPlayerEngine.notifyExternalSeekInitiated()
         player.seekTo(targetPosition)
     }
@@ -429,10 +392,6 @@ class PlaybackStateHolder @Inject constructor(
         _stablePlayerState.update { it.copy(repeatMode = mode) }
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                               Progress Updates                             */
-    /* -------------------------------------------------------------------------- */
-    
     private var progressJob: kotlinx.coroutines.Job? = null
 
     /**
@@ -462,12 +421,10 @@ class PlaybackStateHolder @Inject constructor(
         val diff = abs(reported - hint)
         if (diff <= DURATION_MISMATCH_TOLERANCE_MS) return reported
 
-        // If playback already passed the metadata hint, trust the reported duration to avoid clipping.
         if (position > hint + DURATION_MISMATCH_TOLERANCE_MS && reported >= position) {
             return reported
         }
 
-        // Otherwise prefer the shorter duration to avoid stale longer values after swaps.
         val resolved = minOf(reported, hint)
         if (diff > 10_000L) {
             Timber.tag(TAG).w(
@@ -491,11 +448,6 @@ class PlaybackStateHolder @Inject constructor(
     fun startProgressUpdates() {
         stopProgressUpdates()
         progressJob = scope?.launch {
-            // Battery: only spin the polling loop while something is actually
-            // observing currentPosition. With no subscribers (screen off and
-            // no lock-screen progress UI mounted), this collectLatest sits
-            // idle and the CPU stays asleep. As soon as a subscriber appears
-            // (player sheet opened, widget bound, etc.) the inner loop resumes.
             _currentPosition.subscriptionCount.collectLatest { subscriberCount ->
                 if (subscriberCount == 0) return@collectLatest
                 coroutineScope {
@@ -559,8 +511,6 @@ class PlaybackStateHolder @Inject constructor(
 
     private fun currentProgressTickMs(): Long {
         if (!powerManager.isInteractive) return BACKGROUND_TICK_MS
-        // Interactive but the slider isn't mounted (mini-player / lock-screen
-        // notification only) — second-level precision is enough.
         return if (_sliderUiMounted.value) SLIDER_TICK_MS else MINIPLAYER_TICK_MS
     }
 
@@ -568,10 +518,6 @@ class PlaybackStateHolder @Inject constructor(
         progressJob?.cancel()
         progressJob = null
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                               Shuffle & Repeat                             */
-    /* -------------------------------------------------------------------------- */
 
     private data class PreparedQueueReplacement(
         val mediaItems: List<MediaItem>,
@@ -750,7 +696,6 @@ class PlaybackStateHolder @Inject constructor(
                     val isCurrentlyShuffled = _stablePlayerState.value.isShuffleEnabled
 
                     if (!isCurrentlyShuffled) {
-                        // Enable Shuffle
                         if (!queueStateHolder.hasOriginalQueue()) {
                             queueStateHolder.setOriginalQueueOrder(currentSongs)
                         }
@@ -770,13 +715,10 @@ class PlaybackStateHolder @Inject constructor(
                         val wasPlaying = player.isPlaying
                         val currentMediaItem = player.currentMediaItem
 
-                        // Run heavy shuffle work off main to keep UI and playback responsive.
                         val shuffledQueue = withContext(Dispatchers.Default) {
                             QueueUtils.buildAnchoredShuffleQueueSuspending(currentSongs, currentIndex)
                         }
 
-                        // For large queues, use bulk replace (1 IPC call) instead of
-                        // per-item moveMediaItem (n IPC calls) which freezes the UI.
                         if (currentSongs.size > BULK_REPLACE_THRESHOLD) {
                             val preservedReplacement = buildQueueSegments(
                                 newQueue = shuffledQueue,
@@ -830,7 +772,6 @@ class PlaybackStateHolder @Inject constructor(
                             }
                         }
                     } else {
-                        // Disable Shuffle
                         scope?.launch {
                             if (userPreferencesRepository.persistentShuffleEnabledFlow.first()) {
                                 userPreferencesRepository.setShuffleOn(false)
@@ -854,7 +795,6 @@ class PlaybackStateHolder @Inject constructor(
                             return@launch
                         }
 
-                        // Use bulk replace for large queues to avoid UI freeze
                         if (originalQueue.size > BULK_REPLACE_THRESHOLD) {
                             val preservedReplacement = buildQueueSegments(
                                 newQueue = originalQueue,

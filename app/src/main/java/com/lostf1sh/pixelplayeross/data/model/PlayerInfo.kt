@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class QueueItem(
-    val id: Long, // Unique song ID
+    val id: Long,
     val albumArtUri: String? = null
 ) {
     override fun equals(other: Any?): Boolean {
@@ -68,9 +68,8 @@ data class PlayerInfo(
     val queue: List<QueueItem> = emptyList(),
     val themeColors: WidgetThemeColors? = null,
     val isShuffleEnabled: Boolean = false,
-    val repeatMode: Int = 0, // 0 = OFF, 1 = ONE, 2 = ALL
+    val repeatMode: Int = 0,
 ) {
-    // equals and hashCode for ByteArray, since the default doesn't compare contents
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

@@ -24,13 +24,11 @@ sealed class Screen(val route: String) {
     object RecentlyPlayed : Screen("recently_played")
     object Stats : Screen("stats")
     object Duplicates : Screen("duplicates")
-    object GenreDetail : Screen("genre_detail/{genreId}") { // New screen
+    object GenreDetail : Screen("genre_detail/{genreId}") {
         fun createRoute(genreId: String) = "genre_detail/$genreId"
     }
     object DJSpace : Screen("dj_space")
-    // The base route is "album_detail". The full route with the argument is defined in AppNavigation.
     object AlbumDetail : Screen("album_detail/{albumId}") {
-        // Helper function to build the navigation route with the album ID.
         fun createRoute(albumId: Long) = "album_detail/$albumId"
     }
 

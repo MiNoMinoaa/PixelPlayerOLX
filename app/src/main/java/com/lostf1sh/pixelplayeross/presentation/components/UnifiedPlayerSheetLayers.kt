@@ -83,8 +83,6 @@ internal fun BoxScope.UnifiedPlayerMiniAndFullLayers(
                         .fillMaxWidth()
                         .height(MiniPlayerHeight)
                         .graphicsLayer {
-                            // Compute miniAlpha in the draw phase from the Animatable,
-                            // avoiding per-frame recomposition during gestures.
                             alpha = (1f - playerContentExpansionFraction.value * 2f)
                                 .coerceIn(0f, 1f)
                         }
@@ -113,7 +111,6 @@ internal fun BoxScope.UnifiedPlayerMiniAndFullLayers(
                 LocalMaterialTheme provides albumColorScheme
             ) {
                 val fullPlayerScale by remember(bottomSheetOpenFraction) {
-                    // Keep the depth effect, but avoid aggressive full-screen rescaling on every frame.
                     derivedStateOf { lerp(1f, 0.972f, bottomSheetOpenFraction) }
                 }
 
@@ -134,9 +131,6 @@ internal fun BoxScope.UnifiedPlayerMiniAndFullLayers(
                     bottomSheetOpenFraction = bottomSheetOpenFraction
                 )
 
-                // Scoped queue collection: only the FullPlayer subtree observes
-                // the queue. Sibling MiniPlayer composable and the whole
-                // UnifiedPlayerSheetV2 caller are insulated from queue churn.
                 val currentPlaybackQueue by playerViewModel.queueFlow
                     .collectAsStateWithLifecycle()
 
@@ -145,8 +139,6 @@ internal fun BoxScope.UnifiedPlayerMiniAndFullLayers(
                         .fillMaxWidth()
                         .requiredHeight(containerHeight)
                         .graphicsLayer {
-                            // Read from FullPlayerVisualState lazy getters in the draw phase;
-                            // these read Animatable.value internally → re-draw only, no recomposition.
                             alpha = fullPlayerVisualState.contentAlpha
                             translationY = fullPlayerVisualState.translationY
                             scaleX = fullPlayerScale
@@ -258,8 +250,6 @@ internal fun UnifiedPlayerPrewarmLayer(
     onQueueRelease: (Float, Float) -> Unit
 ) {
     if (prewarmFullPlayer && currentSong != null) {
-        // Scoped queue collection: the prewarmed FullPlayer owns its own
-        // subscription, keeping the queue out of the outer sheet's state.
         val currentPlaybackQueue by playerViewModel.queueFlow
             .collectAsStateWithLifecycle()
         CompositionLocalProvider(
@@ -272,8 +262,6 @@ internal fun UnifiedPlayerPrewarmLayer(
                     .alpha(0f)
                     .clipToBounds()
             ) {
-                // Memoize closures the same way the main layer does to avoid creating
-                // new lambda instances on every recomposition.
                 val latestInfrequentPlayerState = rememberUpdatedState(infrequentPlayerState)
                 val latestIsFavorite = rememberUpdatedState(isFavorite)
                 val isPlayingProvider = remember { { latestInfrequentPlayerState.value.isPlaying } }

@@ -75,8 +75,6 @@ import kotlinx.coroutines.flow.map
 import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.collections.immutable.ImmutableList
 
-// Shared placeholder for loading skeletons: allocating a fresh MutableStateFlow inline in
-// composition would create a new object on every recomposition of every skeleton row.
 private val EmptyColorSchemePairFlow: StateFlow<ColorSchemePair?> = MutableStateFlow(null)
 
 @androidx.annotation.OptIn(UnstableApi::class)
@@ -146,8 +144,6 @@ fun LibraryAlbumsTab(
         pendingAlbumSortScrollReset = false
     }
 
-    // P2-3: Debounce 150ms to avoid firing on every scroll frame.
-    // Reduced prefetchCount from 10 to 4 to lower memory/IO pressure.
     LaunchedEffect(albums, gridState, listState, isListView) {
         if (isListView) {
             snapshotFlow { listState.layoutInfo }

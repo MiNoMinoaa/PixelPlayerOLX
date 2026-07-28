@@ -22,7 +22,6 @@ class MediaMapper @Inject constructor(
     fun resolveSongFromMediaItem(mediaItem: MediaItem): Song? {
         val metadata = mediaItem.mediaMetadata
         val extras = metadata.extras
-        // extras are lazily populated in some cases, or we rely on localConfiguration
         val contentUri = extras?.getString(MediaItemBuilder.EXTERNAL_EXTRA_CONTENT_URI)
             ?: mediaItem.localConfiguration?.uri?.toString()
             ?: return null
@@ -45,13 +44,11 @@ class MediaMapper @Inject constructor(
                 .orEmpty()
         val id = mediaItem.mediaId
 
-        // Note: This creates a partial Song object. 
-        // Some fields like path, genre, year might be missing if not in extras.
         return Song(
             id = id,
             title = title,
             artist = artist,
-            artistId = -1L, // unknown from just MediaItem typically
+            artistId = -1L,
             album = album,
             albumId = albumId,
             path = filePath,

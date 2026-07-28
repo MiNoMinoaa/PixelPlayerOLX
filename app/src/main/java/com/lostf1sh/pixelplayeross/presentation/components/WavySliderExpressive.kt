@@ -74,7 +74,7 @@ fun WavySliderExpressive(
     thumbRadius: Dp = 8.dp,
     trackEdgePadding: Dp = thumbRadius,
     wavelength: Dp = WavyProgressIndicatorDefaults.LinearDeterminateWavelength,
-    waveSpeed: Dp = WavyProgressIndicatorDefaults.LinearDeterminateWavelength / 2f, // Slower wave as requested
+    waveSpeed: Dp = WavyProgressIndicatorDefaults.LinearDeterminateWavelength / 2f,
 
     waveAmplitudeWhenPlaying: Dp = 4.dp,
     thumbLineHeightWhenInteracting: Dp = 24.dp,
@@ -146,9 +146,6 @@ fun WavySliderExpressive(
         }
     }
 
-    // Keep visual progress interpolation out of composition:
-    // update this state on frame clock, then consume it only inside draw lambdas.
-    // This preserves smooth visuals while avoiding high-frequency recompositions.
     val renderedNormalizedProgress = remember {
         val initialVal = value()
         val initialNorm = if (valueRange.endInclusive == valueRange.start) 0f
@@ -165,10 +162,6 @@ fun WavySliderExpressive(
             }
 
             val start = renderedNormalizedProgress.floatValue
-            // Snap on discontinuities (song change, big catch-up after a seek, resume after
-            // backgrounding). Per-tick natural progress is well under 10% even for short
-            // clips, so a bigger jump can't be normal playback — tweening it produces the
-            // "slowly slides to 0" effect on track switch.
             if (abs(start - target) > 0.1f) {
                 renderedNormalizedProgress.floatValue = target
                 lastProgressUpdateNanos = System.nanoTime()
@@ -176,9 +169,6 @@ fun WavySliderExpressive(
             }
 
             val nowNanos = System.nanoTime()
-            // Cap the perceived interval so a long pause (paused playback, sheet hidden,
-            // backgrounded app) can't translate into a multi-second tween once progress
-            // resumes with a tiny delta.
             val intervalMs = if (lastProgressUpdateNanos == 0L) {
                 180L
             } else {
@@ -238,7 +228,6 @@ fun WavySliderExpressive(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = trackEdgePadding.coerceAtLeast(0.dp))
-                    // Decorative layer: avoid duplicate semantics updates from the visual track.
                     .clearAndSetSemantics { },
                 color = activeTrackColor,
                 trackColor = inactiveTrackColor,

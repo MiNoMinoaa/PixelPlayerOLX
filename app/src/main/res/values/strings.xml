@@ -99,7 +99,6 @@
     <string name="widget_grid_2x2_desc">Minimalist square player</string>
     <string name="service_processing_action">Processing playback action…</string>
 
-    <!-- Playlist bulk actions -->
     <string name="playlist_none_to_share">No playlists to share</string>
     <string name="playlist_share_chooser_title">Share playlists</string>
     <string name="playlist_share_failed">Share failed: %1$s</string>
@@ -110,7 +109,6 @@
 
 
 
-    <!-- Backup / data transfer (ViewModels) -->
     <string name="backup_invalid_format">Invalid backup: %1$s</string>
     <string name="backup_progress_preparing_restore">Preparing restore</string>
     <string name="backup_progress_starting_task">Starting restore task.</string>
@@ -126,7 +124,6 @@
     <string name="restore_partial_unresolved_format">Restore completed with unresolved issues. Failed: %1$s</string>
     <string name="dev_test_crash_message">Test crash triggered from Developer Options - This is intentional for testing the crash reporting system</string>
 
-    <!-- PlayerViewModel -->
     <string name="player_song_not_found_in_list">Song not found in current list</string>
     <string name="player_could_not_locate_song">Could not locate song</string>
     <string name="player_no_songs_in_library_toast">No songs found in library</string>
@@ -166,7 +163,6 @@
     <string name="delete_songs_permanent_message">These songs will be permanently deleted from your device and cannot be recovered.</string>
     <string name="delete_action">Delete</string>
 
-    <!-- Sleep timer (SleepTimerStateHolder + TimerOptionsBottomSheet) -->
     <string name="sleep_timer_n_minutes_format">%1$d minutes</string>
     <string name="sleep_timer_display_eot">End of track</string>
     <string name="sleep_timer_set_for_minutes_toast">Timer set for %1$d minutes.</string>
@@ -189,7 +185,6 @@
     <string name="backup_manifest_schema_v">v%1$d</string>
     <string name="backup_manifest_device_line">%1$s %2$s</string>
 
-    <!-- Batch Edit -->
     <string name="batch_edit_toolbar_title">Edit %d Songs</string>
     <string name="batch_edit_info_message">Only modified fields will be updated. Leave fields empty to keep existing values.</string>
     <string name="batch_edit_mixed_values">(Mixed values)</string>
@@ -198,25 +193,20 @@
     <string name="batch_edit_partial_success">Updated %1$d of %2$d songs. Some files could not be edited.</string>
     <string name="batch_edit_failed">Failed to update songs</string>
 
-    <!-- Batch Edit Cover Art -->
     <string name="batch_edit_cover_art_heading">Batch Cover Art</string>
     <string name="batch_edit_cover_art_hint">This will replace the cover art for all %d selected songs</string>
     <string name="batch_edit_set_cover_art">Set Cover Art for All</string>
     <string name="batch_edit_remove_all_art">Remove All Cover Art</string>
     <string name="batch_edit_multiple_covers">(Multiple different covers)</string>
 
-    <!-- Error visibility -->
     <string name="player_error_skipping">Couldn\'t play this track — skipping</string>
     <string name="sync_failed_toast">Library sync failed. Pull down to refresh and try again.</string>
 
-    <!-- Accessibility -->
     <string name="a11y_toggle_on">On</string>
     <string name="a11y_toggle_off">Off</string>
 
-    <!-- Playback -->
     <string name="setcat_playback_speed">Playback speed</string>
 
-    <!-- Duplicate tracks -->
     <string name="duplicates_title">Duplicate tracks</string>
     <string name="duplicates_none">No duplicate tracks found.</string>
     <string name="duplicates_summary">%1$d groups · %2$d tracks</string>

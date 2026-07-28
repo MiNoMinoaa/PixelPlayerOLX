@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Shared login / streaming auth -->
     <string name="auth_cd_back">Back</string>
     <string name="auth_show_password">Show password</string>
     <string name="auth_hide_password">Hide password</string>
@@ -19,7 +18,6 @@
     <string name="auth_select_libraries_subtitle">This server has more than one music library. Pick which ones to sync — you can change this later from the server dashboard.</string>
     <string name="auth_select_libraries_confirm">Save and sync</string>
 
-    <!-- Navidrome / Subsonic -->
     <string name="auth_navidrome_title">Subsonic / Navidrome</string>
     <string name="auth_navidrome_subtitle">Connect to your self-hosted music server</string>
     <string name="auth_navidrome_info_card">Supports Navidrome, Airsonic, Gonic, Ampache and other servers compatible with the Subsonic API.</string>
@@ -33,7 +31,6 @@
     <string name="cd_navidrome_logo">Navidrome</string>
     <string name="cd_subsonic_logo">Subsonic</string>
 
-    <!-- Jellyfin -->
     <string name="auth_jellyfin_title">Jellyfin</string>
     <string name="auth_jellyfin_info_card">Connects to Jellyfin servers. Both HTTP and HTTPS are supported for local network access.</string>
     <string name="auth_jellyfin_subtitle">Connect to your Jellyfin media server</string>

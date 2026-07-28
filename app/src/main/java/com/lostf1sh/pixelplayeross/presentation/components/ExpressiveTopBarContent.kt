@@ -47,7 +47,7 @@ fun ExpressiveTopBarContent(
     collapseFraction: Float,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
-    collapsedTitleStartPadding: Dp = 56.dp, // Default safe for standard Nav Icon
+    collapsedTitleStartPadding: Dp = 56.dp,
     expandedTitleStartPadding: Dp = 16.dp,
     collapsedTitleEndPadding: Dp = 24.dp,
     expandedTitleEndPadding: Dp = 24.dp,
@@ -149,9 +149,7 @@ fun ExpressiveTopBarContent(
                     maxLines = maxLines,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.graphicsLayer {
-                        // Removed scaleX/scaleY scaling from graphicsLayer to allow proper ellipsis during layout.
-                        // Scaling font size directly ensures Text component is measured with correct constraints.
-                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0.5f) // Scale from left center
+                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0.5f)
                     }
                 )
                 if (!subtitle.isNullOrEmpty()) {

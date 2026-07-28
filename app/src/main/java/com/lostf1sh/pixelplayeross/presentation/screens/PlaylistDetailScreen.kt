@@ -150,9 +150,6 @@ fun PlaylistDetailScreen(
     navController: NavController
 ) {
     val uiState by playlistViewModel.uiState.collectAsStateWithLifecycle()
-    // Only the "is a song loaded" transition matters at screen level — per-song playback
-    // highlighting is isolated per item below so the song list does not recompose
-    // wholesale on every playback-state change.
     val playerStableState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
     val hasCurrentSong by remember {
         derivedStateOf { playerStableState.currentSong != null }
@@ -213,7 +210,7 @@ fun PlaylistDetailScreen(
     }
 
     val selectedSongForInfo by playerViewModel.selectedSongForInfo.collectAsStateWithLifecycle()
-    val favoriteIds by playerViewModel.favoriteSongIds.collectAsStateWithLifecycle() // Reintroduce favoriteIds here
+    val favoriteIds by playerViewModel.favoriteSongIds.collectAsStateWithLifecycle()
     val stableOnMoreOptionsClick: (Song) -> Unit = remember {
         { song ->
             playerViewModel.selectSongForInfo(song)
@@ -605,9 +602,6 @@ fun PlaylistDetailScreen(
                                 localReorderableSongs,
                                 key = { _, item -> item.id },
                                 contentType = { _, _ -> "playlist_song" }) { _, song ->
-                                // Per-item playback observation (same pattern as
-                                // LibraryPlaybackAwareSongItem): keeps a track change from
-                                // recomposing every visible row.
                                 val playbackUiState by remember(song.id, playerViewModel) {
                                     playerViewModel.stablePlayerState
                                         .map { state ->
@@ -701,7 +695,7 @@ fun PlaylistDetailScreen(
                                 .padding(
                                     bottom = if (hasCurrentSong) MiniPlayerHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 20.dp else WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 16.dp,
                                     end = 14.dp,
-                                    top = 18.dp // Increased to 16.dp as requested
+                                    top = 18.dp
                                 )
                         )
                     }
@@ -874,8 +868,7 @@ fun PlaylistDetailScreen(
                 song = currentSong,
                 isFavorite = isFavorite,
                 onToggleFavorite = {
-                    // Directly use PlayerViewModel's method to toggle, which should handle UserPreferencesRepository
-                    playerViewModel.toggleFavoriteSpecificSong(currentSong) // Assumes such a method exists or will be added to PlayerViewModel
+                    playerViewModel.toggleFavoriteSpecificSong(currentSong)
                 },
                 onDismiss = { showSongInfoBottomSheet = false },
                 onPlaySong = {
@@ -883,7 +876,7 @@ fun PlaylistDetailScreen(
                     showSongInfoBottomSheet = false
                 },
                 onAddToQueue = {
-                    playerViewModel.addSongToQueue(currentSong) // Assumes such a method exists or will be added
+                    playerViewModel.addSongToQueue(currentSong)
                     showSongInfoBottomSheet = false
                     playerViewModel.sendToast(toastAddedToQueue)
                 },
@@ -967,10 +960,8 @@ fun PlaylistDetailScreen(
     val isSortSheetVisible by playerViewModel.isSortingSheetVisible.collectAsStateWithLifecycle()
 
     if (isSortSheetVisible) {
-        // Check if playlist is in Manual mode (which corresponds to Default Order)
         val isManualMode = uiState.playlistSongsOrderMode is PlaylistSongsOrderMode.Manual
         val rawOption = uiState.currentPlaylistSongsSortOption
-        // If in Manual mode, show SongDefaultOrder as selected; otherwise use the stored sort option
         val currentSortOption = if (isManualMode) {
             SortOption.SongDefaultOrder
         } else if (currentPlaylist != null) {
@@ -979,7 +970,6 @@ fun PlaylistDetailScreen(
             SortOption.SongTitleAZ
         }
 
-        // Build options list inline to avoid potential static initialization issues
         val songSortOptions = persistentListOf(
             SortOption.SongDefaultOrder,
             SortOption.SongTitleAZ,
@@ -1002,7 +992,6 @@ fun PlaylistDetailScreen(
             onOptionSelected = { option ->
                  playlistViewModel.sortPlaylistSongs(option)
                  playerViewModel.hideSortingSheet()
-                 // Auto-scroll to first item after sorting (delay to allow list to update)
                  scope.launch {
                      kotlinx.coroutines.delay(100)
                      listState.animateScrollToItem(0)
@@ -1061,7 +1050,6 @@ private fun PlaylistActionItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-// SongPickerBottomSheet moved to com.lostf1sh.pixelplayeross.presentation.components
 fun RenamePlaylistDialog(currentName: String, onDismiss: () -> Unit, onRename: (String) -> Unit) {
     var newName by remember { mutableStateOf(TextFieldValue(currentName)) }
     val renameTitle = stringResource(R.string.presentation_batch_b_rename_playlist_dialog_title)

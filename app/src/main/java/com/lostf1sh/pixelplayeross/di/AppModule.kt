@@ -94,7 +94,7 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideJson(): Json { // Provide Json
+    fun provideJson(): Json {
         return Json {
             isLenient = true
             ignoreUnknownKeys = true
@@ -127,10 +127,6 @@ object AppModule {
             .addMigrations(MIGRATION_1_2)
             .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
 
-        // P2-4: Only allow destructive recreation in debug builds.
-        // In release, an unexpected schema version (e.g. a database restored by
-        // Platform Auto Backup from an older install) must crash the app
-        // rather than silently wiping user data (playlists, favorites, statistics).
         if (BuildConfig.DEBUG) {
             builder.fallbackToDestructiveMigration(dropAllTables = true)
         }
@@ -146,13 +142,13 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideSearchHistoryDao(database: PixelPlayerDatabase): SearchHistoryDao { // NEW METHOD
+    fun provideSearchHistoryDao(database: PixelPlayerDatabase): SearchHistoryDao {
         return database.searchHistoryDao()
     }
 
     @Singleton
     @Provides
-    fun provideMusicDao(database: PixelPlayerDatabase): MusicDao { // Provide MusicDao
+    fun provideMusicDao(database: PixelPlayerDatabase): MusicDao {
         return database.musicDao()
     }
 
@@ -205,32 +201,21 @@ object AppModule {
         okHttpClient: OkHttpClient
     ): ImageLoader {
         return ImageLoader.Builder(context)
-            // Reuse the app's shared client so image loads share its connection pool
-            // and dispatcher instead of spinning up a second, independent OkHttp stack.
             .okHttpClient(okHttpClient)
-            .dispatcher(Dispatchers.Default) // Use CPU-bound dispatcher for decoding
-            .allowHardware(true) // Re-enable hardware bitmaps for better performance
+            .dispatcher(Dispatchers.Default)
+            .allowHardware(true)
             .memoryCache {
                 MemoryCache.Builder(context)
-                    // Hard 40 MB cap instead of 20%-of-heap. Rationale:
-                    //  - On large-heap devices (Pixel 8 etc.) the percentage
-                    //    expanded to ~80–100 MB, far beyond what an album-art
-                    //    workload needs.
-                    //  - allowHardware(true) keeps most decoded pixels in GPU
-                    //    memory, so the MemoryCache mostly tracks Bitmap
-                    //    references — 40 MB still buffers ~100+ album arts.
-                    //  - Tighter cap = less GC pressure and less thermal
-                    //    headroom spent on memory pressure during long sessions.
                     .maxSizeBytes(40 * 1024 * 1024)
                     .build()
             }
             .diskCache {
                 DiskCache.Builder()
                     .directory(context.cacheDir.resolve("image_cache"))
-                    .maxSizeBytes(100L * 1024 * 1024) // 100 MB disk cache
+                    .maxSizeBytes(100L * 1024 * 1024)
                     .build()
             }
-            .respectCacheHeaders(false) // Ignore server cache headers, always cache
+            .respectCacheHeaders(false)
             .build()
     }
 
@@ -331,15 +316,11 @@ object AppModule {
     @Singleton
     fun provideOkHttpClient(): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
-            // HEADERS (not BODY) so we never print response bodies that may contain
-            // cookies, tokens, or third-party API payloads. Headers are still useful
-            // for debugging request paths and status codes.
             level = if (BuildConfig.DEBUG) {
                 HttpLoggingInterceptor.Level.HEADERS
             } else {
                 HttpLoggingInterceptor.Level.NONE
             }
-            // Redact every header that can carry a credential or session token.
             redactHeader("Authorization")
             redactHeader("Proxy-Authorization")
             redactHeader("Cookie")
@@ -349,7 +330,6 @@ object AppModule {
             redactHeader("X-MediaBrowser-Token")
         }
         
-        // Connection pool with optimized connections for better performance
         val connectionPool = okhttp3.ConnectionPool(
             maxIdleConnections = 5,
             keepAliveDuration = 30,
@@ -362,7 +342,6 @@ object AppModule {
             .readTimeout(8, java.util.concurrent.TimeUnit.SECONDS)
             .writeTimeout(8, java.util.concurrent.TimeUnit.SECONDS)
             .retryOnConnectionFailure(true)
-            // Add User-Agent header (required by some APIs)
             .addInterceptor { chain ->
                 val originalRequest = chain.request()
                 val requestWithUserAgent = originalRequest.newBuilder()
@@ -383,8 +362,6 @@ object AppModule {
     @FastOkHttpClient
     fun provideFastOkHttpClient(): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
-            // Only log request/response headers in debug builds. In release this
-            // would leak LRCLIB search URLs (which carry the query terms) to logcat.
             level = if (BuildConfig.DEBUG) {
                 HttpLoggingInterceptor.Level.HEADERS
             } else {
@@ -392,20 +369,16 @@ object AppModule {
             }
         }
         
-        // Connection pool to reuse connections for better performance
         val connectionPool = okhttp3.ConnectionPool(
             maxIdleConnections = 5,
             keepAliveDuration = 30,
             timeUnit = java.util.concurrent.TimeUnit.SECONDS
         )
         
-        // Use the platform resolver and fall back to manual JVM resolution if needed.
         val dns = okhttp3.Dns { hostname ->
             try {
-                // First try system DNS
                 okhttp3.Dns.SYSTEM.lookup(hostname)
             } catch (e: Exception) {
-                // Fallback to manual resolution if system DNS fails
                 java.net.InetAddress.getAllByName(hostname).toList()
             }
         }
@@ -413,9 +386,7 @@ object AppModule {
         return OkHttpClient.Builder()
             .dns(dns)
             .connectionPool(connectionPool)
-            // Use HTTP/1.1 to avoid HTTP/2 stream issues with some servers
             .protocols(listOf(okhttp3.Protocol.HTTP_1_1))
-            // Use modern TLS connection spec
             .connectionSpecs(listOf(
                 okhttp3.ConnectionSpec.MODERN_TLS,
                 okhttp3.ConnectionSpec.COMPATIBLE_TLS
@@ -423,9 +394,7 @@ object AppModule {
             .connectTimeout(8, java.util.concurrent.TimeUnit.SECONDS)
             .readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
             .writeTimeout(8, java.util.concurrent.TimeUnit.SECONDS)
-            // Enable built-in retry on connection failure
             .retryOnConnectionFailure(true)
-            // Add headers
             .addInterceptor { chain ->
                 val originalRequest = chain.request()
                 val requestWithHeaders = originalRequest.newBuilder()

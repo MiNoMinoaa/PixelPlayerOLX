@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Base app theme -->
     <style name="Theme.PixelPlayer" parent="Theme.Material3.DynamicColors.DayNight">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
@@ -17,10 +16,6 @@
         <item name="android:enforceNavigationBarContrast">false</item>
     </style>
 
-    <!-- Splash screen theme can still extend Theme.SplashScreen -->
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
-<!--        <item name="windowSplashScreenBackground">@color/light_background</item>-->
-<!--        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>-->
-<!--        <item name="postSplashScreenTheme">@style/Theme.PixelPlayer</item>-->
     </style>
 </resources>

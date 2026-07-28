@@ -96,11 +96,6 @@ constructor(
                     val requestedForceMetadata = inputData.getBoolean(INPUT_FORCE_METADATA, false)
                     val requestedRunMaintenance = inputData.getBoolean(INPUT_RUN_MAINTENANCE, true)
 
-                    // Without the media-read permission the MediaStore query silently returns
-                    // zero rows, so the worker would "succeed", write lastSyncTimestamp, and
-                    // permanently suppress the first-install sync indicator (which keys off
-                    // lastSyncTimestamp == 0). Bail out WITHOUT touching the timestamp; the
-                    // post-setup sync runs again once permission is granted.
                     if (!hasMediaReadPermission()) {
                         Timber.tag(TAG).w(
                             "Skipping sync: media read permission not granted (setup not finished?)"
@@ -108,12 +103,6 @@ constructor(
                         return@withContext Result.success()
                     }
 
-                    // Battery / thermal: defer background INCREMENTAL syncs while
-                    // music is playing. FULL and REBUILD are skipped from this
-                    // gate because they're either user-initiated from settings
-                    // (user is waiting for the result) or required for first-run
-                    // population. INCREMENTAL is opportunistic and safe to push
-                    // back until playback ends.
                     if (
                         syncMode == SyncMode.INCREMENTAL &&
                         PlaybackActivityTracker.isPlaybackActive &&
@@ -143,14 +132,12 @@ constructor(
                     val directoryRulesChanged =
                         directoryRulesVersion != lastAppliedDirectoryRulesVersion
 
-                    // Feature: Directory Filtering
                     val allowedDirs = userPreferencesRepository.allowedDirectoriesFlow.first()
                     val blockedDirs = userPreferencesRepository.blockedDirectoriesFlow.first()
                     val directoryResolver = DirectoryRuleResolver(allowedDirs, blockedDirs)
                     
                     val lastSyncTimestamp = userPreferencesRepository.getLastSyncTimestamp()
 
-                    // Smart Duration Filtering
                     minSongDurationMs = userPreferencesRepository.getMinSongDuration()
                     minTracksPerAlbum = userPreferencesRepository.minTracksPerAlbumFlow.first()
 
@@ -161,15 +148,10 @@ constructor(
                                 "(current=$directoryRulesVersion, applied=$lastAppliedDirectoryRulesVersion)"
                         )
 
-                    // --- DELETION PHASE ---
-                    // Detect and remove deleted songs efficiently using ID comparison
-                    // We do this for INCREMENTAL and FULL modes. REBUILD clears everything anyway.
                     if (syncMode != SyncMode.REBUILD) {
-                        // Only compare MediaStore-backed songs; cloud sources are excluded.
                         val localSongIds = musicDao.getAllMediaStoreSongIds().toHashSet()
                         val mediaStoreIds = fetchMediaStoreIds(directoryResolver)
 
-                        // Identify IDs that are in local DB but not in MediaStore
                         val deletedIds = localSongIds - mediaStoreIds
 
                         if (deletedIds.isNotEmpty()) {
@@ -188,8 +170,6 @@ constructor(
                         }
                     }
 
-                    // --- FETCH PHASE ---
-                    // Determine what to fetch based on mode
                     val isFreshInstall = musicDao.getSongCount().first() == 0
                     val syncPlan = buildSyncExecutionPlan(
                         requestedMode = syncMode,
@@ -200,9 +180,6 @@ constructor(
                         isFreshInstall = isFreshInstall
                     )
 
-                    // If REBUILD or FULL or RescanRequired or Fresh Install -> Fetch EVERYTHING
-                    // (timestamp = 0)
-                    // If INCREMENTAL -> Fetch only changes since lastSyncTimestamp
                     val fetchTimestamp = if (!syncPlan.forceProcessAll) {
                         incrementalFetchTimestampSeconds(lastSyncTimestamp)
                     } else {
@@ -212,7 +189,6 @@ constructor(
                     Timber.tag(TAG)
                         .i("Fetching music from MediaStore (plan=${syncPlan.localScanMode}, since=$fetchTimestamp seconds)...")
 
-                    // Update every 50 songs or ~5% of library
                     val progressBatchSize = 50
 
                     val songsToInsert = fetchMusicFromMediaStore(
@@ -235,7 +211,6 @@ constructor(
                     Timber.tag(TAG)
                         .i("Fetched ${songsToInsert.size} new/modified songs from MediaStore.")
 
-                    // --- PROCESSING PHASE ---
                     val anySongsFetched = songsToInsert.isNotEmpty()
                     if (anySongsFetched) {
 
@@ -255,7 +230,6 @@ constructor(
                         val existingArtistMetadata =
                                 allExistingArtists.associate { it.id to (it.imageUrl to it.customImageUri) }
                         
-                        // Load all existing artist IDs to ensure stability across incremental syncs
                         val existingArtistIdMap = allExistingArtists.associate { it.name to it.id }.toMutableMap()
                         val maxArtistId = (musicDao.getMaxArtistId() ?: 0L).coerceAtLeast(0L)
 
@@ -275,8 +249,6 @@ constructor(
                                         initialMaxArtistId = maxArtistId
                                 )
 
-                        // Use incrementalSyncMusicData for all modes except REBUILD
-                        // Even for FULL sync, we can just upsert the values
                         if (syncMode == SyncMode.REBUILD) {
                             setProgress(
                                 workDataOf(
@@ -285,8 +257,6 @@ constructor(
                                     PROGRESS_PHASE to SyncProgress.SyncPhase.SAVING_TO_DATABASE.ordinal
                                 )
                             )
-                            // Keep clear + insert in one transaction to avoid partial clears
-                            // if this worker gets cancelled/replaced mid-rebuild.
                             musicDao.rebuildLocalMusicDataWithCrossRefs(
                                 correctedSongs,
                                 albums,
@@ -301,14 +271,12 @@ constructor(
                                     PROGRESS_PHASE to SyncProgress.SyncPhase.SAVING_TO_DATABASE.ordinal
                                 )
                             )
-                            // incrementalSyncMusicData handles upserts efficiently
-                            // processing deleted songs was already handled at the start
                             musicDao.incrementalSyncMusicData(
                                     songs = correctedSongs,
                                     albums = albums,
                                     artists = artists,
                                     crossRefs = crossRefs,
-                                    deletedSongIds = emptyList() // Already handled
+                                    deletedSongIds = emptyList()
                             )
                         }
                     } else if (syncMode == SyncMode.REBUILD) {
@@ -337,17 +305,12 @@ constructor(
                         )
                     }
 
-                    // Persist the timestamp captured at the START of this run (not "now"): any file
-                    // MediaStore indexes while the worker is still running is then re-detected by the
-                    // next incremental query instead of being skipped. Always updated on success, even
-                    // with no new songs, so we don't re-sync on every launch.
                     userPreferencesRepository.setLastSyncTimestamp(startTime)
 
                     val endTime = System.currentTimeMillis()
                     Timber.tag(TAG)
                         .i("Synchronization finished successfully in ${endTime - startTime}ms.")
 
-                    // Count total songs for the output
                     val totalSongs = musicDao.getSongCount().first()
                     if (!syncPlan.runMaintenance) {
                         Timber.tag(TAG).d("Skipping library maintenance phases for local-only sync.")
@@ -356,13 +319,11 @@ constructor(
                         )
                     }
 
-                    // --- LRC SCANNING PHASE ---
                     val autoScanLrc = userPreferencesRepository.autoScanLrcFilesFlow.first()
                     if (autoScanLrc) {
                         Timber.tag(TAG)
                             .i("Auto-scan LRC files enabled. Starting scan phase in chunks...")
 
-                        // Get ALL media store song IDs to scan in manageable chunks
                         val mediaStoreSongIds = musicDao.getAllMediaStoreSongIds()
                         val totalToScan = mediaStoreSongIds.size
                         var totalScannedCount = 0
@@ -396,7 +357,6 @@ constructor(
                                     lyricsRepository.scanAndAssignLocalLrcFiles(batchSongs) {
                                             current,
                                             total ->
-                                        // Progress within the current batch
                                         val overallCurrent = totalScannedCount + current
                                         setProgress(
                                                 workDataOf(
@@ -417,7 +377,6 @@ constructor(
                         Timber.tag(TAG).i("LRC Scan finished for $totalToScan songs.")
                     }
 
-                    // Clean orphaned album art cache files
                     setProgress(
                         workDataOf(
                             PROGRESS_PHASE to SyncProgress.SyncPhase.CLEANING_CACHE.ordinal
@@ -436,7 +395,6 @@ constructor(
 
                     cloudSyncCoordinator.syncUnifiedCloudLibraries()
 
-                    // Recalculate total
                     val finalTotalSongs = musicDao.getSongCount().first()
 
                     Result.success(workDataOf(OUTPUT_TOTAL_SONGS to finalTotalSongs))
@@ -472,7 +430,7 @@ constructor(
     ): MultiArtistProcessResult {
         
         val nextArtistId = AtomicLong(initialMaxArtistId + 1)
-        val artistNameToId = existingArtistIdMap // Re-use the map passed in
+        val artistNameToId = existingArtistIdMap
         
         val allCrossRefs = mutableListOf<SongArtistCrossRef>()
         val artistTrackCounts = mutableMapOf<Long, Int>()
@@ -492,7 +450,6 @@ constructor(
             val rawArtistName = song.artistName
             val songArtistNameTrimmed = rawArtistName.trim()
 
-            // Split artist field by character + word delimiters
             val allArtistsForSong =
                     artistSplitCache.getOrPut("$rawArtistName\u0000${song.title}\u0000$extractFromTitle") {
                         collectArtistNames(
@@ -517,11 +474,6 @@ constructor(
                             ?: songArtistNameTrimmed
             val primaryArtistId = artistNameToId[primaryArtistName] ?: song.artistId
 
-            // Effective album artist = the album_artist tag when usable, else the primary track
-            // artist. Registered as a first-class artist row (even for compilation-only names like
-            // "Various Artists" that never appear as a track artist) so the "Group by Album Artist"
-            // tab can collapse onto songs.album_artist_id. Preference-independent: the toggle only
-            // chooses whether the tab/detail query reads this column, so no re-sync is needed.
             val effectiveAlbumArtistName = song.albumArtist
                     ?.trim()
                     ?.takeIf { it.isNotEmpty() && !it.equals("<unknown>", ignoreCase = true) }
@@ -535,7 +487,7 @@ constructor(
                 val normalizedName = artistName.trim()
                 val artistId = artistNameToId[normalizedName]
                 if (artistId != null) {
-                    val isPrimary = (index == 0) // First artist is primary
+                    val isPrimary = (index == 0)
                     allCrossRefs.add(
                             SongArtistCrossRef(
                                     songId = song.id,
@@ -547,11 +499,9 @@ constructor(
                 }
             }
 
-            // --- Album Logic ---
             val albumKey = buildAlbumGroupingKey(song)
             val finalAlbumId = albumMap.getOrPut(albumKey) { song.albumId }
 
-            // Build serialized artists JSON for efficient loading without JOINs
             val artistRefsForJson = allArtistsForSong.mapIndexed { index, name ->
                 val normalizedName = name.trim()
                 val artistId = artistNameToId[normalizedName] ?: 0L
@@ -561,7 +511,7 @@ constructor(
             correctedSongs.add(
                     song.copy(
                             artistId = primaryArtistId,
-                            artistName = rawArtistName, // Preserving full artist string for display
+                            artistName = rawArtistName,
                             albumArtistId = albumArtistId,
                             albumId = finalAlbumId,
                             artistsJson = serializeArtistRefs(artistRefsForJson)
@@ -569,7 +519,6 @@ constructor(
             )
         }
 
-        // Build Entities
         val artistEntities = artistNameToId.map { (name, id) ->
             val count = artistTrackCounts[id] ?: 0
             val metadata = existingArtistMetadata[id]
@@ -582,8 +531,6 @@ constructor(
             )
         }
         
-        // Re-calculate Album Entities from the corrected songs to ensure we have valid metadata (Art, Year)
-        // which isn't available in the simple albumMap (which only has ID)
         val albumEntities = correctedSongs.groupBy { it.albumId }.map { (catAlbumId, songsInAlbum) ->
              val firstSong = songsInAlbum.first()
              val representativeAlbumArt = songsInAlbum.firstNotNullOfOrNull { it.albumArtUriString }
@@ -621,7 +568,7 @@ constructor(
         }
 
         return MultiArtistProcessResult(
-                songs = correctedSongs, // Corrected songs have the right Album IDs now
+                songs = correctedSongs,
                 albums = albumEntities,
                 artists = artistEntities,
                 crossRefs = allCrossRefs
@@ -638,12 +585,10 @@ constructor(
      * 2. Fetches all genres first, then queries members in parallel with controlled concurrency
      */
     private suspend fun fetchGenreMap(forceRefresh: Boolean = false): Map<Long, String> = coroutineScope {
-        // Optimization: Skip genre map on Android 11+ because we can query GENRE directly.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             return@coroutineScope emptyMap()
         }
 
-        // Check cache first (valid for 1 hour)
         val now = System.currentTimeMillis()
         val cacheAge = now - genreMapCacheTimestamp
         if (!forceRefresh && genreMapCache.isNotEmpty() && cacheAge < GENRE_CACHE_TTL_MS) {
@@ -654,11 +599,9 @@ constructor(
         val genreMap = ConcurrentHashMap<Long, String>()
         val genreProjection = arrayOf(MediaStore.Audio.Genres._ID, MediaStore.Audio.Genres.NAME)
         
-        // Semaphore to limit concurrent queries (avoid overwhelming ContentResolver)
         val querySemaphore = Semaphore(4)
 
         try {
-            // Step 1: Fetch all genres (single query)
             val genres = mutableListOf<Pair<Long, String>>()
             
             contentResolver.query(
@@ -686,7 +629,6 @@ constructor(
                         }
                     }
             
-            // Step 2: Fetch members for each genre in parallel (controlled concurrency)
             genres.map { (genreId, genreName) ->
                 async(Dispatchers.IO) {
                     querySemaphore.withPermit {
@@ -713,8 +655,6 @@ constructor(
                                     if (audioIdCol >= 0) {
                                         while (membersCursor.moveToNext()) {
                                             val audioId = membersCursor.getLong(audioIdCol)
-                                            // If a song has multiple genres, the last one processed wins.
-                                            // This is acceptable as a primary genre for display.
                                             genreMap[audioId] = genreName
                                         }
                                     }
@@ -727,7 +667,6 @@ constructor(
             Timber.tag(TAG).e(e, "Error fetching genre map")
         }
         
-        // Update cache
         if (genreMap.isNotEmpty()) {
             genreMapCache = genreMap.toMap()
             genreMapCacheTimestamp = System.currentTimeMillis()
@@ -783,7 +722,7 @@ constructor(
     }
 
     private suspend fun fetchMusicFromMediaStore(
-            sinceTimestamp: Long, // Seconds
+            sinceTimestamp: Long,
             forceMetadata: Boolean,
             directoryResolver: DirectoryRuleResolver,
             forceProcessAll: Boolean,
@@ -792,7 +731,7 @@ constructor(
             onProgress: suspend (current: Int, total: Int, phaseOrdinal: Int) -> Unit
     ): List<SongEntity> = traceAsyncSection("SyncWorker.fetchMusicFromMediaStore") {
         val deepScan = forceMetadata
-        val genreMap = fetchGenreMap() // Load genres upfront
+        val genreMap = fetchGenreMap()
 
         val projectionList = mutableListOf(
                 MediaStore.Audio.Media._ID,
@@ -811,7 +750,6 @@ constructor(
                 MediaStore.Audio.Media.DATE_MODIFIED
         )
 
-        // API 30+ supports GENRE in the main audio table
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             projectionList.add(MediaStore.Audio.Media.GENRE)
         }
@@ -822,7 +760,6 @@ constructor(
         val selectionBuilder = StringBuilder(baseSelection)
         val selectionArgsList = baseArgs.toMutableList()
 
-        // Incremental selection
         if (sinceTimestamp > 0) {
             selectionBuilder.append(
                     " AND (${MediaStore.Audio.Media.DATE_MODIFIED} > ? OR ${MediaStore.Audio.Media.DATE_ADDED} > ?)"
@@ -834,7 +771,6 @@ constructor(
         val selection = selectionBuilder.toString()
         val selectionArgs = selectionArgsList.toTypedArray()
 
-        // Phase 1: Fast cursor iteration to collect raw data
         val rawDataList = mutableListOf<RawSongData>()
 
         contentResolver.query(
@@ -878,7 +814,6 @@ constructor(
                                 }
                             }
                         } catch (e: Exception) {
-                            // Proceed on error
                         }
 
                         rawDataList.add(
@@ -923,13 +858,10 @@ constructor(
             return@traceAsyncSection emptyList()
         }
 
-        // Phase 2: Identify changed songs and merge with existing data in chunks
         val rawSongCount = rawDataList.size
         val songsToProcess = if (forceProcessAll) {
               rawDataList.toList()
         } else {
-            // Find existing data for these songs to avoid unnecessary reprocessing
-            // and to preserve user edits.
             val results = mutableListOf<RawSongData>()
             
             rawDataList.chunked(500).forEach { batch ->
@@ -946,8 +878,6 @@ constructor(
             results
         }
 
-        // rawDataList is no longer needed — release its memory before the processing phase,
-        // which may allocate large existingMap objects and metadata ByteArrays.
         rawDataList.clear()
 
         val totalCount = songsToProcess.size
@@ -958,14 +888,11 @@ constructor(
             return@traceAsyncSection emptyList()
         }
 
-        // Phase 3: Parallel processing of songs with metadata merging
         onProgress(0, totalCount, SyncProgress.SyncPhase.PROCESSING_FILES.ordinal)
         val processedCount = AtomicInteger(0)
-        val concurrencyLimit = 4 // Reduced concurrency to save memory
+        val concurrencyLimit = 4
         val semaphore = Semaphore(concurrencyLimit)
 
-        // Process batches sequentially so each batch's existingMap can be GC'd before the next
-        // batch is loaded. The semaphore still limits concurrency within each batch.
         val songs = mutableListOf<SongEntity>()
         for (batch in songsToProcess.chunked(200)) {
             val ids = batch.map { it.id }
@@ -984,7 +911,6 @@ constructor(
                                 )
 
                             val song = if (localSong != null) {
-                                // Preserve user-edited fields
                                 mediaStoreSong.copy(
                                     dateAdded = if (
                                         localSong.mediaStoreDateAdded > 0 &&
@@ -1075,7 +1001,7 @@ constructor(
         var trackNumber = raw.trackNumber
         var discNumber = raw.discNumber
         var year = raw.year
-        var genre: String? = genreMap[raw.id] ?: raw.genre // Use mapped genre as default, or direct genre from main cursor
+        var genre: String? = genreMap[raw.id] ?: raw.genre
 
         val shouldAugmentMetadata =
                 deepScan ||
@@ -1084,10 +1010,6 @@ constructor(
                         raw.filePath.endsWith(".ogg", true) ||
                         raw.filePath.endsWith(".oga", true) ||
                         raw.filePath.endsWith(".aiff", true) ||
-                        // Fallback: if MediaStore returned default/missing metadata,
-                        // try TagLib+JAudioTagger to read actual tags from the file.
-                        // MediaStore uses "<unknown>" for unreadable fields;
-                        // our normalization may produce "Unknown Artist"/"Unknown Album".
                         isDefaultMetadata(raw.artist) ||
                         isDefaultMetadata(raw.album)
 
@@ -1182,27 +1104,20 @@ constructor(
 
     companion object {
         const val WORK_NAME = "com.lostf1sh.pixelplayeross.data.worker.SyncWorker"
-        // Distinct unique name so background maintenance never feeds the WORK_NAME-bound
-        // isSyncing/syncProgress flows — the loading indicator stays silent for it.
         const val PERIODIC_MAINTENANCE_WORK_NAME =
             "com.lostf1sh.pixelplayeross.data.worker.SyncWorker.PeriodicMaintenance"
         private const val TAG = "SyncWorker"
         const val INPUT_FORCE_METADATA = "input_force_metadata"
         const val INPUT_RUN_MAINTENANCE = "input_run_maintenance"
         const val INPUT_SYNC_MODE = "input_sync_mode"
-        // INCREMENTAL syncs back off this many times while playback is active
-        // before running anyway. With WorkManager's exponential backoff
-        // (30s -> 60s -> 2m -> 4m -> 8m -> ...), 5 retries cover ~16 minutes.
         private const val MAX_PLAYBACK_DEFERRALS = 5
 
-        // Progress reporting constants
         const val PROGRESS_CURRENT = "progress_current"
         const val PROGRESS_TOTAL = "progress_total"
         const val PROGRESS_PHASE = "progress_phase"
         const val OUTPUT_TOTAL_SONGS = "output_total_songs"
 
-        // Genre cache - shared across worker instances to avoid refetching on incremental syncs
-        private const val GENRE_CACHE_TTL_MS = 60 * 60 * 1000L // 1 hour
+        private const val GENRE_CACHE_TTL_MS = 60 * 60 * 1000L
         @Volatile private var genreMapCache: Map<Long, String> = emptyMap()
         @Volatile private var genreMapCacheTimestamp: Long = 0L
         
@@ -1235,10 +1150,6 @@ constructor(
                         )
                         .build()
 
-        // Full rescans and rebuilds do heavy bulk writes to Room + the album art cache.
-        // Requiring non-critical storage prevents partial/corrupt syncs when the device is
-        // nearly full. Not applied to incremental/startup sync so the library still appears
-        // immediately when the user opens the app.
         private val heavySyncConstraints: Constraints =
                 Constraints.Builder()
                         .setRequiresStorageNotLow(true)
@@ -1269,9 +1180,6 @@ constructor(
                         .setConstraints(heavySyncConstraints)
                         .build()
 
-        // Daily "heavy cleanup" (LRC scan, album-art cache, cloud sync). Runs a FULL sync
-        // with maintenance on, but only while charging on an unmetered network so it stays
-        // invisible to the user.
         fun periodicMaintenanceWork(): PeriodicWorkRequest {
             val constraints = Constraints.Builder()
                 .setRequiresCharging(true)

@@ -119,7 +119,6 @@ import com.lostf1sh.pixelplayeross.presentation.components.rememberModalSheetSta
 
 private const val HomeLoadingPlaceholderMinDurationMillis = 1200L
 
-// Modern HomeScreen with collapsible top bar and staggered grid layout
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -133,7 +132,6 @@ fun HomeScreen(
     onOpenSidebar: () -> Unit
 ) {
     val context = LocalContext.current
-    // DETECT BENCHMARK MODE
     val isBenchmarkMode = remember {
         (context as? android.app.Activity)?.intent?.getBooleanExtra("is_benchmark", false) ?: false
     }
@@ -192,7 +190,6 @@ fun HomeScreen(
             maxItems = 64
         )
     }
-    // Keep the visible Home snapshot stable and only refresh it once the screen is off-screen.
     var recentlyPlayedSongs by rememberSaveable { mutableStateOf(latestRecentlyPlayedSongs) }
     val latestRecentlyPlayedSongsState = rememberUpdatedState(latestRecentlyPlayedSongs)
 
@@ -225,19 +222,16 @@ fun HomeScreen(
 
     val yourMixSong: String = "Today's Mix for you"
 
-    // 2) Observe only the currentSong (or null) to know whether to show padding
     val currentSong by remember(playerViewModel.stablePlayerState) {
         playerViewModel.stablePlayerState.map { it.currentSong }
     }.collectAsStateWithLifecycle(initialValue = null)
 
-    // 3) Observe shuffle state for sync
     val isShuffleEnabled by remember(playerViewModel.stablePlayerState) {
         playerViewModel.stablePlayerState
             .map { it.isShuffleEnabled }
             .distinctUntilChanged()
     }.collectAsStateWithLifecycle(initialValue = false)
 
-    // Bottom padding if there is a song playing
     val bottomPadding = if (currentSong != null) MiniPlayerHeight else 0.dp
     val navBarCompactMode by playerViewModel.navBarCompactMode.collectAsStateWithLifecycle()
     val bottomGradientHeight = resolveMainScreenBottomGradientHeight(navBarCompactMode)
@@ -260,9 +254,6 @@ fun HomeScreen(
         derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > scrollThresholdPx }
     }
 
-    // Persist the scroll position across navigation away/back. The Stats card and other
-    // conditional sections can shift indices while data re-emits when returning, which
-    // would otherwise leave the list scrolled to the wrong place or jump to the top.
     var savedScrollIndex by rememberSaveable { mutableIntStateOf(0) }
     var savedScrollOffset by rememberSaveable { mutableIntStateOf(0) }
     var needsScrollRestore by rememberSaveable { mutableStateOf(false) }
@@ -294,7 +285,6 @@ fun HomeScreen(
         needsScrollRestore = false
     }
 
-    // Drawer state for sidebar
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
     Box(
@@ -317,7 +307,6 @@ fun HomeScreen(
                           showStreamingProviderSheet = true
                     },
                     onMenuClick = {
-                        // onOpenSidebar() // Disabled
                     },
                     isScrolled = isScrolledPastThreshold.value
                 )
@@ -375,7 +364,6 @@ fun HomeScreen(
                     }
                 }
 
-                // Collage
                 if (yourMixSongs.isNotEmpty()) {
                     item(
                         key = "album_art_collage",
@@ -412,7 +400,6 @@ fun HomeScreen(
                     }
                 }
 
-                // Daily Mix
                 if (dailyMixSongs.isNotEmpty()) {
                     item(
                         key = "daily_mix_section",
@@ -534,7 +521,6 @@ fun HomeScreen(
         ModalBottomSheet(
             onDismissRequest = { showBetaInfoBottomSheet = false },
             sheetState = betaSheetState,
-            //contentWindowInsets = { WindowInsets.statusBars.only(WindowInsets.statusBars) }
         ) {
             BetaInfoBottomSheet()
         }
@@ -673,7 +659,6 @@ fun YourMixHeader(
                 .align(Alignment.TopStart)
                 .padding(top = 48.dp, start = 12.dp)
         ) {
-            // Your Mix Title
             Text(
                 text = stringResource(R.string.home_your_mix_title),
                 style = titleStyle,
@@ -681,7 +666,6 @@ fun YourMixHeader(
                 modifier = Modifier
             )
 
-            // Artist/Song subtitle
             Text(
                 text = song,
                 style = MaterialTheme.typography.bodyMedium,
@@ -689,7 +673,6 @@ fun YourMixHeader(
                 modifier = Modifier.padding(start = 8.dp)
             )
         }
-        // Play Button - color changes based on shuffle state
         LargeExtendedFloatingActionButton(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -718,7 +701,6 @@ fun YourMixHeader(
 }
 
 
-// SongListItem (modified to accept individual parameters)
 @Composable
 fun SongListItemFavs(
     modifier: Modifier = Modifier,
@@ -783,16 +765,15 @@ fun SongListItemFavs(
                     modifier = Modifier
                         .weight(0.1f)
                         .padding(start = 8.dp)
-                        .size(width = 18.dp, height = 16.dp), // similar to the icon size
+                        .size(width = 18.dp, height = 16.dp),
                     color = colors.primary,
-                    isPlaying = isPlaying  // or wire it to your real playback state
+                    isPlaying = isPlaying
                 )
             }
         }
     }
 }
 
-// Wrapper Composable for SongListItemFavs to isolate state observation
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun SongListItemFavsWrapper(
@@ -801,15 +782,12 @@ fun SongListItemFavsWrapper(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Collect the stablePlayerState once
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
 
-    // Derive isThisSongPlaying using remember
     val isThisSongPlaying = remember(song.id, stablePlayerState.currentSong?.id, stablePlayerState.isPlaying) {
         song.id == stablePlayerState.currentSong?.id
     }
 
-    // Call the presentational composable
     SongListItemFavs(
         modifier = modifier,
         cardCorners = 0.dp,

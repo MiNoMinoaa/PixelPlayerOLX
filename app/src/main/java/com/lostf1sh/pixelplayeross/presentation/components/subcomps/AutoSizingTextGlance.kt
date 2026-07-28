@@ -58,66 +58,54 @@ fun AutoSizingTextGlance(
     val textColor = color.getColor(context).toArgb()
     val density = context.resources.displayMetrics.density
 
-    // Convert Dp dimensions to Pixels
     val widthPx = (width.value * density).toInt()
     val heightPx = (height.value * density).toInt()
 
-    // Create the bitmap that will hold the rendered text
     val bitmap = Bitmap.createBitmap(widthPx.coerceAtLeast(1), heightPx.coerceAtLeast(1), Bitmap.Config.ARGB_8888)
     val canvas = android.graphics.Canvas(bitmap)
 
-    // Configure TextPaint to measure and draw the text
     val textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         this.color = textColor
-        // Apply the style's fontWeight
         this.typeface = when (style.fontWeight) {
             FontWeight.Bold -> Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-            FontWeight.Medium -> Typeface.create("sans-serif-medium", Typeface.NORMAL) // Requires API 21+
+            FontWeight.Medium -> Typeface.create("sans-serif-medium", Typeface.NORMAL)
             else -> Typeface.DEFAULT
         }
     }
 
-    // Map Glance's TextAlign to Android's Layout.Alignment
     val alignment = when (textAlign) {
         TextAlign.Center -> Layout.Alignment.ALIGN_CENTER
         TextAlign.End -> Layout.Alignment.ALIGN_OPPOSITE
-        else -> Layout.Alignment.ALIGN_NORMAL // Start, Left
+        else -> Layout.Alignment.ALIGN_NORMAL
     }
 
 
-    // --- Binary search for the optimal font size ---
     var lowerBound = minFontSize.value
     var upperBound = maxFontSize.value
     var bestSize = lowerBound
 
-    // Run the search only if the area is valid
     if (widthPx > 0 && heightPx > 0) {
         while (lowerBound <= upperBound) {
             val mid = (lowerBound + upperBound) / 2
-            if (mid <= 0) break // Avoid invalid font sizes
+            if (mid <= 0) break
 
             textPaint.textSize = mid * density
 
-            // StaticLayout is Android's tool for handling multiline text and line breaks.
             val staticLayout = StaticLayout.Builder.obtain(text, 0, text.length, textPaint, widthPx)
                 .setAlignment(alignment)
                 .setLineSpacing(0f, 1f)
                 .setIncludePad(false)
                 .build()
 
-            // If the text fits within the height, it's a valid candidate. Try a larger size.
             if (staticLayout.height <= heightPx) {
                 bestSize = mid
                 lowerBound = mid + 0.1f
             } else {
-                // If it doesn't fit, we need a smaller size.
                 upperBound = mid - 0.1f
             }
         }
     }
-    // --- End of binary search ---
 
-    // Draw the final text on the canvas with the best font size found
     textPaint.textSize = bestSize * density
     val finalLayout = StaticLayout.Builder.obtain(text, 0, text.length, textPaint, widthPx)
         .setAlignment(alignment)
@@ -127,17 +115,15 @@ fun AutoSizingTextGlance(
 
     finalLayout.draw(canvas)
 
-    // Show the rendered bitmap in an Image Composable
     Box(
         modifier = modifier.size(width, height),
         contentAlignment = Alignment.CenterStart
     ) {
         Image(
             provider = ImageProvider(bitmap),
-            contentDescription = text, // Use the text as the content description
+            contentDescription = text,
             modifier = GlanceModifier
                 .fillMaxSize()
-                //.size(width, height)
         )
     }
 }

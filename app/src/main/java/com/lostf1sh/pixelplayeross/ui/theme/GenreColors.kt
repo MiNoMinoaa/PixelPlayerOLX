@@ -26,49 +26,49 @@ object GenreThemeUtils {
     )
     
     private val darkColors = listOf(
-        GenreThemeColor(Color(0xFF004A77), Color(0xFFC2E7FF)), // Blue
-        GenreThemeColor(Color(0xFF7D5260), Color(0xFFFFD8E4)), // Rose
-        GenreThemeColor(Color(0xFF633B48), Color(0xFFFFD8EC)), // Pink
-        GenreThemeColor(Color(0xFF004F58), Color(0xFF88FAFF)), // Cyan
-        GenreThemeColor(Color(0xFF324F34), Color(0xFFCBEFD0)), // Green
-        GenreThemeColor(Color(0xFF6E4E13), Color(0xFFFFDEAC)), // Gold/Orange
-        GenreThemeColor(Color(0xFF3F474D), Color(0xFFDEE3EB)), // Slate
-        GenreThemeColor(Color(0xFF4A4458), Color(0xFFE8DEF8)), // Purple
-        GenreThemeColor(Color(0xFF7D2B2B), Color(0xFFFFB4AB)), // Red
-        GenreThemeColor(Color(0xFF5B6300), Color(0xFFDDF669)), // Lime
-        GenreThemeColor(Color(0xFF005047), Color(0xFF8CF4E6)), // Teal
-        GenreThemeColor(Color(0xFF4F378B), Color(0xFFEADDFF)), // Indigo
-        GenreThemeColor(Color(0xFF8B4A62), Color(0xFFFFD9E2)), // Maroon
-        GenreThemeColor(Color(0xFF725C00), Color(0xFFFFE084)), // Yellow
-        GenreThemeColor(Color(0xFF00213B), Color(0xFF99CBFF)), // Navy
-        GenreThemeColor(Color(0xFF23507D), Color(0xFFD1E4FF)), // Steel Blue
-        GenreThemeColor(Color(0xFF93000A), Color(0xFFFFDAD6)), // Brick Red
-        GenreThemeColor(Color(0xFF45464F), Color(0xFFC4C6D0)), // Grey
-        GenreThemeColor(Color(0xFF5D3F75), Color(0xFFE8B6FF)), // Violet
-        GenreThemeColor(Color(0xFF7A5900), Color(0xFFFFDEA5))  // Amber
+        GenreThemeColor(Color(0xFF004A77), Color(0xFFC2E7FF)),
+        GenreThemeColor(Color(0xFF7D5260), Color(0xFFFFD8E4)),
+        GenreThemeColor(Color(0xFF633B48), Color(0xFFFFD8EC)),
+        GenreThemeColor(Color(0xFF004F58), Color(0xFF88FAFF)),
+        GenreThemeColor(Color(0xFF324F34), Color(0xFFCBEFD0)),
+        GenreThemeColor(Color(0xFF6E4E13), Color(0xFFFFDEAC)),
+        GenreThemeColor(Color(0xFF3F474D), Color(0xFFDEE3EB)),
+        GenreThemeColor(Color(0xFF4A4458), Color(0xFFE8DEF8)),
+        GenreThemeColor(Color(0xFF7D2B2B), Color(0xFFFFB4AB)),
+        GenreThemeColor(Color(0xFF5B6300), Color(0xFFDDF669)),
+        GenreThemeColor(Color(0xFF005047), Color(0xFF8CF4E6)),
+        GenreThemeColor(Color(0xFF4F378B), Color(0xFFEADDFF)),
+        GenreThemeColor(Color(0xFF8B4A62), Color(0xFFFFD9E2)),
+        GenreThemeColor(Color(0xFF725C00), Color(0xFFFFE084)),
+        GenreThemeColor(Color(0xFF00213B), Color(0xFF99CBFF)),
+        GenreThemeColor(Color(0xFF23507D), Color(0xFFD1E4FF)),
+        GenreThemeColor(Color(0xFF93000A), Color(0xFFFFDAD6)),
+        GenreThemeColor(Color(0xFF45464F), Color(0xFFC4C6D0)),
+        GenreThemeColor(Color(0xFF5D3F75), Color(0xFFE8B6FF)),
+        GenreThemeColor(Color(0xFF7A5900), Color(0xFFFFDEA5))
     )
 
     private val lightColors = listOf(
-        GenreThemeColor(Color(0xFFD7E3FF), Color(0xFF005AC1)), // Blue
-        GenreThemeColor(Color(0xFFFFD8E4), Color(0xFF631835)), // Rose
-        GenreThemeColor(Color(0xFFFFD8EC), Color(0xFF631B4B)), // Pink
-        GenreThemeColor(Color(0xFFCCE8EA), Color(0xFF004F58)), // Cyan
-        GenreThemeColor(Color(0xFFCBEFD0), Color(0xFF042106)), // Green
-        GenreThemeColor(Color(0xFFFFDEAC), Color(0xFF281900)), // Gold/Orange
-        GenreThemeColor(Color(0xFFEFF1F7), Color(0xFF44474F)), // Slate
-        GenreThemeColor(Color(0xFFE8DEF8), Color(0xFF1D192B)), // Purple
-        GenreThemeColor(Color(0xFFFFB4AB), Color(0xFF690005)), // Red
-        GenreThemeColor(Color(0xFFDDF669), Color(0xFF2F3300)), // Lime
-        GenreThemeColor(Color(0xFF8CF4E6), Color(0xFF00201C)), // Teal
-        GenreThemeColor(Color(0xFFEADDFF), Color(0xFF21005D)), // Indigo
-        GenreThemeColor(Color(0xFFFFD9E2), Color(0xFF3B071D)), // Maroon
-        GenreThemeColor(Color(0xFFFFE084), Color(0xFF231B00)), // Yellow
-        GenreThemeColor(Color(0xFF99CBFF), Color(0xFF003258)), // Navy
-        GenreThemeColor(Color(0xFFD1E4FF), Color(0xFF051C36)), // Steel Blue
-        GenreThemeColor(Color(0xFFFFDAD6), Color(0xFF410002)), // Brick Red
-        GenreThemeColor(Color(0xFFE2E2E9), Color(0xFF191C20)), // Grey
-        GenreThemeColor(Color(0xFFF2DAFF), Color(0xFF2C004F)), // Violet
-        GenreThemeColor(Color(0xFFFFDEA5), Color(0xFF261900))  // Amber
+        GenreThemeColor(Color(0xFFD7E3FF), Color(0xFF005AC1)),
+        GenreThemeColor(Color(0xFFFFD8E4), Color(0xFF631835)),
+        GenreThemeColor(Color(0xFFFFD8EC), Color(0xFF631B4B)),
+        GenreThemeColor(Color(0xFFCCE8EA), Color(0xFF004F58)),
+        GenreThemeColor(Color(0xFFCBEFD0), Color(0xFF042106)),
+        GenreThemeColor(Color(0xFFFFDEAC), Color(0xFF281900)),
+        GenreThemeColor(Color(0xFFEFF1F7), Color(0xFF44474F)),
+        GenreThemeColor(Color(0xFFE8DEF8), Color(0xFF1D192B)),
+        GenreThemeColor(Color(0xFFFFB4AB), Color(0xFF690005)),
+        GenreThemeColor(Color(0xFFDDF669), Color(0xFF2F3300)),
+        GenreThemeColor(Color(0xFF8CF4E6), Color(0xFF00201C)),
+        GenreThemeColor(Color(0xFFEADDFF), Color(0xFF21005D)),
+        GenreThemeColor(Color(0xFFFFD9E2), Color(0xFF3B071D)),
+        GenreThemeColor(Color(0xFFFFE084), Color(0xFF231B00)),
+        GenreThemeColor(Color(0xFF99CBFF), Color(0xFF003258)),
+        GenreThemeColor(Color(0xFFD1E4FF), Color(0xFF051C36)),
+        GenreThemeColor(Color(0xFFFFDAD6), Color(0xFF410002)),
+        GenreThemeColor(Color(0xFFE2E2E9), Color(0xFF191C20)),
+        GenreThemeColor(Color(0xFFF2DAFF), Color(0xFF2C004F)),
+        GenreThemeColor(Color(0xFFFFDEA5), Color(0xFF261900))
     )
 
     private fun isUnknownGenreId(genreId: String): Boolean {
@@ -111,12 +111,8 @@ object GenreThemeUtils {
     }
 
     private fun androidx.compose.ui.graphics.Color.contrastContentColor(): androidx.compose.ui.graphics.Color {
-        // Calculate luminance
         val luminance = (0.299 * red + 0.587 * green + 0.114 * blue)
         
-        // If background is dark (luminance <= 0.5), we want a light color (Pastel).
-        // If background is light (luminance > 0.5), we want a dark color (Deep Tone).
-        // mixing 90% white or 90% black retains some hue (10%) while ensuring high contrast.
         return if (luminance <= 0.5) {
              androidx.compose.ui.graphics.lerp(this, androidx.compose.ui.graphics.Color.White, 0.9f)
         } else {

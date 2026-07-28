@@ -136,7 +136,6 @@ private fun EditMultipleSongsContent(
         coverArtUpdate: CoverArtUpdate?
     ) -> Unit,
 ) {
-    // Initialize mixed value fields
     val titleField = remember(songs) { songs.map { it.title }.toMixedValueField() }
     val artistField = remember(songs) { songs.map { it.displayArtist }.toMixedValueField() }
     val albumField = remember(songs) { songs.map { it.album }.toMixedValueField() }
@@ -146,7 +145,6 @@ private fun EditMultipleSongsContent(
     val trackNumberField = remember(songs) { songs.map { it.trackNumber }.toMixedValueField() }
     val discNumberField = remember(songs) { songs.map { it.discNumber }.toMixedValueField() }
 
-    // Editable state
     var title by remember { mutableStateOf<String?>(null) }
     var artist by remember { mutableStateOf<String?>(null) }
     var album by remember { mutableStateOf<String?>(null) }
@@ -244,7 +242,6 @@ private fun EditMultipleSongsContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Info card
                 item {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
@@ -271,7 +268,6 @@ private fun EditMultipleSongsContent(
                     }
                 }
 
-                // Cover Art Editor Card
                 item {
                     BatchCoverArtEditorCard(
                         modifier = Modifier.fillMaxWidth(),
@@ -296,7 +292,6 @@ private fun EditMultipleSongsContent(
                     )
                 }
 
-                // Artist field
                 item {
                     BatchEditField(
                         value = artist ?: "",
@@ -313,7 +308,6 @@ private fun EditMultipleSongsContent(
                     )
                 }
 
-                // Album field
                 item {
                     BatchEditField(
                         value = album ?: "",
@@ -330,7 +324,6 @@ private fun EditMultipleSongsContent(
                     )
                 }
 
-                // Album Artist field
                 item {
                     BatchEditField(
                         value = albumArtist ?: "",
@@ -347,7 +340,6 @@ private fun EditMultipleSongsContent(
                     )
                 }
 
-                // Genre field
                 item {
                     BatchEditField(
                         value = genre ?: "",
@@ -364,7 +356,6 @@ private fun EditMultipleSongsContent(
                     )
                 }
 
-                // Composer field
                 item {
                     BatchEditField(
                         value = composer ?: "",
@@ -378,7 +369,6 @@ private fun EditMultipleSongsContent(
                     )
                 }
 
-                // ReplayGain Track
                 item {
                     BatchEditField(
                         value = replayGainTrackGainDb ?: "",
@@ -393,7 +383,6 @@ private fun EditMultipleSongsContent(
                     )
                 }
 
-                // ReplayGain Album
                 item {
                     BatchEditField(
                         value = replayGainAlbumGainDb ?: "",

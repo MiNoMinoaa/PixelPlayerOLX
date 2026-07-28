@@ -20,7 +20,6 @@ import kotlinx.collections.immutable.toImmutableList
 @Singleton
 class PlaylistSelectionStateHolder @Inject constructor() {
 
-    // Internal mutable state - uses List to preserve selection order
     private val _selectedPlaylists = MutableStateFlow<ImmutableList<Playlist>>(persistentListOf())
     
     /**
@@ -57,11 +56,9 @@ class PlaylistSelectionStateHolder @Inject constructor() {
         val currentIds = _selectedPlaylistIds.value.toMutableSet()
         
         if (currentIds.contains(playlist.id)) {
-            // Remove from selection
             currentList.removeAll { it.id == playlist.id }
             currentIds.remove(playlist.id)
         } else {
-            // Add to selection (preserving order)
             currentList.add(playlist)
             currentIds.add(playlist.id)
         }
@@ -80,7 +77,6 @@ class PlaylistSelectionStateHolder @Inject constructor() {
         val currentIds = _selectedPlaylistIds.value
         val currentList = _selectedPlaylists.value.toMutableList()
         
-        // Add playlists that aren't already selected
         playlists.forEach { playlist ->
             if (!currentIds.contains(playlist.id)) {
                 currentList.add(playlist)

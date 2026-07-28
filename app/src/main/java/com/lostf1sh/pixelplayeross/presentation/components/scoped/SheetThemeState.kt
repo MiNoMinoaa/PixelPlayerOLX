@@ -86,9 +86,6 @@ internal fun rememberSheetThemeState(
 
     var lastAlbumScheme by remember { mutableStateOf<ColorScheme?>(null) }
     var lastAlbumSchemeSongId by remember { mutableStateOf<String?>(null) }
-    // When song changes, keep lastAlbumScheme as cross-song fallback
-    // to prevent flicker to system color while new color loads.
-    // Only update the tracked song ID so the new scheme replaces it once ready.
     LaunchedEffect(currentSong?.id) {
         if (currentSong?.id != lastAlbumSchemeSongId) {
             lastAlbumSchemeSongId = currentSong?.id
@@ -106,11 +103,8 @@ internal fun rememberSheetThemeState(
         preparingSongId != null && preparingSongId == currentSong?.id
     }
 
-    // Capture nullable var for smart null handling
     val lastAlbumSchemeSnapshot = lastAlbumScheme
 
-    // Cross-song fallback is only valid while a new track with usable album art is still loading.
-    // Tracks without art must resolve directly to the system scheme, otherwise previous colors stick.
     val rawAlbumColorScheme = resolvePlayerSheetTargetScheme(
         isAlbumArtTheme = isAlbumArtTheme,
         hasAlbumArt = hasAlbumArt,
@@ -127,11 +121,6 @@ internal fun rememberSheetThemeState(
         systemColorScheme = systemColorScheme
     )
 
-    // --- Batch Color Animation ---
-    // Instead of 34×2 = 68 independent animateColorAsState (one Spring coroutine each),
-    // we use a single Animatable<Float> progress [0,1] that interpolates between the
-    // previous and the new target ColorScheme manually. This reduces per-frame State reads
-    // from 68 → 0 (the lerp runs during the Animatable tick, not during recomposition).
     val albumColorScheme = rememberBatchAnimatedColorScheme(rawAlbumColorScheme)
     val miniPlayerScheme = rememberBatchAnimatedColorScheme(rawMiniPlayerScheme)
 
@@ -150,15 +139,6 @@ internal fun rememberSheetThemeState(
     val miniReadyAlpha = miniAppearProgress.value
     val miniAppearScale = lerp(0.985f, 1f, miniAppearProgress.value)
     val playerAreaBackground = miniPlayerScheme.primaryContainer
-
-    // NOTE: miniAlpha and effectivePlayerAreaElevation are no longer computed here.
-    // They were driven by the expansion fraction via the Transition API, which
-    // read `playerContentExpansionFraction.value` during composition — causing
-    // per-frame recomposition of UnifiedPlayerSheetV2 during every gesture.
-    //
-    // These values are now computed inline at their consumption sites:
-    //   - miniAlpha → inside graphicsLayer in UnifiedPlayerMiniAndFullLayers
-    //   - elevation → inside derivedStateOf for visualCardShadowElevation
 
     return SheetThemeState(
         albumColorScheme = albumColorScheme,
@@ -186,7 +166,6 @@ private fun rememberBatchAnimatedColorScheme(target: ColorScheme): ColorScheme {
 
     LaunchedEffect(target) {
         if (toScheme == target) return@LaunchedEffect
-        // Snapshot current interpolated state as the new "from"
         fromScheme = lerpColorScheme(fromScheme, toScheme, progress.value)
         toScheme = target
         progress.snapTo(0f)
@@ -196,8 +175,6 @@ private fun rememberBatchAnimatedColorScheme(target: ColorScheme): ColorScheme {
         )
     }
 
-    // derivedStateOf ensures we only recompose consumers when progress.value actually changes,
-    // not on every State read elsewhere in the composition.
     val interpolated by remember {
         derivedStateOf { lerpColorScheme(fromScheme, toScheme, progress.value) }
     }

@@ -88,12 +88,10 @@ fun String.splitArtistsByDelimiters(
         return listOf(this.trim()).filter { it.isNotEmpty() }
     }
 
-    // Sort delimiters by length descending to handle longer delimiters first
     val sortedDelimiters = delimiters.sortedByDescending { it.length }
 
     var working = this
 
-    // Replace escaped delimiters with placeholders
     val escapedMappings = mutableMapOf<String, String>()
     sortedDelimiters.forEachIndexed { index, delimiter ->
         val escapedDelimiter = ESCAPE_SEQUENCE + delimiter
@@ -102,26 +100,18 @@ fun String.splitArtistsByDelimiters(
         working = working.replace(escapedDelimiter, placeholder)
     }
 
-    // Build combined regex pattern:
-    // 1. Word delimiters: matched case-insensitively with whitespace boundaries
-    //    Single-char word delimiters (like "x") require spaces on both sides
-    // 2. Character delimiters: matched literally (with optional surrounding whitespace)
     val patternParts = mutableListOf<String>()
 
-    // Word delimiters first (longer ones first to avoid partial matches)
     val sortedWordDelimiters = wordDelimiters.sortedByDescending { it.length }
     for (wd in sortedWordDelimiters) {
         val escaped = Regex.escape(wd)
         if (wd.length == 1) {
-            // Single-char word delimiters (e.g., "x") — require spaces on both sides
             patternParts.add("\\s+$escaped\\s+")
         } else {
-            // Multi-char word delimiters — require word boundary or whitespace
             patternParts.add("\\s+$escaped\\s+|\\s+$escaped$|^$escaped\\s+")
         }
     }
 
-    // Character delimiters
     if (sortedDelimiters.isNotEmpty()) {
         val charPattern = sortedDelimiters.joinToString("|") { Regex.escape(it) }
         patternParts.add(charPattern)
@@ -134,10 +124,8 @@ fun String.splitArtistsByDelimiters(
     val combinedPattern = patternParts.joinToString("|")
     val regex = Regex(combinedPattern, RegexOption.IGNORE_CASE)
 
-    // Split by combined pattern
     val parts = working.split(regex)
 
-    // Restore escaped delimiters and trim each part
     return parts
         .map { part ->
             var restored = part
@@ -168,7 +156,6 @@ fun String.extractArtistsFromTitle(
 ): Pair<String, List<String>> {
     if (this.isBlank()) return this to emptyList()
 
-    // Match patterns like (feat. ...), [ft. ...], (with ...), etc.
     val featureKeywords = listOf("featuring", "feat\\.", "feat", "ft\\.", "ft", "with", "prod\\.", "prod")
     val keywordPattern = featureKeywords.joinToString("|")
     val bracketPattern = Regex(
@@ -181,7 +168,6 @@ fun String.extractArtistsFromTitle(
 
     bracketPattern.findAll(this).forEach { match ->
         val artistString = match.groupValues[1]
-        // Split the extracted artist string by delimiters (handles "Artist1 & Artist2" inside parens)
         val artists = artistString.splitArtistsByDelimiters(delimiters, wordDelimiters)
         extractedArtists.addAll(artists)
         cleanedTitle = cleanedTitle.replace(match.value, "")

@@ -20,7 +20,6 @@ internal fun resolveMediaItemsWithTrustedArtworkGrants(
             resolvedItems += trustedItem
             trustedArtworkGrantItems += trustedItem
         } else {
-            // Caller-supplied metadata is untrusted and must never drive provider grants.
             resolvedItems += requestedItem
         }
     }

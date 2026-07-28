@@ -46,8 +46,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// In a new file or alongside PlayerInternalNavigationItemsRow.kt
-
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun RowScope.CustomNavigationBarItem(
@@ -68,7 +66,6 @@ fun RowScope.CustomNavigationBarItem(
     indicatorColor: Color = MaterialTheme.colorScheme.secondaryContainer,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 ) {
-    // Animated colors - only recompose when 'selected' changes
     val iconColor by animateColorAsState(
         targetValue = if (selected) selectedIconColor else unselectedIconColor,
         animationSpec = tween(durationMillis = 150),
@@ -90,7 +87,6 @@ fun RowScope.CustomNavigationBarItem(
         label = "iconScale"
     )
 
-    // Determine whether to show the label
     val showLabel = label != null && (alwaysShowLabel || selected)
     val indicatorWidth = 64.dp
     val indicatorHeight = 32.dp
@@ -100,7 +96,6 @@ fun RowScope.CustomNavigationBarItem(
     val indicatorShape = RoundedCornerShape(16.dp)
     val iconShape = RoundedCornerShape(12.dp)
 
-    // Main layout
     Column(
         modifier = modifier
             .weight(1f)
@@ -110,7 +105,7 @@ fun RowScope.CustomNavigationBarItem(
                 enabled = enabled,
                 role = Role.Tab,
                 interactionSource = interactionSource,
-                indication = null //ripple(bounded = true, radius = 24.dp) // Contained ripple
+                indication = null
             )
             .semantics {
                  if (contentDescription != null) {
@@ -120,28 +115,22 @@ fun RowScope.CustomNavigationBarItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Container for the icon with indicator
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(indicatorWidth, indicatorHeight)
         ) {
-            // Background indicator (pill shape for Material 3 Expressive)
             androidx.compose.animation.AnimatedVisibility(
                 visible = selected,
-                enter = fadeIn(animationSpec = tween(100)) + // A faster fade in
+                enter = fadeIn(animationSpec = tween(100)) +
                         scaleIn(
-                            animationSpec = spring( // We use spring for the scaleIn
-                                dampingRatio = Spring.DampingRatioMediumBouncy, // Provides a moderate bounce
-                                stiffness = Spring.StiffnessLow // You can tune the stiffness
-                                // initialScale so it starts a bit smaller if you want more impact
-                                // initialScale = 0.8f // (Optional)
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow
                             ),
-                            // You can also tune initialScale inside scaleIn if needed
-                            // initialScale = 0.8f // This is the default value of scaleIn if not specified inside spring
                         ),
                 exit = fadeOut(animationSpec = tween(100)) +
-                        scaleOut(animationSpec = tween(100, easing = EaseInQuart)) // Keep the exit as it was or tune it as needed
+                        scaleOut(animationSpec = tween(100, easing = EaseInQuart))
             ) {
                 Box(
                     modifier = Modifier
@@ -154,7 +143,6 @@ fun RowScope.CustomNavigationBarItem(
                 )
             }
 
-            // Clickable area of the icon (smaller than the container)
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -166,12 +154,10 @@ fun RowScope.CustomNavigationBarItem(
                     }
 
             ) {
-                // Icon
                 CompositionLocalProvider(LocalContentColor provides iconColor) {
                     Box(
                         modifier = Modifier.clearAndSetSemantics {
                             if (showLabel) {
-                                // Semantics are handled at the top level
                             }
                         }
                     ) {
@@ -181,7 +167,6 @@ fun RowScope.CustomNavigationBarItem(
             }
         }
 
-        // Label with animation
         androidx.compose.animation.AnimatedVisibility(
             visible = showLabel,
             enter = fadeIn(animationSpec = tween(200, delayMillis = 50)),
@@ -205,6 +190,5 @@ fun RowScope.CustomNavigationBarItem(
     }
 }
 
-// Easing curves for smoother animations (Material 3 Expressive)
 private val EaseOutQuart = CubicBezierEasing(0.25f, 1f, 0.5f, 1f)
 private val EaseInQuart = CubicBezierEasing(0.5f, 0f, 0.75f, 0f)

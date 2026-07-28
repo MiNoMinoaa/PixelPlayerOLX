@@ -48,7 +48,6 @@ class ColorSchemeProcessor @Inject constructor(
     @ApplicationContext private val context: Context,
     private val albumArtThemeDao: AlbumArtThemeDao
 ) {
-    // In-memory LRU cache for faster access (avoids DB reads for hot paths)
     private val memoryCache = LruCache<String, ColorSchemePair>(20)
     private val processingMutex = Mutex()
     private val inProgressUris = mutableSetOf<String>()
@@ -127,12 +126,10 @@ class ColorSchemeProcessor @Inject constructor(
     ): ColorSchemePair? = traceAsyncSection("ColorSchemeProcessor.generate") {
         try {
             val cacheKey = buildCacheKey(albumArtUri, paletteStyle, colorAccuracyLevel)
-            // Load bitmap on IO dispatcher
             val bitmap = withContext(Dispatchers.IO) {
                 loadBitmapForColorExtraction(albumArtUri, forceRefresh)
             } ?: return@traceAsyncSection null
 
-            // Extract colors on Default dispatcher (CPU-bound)
             val schemePair = withContext(Dispatchers.Default) {
                 val seed = extractSeedColor(
                     bitmap = bitmap,
@@ -140,7 +137,6 @@ class ColorSchemeProcessor @Inject constructor(
                         accuracyLevel = colorAccuracyLevel
                     )
                 )
-                // Recycle immediately after pixel access — we only need the seed color.
                 bitmap.recycle()
                 generateColorSchemeFromSeed(
                     seedColor = seed,
@@ -148,7 +144,6 @@ class ColorSchemeProcessor @Inject constructor(
                 )
             }
 
-            // Cache to memory
             memoryCache.put(cacheKey, schemePair)
 
             if (persistToDatabase) {
@@ -180,8 +175,8 @@ class ColorSchemeProcessor @Inject constructor(
             
             val request = ImageRequest.Builder(context)
                 .data(uri)
-                .allowHardware(false) // Required for pixel access
-                .size(Size(128, 128)) // Small size for fast processing
+                .allowHardware(false)
+                .size(Size(128, 128))
                 .bitmapConfig(Bitmap.Config.ARGB_8888)
                 .memoryCachePolicy(cachePolicy)
                 .diskCachePolicy(diskCachePolicy)
@@ -197,8 +192,6 @@ class ColorSchemeProcessor @Inject constructor(
                     drawable.setBounds(0, 0, canvas.width, canvas.height)
                     drawable.draw(canvas)
                 }
-                // bitmap is only needed for extractSeedColor() which is called synchronously
-                // by the caller on Dispatchers.Default; it will be recycled there.
             }
         } catch (e: Exception) {
             null
@@ -262,7 +255,6 @@ class ColorSchemeProcessor @Inject constructor(
             .forEach { key -> memoryCache.remove(key) }
     }
 
-    // Mapping functions
     private fun mapColorSchemePairToEntity(
         uri: String,
         paletteStyle: AlbumArtPaletteStyle,

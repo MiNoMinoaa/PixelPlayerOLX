@@ -80,9 +80,9 @@ fun PlayerSeekBar(
         modifier = modifier
             .fillMaxWidth()
             .shadow(
-                elevation = 8.dp,          // shadow level
-                shape = CircleShape,       // the same clip shape
-                clip = false               // important: do NOT clip the shadow
+                elevation = 8.dp,
+                shape = CircleShape,
+                clip = false
             )
             .clip(CircleShape)
             .background(backgroundColor)
@@ -113,12 +113,12 @@ fun PlayerSeekBar(
                 lastSeekFinishedTime = System.currentTimeMillis()
                 isUserSeeking = false
             },
-            strokeWidth = 5.dp, // Was trackHeight
+            strokeWidth = 5.dp,
             thumbRadius = 8.dp,
             activeTrackColor = primaryColor,
             inactiveTrackColor = primaryColor.copy(alpha = 0.2f),
             thumbColor = primaryColor,
-            wavelength = 30.dp, // Was waveLength
+            wavelength = 30.dp,
             isPlaying = isPlaying,
             semanticsLabel = "Playback position"
         )

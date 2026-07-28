@@ -316,23 +316,17 @@ fun LibraryScreen(
     libraryViewModel: LibraryViewModel = hiltViewModel(),
     songInfoBottomSheetViewModel: SongInfoBottomSheetViewModel = hiltViewModel()
 ) {
-    // High-level state collection is kept minimal.
-    val context = LocalContext.current // Added context
+    val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val lastTabIndex by playerViewModel.lastLibraryTabIndexFlow.collectAsStateWithLifecycle()
-    val favoriteIds by playerViewModel.favoriteSongIds.collectAsStateWithLifecycle() // Reintroduce favoriteIds here
-    val scope = rememberCoroutineScope() // Keep if used for UI actions
+    val favoriteIds by playerViewModel.favoriteSongIds.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
     val syncManager = playerViewModel.syncManager
     var isRefreshing by remember { mutableStateOf(false) }
-    // The pull-to-refresh spinner is reserved for user gestures. Automatic sync
-    // and long-running refresh work move through the slim linear indicator under
-    // LibraryActionRow so the list stays put.
     val isFetchingChanges by syncManager.isFetchingChanges
         .collectAsStateWithLifecycle(initialValue = false)
     val isSyncing by syncManager.isSyncing
         .collectAsStateWithLifecycle(initialValue = false)
-    // NOTE: syncProgress is NOT collected here. It is collected inside LibrarySyncOverlay
-    // to avoid triggering recomposition of the entire LibraryScreen on every progress tick.
 
     var showSongInfoBottomSheet by remember { mutableStateOf(false) }
     var showPlaylistBottomSheet by remember { mutableStateOf(false) }
@@ -379,7 +373,6 @@ fun LibraryScreen(
     var showReorderTabsSheet by remember { mutableStateOf(false) }
     var showTabSwitcherSheet by remember { mutableStateOf(false) }
 
-    // Multi-selection state
     val multiSelectionState = playerViewModel.multiSelectionStateHolder
     val selectedSongs by multiSelectionState.selectedSongs.collectAsStateWithLifecycle()
     val isSelectionMode by multiSelectionState.isSelectionMode.collectAsStateWithLifecycle()
@@ -399,7 +392,6 @@ fun LibraryScreen(
     var foldersLocateAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     var pendingFoldersLocatePath by remember { mutableStateOf<String?>(null) }
 
-    // Multi-selection callbacks
     val onSongLongPress: (Song) -> Unit = remember(multiSelectionState, haptic) {
         { song -> 
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -442,7 +434,6 @@ fun LibraryScreen(
         }
     }
 
-    // Playlist multi-selection state and callbacks
     val playlistMultiSelectionState = playerViewModel.playlistSelectionStateHolder
     val selectedPlaylists by playlistMultiSelectionState.selectedPlaylists.collectAsStateWithLifecycle()
     val selectedPlaylistIds by playlistMultiSelectionState.selectedPlaylistIds.collectAsStateWithLifecycle()
@@ -454,7 +445,6 @@ fun LibraryScreen(
     val onPlaylistLongPress: (com.lostf1sh.pixelplayeross.data.model.Playlist) -> Unit = remember(playlistMultiSelectionState, haptic) {
         { playlist ->
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            // Only toggle selection, don't show sheet immediately (similar to songs multi-selection)
             playlistMultiSelectionState.toggleSelection(playlist)
             Timber.tag("PlaylistMultiSelect").d("Toggled: ${playlist.name}, total selected: ${playlistMultiSelectionState.selectedPlaylists.value.size}")
         }
@@ -470,9 +460,6 @@ fun LibraryScreen(
             showSongInfoBottomSheet = true
         }
     }
-    // Pull-to-refresh uses incremental sync for speed. The spinner gives manual
-    // refreshes a short tactile confirmation, then longer work hands off to the
-    // inline sync indicator.
     var isMinDelayActive by remember { mutableStateOf(false) }
     var refreshGeneration by remember { mutableStateOf(0) }
 
@@ -487,8 +474,6 @@ fun LibraryScreen(
                 kotlinx.coroutines.delay(PULL_REFRESH_MIN_VISIBLE_MS)
                 if (currentRefreshGeneration != refreshGeneration) return@launch
                 isMinDelayActive = false
-                // If the changes phase already finished while the tactile minimum was
-                // still active, hide the spinner now.
                 val stillFetching = syncManager.isFetchingChanges.first()
                 if (!stillFetching) {
                     isRefreshing = false
@@ -502,7 +487,6 @@ fun LibraryScreen(
                     kotlinx.coroutines.delay(remainingVisibleMs)
                 }
                 if (currentRefreshGeneration != refreshGeneration) return@launch
-                // Long-running refresh work continues through the inline indicator.
                 isRefreshing = false
             }
         }
@@ -514,10 +498,6 @@ fun LibraryScreen(
         }
     }
 
-    // Minimum-visible gate for the inline sync indicator. It covers automatic
-    // startup syncs and manual refreshes once the pull spinner has handed off.
-    // Fast no-op phases finish in tens of milliseconds, so the small linear bar is
-    // held briefly to avoid single-frame flicker.
     var inlineSyncVisible by remember { mutableStateOf(false) }
     var inlineSyncShownAt by remember { mutableStateOf<Long?>(null) }
     LaunchedEffect(isSyncing, isRefreshing) {
@@ -540,15 +520,11 @@ fun LibraryScreen(
             if (remaining > 0) {
                 kotlinx.coroutines.delay(remaining)
             }
-            // If sync flipped back to visible during the delay this LaunchedEffect
-            // is cancelled and re-runs, so reaching this line means we should hide.
             inlineSyncVisible = false
             inlineSyncShownAt = null
         }
     }
 
-    // P1-1: derivedStateOf ensures BackHandler only recomposes when the boolean RESULT changes,
-    // not every time any individual selection state emits.
     val hasSelectionInCurrentTab by remember {
         derivedStateOf {
             when (currentTabId) {
@@ -602,7 +578,6 @@ fun LibraryScreen(
         }
     }
 
-    // Feedback for Playlist Creation
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(playlistViewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -615,7 +590,6 @@ fun LibraryScreen(
         }
     }
 
-    // The lazy loading logic is kept.
     LaunchedEffect(Unit) {
         traceSection("LibraryScreen.InitialTabLoad") {
             playerViewModel.onLibraryTabSelected(normalizedLastTabIndex)
@@ -627,7 +601,6 @@ fun LibraryScreen(
             playerViewModel.onLibraryTabSelected(currentTabIndex)
         }
 
-        // Clear selection when switching tabs
         multiSelectionState.clearSelection()
         playlistMultiSelectionState.clearSelection()
         selectedAlbums = persistentListOf()
@@ -636,11 +609,11 @@ fun LibraryScreen(
         showAlbumMultiSelectionSheet = false
     }
 
-    val fabState by remember { derivedStateOf { currentTabIndex } } // UI unchanged
+    val fabState by remember { derivedStateOf { currentTabIndex } }
     val transition = updateTransition(
         targetState = fabState,
         label = "Action Button Icon Transition"
-    ) // UI unchanged
+    )
 
     val systemNavBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val navBarCompactMode by playerViewModel.navBarCompactMode.collectAsStateWithLifecycle()
@@ -656,8 +629,8 @@ fun LibraryScreen(
         }
     ) { page ->
         when (tabTitles.getOrNull(page)?.toLibraryTabIdOrNull()) {
-            LibraryTabId.PLAYLISTS -> 0f // Playlist icon (PlaylistAdd) usually doesn't rotate
-            else -> 360f // Shuffle icon animates
+            LibraryTabId.PLAYLISTS -> 0f
+            else -> 360f
         }
     }
 
@@ -841,10 +814,8 @@ fun LibraryScreen(
                         cornerRadiusTR = 34.dp,
                         smoothnessAsPercentTL = 60
                     )
-                    // shape = AbsoluteSmoothCornerShape(cornerRadiusTL = 24.dp, smoothnessAsPercentTR = 60, /*...*/) // Your custom shape
                 ) {
                     Column(Modifier.fillMaxSize()) {
-                        // OPTIMIZATION: The sorting logic is now more efficient.
                         val availableSortOptions by playerViewModel.availableSortOptions.collectAsStateWithLifecycle()
                         val sanitizedSortOptions = remember(availableSortOptions, currentTabId) {
                             val cleaned = availableSortOptions.filterIsInstance<SortOption>()
@@ -917,7 +888,6 @@ fun LibraryScreen(
                             }
                         }
 
-                        // Switch between normal action row and selection action row
                         AnimatedContent(
                             targetState = isSelectionMode || isPlaylistSelectionMode || isAlbumSelectionMode,
                             label = "ActionRowModeSwitch",
@@ -934,7 +904,6 @@ fun LibraryScreen(
                                 .heightIn(min = 56.dp)
                         ) { inSelectionMode ->
                             if (inSelectionMode) {
-                                // Playlist selection row
                                 if (currentTabId == LibraryTabId.PLAYLISTS && isPlaylistSelectionMode) {
                                     SelectionActionRow(
                                         selectedCount = selectedPlaylists.size,
@@ -969,7 +938,6 @@ fun LibraryScreen(
                                         onOptionsClick = { showAlbumMultiSelectionSheet = true }
                                     )
                                 } else {
-                                    // Song selection row
                                     SelectionActionRow(
                                         selectedCount = selectedSongs.size,
                                         onSelectAll = {
@@ -1037,9 +1005,6 @@ fun LibraryScreen(
                             }
                         }
 
-                        // Slim inline sync indicator. Automatic startup syncs use this
-                        // instead of pulling the list down, and manual refreshes hand off
-                        // to it when the worker takes longer than the pull gesture window.
                         LibraryInlineSyncIndicator(
                             visible = inlineSyncVisible && !isLibraryContentEmpty,
                             syncManager = syncManager
@@ -1090,7 +1055,6 @@ fun LibraryScreen(
                                             val surfaceColor = MaterialTheme.colorScheme.surfaceVariant
                                             val onSurfaceColor = MaterialTheme.colorScheme.onSurfaceVariant
 
-                                            // Grid Item
                                             ToggleSegmentButton(
                                                 modifier = Modifier.weight(1f),
                                                 active = !isList,
@@ -1104,7 +1068,6 @@ fun LibraryScreen(
                                                 imageVector = Icons.Rounded.ViewModule
                                             )
 
-                                            // List Item
                                             ToggleSegmentButton(
                                                 modifier = Modifier.weight(1f),
                                                 active = isList,
@@ -1191,7 +1154,6 @@ fun LibraryScreen(
                             )
                         }
 
-                        // Box wrapper to allow floating SelectionCountPill overlay
                         Box(modifier = Modifier.fillMaxSize()) {
                             HorizontalPager(
                                 state = pagerState,
@@ -1199,7 +1161,7 @@ fun LibraryScreen(
                                     .fillMaxSize()
                                     .padding(top = 8.dp),
                                 pageSpacing = 0.dp,
-                                beyondViewportPageCount = 1, // Pre-load adjacent tabs to reduce lag when switching
+                                beyondViewportPageCount = 1,
                                 key = { it }
                             ) { page ->
                                 val tabIndex = resolveTabIndex(
@@ -1292,7 +1254,6 @@ fun LibraryScreen(
                                             bottomBarHeight = bottomBarHeightDp,
                                             isRefreshing = isRefreshing,
                                             onRefresh = onRefresh,
-                                            // Playlist multi-selection
                                             isSelectionMode = isPlaylistSelectionMode,
                                             selectedPlaylistIds = selectedPlaylistIds,
                                             onPlaylistLongPress = onPlaylistLongPress,
@@ -1381,7 +1342,6 @@ fun LibraryScreen(
                                 }
                             }
 
-                            // Floating selection count pill overlay
                             val selectionCount = when {
                                 currentTabId == LibraryTabId.PLAYLISTS && isPlaylistSelectionMode -> selectedPlaylists.size
                                 currentTabId == LibraryTabId.ALBUMS && isAlbumSelectionMode -> selectedAlbums.size
@@ -1404,14 +1364,9 @@ fun LibraryScreen(
                                     playerUiState.isLoadingLibraryCategories
                             )
                 ) {
-                    // The full-screen overlay is reserved for first-launch / empty library
-                    // states. Once the user has content, in-place indicators (pull-to-refresh
-                    // spinner + LibraryInlineSyncIndicator) handle sync feedback so the
-                    // list stays visible.
                     LibrarySyncOverlay(syncManager = syncManager)
                 }
             }
-            //Grad box
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1481,8 +1436,7 @@ fun LibraryScreen(
                 song = currentSong,
                 isFavorite = isFavorite,
                 onToggleFavorite = {
-                    // Directly use PlayerViewModel's method to toggle, which should handle UserPreferencesRepository
-                    playerViewModel.toggleFavoriteSpecificSong(currentSong) // Assumes such a method exists or will be added to PlayerViewModel
+                    playerViewModel.toggleFavoriteSpecificSong(currentSong)
                 },
                 onDismiss = { showSongInfoBottomSheet = false },
                 onPlaySong = {
@@ -1490,7 +1444,7 @@ fun LibraryScreen(
                     showSongInfoBottomSheet = false
                 },
                 onAddToQueue = {
-                    playerViewModel.addSongToQueue(currentSong) // Assumes such a method exists or will be added
+                    playerViewModel.addSongToQueue(currentSong)
                     showSongInfoBottomSheet = false
                     playerViewModel.sendToast(context.getString(R.string.toast_added_to_queue))
                 },
@@ -1569,7 +1523,6 @@ fun LibraryScreen(
         )
     }
 
-    // Multi-Selection Bottom Sheet
     if (showMultiSelectionSheet && selectedSongs.isNotEmpty()) {
         val activity = context as? android.app.Activity
 
@@ -1621,7 +1574,6 @@ fun LibraryScreen(
         )
     }
 
-    // Album Multi-Selection Option Sheet
     if (showAlbumMultiSelectionSheet && selectedAlbums.isNotEmpty()) {
         AlbumMultiSelectionOptionSheet(
             selectedAlbums = selectedAlbums,
@@ -1645,7 +1597,6 @@ fun LibraryScreen(
         )
     }
 
-    // Playlist Multi-Selection Bottom Sheet
     if (showPlaylistMultiSelectionSheet && selectedPlaylists.isNotEmpty()) {
         val activity = context as? android.app.Activity
 
@@ -1717,7 +1668,6 @@ fun LibraryScreen(
         )
     }
 
-    // Merge Playlists Dialog
     if (showMergePlaylistDialog && pendingMergePlaylistIds.isNotEmpty()) {
         var mergePlaylistName by remember { mutableStateOf("") }
 
@@ -1780,7 +1730,6 @@ fun LibraryScreen(
         )
     }
 
-    // Batch Edit Sheet
     if (showBatchEditSheet && selectedSongs.isNotEmpty()) {
         EditMultipleSongsSheet(
             visible = showBatchEditSheet,
@@ -1870,8 +1819,6 @@ private fun LibraryInlineSyncIndicator(
             animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing)
         ) + androidx.compose.animation.fadeOut(animationSpec = tween(160))
     ) {
-        // Collected inside this subtree so progress ticks don't recompose the
-        // parent screen — same pattern as LibrarySyncOverlay.
         val syncProgress by syncManager.syncProgress
             .collectAsStateWithLifecycle(initialValue = SyncProgress())
 
@@ -1938,13 +1885,11 @@ private fun LibrarySyncOverlay(syncManager: com.lostf1sh.pixelplayeross.data.wor
                 modifier = Modifier.padding(32.dp)
             ) {
                 if (syncProgress.hasProgress && syncProgress.isRunning) {
-                    // Show progress bar with file count when we have progress info
                     SyncProgressBar(
                         syncProgress = syncProgress,
                         modifier = Modifier.fillMaxWidth()
                     )
                 } else {
-                    // Show indeterminate loading indicator when scanning starts
                     LoadingIndicator(modifier = Modifier.size(64.dp))
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
@@ -1972,7 +1917,7 @@ fun LibraryNavigationPill(
 ) {
     data class PillState(val pageIndex: Int, val iconRes: Int, val title: String)
 
-    val pillRadius = 50.dp//26.dp
+    val pillRadius = 50.dp
     val innerRadius = 4.dp
     val titleHorizontalPadding = 14.dp
     val titleVerticalPadding = 10.dp
@@ -2021,14 +1966,13 @@ fun LibraryNavigationPill(
         val availableWidth = if (availableWidthPx > 0) {
             with(density) { availableWidthPx.toDp() }
         } else {
-            // High fallback value for initial composition
             1000.dp
         }
         val maxTitleWidth = (availableWidth - targetArrowWidth - pillGap - 40.dp).coerceAtLeast(0.dp)
         val idealTitleWidth = idealTextWidth +
                 titleHorizontalPadding * 2 +
                 (if (showIcon) (titleIconSize + titleIconSpacing) else 0.dp) +
-                4.dp // Tiny safety buffer
+                4.dp
         val naturalTitleWidth = minOf(idealTitleWidth, maxTitleWidth)
         val minCompressedTitleWidth = (
                 titleHorizontalPadding * 2 +
@@ -2090,12 +2034,9 @@ fun LibraryNavigationPill(
                     AnimatedContent(
                         targetState = PillState(pageIndex = pageIndex, iconRes = iconRes, title = title),
                         transitionSpec = {
-                            // Calculate direction based on shortest path for potentially infinite/large page indices
                             val diff = targetState.pageIndex - initialState.pageIndex
                             val direction = when {
                                 diff == 0 -> 0
-                                // If the absolute difference is very large, it's likely a wrap-around or a direct jump
-                                // We treat jumps as "forward" if positive, but we could also check a threshold
                                 abs(diff) > 1 -> diff.coerceIn(-1, 1)
                                 else -> diff
                             }
@@ -2145,12 +2086,12 @@ fun LibraryNavigationPill(
                             Text(
                                 modifier = Modifier
                                     .weight(1f, fill = false)
-                                    .padding(end = 4.dp), // Add slight end padding for safety
+                                    .padding(end = 4.dp),
                                 text = targetState.title,
                                 style = titleStyle,
                                 maxLines = 1,
                                 softWrap = false,
-                                overflow = TextOverflow.Visible, // Change to Visible to prevent early ellipsis
+                                overflow = TextOverflow.Visible,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
@@ -2468,7 +2409,6 @@ fun LibraryFoldersTab(
     onClearPendingLocate: () -> Unit = {},
     onRequestCrossFolderLocate: (String) -> Unit = {}
 ) {
-    // List state moved inside AnimatedContent to prevent state sharing issues during transitions
 
 
     AnimatedContent(
@@ -2490,7 +2430,6 @@ fun LibraryFoldersTab(
             slideIn.togetherWith(slideOut)
         }
     ) { (playlistMode, targetPath) ->
-        // Each navigation destination gets its own independant ListState
         val listState = rememberLazyListState()
         val coroutineScope = rememberCoroutineScope()
         val visibilityCallback by rememberUpdatedState(onLocateCurrentSongVisibilityChanged)
@@ -2714,7 +2653,6 @@ fun LibraryFoldersTab(
                                 }
                             }
 
-                            // ScrollBar Overlay
                             val bottomPadding = if (stablePlayerState.currentSong != null && stablePlayerState.currentSong != Song.emptySong())
                                 bottomBarHeight + MiniPlayerHeight + 16.dp
                             else
@@ -2882,14 +2820,12 @@ fun AlbumGridItemRedesigned(
     val albumColorSchemePair by albumColorSchemePairFlow.collectAsStateWithLifecycle()
     val systemIsDark = LocalPixelPlayerDarkTheme.current
 
-    // 1. Get the current theme's colorScheme here, in the Composable scope.
     val currentMaterialColorScheme = MaterialTheme.colorScheme
 
     val itemDesignColorScheme = remember(albumColorSchemePair, systemIsDark, currentMaterialColorScheme) {
-        // 2. Now currentMaterialColorScheme is a stable variable you can use.
         albumColorSchemePair?.let { pair ->
             if (systemIsDark) pair.dark else pair.light
-        } ?: currentMaterialColorScheme // Use the captured variable
+        } ?: currentMaterialColorScheme
     }
 
     val gradientBaseColor = itemDesignColorScheme.primaryContainer
@@ -2997,8 +2933,6 @@ fun AlbumGridItemRedesigned(
                             model = album.albumArtUriString,
                             contentDescription = stringResource(R.string.cd_album_art_for_title, album.title),
                             contentScale = ContentScale.Crop,
-                            // Reduced the size to improve scroll performance, as suggested in the report.
-                            // ContentScale.Crop will handle fitting the image to the aspect ratio.
                             targetSize = Size(256, 256),
                             modifier = Modifier
                                 .aspectRatio(3f / 2f)
@@ -3019,7 +2953,7 @@ fun AlbumGridItemRedesigned(
                                 .fillMaxSize()
                                 .aspectRatio(3f / 2f)
                                 .background(
-                                    remember(gradientBaseColor) { // Remember the Brush
+                                    remember(gradientBaseColor) {
                                         Brush.verticalGradient(
                                             colors = listOf(
                                                 Color.Transparent, gradientBaseColor
@@ -3085,7 +3019,6 @@ fun ArtistListItem(artist: Artist, onClick: () -> Unit, isLoading: Boolean = fal
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             if (isLoading) {
-                // Skeleton loading state
                 ShimmerBox(
                     modifier = Modifier
                         .size(48.dp)
@@ -3253,7 +3186,6 @@ fun AlbumListItem(
                 Row(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    // LEFT: Album Art
                     Box(
                         modifier = Modifier
                             .aspectRatio(1f)
@@ -3274,7 +3206,6 @@ fun AlbumListItem(
                             ShimmerBox(modifier = Modifier.fillMaxSize())
                         }
 
-                        // Gradient Overlay
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -3289,14 +3220,12 @@ fun AlbumListItem(
                         )
                     }
 
-                    // MIDDLE: Solid Background
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
                             .background(gradientBaseColor)
                     ) {
-                        // Text on top of the gradient/solid background
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()

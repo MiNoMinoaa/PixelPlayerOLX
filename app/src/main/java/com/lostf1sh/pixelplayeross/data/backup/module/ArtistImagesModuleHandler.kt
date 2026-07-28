@@ -33,7 +33,6 @@ class ArtistImagesModuleHandler @Inject constructor(
                 val customImageBase64 = artist.customImageUri
                     ?.takeIf { it.isNotBlank() }
                     ?.let { readFileAsBase64(it) }
-                // Skip artists with neither a Deezer URL nor a custom image
                 if (imageUrl == null && customImageBase64 == null) return@mapNotNull null
                 ArtistImageBackupEntry(
                     artistName = artist.name,
@@ -57,11 +56,9 @@ class ArtistImagesModuleHandler @Inject constructor(
         val entries: List<ArtistImageBackupEntry> = gson.fromJson(payload, type)
         entries.forEach { entry ->
             val artistId = musicDao.getArtistIdByName(entry.artistName) ?: return@forEach
-            // Restore Deezer URL
             if (entry.imageUrl.isNotBlank()) {
                 musicDao.updateArtistImageUrl(artistId, entry.imageUrl)
             }
-            // Restore custom image file
             val customBase64 = entry.customImageBase64
             if (customBase64 != null) {
                 try {
@@ -102,7 +99,6 @@ class ArtistImagesModuleHandler @Inject constructor(
                     Timber.tag(TAG).w(e, "Failed to roll back custom image for artist: ${artist.name}")
                 }
             } else {
-                // No custom image in the snapshot — remove anything the failed restore wrote.
                 File(context.filesDir, "artist_art_${artist.id}.jpg").delete()
                 musicDao.updateArtistCustomImage(artist.id, null)
             }

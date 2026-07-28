@@ -96,7 +96,6 @@ fun MashupScreen(
                     val isLoading1 = mashupUiState.deck1.song == null && mashupUiState.showSongPickerForDeck == 1
                     val isLoading2 = mashupUiState.deck2.song == null && mashupUiState.showSongPickerForDeck == 2
 
-                    // The rest of the UI (DeckUi, Crossfader) stays the same
                     DeckUi(
                         deckNumber = 1,
                         deckState = mashupUiState.deck1,

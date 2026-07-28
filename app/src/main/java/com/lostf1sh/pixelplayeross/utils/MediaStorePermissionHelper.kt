@@ -201,8 +201,6 @@ object MediaStorePermissionHelper {
     ): IntentSender? {
         if (uris.isEmpty()) return null
 
-        // Filter out URIs that do not exist in the MediaStore database
-        // to avoid IllegalArgumentException: Invalid Uri
         val existingIds = try {
             val projection = arrayOf(MediaStore.Files.FileColumns._ID)
             val idList = uris.mapNotNull { it.lastPathSegment?.toLongOrNull() }

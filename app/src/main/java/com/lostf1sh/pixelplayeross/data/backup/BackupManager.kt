@@ -53,7 +53,6 @@ class BackupManager @Inject constructor(
             reportProgress(onProgress, BackupOperationType.EXPORT, ++step, totalSteps,
                 "Preparing backup", "Building your selected backup sections.")
 
-            // Collect module payloads
             val modulePayloads = mutableMapOf<String, String>()
             selectedSections.forEach { section ->
                 reportProgress(onProgress, BackupOperationType.EXPORT, ++step, totalSteps,
@@ -63,7 +62,6 @@ class BackupManager @Inject constructor(
                 modulePayloads[section.key] = handler.export()
             }
 
-            // Build manifest
             val packageInfo = try {
                 context.packageManager.getPackageInfo(context.packageName, 0)
             } catch (_: Exception) { null }
@@ -100,7 +98,6 @@ class BackupManager @Inject constructor(
      */
     suspend fun inspectBackup(uri: Uri): Result<RestorePlan> = withContext(Dispatchers.IO) {
         runCatching {
-            // Validate file first
             val fileValidation = validationPipeline.validateFile(uri)
             val warnings = mutableListOf<String>()
             if (fileValidation is BackupValidationResult.Invalid && fileValidation.fatalErrors.isNotEmpty()) {
@@ -110,10 +107,8 @@ class BackupManager @Inject constructor(
                 warnings.addAll(fileValidation.warnings.map { it.message })
             }
 
-            // Build restore plan
             val plan = restorePlanner.buildRestorePlan(uri).getOrThrow()
 
-            // Validate manifest
             val manifestValidation = validationPipeline.validateManifest(plan.manifest)
             warnings.addAll(plan.warnings)
             if (manifestValidation is BackupValidationResult.Invalid) {
@@ -166,9 +161,6 @@ class BackupManager @Inject constructor(
         plan: RestorePlan,
         onProgress: (BackupTransferProgressUpdate) -> Unit
     ): RestoreResult = withContext(Dispatchers.IO) {
-        // Re-run the file-level safety checks (zip-bomb, path traversal, size limits) here
-        // rather than trusting that the caller went through inspectBackup() first — restore()
-        // is public API and must not be a validation bypass.
         val fileValidation = validationPipeline.validateFile(uri)
         if (fileValidation is BackupValidationResult.Invalid && fileValidation.fatalErrors.isNotEmpty()) {
             return@withContext RestoreResult.TotalFailure(
@@ -178,7 +170,6 @@ class BackupManager @Inject constructor(
 
         val result = restoreExecutor.execute(uri, plan, onProgress)
 
-        // Add to backup history on successful inspection/restore
         if (result is RestoreResult.Success) {
             try {
                 val docFile = androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri)
@@ -194,7 +185,6 @@ class BackupManager @Inject constructor(
                     )
                 )
             } catch (_: Exception) {
-                // Non-critical; don't fail restore because of history persistence
             }
         }
 

@@ -42,18 +42,14 @@ object FileDeletionUtils {
                 val file = File(filePath)
                 if (!file.exists()) return@withContext true
 
-                // Try to get MediaStore URI for the file
                 val uri = MediaStorePermissionHelper.getMediaStoreUri(context, filePath)
                 if (uri != null) {
-                    // Use MediaStore for deletion
                     val rowsDeleted = context.contentResolver.delete(uri, null, null)
                     rowsDeleted > 0
                 } else {
                     false
                 }
             } catch (e: SecurityException) {
-                // Without MANAGE_EXTERNAL_STORAGE, this is expected for files not owned by the app.
-                // The caller should use MediaStore.createDeleteRequest() instead.
                 false
             } catch (e: Exception) {
                 false
@@ -82,13 +78,11 @@ object FileDeletionUtils {
                 val file = File(filePath)
                 if (!file.exists()) return@withContext true
 
-                // For Android 10, we can still use MediaStore for media files
                 val uri = MediaStorePermissionHelper.getMediaStoreUri(context, filePath)
                 return@withContext if (uri != null) {
                     val rowsDeleted = context.contentResolver.delete(uri, null, null)
                     rowsDeleted > 0
                 } else {
-                    // For non-media files in app-specific directory
                     file.delete()
                 }
             } catch (e: Exception) {

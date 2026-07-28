@@ -28,8 +28,6 @@ class StartupBenchmarks {
 
     @Test
     fun startupCompilationBaselineProfiles() = startup(
-        // Usamos UseIfAvailable en lugar de Require para evitar errores de
-        // asunción fallida en dispositivos Samsung/OneUI.
         CompilationMode.Partial(
             baselineProfileMode = BaselineProfileMode.UseIfAvailable
         )

@@ -64,15 +64,14 @@ import androidx.compose.ui.text.style.TextOverflow
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LibrarySongsTab(
-    songs: LazyPagingItems<Song>, // Changed from ImmutableList<Song>
-    isLoading: Boolean, // Kept for initial load or other states, though Paging has its own
+    songs: LazyPagingItems<Song>,
+    isLoading: Boolean,
     playerViewModel: PlayerViewModel,
     bottomBarHeight: Dp,
     onMoreOptionsClick: (Song) -> Unit,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
-    sortOption: SortOption, // Added sortOption parameter
-    // Multi-selection parameters
+    sortOption: SortOption,
     isSelectionMode: Boolean = false,
     selectedSongIds: Set<String> = emptySet(),
     onSongLongPress: (Song) -> Unit = {},
@@ -106,7 +105,6 @@ fun LibrarySongsTab(
     }.collectAsStateWithLifecycle(initialValue = null)
 
     
-    // Calculate current song index for button visibility
     val currentSongListIndex = remember(songs.itemSnapshotList, currentSongId) {
         if (currentSongId == null) -1
         else {
@@ -120,7 +118,6 @@ fun LibrarySongsTab(
         }
     }
 
-    // Scroll Handler from ViewModel
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(playerViewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -137,7 +134,6 @@ fun LibrarySongsTab(
         }
     }
 
-    // New action just triggers the ViewModel request
     val locateCurrentSongAction: (() -> Unit)? = remember(currentSongId) {
         if (currentSongId == null) {
             null
@@ -161,7 +157,6 @@ fun LibrarySongsTab(
         listState.scrollToItem(0)
     }
 
-    // Apply a second reset after paging finishes refresh, to avoid key-anchor jumps.
     LaunchedEffect(songs.loadState.refresh, pendingSongSortScrollReset) {
         if (!pendingSongSortScrollReset) return@LaunchedEffect
         if (songs.loadState.refresh is LoadState.Loading) {
@@ -173,35 +168,23 @@ fun LibrarySongsTab(
         pendingSongSortScrollReset = false
     }
     
-    // Visibility Logic:
-    // If the song is NOT in the current snapshot (index == -1), we assume it's unloaded, so SHOW the button.
-    // If the song IS in the snapshot (index != -1), we check if it's visible on screen.
-    // - If visible -> Hide button
-    // - If not visible -> Show button
-
     LaunchedEffect(currentSongListIndex, songs.itemCount, isLoading, listState, currentSongId) {
-        // If list is empty or loading, hide button
         if (songs.itemCount == 0 || isLoading) {
             visibilityCallback(false)
             return@LaunchedEffect
         }
         
-        // If song is not loaded in current Paging snapshot, we ALWAYS show the button
-        // because we don't know if it's visible or not, so we assume it's reachable via the button (which triggers DB lookup)
         if (currentSongListIndex == -1) {
-             // Only show if we actually have a current song
              visibilityCallback(currentSongId != null)
              return@LaunchedEffect
         }
 
-        // If song IS loaded, check visibility using layout info
         snapshotFlow {
             val layoutInfo = listState.layoutInfo
             val visibleItems = layoutInfo.visibleItemsInfo
             if (visibleItems.isEmpty()) {
                 false
             } else {
-                // Consider it visible if it's within the range of visible indices
                 currentSongListIndex in visibleItems.first().index..visibleItems.last().index
             }
         }
@@ -218,7 +201,6 @@ fun LibrarySongsTab(
         }
     }
 
-    // Handle different loading states
     val refreshState = songs.loadState.refresh
     val reachedEndOfPagination = songs.loadState.append.endOfPaginationReached
     val shouldShowInitialLoading = songs.itemCount == 0 && (
@@ -251,7 +233,6 @@ fun LibrarySongsTab(
             }
         }
         shouldShowInitialLoading -> {
-            // Initial loading - show skeleton placeholders
             LazyColumn(
                 modifier = Modifier
                     .padding(start = 12.dp, end = 24.dp, bottom = 6.dp)
@@ -268,7 +249,7 @@ fun LibrarySongsTab(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(bottom = bottomBarHeight + MiniPlayerHeight + ListExtraBottomGap)
             ) {
-                items(12, key = { "skeleton_song_$it" }) { // Show 12 skeleton items
+                items(12, key = { "skeleton_song_$it" }) {
                     EnhancedSongListItem(
                         song = Song.emptySong(),
                         isPlaying = false,
@@ -288,7 +269,6 @@ fun LibrarySongsTab(
             )
         }
         else -> {
-            // Songs loaded
             Box(modifier = Modifier.fillMaxSize()) {
                 PullToRefreshBox(
                     isRefreshing = isRefreshing,
@@ -334,7 +314,6 @@ fun LibrarySongsTab(
                                         { songFromListItem -> onMoreOptionsClick(songFromListItem) }
                                     }
                                     
-                                    // In selection mode, click toggles selection instead of playing
                                     val rememberedOnClick: () -> Unit = remember(song, isSelectionMode) {
                                         if (isSelectionMode) {
                                             { onSongSelectionToggle(song) }
@@ -358,7 +337,6 @@ fun LibrarySongsTab(
                                         onClick = rememberedOnClick
                                     )
                                 } else {
-                                     // Placeholder
                                      EnhancedSongListItem(
                                         song = Song.emptySong(),
                                         isPlaying = false,
@@ -371,7 +349,6 @@ fun LibrarySongsTab(
                             }
                         }
                         
-                        // ScrollBar Overlay
                         val bottomPadding = if (hasCurrentSong)
                             bottomBarHeight + MiniPlayerHeight + 16.dp 
                         else 

@@ -271,7 +271,6 @@ fun ThemeSelectorItem(
                     
                     Spacer(modifier = Modifier.height(10.dp))
                     
-                    // Selected Value Badge
                     Surface(
                         color = MaterialTheme.colorScheme.surfaceContainerLowest,
                         shape = androidx.compose.foundation.shape.CircleShape,
@@ -299,7 +298,7 @@ fun ThemeSelectorItem(
             Column(modifier = Modifier.padding(bottom = 24.dp)) {
                 Text(
                     text = label,
-                    style = MaterialTheme.typography.headlineSmall, // Larger header
+                    style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
                     fontWeight = FontWeight.Bold
                 )
@@ -361,7 +360,7 @@ fun ExpressiveSettingsGroup(
 ) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(24.dp)) // Large corners for the group
+            .clip(RoundedCornerShape(24.dp))
             .background(Color.Transparent),
     ) {
         content()
@@ -462,7 +461,6 @@ fun RefreshLibraryItem(
 
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Full Rescan button
             FilledTonalButton(
                     onClick = onFullSync,
                     enabled = !isSyncing,
@@ -485,7 +483,6 @@ fun RefreshLibraryItem(
              
             Spacer(modifier = Modifier.height(8.dp))
             
-            // Rebuild Database button - full width, destructive action
             OutlinedButton(
                     onClick = onRebuild,
                     enabled = !isSyncing,
@@ -693,7 +690,6 @@ fun ActionSettingsItem(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Primary Action
             FilledTonalButton(
                 onClick = onPrimaryAction,
                 enabled = enabled,
@@ -702,7 +698,6 @@ fun ActionSettingsItem(
                 Text(primaryActionLabel, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
 
-            // Secondary Action (Optional)
             if (secondaryActionLabel != null && onSecondaryAction != null) {
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedButton(

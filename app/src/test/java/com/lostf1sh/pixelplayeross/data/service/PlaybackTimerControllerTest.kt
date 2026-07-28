@@ -127,7 +127,6 @@ class PlaybackTimerControllerTest {
                 mediaItem("song-2"),
                 Player.MEDIA_ITEM_TRANSITION_REASON_SEEK
             )
-            // Timer is gone: a later auto transition from song-1 must not pause.
             every { player.previousMediaItemIndex } returns 0
             every { player.getMediaItemAt(0) } returns mediaItem("song-1")
             controller.handleMediaItemTransition(
@@ -186,10 +185,10 @@ class PlaybackTimerControllerTest {
             controller.startCountedPlay(2)
             val listener = listenerSlot.captured
 
-            autoReplay(listener) // play #2 — target reached
+            autoReplay(listener)
             verify(exactly = 0) { player.pause() }
 
-            autoReplay(listener) // would be play #3 — over target
+            autoReplay(listener)
             verify { player.pause() }
             verify { player.repeatMode = Player.REPEAT_MODE_OFF }
             verify { player.removeListener(listener) }
@@ -217,7 +216,6 @@ class PlaybackTimerControllerTest {
             listener.onRepeatModeChanged(Player.REPEAT_MODE_ALL)
 
             verify { player.removeListener(listener) }
-            // Repeat mode is left as the user set it (only the initial force to REPEAT_MODE_ONE).
             verify(exactly = 0) { player.repeatMode = Player.REPEAT_MODE_OFF }
         }
 

@@ -26,8 +26,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import kotlin.math.*
-import androidx.compose.ui.draw.drawWithCache // Required import
-import androidx.compose.ui.graphics.drawscope.DrawScope // For the onDraw type
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
@@ -83,7 +83,6 @@ fun WavyMusicSlider(
     hideInactiveTrackPortion: Boolean = true,
     isPlaying: Boolean = true,
     thumbLineHeightWhenInteracting: Dp = 24.dp,
-    // NEW: allows disabling the wave if the sheet is not expanded
     isWaveEligible: Boolean = true,
     semanticsLabel: String? = null,
     semanticsProgressStep: Float = 0.01f
@@ -98,7 +97,6 @@ fun WavyMusicSlider(
         label = "ThumbInteractionAnim"
     )
 
-    // Wave only if: the track is playing, there is no interaction, and the context allows it
     val shouldShowWave = isWaveEligible && isPlaying && !isInteracting
 
     val animatedWaveAmplitude by animateDpAsState(
@@ -107,7 +105,6 @@ fun WavyMusicSlider(
         label = "WaveAmplitudeAnim"
     )
 
-    // CONDITIONAL PHASE: if the wave is not shown, there is no infinite transition or invalidations.
     val phaseShiftAnim = remember { Animatable(0f) }
     val phaseShift = phaseShiftAnim.value
 
@@ -169,7 +166,6 @@ fun WavyMusicSlider(
                 } else {
                     ((newValue - valueRange.start) / (valueRange.endInclusive - valueRange.start)).coerceIn(0f, 1f)
                 }
-                // Slightly coarser haptic granularity keeps tactile quality while reducing binder chatter.
                 val currentStep = (normalizedNew * 50f).roundToInt()
                 if (currentStep != lastHapticStep.intValue) {
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -180,7 +176,6 @@ fun WavyMusicSlider(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(sliderVisualHeight)
-                // Keep slider accessible but quantize semantic updates to avoid per-frame events.
                 .clearAndSetSemantics {
                     if (!semanticsLabel.isNullOrBlank()) {
                         contentDescription = semanticsLabel
@@ -229,7 +224,6 @@ fun WavyMusicSlider(
                         )
                     }
                     onDrawWithContent {
-                        // --- Draw Inactive Track ---
                         val currentProgressPxEndVisual =
                             localTrackStart + localTrackWidth * normalizedValue
                         if (hideInactiveTrackPortion) {
@@ -252,7 +246,6 @@ fun WavyMusicSlider(
                             )
                         }
 
-                        // --- Draw Active Track (Wave or Line) ---
                         if (normalizedValue > 0f) {
                             val activeTrackVisualEnd =
                                 currentProgressPxEndVisual - (thumbGapPx * thumbInteractionFraction)
@@ -286,7 +279,6 @@ fun WavyMusicSlider(
                                         val y = yAt(x)
                                         val midX = (prevX + x) * 0.5f
                                         val midY = (prevY + y) * 0.5f
-                                        // Compose Path: quadraticTo(controlX, controlY, endX, endY)
                                         wavePath.quadraticTo(prevX, prevY, midX, midY)
                                         prevX = x
                                         prevY = y
@@ -301,7 +293,7 @@ fun WavyMusicSlider(
                                         style = Stroke(
                                             width = trackHeightPx,
                                             cap = StrokeCap.Round,
-                                            join = StrokeJoin.Round, // <- important for smoothing joins
+                                            join = StrokeJoin.Round,
                                             miter = 1f
                                         )
                                     )
@@ -320,7 +312,6 @@ fun WavyMusicSlider(
                         }
 
 
-                        // --- Draw Thumb ---
                         val currentThumbCenterX =
                             localTrackStart + localTrackWidth * normalizedValue
                         val thumbCurrentWidthPx =

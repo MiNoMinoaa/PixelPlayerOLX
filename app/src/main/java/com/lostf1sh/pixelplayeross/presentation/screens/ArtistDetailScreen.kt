@@ -116,7 +116,6 @@ fun ArtistDetailScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
     
-    // Optimization: Defer heavy list rendering until navigation transition settles
     var isTransitionFinished by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         delay(300)
@@ -137,16 +136,12 @@ fun ArtistDetailScreen(
     val isDarkTheme = LocalPixelPlayerDarkTheme.current
     val baseColorScheme = MaterialTheme.colorScheme
 
-    // --- Dynamic color palette from pre-warmed ViewModel state ---
-    // artistColorScheme is set by the ViewModel BEFORE isLoading becomes false,
-    // so the very first composition already has the correct palette — no flash.
     val artistColorSchemePair by viewModel.artistColorScheme.collectAsStateWithLifecycle()
     val artistColorScheme = remember(artistColorSchemePair, isDarkTheme) {
         artistColorSchemePair?.let { pair -> if (isDarkTheme) pair.dark else pair.light }
             ?: baseColorScheme
     }
 
-    // --- Image picker for custom artist image ---
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
@@ -157,7 +152,6 @@ fun ArtistDetailScreen(
         playerViewModel.collapsePlayerSheet()
     }
 
-    // --- Collapsible Header Logic ---
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val minTopBarHeight = 64.dp + statusBarHeight
     val maxTopBarHeight = 300.dp
@@ -188,8 +182,6 @@ fun ArtistDetailScreen(
                 val delta = available.y
                 val isScrollingDown = delta < 0
 
-                // If we are scrolling up and we are not at the top of the list,
-                // the scroll is for the list, not for the TopBar.
                 if (!isScrollingDown && (lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 0)) {
                     return Offset.Zero
                 }
@@ -204,7 +196,6 @@ fun ArtistDetailScreen(
                     }
                 }
 
-                // If we are at the top and scroll up, the list should not move.
                 val canConsumeScroll = !(isScrollingDown && newHeight == minTopBarHeightPx)
                 return if (canConsumeScroll) Offset(0f, consumed) else Offset.Zero
             }
@@ -233,9 +224,7 @@ fun ArtistDetailScreen(
             }
         }
     }
-    // --- End of Header logic ---
 
-    // Wrap in dynamic theme derived from the artist's image
     MaterialTheme(
         colorScheme = artistColorScheme,
         typography = MaterialTheme.typography,
@@ -459,9 +448,8 @@ fun ArtistDetailScreen(
                 }
             }
         }
-    } // End Surface
+    }
 
-    // Bottom sheets inherit the artist's dynamic color palette — same approach as AlbumDetailScreen
     if (showSongInfoBottomSheet && selectedSongForInfo != null) {
         val currentSong = selectedSongForInfo
         val isFavorite = remember(currentSong?.id, favoriteIds) {
@@ -559,7 +547,7 @@ fun ArtistDetailScreen(
             }
         }
     }
-    } // End MaterialTheme
+    }
 }
 
 private fun ArtistAlbumSection.collapseKey(): String = "artist_album_${albumId}_${title}"
@@ -919,7 +907,7 @@ private fun CustomCollapsingTopBar(
     effectiveImageUrl: String?,
     hasCustomImage: Boolean,
     songsCount: Int,
-    collapseFraction: Float, // 0.0 = expanded, 1.0 = collapsed
+    collapseFraction: Float,
     headerHeight: Dp,
     headerImageRequestSize: Size,
     onBackPressed: () -> Unit,
@@ -930,7 +918,6 @@ private fun CustomCollapsingTopBar(
     val surfaceColor = MaterialTheme.colorScheme.surface
     val statusBarColor = if (LocalPixelPlayerDarkTheme.current) Color.Black.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.4f)
 
-    // --- Animation Values ---
     val fabScale = 1f - collapseFraction
     val backgroundAlpha = collapseFraction
     val headerContentAlpha = 1f - (collapseFraction * 2).coerceAtMost(1f)
@@ -961,7 +948,6 @@ private fun CustomCollapsingTopBar(
         lerpColor(expandedStatusBarFallback, surfaceColor, solidAlpha)
     }
 
-    // Title animation
     val titleScale = lerp(1f, 0.75f, collapseFraction)
     val titlePaddingStart = lerp(24.dp, 58.dp, collapseFraction)
     val titleMaxLines = if(collapseFraction < 0.5f) 2 else 1
@@ -1033,7 +1019,6 @@ private fun CustomCollapsingTopBar(
                     Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.auth_cd_back))
                 }
 
-                // Image edit button (visible only when header is mostly expanded)
                 if (collapseFraction < 0.5f) {
                     var showImageMenu by remember { mutableStateOf(false) }
                     Box(
@@ -1075,7 +1060,6 @@ private fun CustomCollapsingTopBar(
                     }
                 }
 
-                // Container box for the title
                 Box(
                     modifier = Modifier
                         .align(animatedTitleAlignment)
@@ -1115,7 +1099,6 @@ private fun CustomCollapsingTopBar(
                     }
                 }
 
-                // Play button
                 LargeExtendedFloatingActionButton(
                     onClick = onPlayClick,
                     shape = RoundedStarShape(sides = 8, curve = 0.05, rotation = 0f),

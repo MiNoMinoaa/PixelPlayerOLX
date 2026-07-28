@@ -29,7 +29,7 @@ fun SearchHistoryEntity.toSearchHistoryItem(): SearchHistoryItem {
 
 fun SearchHistoryItem.toEntity(): SearchHistoryEntity {
     return SearchHistoryEntity(
-        id = this.id ?: 0, // Room will auto-generate if id is 0 and not set
+        id = this.id ?: 0,
         query = this.query,
         timestamp = this.timestamp
     )

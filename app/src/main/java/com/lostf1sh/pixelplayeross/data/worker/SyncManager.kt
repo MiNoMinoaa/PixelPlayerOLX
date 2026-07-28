@@ -69,19 +69,15 @@ class SyncManager @Inject constructor(
     private val sharingScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var mediaStoreAutoSyncJob: Job? = null
     private val autoSyncLock = Any()
-    // In-memory only: lives in this @Singleton for the process lifetime, so no leak.
     @Volatile
     private var lastForegroundSyncTime = 0L
     @Volatile
     private var currentSyncWorkId: UUID? = null
 
-    // Exposes a simple Flow<Boolean>.
     val isSyncing: Flow<Boolean> =
         workManager.getWorkInfosForUniqueWorkFlow(SyncWorker.WORK_NAME)
             .map { workInfos ->
                 val isRunning = workInfos.any { it.state == WorkInfo.State.RUNNING }
-                // Fresh enqueued work is about to start. Retried enqueued work is in
-                // backoff and does no work, so it should not keep the UI in syncing state.
                 val isFreshlyEnqueued = workInfos.any {
                     it.state == WorkInfo.State.ENQUEUED && it.runAttemptCount == 0
                 }
@@ -359,8 +355,6 @@ class SyncManager @Inject constructor(
     }
 
     private fun observeAppForeground() {
-        // ProcessLifecycleOwner is application-scoped; the observer and this @Singleton both
-        // live for the whole process, so registering once here cannot leak.
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStart(owner: LifecycleOwner) {
                 maybeRunForegroundCatchUpSync()
@@ -381,10 +375,6 @@ class SyncManager @Inject constructor(
             return
         }
         sharingScope.launch {
-            // Never auto-sync before initial setup finishes: this fires on the very first
-            // app foreground (while the user is still on the setup screen, before the media
-            // permission exists). That run would scan zero files, "succeed", and write
-            // lastSyncTimestamp — permanently hiding the first-install sync indicator.
             if (!userPreferencesRepository.initialSetupDoneFlow.first()) {
                 Timber.tag(TAG).d("Skipping foreground catch-up sync: initial setup not finished")
                 return@launch
@@ -411,14 +401,13 @@ class SyncManager @Inject constructor(
             request
         )
         if (notifyObserver) {
-            // Keep reactive MediaStore-based views in sync with manual refresh actions.
             mediaStoreObserver.forceRescan()
         }
     }
 
     companion object {
         private const val TAG = "SyncManager"
-        private const val MIN_SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000L // 6 hours
+        private const val MIN_SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000L
         private const val MEDIASTORE_CHANGE_DEBOUNCE_MS = 1_500L
         private const val FOREGROUND_SYNC_COOLDOWN_MS = 60_000L
 

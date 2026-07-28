@@ -302,7 +302,6 @@ class LyricsUtilsTest {
 
     @Test
     fun parseLyrics_nonTimestampedLinePreservedAsMerge_notTranslation() {
-        // Non-timestamped lines after a synced line are merged into line text (existing behavior)
         val lrc = "[00:10.00]Hello world\ncontinuation line\n[00:20.00]Next"
 
         val lyrics = LyricsUtils.parseLyrics(lrc)
@@ -315,7 +314,6 @@ class LyricsUtilsTest {
 
     @Test
     fun parseLyrics_colonSubSecondSeparator_parsedAndPairedWithTranslation() {
-        // Some LRC files use [mm:ss:xx] (colon) instead of [mm:ss.xx] (dot)
         val lrc = "[00:00.000]作词: テスト\n" +
             "[00:01.000]作曲: テスト\n" +
             "[00:22:43]あいうえおかき\n" +
@@ -326,10 +324,8 @@ class LyricsUtilsTest {
         val lyrics = LyricsUtils.parseLyrics(lrc)
         val synced = requireNotNull(lyrics.synced)
 
-        // Credits + 2 paired lines = 4 lines
         assertEquals(4, synced.size)
 
-        // The Japanese originals should be separate synced lines, not merged into credits
         val line22 = synced.first { it.line == "あいうえおかき" }
         assertEquals(22_430, line22.time)
         assertEquals("哈机密密集哈", line22.translation)

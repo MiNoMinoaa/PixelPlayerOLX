@@ -47,7 +47,6 @@ class SearchStateHolder @Inject constructor(
         val requestId: Long,
     )
 
-    // Search State
     private val _searchResults = MutableStateFlow<ImmutableList<SearchResultItem>>(persistentListOf())
     val searchResults = _searchResults.asStateFlow()
 
@@ -93,7 +92,6 @@ class SearchStateHolder @Inject constructor(
                     try {
                         val currentFilter = _selectedSearchFilter.value
                         musicRepository.searchAll(normalizedQuery, currentFilter).collect { resultsList ->
-                            // Sort: prioritize Song/Album matches over Artist/Playlist matches
                             val sortedResults = resultsList.sortedWith(
                                 compareBy { result ->
                                     when (result) {
@@ -115,7 +113,6 @@ class SearchStateHolder @Inject constructor(
                             }
                         }
                     } catch (_: CancellationException) {
-                        // Superseded by a newer query; ignore.
                     } catch (e: Exception) {
                         if (request.requestId == latestSearchRequestId.get()) {
                             Timber.e(e, "Error performing search for query: $normalizedQuery")

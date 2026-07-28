@@ -64,7 +64,6 @@ class PixelPlayerApplication : Application(), ImageLoaderFactory, Configuration.
 
     private val startupScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    // ADD THE COMPANION OBJECT
     companion object {
         const val NOTIFICATION_CHANNEL_ID = "pixelplayer_music_channel"
     }
@@ -78,8 +77,6 @@ class PixelPlayerApplication : Application(), ImageLoaderFactory, Configuration.
     override fun onCreate() {
         super.onCreate()
 
-        // Benchmark variant intentionally restarts/kills app process during tests.
-        // Avoid persisting those events as user-facing crash reports.
         if (BuildConfig.BUILD_TYPE != "benchmark") {
             CrashHandler.install(this)
         }
@@ -87,7 +84,6 @@ class PixelPlayerApplication : Application(), ImageLoaderFactory, Configuration.
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         } else {
-            // Release tree: only WARN/ERROR/WTF - no DEBUG/VERBOSE/INFO
             Timber.plant(ReleaseTree())
         }
 
@@ -103,8 +99,6 @@ class PixelPlayerApplication : Application(), ImageLoaderFactory, Configuration.
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(appLifecycleObserver)
 
-        // Explicit launch site for SyncManager's background observers (storage changes,
-        // foreground catch-up sync, periodic maintenance) — see SyncManager.start().
         syncManager.get().start()
 
         startupScope.launch {
@@ -161,7 +155,6 @@ class PixelPlayerApplication : Application(), ImageLoaderFactory, Configuration.
         }
     }
 
-    // 3. Override the method to provide the WorkManager configuration
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)

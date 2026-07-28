@@ -45,7 +45,7 @@ fun ExpressiveSongListItem(
 ) {
     Surface(
         onClick = onClick,
-        color = Color.Transparent, // Let the background shine through or handle externally
+        color = Color.Transparent,
         modifier = modifier.fillMaxWidth()
     ) {
         Row(
@@ -54,7 +54,6 @@ fun ExpressiveSongListItem(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Album Art
             SmartImage(
                 model = song.albumArtUriString,
                 contentDescription = stringResource(R.string.presentation_batch_g_list_cd_album_art_for, song.title),
@@ -66,7 +65,6 @@ fun ExpressiveSongListItem(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Text Info
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.Center
@@ -95,7 +93,6 @@ fun ExpressiveSongListItem(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Trailing Info (Duration or Indicator)
             if (isPlaying) {
                 Icon(
                     imageVector = Icons.Rounded.GraphicEq,

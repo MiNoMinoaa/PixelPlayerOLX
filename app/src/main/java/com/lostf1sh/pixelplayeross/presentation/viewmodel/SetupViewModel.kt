@@ -76,8 +76,6 @@ class SetupViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(SetupUiState())
     val uiState = _uiState.asStateFlow()
-    // Channel instead of SharedFlow: RestoreCompleted drives navigation, so an event
-    // emitted while the collector is being re-created (config change) must not be lost.
     private val _events = Channel<SetupEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
     
@@ -110,7 +108,6 @@ class SetupViewModel @Inject constructor(
             }
         }
 
-        // Consolidated collectors using combine() to reduce coroutine overhead
         viewModelScope.launch {
             combine<Any?, SetupPrefsUpdate>(
                 userPreferencesRepository.blockedDirectoriesFlow,
@@ -174,7 +171,7 @@ class SetupViewModel @Inject constructor(
         val notificationsPermissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
         } else {
-            true // Not required before Android 13 (Tiramisu)
+            true
         }
 
         val alarmsPermissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -196,7 +193,6 @@ class SetupViewModel @Inject constructor(
     fun loadMusicDirectories() {
         viewModelScope.launch {
             if (!userPreferencesRepository.initialSetupDoneFlow.first()) {
-                // Blacklist model: default is allow all, so no setup needed.
             }
 
             userPreferencesRepository.blockedDirectoriesFlow.first().let { blocked ->

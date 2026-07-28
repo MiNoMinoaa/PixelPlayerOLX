@@ -13,8 +13,6 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface NavidromeDao {
 
-    // ─── Songs ─────────────────────────────────────────────────────────
-
     @Query("SELECT * FROM navidrome_songs ORDER BY date_added DESC")
     fun getAllNavidromeSongs(): Flow<List<NavidromeSongEntity>>
 
@@ -47,8 +45,6 @@ interface NavidromeDao {
 
     @Query("DELETE FROM navidrome_songs WHERE playlist_id = :playlistId")
     suspend fun deleteSongsByPlaylist(playlistId: String)
-
-    // ─── Playlists ─────────────────────────────────────────────────────
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlaylist(playlist: NavidromePlaylistEntity)
@@ -86,8 +82,6 @@ interface NavidromeDao {
         clearLibrarySongs()
         insertSongs(songs)
     }
-
-    // ─── Clear All ─────────────────────────────────────────────────────
 
     @Query("DELETE FROM navidrome_songs")
     suspend fun clearAllSongs()

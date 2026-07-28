@@ -241,13 +241,11 @@ fun NavidromeLoginScreen(
         ) {
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Protocol Icons (Tiled/Horizontal)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Navidrome Icon
                 androidx.compose.material3.Surface(
                     shape = CircleShape,
                     color = androidx.compose.ui.graphics.Color.White,
@@ -267,7 +265,6 @@ fun NavidromeLoginScreen(
 
                 Spacer(modifier = Modifier.width(24.dp))
 
-                // Subsonic Icon
                 androidx.compose.material3.Surface(
                     shape = CircleShape,
                     color = androidx.compose.ui.graphics.Color.White,
@@ -304,7 +301,6 @@ fun NavidromeLoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Info Card
             Card(
                 shape = AbsoluteSmoothCornerShape(20.dp, 60),
                 colors = CardDefaults.cardColors(
@@ -454,7 +450,6 @@ fun NavidromeLoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Login Button
             Button(
                 onClick = connect,
                 enabled = !isLoading && serverUrl.isNotBlank() && username.isNotBlank() && password.isNotBlank(),
@@ -477,7 +472,6 @@ fun NavidromeLoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Help text
             Text(
                 text = stringResource(R.string.auth_navidrome_footer),
                 style = MaterialTheme.typography.bodySmall,

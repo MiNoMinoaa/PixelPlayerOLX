@@ -60,7 +60,6 @@ class DeckController(
                 allowedVideoJoiningTimeMs: Long,
                 out: ArrayList<androidx.media3.exoplayer.Renderer>
             ) {
-                // Audio-only player
             }
 
             override fun buildTextRenderers(
@@ -70,7 +69,6 @@ class DeckController(
                 extensionRendererMode: Int,
                 out: ArrayList<androidx.media3.exoplayer.Renderer>
             ) {
-                // Audio-only player
             }
 
             override fun buildCameraMotionRenderers(
@@ -78,7 +76,6 @@ class DeckController(
                 extensionRendererMode: Int,
                 out: ArrayList<androidx.media3.exoplayer.Renderer>
             ) {
-                // Audio-only player
             }
         }.setEnableAudioFloatOutput(false)
             .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)

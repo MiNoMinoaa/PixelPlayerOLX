@@ -67,7 +67,6 @@ class JellyfinDashboardViewModel @Inject constructor(
                     _librariesLoadFailed.value = false
                 }
                 .onFailure {
-                    // Library discovery is optional; sync falls back to the server-wide library.
                     _libraries.value = persistentListOf()
                     _librariesLoadFailed.value = true
                 }

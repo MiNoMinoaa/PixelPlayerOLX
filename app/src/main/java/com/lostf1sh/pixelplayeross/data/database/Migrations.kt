@@ -46,7 +46,6 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         db.addColumnIfMissing("navidrome_songs", "album_artist", "`album_artist` TEXT")
         db.addColumnIfMissing("jellyfin_songs", "album_artist", "`album_artist` TEXT")
 
-        // Seed from the existing primary artist so the collapsed tab is non-empty immediately.
         db.execSQL("UPDATE songs SET album_artist_id = artist_id WHERE album_artist_id = 0")
 
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_songs_album_artist_id` ON `songs` (`album_artist_id`)")

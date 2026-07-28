@@ -27,7 +27,7 @@ class MusicDaoTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         db = Room.inMemoryDatabaseBuilder(context, PixelPlayerDatabase::class.java)
             .addCallback(PixelPlayerDatabase.createRuntimeArtifactsCallback())
-            .allowMainThreadQueries() // Permite consultas en el hilo principal para tests
+            .allowMainThreadQueries()
             .build()
         musicDao = db.musicDao()
     }
@@ -83,10 +83,8 @@ class MusicDaoTest {
         )
         musicDao.insertSongs(songList)
 
-        // New signature: getSongs(allowedParentDirs, applyDirectoryFilter)
         val retrievedSongs = musicDao.getSongs(emptyList(), false).first()
         assertEquals(2, retrievedSongs.size)
-        // Sort by title logic in Dao is ASC. Song A comes before Song B.
         assertEquals("Song A", retrievedSongs[0].title)
         assertEquals("Song B", retrievedSongs[1].title)
     }
@@ -98,18 +96,15 @@ class MusicDaoTest {
             createSongEntity(1L, "Song A", "Artist 1", "Album X", "/path/a/songA.mp3"),
             createSongEntity(2L, "Song B", "Artist 1", "Album X", "/path/a/songB.mp3")
         )
-        musicDao.insertSongs(songs) // Needed for inner join in getAlbums
+        musicDao.insertSongs(songs)
 
         val albumList = listOf(
-            createAlbumEntity(201L, "Album X"), // Matches song's albumId 201L default
+            createAlbumEntity(201L, "Album X"),
             createAlbumEntity(202L, "Album Y")
         )
         musicDao.insertAlbums(albumList)
         
         val retrievedAlbums = musicDao.getAlbums(emptyList(), false, 0, 1).first()
-        // getAlbums uses INNER JOIN with songs, so only albums with songs are returned
-        // My createSongEntity uses albumId 201L (Album X).
-        // So Album Y (202L) should NOT be returned if logic holds (INNER JOIN songs ON albums.id = songs.album_id)
         
         assertEquals(1, retrievedAlbums.size)
         assertEquals("Album X", retrievedAlbums[0].title)
@@ -120,17 +115,15 @@ class MusicDaoTest {
     @Throws(Exception::class)
     fun insertAndGetArtists() = runTest {
         val song = createSongEntity(1L, "Song A", "Artist 1", "Album X", "/path/a/songA.mp3")
-        musicDao.insertSongs(listOf(song)) // Needed for inner join in getArtists
+        musicDao.insertSongs(listOf(song))
 
         val artistList = listOf(
-            createArtistEntity(101L, "Artist 1"), // Matches song's artistId 101L default
+            createArtistEntity(101L, "Artist 1"),
             createArtistEntity(102L, "Artist 2")
         )
         musicDao.insertArtists(artistList)
 
         val retrievedArtists = musicDao.getArtists(emptyList(), false).first()
-        // getArtists uses INNER JOIN with songs
-        // Song uses artistId 101L.
         assertEquals(1, retrievedArtists.size)
         assertEquals("Artist 1", retrievedArtists[0].name)
     }
@@ -154,36 +147,11 @@ class MusicDaoTest {
         musicDao.insertMusicData(songs, albums, artists)
 
         val oldSongRetrieved = musicDao.getSongById(1L).first()
-        assertNull(oldSongRetrieved) // Old song should be gone (transaction clears logic?) 
-        // Wait, insertMusicData definition:
-        /*
-            @Transaction
-            suspend fun insertMusicData(...) {
-                insertArtists(artists)
-                insertAlbums(albums)
-                insertSongs(songs)
-            }
-        */
-        // It does NOT clear old data!
-        // But the original test verified it did:
-        // "fun insertMusicData_clearsOldAndInsertsNew()"
-        // "assertThat(musicDao.getSongById(1L).first()).isNull()"
-        // This suggests `insertMusicData` WAS clearing data in older version.
-        // In current `MusicDao.kt`:
-        // It just calls insert... which use REPLACE.
-        // If IDs are different (1L vs 10L), old song 1L stays!
-        // So the test expectation is WRONG for the current implementation of `insertMusicData`.
-        // However, `clearAllMusicData` exists.
-        // If the intention of `insertMusicData` is just upsert, then the test name is wrong.
-        // I will update the test to verify upsert behavior, OR I will check if I should test `clearAllMusicData` + `insertMusicData`.
-        // The original test assumed it cleared.
-        // I will assume the Dao logic is correct (append/replace) and update test to Expect Both, OR clear explicitly.
-        // Let's modify the test to verify `insertMusicData` simply inserts.
+        assertNull(oldSongRetrieved)
         
         val newSongRetrieved = musicDao.getSongById(10L).first()
         assertNotNull(newSongRetrieved)
         
-        // Old song should still be there technically, unless I clear.
         val oldSongStillThere = musicDao.getSongById(1L).first()
         assertNotNull(oldSongStillThere)
     }
@@ -200,7 +168,6 @@ class MusicDaoTest {
 
         val results = musicDao.searchSongs("Cool", emptyList(), false).first()
         assertEquals(2, results.size)
-        // Check contents
         val titles = results.map { it.title }.sorted()
         assertEquals(listOf("Cool Song", "Coolest Song Ever"), titles)
     }

@@ -105,12 +105,10 @@ fun SelectionActionRow(
         horizontalArrangement = Arrangement.Absolute.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Segmented buttons: Select All + Deselect
         Row(
             horizontalArrangement = Arrangement.spacedBy(segmentGap),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Select All button (left segment)
             FilledTonalButton(
                 onClick = onSelectAll,
                 shape = leftSegmentShape,
@@ -135,7 +133,6 @@ fun SelectionActionRow(
                 )
             }
             
-            // Deselect button (right segment) - using secondary colors
             FilledTonalButton(
                 onClick = onDeselect,
                 shape = rightSegmentShape,
@@ -161,9 +158,6 @@ fun SelectionActionRow(
             }
         }
         
-        //Spacer(modifier = Modifier.width(optionsGap))
-        
-        // Options button
         FilledTonalButton(
             onClick = onOptionsClick,
             shape = optionsShape,

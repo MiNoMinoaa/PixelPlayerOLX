@@ -25,7 +25,6 @@ class JellyfinCredentialsTest {
 
     @Test
     fun `http is allowed on local network addresses`() {
-        // localhost, loopback, private RFC1918 ranges, Tailscale, and local DNS names may be HTTP-only.
         listOf(
             "http://localhost:8096",
             "http://127.0.0.1:8096",
@@ -73,7 +72,6 @@ class JellyfinCredentialsTest {
         assertFalse(JellyfinCredentials.empty().isValid)
         assertFalse(JellyfinCredentials(serverUrl = "", username = "u", password = "p").isValid)
         assertTrue(JellyfinCredentials(serverUrl = "s", username = "u", password = "p").isValid)
-        // Token-based auth with no password is still valid.
         assertTrue(
             JellyfinCredentials(serverUrl = "s", username = "u", password = "", accessToken = "tok").isValid
         )

@@ -54,20 +54,16 @@ fun WavyArcSlider(
     val waveLengthPx = with(density) { waveLength.toPx() }
     val thumbRadius = thumbSizePx / 2
     
-    // Normalize value
     val normalizedValue = ((value - valueRange.start) / (valueRange.endInclusive - valueRange.start)).coerceIn(0f, 1f)
     
-    // Animation for wave phase - REMOVED per user request (static wave)
     val phaseShift = 0f
     
-    // Interaction state for thumb scaling
     var isInteracting by remember { mutableStateOf(false) }
     val thumbScale by animateFloatAsState(
         targetValue = if (isInteracting) 1.2f else 1f,
         label = "ThumbScale"
     )
 
-    // Store integer value for haptic feedback
     var lastHapticValue by remember { mutableIntStateOf(value.roundToInt()) }
 
     BoxWithConstraints(
@@ -78,9 +74,6 @@ fun WavyArcSlider(
         val height = constraints.maxHeight.toFloat()
         val minDim = min(width, height)
         
-        // Calculate arc geometry
-        // Ensure strictly square bounds for the arc to be circular
-        // Center the arc in the available space
         val arcDiameter = minDim - thumbSizePx * 2 - waveAmplitudePx * 2
         val arcRadius = arcDiameter / 2
         val arcCenter = Offset(width / 2, height / 2)
@@ -149,9 +142,6 @@ fun WavyArcSlider(
         ) {
             val activeSweep = sweepAngle * normalizedValue
             
-            // 1. Draw Inactive Track
-            // Only draw from the end of the active part to the end of the sweep
-            // This prevents the straight line from showing behind the wavy active part
             if (activeSweep < sweepAngle) {
                 drawArc(
                     color = inactiveTrackColor,
@@ -164,38 +154,26 @@ fun WavyArcSlider(
                 )
             }
             
-            // 2. Draw Active Track (Wavy)
-            
             if (activeSweep > 0) {
                 val wavePath = Path()
                 
-                // We will iterate along the arc angle
-                // Steps need to be small enough for smoothness
-                val steps = (activeSweep * 2).toInt().coerceAtLeast(10) // ~0.5 degree steps
+                val steps = (activeSweep * 2).toInt().coerceAtLeast(10)
                 val angleStep = activeSweep / steps
                 
-                // Starting point
                 var firstPointSet = false
                 
                 for (i in 0..steps) {
                     val currentAngleDeg = startAngle + (i * angleStep)
                     val currentAngleRad = Math.toRadians(currentAngleDeg.toDouble())
                     
-                    // Distance along the arc from start
-                    // Arc length = radius * angle_in_radians (relative to start)
                     val angleFromStartRad = Math.toRadians((i * angleStep).toDouble())
                     val distanceAlongArc = arcRadius * angleFromStartRad
                     
-                    // Calculate wave offset
-                    // h = A * sin(k * x + phase)
-                    // k = 2pi / wavelength
                     val k = (2 * PI) / waveLengthPx
                     val h = if (enabled) waveAmplitudePx * sin(k * distanceAlongArc + phaseShift) else 0.0
                     
-                    // Radius at this point
                     val r = arcRadius + h
                     
-                    // Convert polar to cartesian
                     val x = arcCenter.x + r * cos(currentAngleRad)
                     val y = arcCenter.y + r * sin(currentAngleRad)
                     
@@ -214,7 +192,6 @@ fun WavyArcSlider(
                 )
             }
             
-            // 3. Draw Thumb
             val thumbAngleDeg = startAngle + activeSweep
             val thumbAngleRad = Math.toRadians(thumbAngleDeg.toDouble())
             val thumbX = arcCenter.x + arcRadius * cos(thumbAngleRad)

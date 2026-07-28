@@ -42,8 +42,6 @@ class JellyfinApiService @Inject constructor(
         .writeTimeout(15, TimeUnit.SECONDS)
         .build()
 
-    // ─── Credentials Management ─────────────────────────────────────────
-
     fun setCredentials(credentials: JellyfinCredentials) {
         this.credentials = credentials
         Timber.d("$TAG: Credentials set for server: ${credentials.normalizedServerUrl}, user: ${credentials.username}")
@@ -59,8 +57,6 @@ class JellyfinApiService @Inject constructor(
     fun getServerUrl(): String? = credentials?.normalizedServerUrl
 
     fun getAuthorizationHeader(): String? = credentials?.let { buildAuthorizationHeader() }
-
-    // ─── Authentication ─────────────────────────────────────────────────
 
     private fun buildAuthorizationHeader(): String {
         val cred = credentials
@@ -114,8 +110,6 @@ class JellyfinApiService @Inject constructor(
         }
     }
 
-    // ─── Core Request Method ─────────────────────────────────────────────
-
     private suspend fun request(path: String, params: Map<String, String> = emptyMap()): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
@@ -159,13 +153,9 @@ class JellyfinApiService @Inject constructor(
         return request(path, params).map { JSONObject(it) }
     }
 
-    // ─── System API ──────────────────────────────────────────────────────
-
     suspend fun ping(): Result<Boolean> {
         return request("/System/Ping").map { true }
     }
-
-    // ─── Library / Items API ─────────────────────────────────────────────
 
     /**
      * Get the user's media libraries (views), e.g. Music, Movies, Shows.
@@ -267,8 +257,6 @@ class JellyfinApiService @Inject constructor(
         }
     }
 
-    // ─── Playlist API ────────────────────────────────────────────────────
-
     suspend fun getPlaylists(): Result<List<JSONObject>> {
         val cred = credentials ?: return Result.failure(Exception("No credentials"))
         val params = mapOf(
@@ -297,8 +285,6 @@ class JellyfinApiService @Inject constructor(
         }
     }
 
-    // ─── Search API ──────────────────────────────────────────────────────
-
     suspend fun searchSongs(query: String, limit: Int = 30): Result<List<JSONObject>> {
         val cred = credentials ?: return Result.failure(Exception("No credentials"))
         val params = mapOf(
@@ -315,17 +301,12 @@ class JellyfinApiService @Inject constructor(
         }
     }
 
-    // ─── Media URLs ──────────────────────────────────────────────────────
-
     /**
      * Build a streaming URL for a song.
      */
     fun getStreamUrl(itemId: String, maxBitRate: Int = 0): String {
         val cred = credentials ?: throw IllegalStateException("No credentials configured")
 
-        // Deliberately no api_key query parameter: these URLs get cached and logged
-        // (proxy URL cache, server access logs), so the token travels in the
-        // Authorization header instead — see CloudStreamProxy.upstreamHeaders().
         val urlBuilder = "${cred.normalizedServerUrl}/Audio/$itemId/universal".toHttpUrl().newBuilder()
             .addQueryParameter("UserId", cred.userId)
             .addQueryParameter("DeviceId", DEVICE_ID)
@@ -347,8 +328,6 @@ class JellyfinApiService @Inject constructor(
         return "${cred.normalizedServerUrl}/Items/$itemId/Images/$imageType" +
                 "?maxWidth=$maxWidth&quality=90"
     }
-
-    // ─── Lyrics API ──────────────────────────────────────────────────────
 
     suspend fun getLyrics(itemId: String): Result<String> {
         val cred = credentials ?: return Result.failure(Exception("No credentials"))

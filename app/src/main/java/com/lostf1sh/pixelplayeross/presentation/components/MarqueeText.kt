@@ -44,7 +44,6 @@ fun AutoScrollingTextOnDemand(
     val canStart by remember(text, style) { derivedStateOf { expansionFractionProvider() > 0.99f && overflow } }
 
 
-// Use a "measuring" Text only on the first composition to detect overflow.
     if (!overflow) {
         Text(
             text = text,
@@ -91,7 +90,7 @@ fun AutoScrollingText(
 
                 var isScrolling by remember(text, canScroll) { mutableStateOf(false) }
                 LaunchedEffect(text, canScroll) {
-                    isScrolling = false // Ensure initial state
+                    isScrolling = false
                     kotlinx.coroutines.delay(initialDelayMillis.toLong())
                     isScrolling = true
                 }
@@ -109,7 +108,6 @@ fun AutoScrollingText(
                             drawContent()
                             val gradientWidthPx = gradientWidth.toPx()
 
-                            // Left fade-in: Animates its color from opaque to transparent
                             drawRect(
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(animatedLeftGradientStartColor, gradientEdgeColor),
@@ -118,7 +116,6 @@ fun AutoScrollingText(
                                 ),
                                 blendMode = BlendMode.DstIn
                             )
-                            // Right fade-out: Always visible for overflow
                             drawRect(
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(gradientEdgeColor, Color.Transparent),
@@ -150,7 +147,6 @@ fun AutoScrollingText(
                         .drawWithContent {
                             drawContent()
                             val gradientWidthPx = gradientWidth.toPx()
-                            // Right fade-out: Always visible for overflow
                             drawRect(
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(gradientEdgeColor, Color.Transparent),

@@ -116,8 +116,6 @@ fun EnhancedSongListItem(
         label = "EnhancedSongListItemTransition"
     )
 
-    // Share one transition across the item and derive the visual properties from a
-    // couple of progress values instead of animating each color/radius independently.
     val highlightProgress by transition.animateFloat(
         transitionSpec = { tween(durationMillis = 400) },
         label = "highlightProgress"
@@ -184,7 +182,6 @@ fun EnhancedSongListItem(
     val showSelectionDecoration = selectionVisualProgress > 0.001f
 
     if (isLoading) {
-        // Shimmer Placeholder Layout
         Surface(
             modifier = modifier
                 .fillMaxWidth()
@@ -242,7 +239,6 @@ fun EnhancedSongListItem(
             }
         }
     } else {
-        // Actual Song Item Layout
         Surface(
             modifier = modifier
                 .fillMaxWidth()
@@ -259,9 +255,6 @@ fun EnhancedSongListItem(
                         Modifier
                     }
                 )
-                // Expose a button + click/long-click actions to TalkBack (the raw
-                // pointerInput gestures below are invisible to the a11y tree). Merge the
-                // title/artist text into one node so it's announced as a single item.
                 .semantics(mergeDescendants = true) {
                     role = Role.Button
                     onClick {
@@ -278,14 +271,12 @@ fun EnhancedSongListItem(
                     detectTapGestures(
                         onTap = {
                             if (isSelectionMode) {
-                                // In selection mode, tap toggles selection
                                 onLongPress()
                             } else {
                                 onClick()
                             }
                         },
                         onLongPress = {
-                            // Long press always activates/toggles selection
                             onLongPress()
                         }
                     )
@@ -307,14 +298,12 @@ fun EnhancedSongListItem(
                     ) {
                         SmartImage(
                             model = song.albumArtUriString,
-                            // Decorative here: the title is already announced via the row's merged semantics.
                             contentDescription = null,
                             shape = albumShape,
                             targetSize = Size(albumArtTargetSizePx, albumArtTargetSizePx),
                             modifier = Modifier.fillMaxSize()
                         )
                         
-                        // Selection check overlay on album art
                         if (showSelectionDecoration) {
                             Box(
                                 modifier = Modifier

@@ -11,8 +11,8 @@ import timber.log.Timber
 
 data class AudioMeta(
     val mimeType: String?,
-    val bitrate: Int?,      // bits per second
-    val sampleRate: Int?   // Hz
+    val bitrate: Int?,
+    val sampleRate: Int?
 )
 
 object AudioMetaUtils {
@@ -37,7 +37,6 @@ object AudioMetaUtils {
         var bitrate: Int? = null
         var sampleRate: Int? = null
 
-        // Try MediaMetadataRetriever via pool
         MediaMetadataRetrieverPool.withRetriever { retriever ->
             try {
                 retriever.setDataSource(filePath)
@@ -53,7 +52,6 @@ object AudioMetaUtils {
             }
         }
 
-        // Fallback with MediaExtractor
         try {
             MediaExtractor().apply {
                 setDataSource(filePath)

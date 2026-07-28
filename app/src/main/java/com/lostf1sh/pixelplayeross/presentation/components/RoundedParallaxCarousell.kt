@@ -51,10 +51,6 @@ import androidx.compose.ui.node.invalidateMeasurement
 import com.lostf1sh.pixelplayeross.data.preferences.CarouselStyle
 import kotlinx.coroutines.flow.distinctUntilChanged
 
-/* ================================================================================================
-   PUBLIC API
-   ================================================================================================ */
-
 /** Carousel state (identical to M3's, but standalone) */
 @ExperimentalMaterial3Api
 class CarouselState(
@@ -143,7 +139,7 @@ fun RoundedHorizontalMultiBrowseCarousel(
         CarouselStyle.NO_PEEK -> 0
         CarouselStyle.ONE_PEEK -> 1
         CarouselStyle.TWO_PEEK -> 2
-        else -> 1 // Default to one peek
+        else -> 1
     }
 
     if (carouselStyle == CarouselStyle.NO_PEEK && !suppressNoPeekSettleCorrection) {
@@ -159,7 +155,6 @@ fun RoundedHorizontalMultiBrowseCarousel(
                     val pageCount = state.pagerState.pageCount
                     if (pageCount == 0) return@collect
 
-                    // NO_PEEK must never stay visually between two album arts.
                     val targetPage = state.pagerState.currentPage.coerceIn(0, pageCount - 1)
                     state.scrollToItem(targetPage)
                 }
@@ -194,20 +189,19 @@ fun RoundedHorizontalMultiBrowseCarousel(
                     smallCounts = intArrayOf(1)
                 )
                 CarouselStyle.TWO_PEEK -> {
-                    // Manual keyline definition for [small, large, small]
-                    val largeSize = carouselWidthPx * 0.6f // Main item is 60% of width
-                    val smallSize = carouselWidthPx * 0.45f // Peek items are 45% of width
+                    val largeSize = carouselWidthPx * 0.6f
+                    val smallSize = carouselWidthPx * 0.45f
                     keylineListOf(
                         carouselMainAxisSize = carouselWidthPx,
                         itemSpacing = spacingPx,
                         carouselAlignment = CarouselAlignment.Center
                     ) {
-                        add(smallSize) // Previous peek
-                        add(largeSize) // Focused item
-                        add(smallSize) // Next peek
+                        add(smallSize)
+                        add(largeSize)
+                        add(smallSize)
                     }
                 }
-                else -> multiBrowseKeylineList( // Default to one peek
+                else -> multiBrowseKeylineList(
                     density = density,
                     carouselMainAxisSize = carouselWidthPx,
                     preferredItemSize = carouselWidthPx * 0.8f,
@@ -222,17 +216,13 @@ fun RoundedHorizontalMultiBrowseCarousel(
         modifier = modifier,
         itemSpacing = itemSpacing,
         flingBehavior = flingBehavior,
-        userScrollEnabled = true, // Always allow user scrolling
+        userScrollEnabled = true,
         itemCornerRadius = itemCornerRadius,
-        carouselStyle = carouselStyle, // Pass style down
+        carouselStyle = carouselStyle,
         itemKey = itemKey,
         content = content
     )
 }
-
-/* ================================================================================================
-   CORE (Carousel + PageSize + ItemScope with rounded clip)
-   ================================================================================================ */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -287,16 +277,12 @@ private fun RoundedCarousel(
                     layoutDirection: LayoutDirection,
                     density: Density
                 ): Outline {
-                    // 1) Constrain the mask to the layer (item) size
                     val layerBounds = Rect(0f, 0f, size.width, size.height)
-                    // intersect with bounds and add a sub-px breathing room so it doesn't look 「clipped」
                     val rect = carouselItemInfo.maskRect.intersect(layerBounds).inflate(0.5f)
 
-                    // 2) Build a rounded outline the size of the already-intersected rect
                     val localSize = Size(rect.width, rect.height)
                     val baseOutline = cachedShape.createOutline(localSize, layoutDirection, density)
 
-                    // 3) Convert it to a Path and translate it to (left,top) of the maskRect
                     val path = Path().apply {
                         addOutline(baseOutline)
                         translate(Offset(rect.left, rect.top))
@@ -349,7 +335,6 @@ private class CarouselPageSize(
     }
 }
 
-/* ItemScope with a mask that follows the maskRect + radius */
 @ExperimentalMaterial3Api
 sealed interface CarouselItemScope {
     val carouselItemDrawInfo: CarouselItemDrawInfo
@@ -383,7 +368,6 @@ private class CarouselItemScopeImpl(private val itemInfo: CarouselItemDrawInfo) 
     }
 }
 
-/* Rounded clip that updates per frame based on maskRect (no hairlines) */
 @Composable
 private fun rememberRoundedClipShape(
     itemInfo: CarouselItemDrawInfoImpl,
@@ -405,10 +389,6 @@ private fun rememberRoundedClipShape(
         }
     }
 }
-
-/* ================================================================================================
-   DRAW INFO & ITEM MODIFIER (clip and translate with strategy)
-   ================================================================================================ */
 
 @ExperimentalMaterial3Api
 sealed interface CarouselItemDrawInfo {
@@ -510,7 +490,6 @@ private class CarouselItemModifierNode(
 
         return layout(placeable.width, placeable.height) {
             placeable.placeWithLayer(0, 0, zIndex = itemZIndex) {
-                // --- keylines and interpolation
                 val scrollOffset = calculateCurrentScrollOffset(state, strategyResult)
                 val maxScrollOffset = calculateMaxScrollOffset(state, strategyResult)
                 val keylines =
@@ -529,10 +508,9 @@ private class CarouselItemModifierNode(
                 val before = keylines.getKeylineBefore(unadjustedCenter)
                 val after = keylines.getKeylineAfter(unadjustedCenter)
                 val progress = getProgress(before, after, unadjustedCenter)
-                val ik = lerp(before, after, progress) // interpolated keyline
+                val ik = lerp(before, after, progress)
                 val isOutOfKeylineBounds = before == after
 
-                // --- local center (layer coords) and mask dimensions
                 val centerLocalX =
                     if (isVertical) size.width / 2f else strategyResult.itemMainAxisSize / 2f
                 val centerLocalY =
@@ -540,14 +518,11 @@ private class CarouselItemModifierNode(
                 val halfMaskW = if (isVertical) size.width / 2f else ik.size / 2f
                 val halfMaskH = if (isVertical) ik.size / 2f else size.height / 2f
 
-                // --- base rect (local)
                 var left = centerLocalX - halfMaskW
                 var right = centerLocalX + halfMaskW
                 var top = centerLocalY - halfMaskH
                 var bottom = centerLocalY + halfMaskH
 
-                // --- clip overflow against the carousel viewport
-                //     (prevents the container from "crushing" the peek arc)
                 val containerSize = strategyResult.availableSpace
                 if (!isVertical) {
                     val centerInContainer = ik.offset
@@ -565,21 +540,17 @@ private class CarouselItemModifierNode(
                     bottom -= overflowBottom
                 }
 
-                // --- also constrain to the layer itself (safe)
                 val layerBounds = Rect(0f, 0f, size.width, size.height)
                 val maskRect = Rect(left, top, right, bottom).intersect(layerBounds)
 
-                // --- update mask info (for MaskScope, etc.)
                 carouselItemDrawInfo.sizeState = ik.size
                 carouselItemDrawInfo.minSizeState = roundedKeylines.minBy { it.size }.size
                 carouselItemDrawInfo.maxSizeState = roundedKeylines.firstFocal.size
                 carouselItemDrawInfo.maskRectState = maskRect
 
-                // --- CLIP: always enabled with the rounded shape
                 clip = true
                 shape = clipShape
 
-                // --- final translation (edge snapping)
                 var translation = ik.offset - unadjustedCenter
                 if (isOutOfKeylineBounds) {
                     val outOfBoundsOffset =
@@ -593,10 +564,6 @@ private class CarouselItemModifierNode(
     }
 }
 
-
-/* ================================================================================================
-   STRATEGY (keylines shifting + snapping) — compact, compatible version
-   ================================================================================================ */
 
 private class Strategy(
     val defaultKeylines: KeylineList,
@@ -681,10 +648,6 @@ private class Strategy(
     }
 }
 
-/* ================================================================================================
-   KEYLINES + helpers
-   ================================================================================================ */
-
 private data class Keyline(
     val size: Float,
     val offset: Float,
@@ -755,7 +718,6 @@ private value class CarouselAlignment private constructor(val value: Int) {
     companion object { val Start = CarouselAlignment(-1); val Center = CarouselAlignment(0); val End = CarouselAlignment(1) }
 }
 
-// Overload A: alignment (Start/Center/End)
 private fun keylineListOf(
     carouselMainAxisSize: Float,
     itemSpacing: Float,
@@ -771,7 +733,6 @@ private fun keylineListOf(
     )
 }
 
-// Overload B: explicit pivot (index and offset)
 private fun keylineListOf(
     carouselMainAxisSize: Float,
     itemSpacing: Float,
@@ -789,7 +750,6 @@ private fun keylineListOf(
     )
 }
 
-/* Interpolations */
 private fun lerp(start: Keyline, end: Keyline, fraction: Float) = Keyline(
     size = androidx.compose.ui.util.lerp(start.size, end.size, fraction),
     offset = androidx.compose.ui.util.lerp(start.offset, end.offset, fraction),
@@ -804,10 +764,6 @@ private fun lerp(from: KeylineList, to: KeylineList, fraction: Float): KeylineLi
     val list = from.fastMapIndexed { i, k -> lerp(k, to[i], fraction) }
     return KeylineList(list)
 }
-
-/* ================================================================================================
-   MULTI-BROWSE keyline list + Arrangement (compact version)
-   ================================================================================================ */
 
 /** Size arrangement for small/medium/large and their counts. */
 private data class Arrangement(
@@ -842,7 +798,6 @@ private data class Arrangement(
             for (lc in largeCounts) {
                 for (mc in mediumCounts) {
                     for (sc in smallCounts) {
-                        // fix sizes (small clamped, medium between small and large, large <= target)
                         val large = min(targetLargeSize, availableSpace)
                         val small = targetSmallSize.coerceIn(minSmallSize, maxSmallSize)
                         val medium = if (targetMediumSize > 0f) {
@@ -855,11 +810,9 @@ private data class Arrangement(
                         val total =
                             (lc * large) + (mc * medium) + (sc * small) + totalSpacing
 
-                        // must fit (or be very close). We allow slight over/under-fill and penalize it.
                         val over = max(0f, total - availableSpace)
                         val under = max(0f, availableSpace - total)
 
-                        // cost from target deviation + wasted space
                         val c =
                             cost(large, targetLargeSize) * lc +
                                     cost(medium, (large + small) / 2f) * mc +
@@ -973,10 +926,6 @@ private fun createKeylineListFromArrangement(
     }
 }
 
-/* ================================================================================================
-   SNAP + scroll calculations
-   ================================================================================================ */
-
 private fun getSnapPositionOffset(strategy: Strategy, itemIndex: Int, itemCount: Int): Int {
     if (!strategy.isValid) return 0
     var offset =
@@ -1032,10 +981,6 @@ private fun getProgress(before: Keyline, after: Keyline, unadjustedOffset: Float
     return (unadjustedOffset - before.unadjustedOffset) / total
 }
 
-/* ================================================================================================
-   PAGER STATE (compat) + animateScrollToPage helper
-   ================================================================================================ */
-
 private const val MinPageOffset = -0.5f
 private const val MaxPageOffset = 0.5f
 
@@ -1070,10 +1015,6 @@ class CarouselPagerState(
 
 
 
-/* ================================================================================================
-   Padding HELPERS
-   ================================================================================================ */
-
 @Composable
 private fun PaddingValues.calculateBeforeContentPadding(orientation: Orientation): Float {
     val dp = if (orientation == Orientation.Vertical) calculateTopPadding()
@@ -1087,8 +1028,6 @@ private fun PaddingValues.calculateAfterContentPadding(orientation: Orientation)
     else calculateEndPadding(LocalLayoutDirection.current)
     return with(LocalDensity.current) { dp.toPx() }
 }
-
-/* ---------- shift/steps helpers ---------- */
 
 private fun getStartShiftDistance(
     startKeylineSteps: List<KeylineList>,
@@ -1255,8 +1194,6 @@ private fun getEndKeylineSteps(
     return steps
 }
 
-/* ---------- concrete shifting helpers ---------- */
-
 private fun createShiftedKeylineListForContentPadding(
     from: KeylineList,
     carouselMainAxisSize: Float,
@@ -1278,7 +1215,6 @@ private fun createShiftedKeylineListForContentPadding(
             from.fastForEach { k -> add(k.size - abs(sizeReduction), k.isAnchor) }
         }
 
-    // restore the original unadjustedOffset so Pager (which uses a fixed pageSize) stays consistent
     return KeylineList(
         newKeylines.fastMapIndexed { i, k -> k.copy(unadjustedOffset = from[i].unadjustedOffset) }
     )
@@ -1311,8 +1247,6 @@ private fun MutableList<Keyline>.move(srcIndex: Int, dstIndex: Int): MutableList
     add(dstIndex, k)
     return this
 }
-
-/* ---------- step interpolation ---------- */
 
 private data class ShiftPointRange(
     val fromStepIndex: Int,
@@ -1378,7 +1312,6 @@ private fun lerp(
     return androidx.compose.ui.util.lerp(outputMin, outputMax, t)
 }
 
-// === Receiver scope for building a KeylineList ===
 internal interface KeylineListScope {
     /**
      * Adds a keyline (in visual order of appearance).
@@ -1392,14 +1325,12 @@ private class KeylineListScopeImpl : KeylineListScope {
 
     private data class TmpKeyline(val size: Float, val isAnchor: Boolean)
 
-    // Internal state used both in pivot and in alignment:
     private var firstFocalIndex: Int = -1
     private var focalItemSize: Float = 0f
     private val tmpKeylines = mutableListOf<TmpKeyline>()
 
     override fun add(size: Float, isAnchor: Boolean) {
         tmpKeylines.add(TmpKeyline(size, isAnchor))
-        // store the first index of the largest size (first focal)
         if (size > focalItemSize) {
             focalItemSize = size
             firstFocalIndex = tmpKeylines.lastIndex
@@ -1446,7 +1377,6 @@ private class KeylineListScopeImpl : KeylineListScope {
         val lastFocalIndex = findLastFocalIndex()
         val list = mutableListOf<Keyline>()
 
-        // Pivot
         val pivot = tmpKeylines[pivotIndex]
         val pivotCutoff =
             when {
@@ -1466,7 +1396,6 @@ private class KeylineListScopeImpl : KeylineListScope {
             cutoff = pivotCutoff
         )
 
-        // Before the pivot (left→right in the resulting list; we insert at the beginning)
         var offset = pivotOffset - (focalItemSize / 2f) - itemSpacing
         var unadj  = pivotOffset - (focalItemSize / 2f) - itemSpacing
         for (original in (pivotIndex - 1) downTo 0) {
@@ -1487,12 +1416,10 @@ private class KeylineListScopeImpl : KeylineListScope {
                     cutoff = cutoff
                 )
             )
-            // no ambiguous '-='!
             offset = offset - tmp.size - itemSpacing
             unadj  = unadj  - focalItemSize - itemSpacing
         }
 
-        // After the pivot
         offset = pivotOffset + (focalItemSize / 2f) + itemSpacing
         unadj  = pivotOffset + (focalItemSize / 2f) + itemSpacing
         for (original in (pivotIndex + 1)..tmpKeylines.lastIndex) {
@@ -1531,19 +1458,17 @@ private class KeylineListScopeImpl : KeylineListScope {
         val lastFocalIndex = findLastFocalIndex()
         val focalCount = (lastFocalIndex - firstFocalIndex) + 1
 
-        // We pick the first focal as the pivot
         val pivotIndex = firstFocalIndex
         val pivotOffset =
             when (carouselAlignment) {
                 CarouselAlignment.Center -> {
-                    // if the number of focals is even, the spacing splits the center: compensate for it
                     val spacingSplit = if (itemSpacing == 0f || focalCount % 2 == 0) 0f else itemSpacing / 2f
                     (carouselMainAxisSize / 2f) -
                             ((focalItemSize / 2f) * focalCount) -
                             spacingSplit
                 }
                 CarouselAlignment.End   -> carouselMainAxisSize - (focalItemSize / 2f)
-                else /* Start */        -> (focalItemSize / 2f)
+                else -> (focalItemSize / 2f)
             }
 
         return createWithPivot(

@@ -106,7 +106,7 @@ fun StatsOverviewCard(
                         modifier = Modifier
                             .padding(end = 24.dp)
                             .size(40.dp)
-                            .clip(CircleShape)//RoundedCornerShape(12.dp))
+                            .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.primaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
@@ -249,12 +249,6 @@ private fun MiniListeningTimeline(summary: PlaybackStatsRepository.PlaybackStats
                         .clip(CircleShape)
                         .background(
                             color = MaterialTheme.colorScheme.primary
-//                            Brush.verticalGradient(
-//                                listOf(
-//                                    MaterialTheme.colorScheme.primary,
-//                                    MaterialTheme.colorScheme.tertiary
-//                                )
-//                            )
                         )
                 )
                 Spacer(modifier = Modifier.height(8.dp))

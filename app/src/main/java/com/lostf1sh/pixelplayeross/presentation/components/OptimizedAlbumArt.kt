@@ -96,7 +96,7 @@ fun OptimizedAlbumArt(
             }.build()
             else -> ImageRequest.Builder(context)
                 .data(uri)
-                .crossfade(350) // Use Coil's native crossfade
+                .crossfade(350)
                 .error(R.drawable.ic_music_placeholder)
                 .size(requestTargetSize)
                 .memoryCachePolicy(CachePolicy.ENABLED)
@@ -114,8 +114,6 @@ fun OptimizedAlbumArt(
     }
     var lastSuccessPainter by remember(requestModel.data) { mutableStateOf<Painter?>(null) }
 
-    // Use SubcomposeAsyncImage with Coil's native crossfade instead of Crossfade wrapper
-    // This avoids recompositions on painter.state changes during scroll.
     SubcomposeAsyncImage(
         model = requestModel,
         contentDescription = stringResource(R.string.cd_album_art_of, title),

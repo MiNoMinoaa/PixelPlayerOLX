@@ -55,7 +55,6 @@ data class PlaylistUiState(
     val isLoading: Boolean = false,
     val playlistNotFound: Boolean = false,
 
-    //Sort option
     val currentPlaylistSortOption: SortOption = SortOption.PlaylistNameAZ,
     val currentPlaylistSongsSortOption: SortOption = SortOption.SongTitleAZ,
     val playlistSongsOrderMode: PlaylistSongsOrderMode = PlaylistSongsOrderMode.Sorted(SortOption.SongTitleAZ),
@@ -97,7 +96,6 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    // Helper function to resolve stored playlist sort keys
     private fun resolvePlaylistSortOption(optionKey: String?): SortOption {
         return SortOption.fromStorageKey(
             optionKey,
@@ -124,25 +122,21 @@ class PlaylistViewModel @Inject constructor(
 
     private fun loadPlaylistsAndInitialSortOption() {
         viewModelScope.launch {
-            // First, get the initial sort option
             val initialSortOptionName = playlistPreferencesRepository.playlistsSortOptionFlow.first()
             val initialSortOption = resolvePlaylistSortOption(initialSortOptionName)
             _uiState.update { it.copy(currentPlaylistSortOption = initialSortOption) }
 
-            // Then, collect playlists and apply the sort option
             playlistPreferencesRepository.userPlaylistsFlow.collect { playlists ->
                 val currentSortOption =
-                    _uiState.value.currentPlaylistSortOption // Use the most up-to-date sort option
+                    _uiState.value.currentPlaylistSortOption
                 val sortedPlaylists = sortPlaylistsList(playlists, currentSortOption)
                 _uiState.update { it.copy(playlists = sortedPlaylists.toImmutableList()) }
             }
         }
-        // Collect subsequent changes to sort option from preferences
         viewModelScope.launch {
             playlistPreferencesRepository.playlistsSortOptionFlow.collect { optionName ->
                 val newSortOption = resolvePlaylistSortOption(optionName)
                 if (_uiState.value.currentPlaylistSortOption != newSortOption) {
-                    // If the option from preferences is different, re-sort the current list
                     sortPlaylists(newSortOption)
                 }
             }
@@ -159,7 +153,7 @@ class PlaylistViewModel @Inject constructor(
                     currentPlaylistDetails = if (shouldKeepExisting) it.currentPlaylistDetails else null,
                     currentPlaylistSongs = if (shouldKeepExisting) it.currentPlaylistSongs else emptyList()
                 )
-            } // Reset details and songs
+            }
             try {
                 if (isFolderPlaylistId(playlistId)) {
                     val folderPath = Uri.decode(playlistId.removePrefix(FOLDER_PLAYLIST_PREFIX))
@@ -206,7 +200,6 @@ class PlaylistViewModel @Inject constructor(
                         }
                     }
                 } else {
-                    // Get the playlist from the user's preferences
                     val playlist = playlistPreferencesRepository.userPlaylistsFlow.first()
                         .find { it.id == playlistId }
 
@@ -215,7 +208,6 @@ class PlaylistViewModel @Inject constructor(
                         val orderMode = _uiState.value.playlistOrderModes[playlistId]
                             ?: PlaylistSongsOrderMode.Manual
 
-                        // Collect the song list from the Flow returned by the repository on an IO thread
                         val songsList: List<Song> = withContext(kotlinx.coroutines.Dispatchers.IO) {
                             musicRepository.getSongsByIds(playlistForDisplay.songIds).first()
                         }
@@ -227,7 +219,6 @@ class PlaylistViewModel @Inject constructor(
                             PlaylistSongsOrderMode.Manual -> songsList
                         }
 
-                        // The UI update is done on the main thread
                         _uiState.update {
                             it.copy(
                                 currentPlaylistDetails = playlistForDisplay,
@@ -249,8 +240,7 @@ class PlaylistViewModel @Inject constructor(
                                 currentPlaylistDetails = null,
                                 currentPlaylistSongs = emptyList()
                             )
-                        } // Keep isLoading as false
-                        // Optional: you could set an error or a specific "not found" state
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -272,7 +262,7 @@ class PlaylistViewModel @Inject constructor(
         coverImageUri: String? = null,
         coverColor: Int? = null,
         coverIcon: String? = null,
-        songIds: List<String> = emptyList(), // Added songIds parameter
+        songIds: List<String> = emptyList(),
         cropScale: Float = 1f,
         cropPanX: Float = 0f,
         cropPanY: Float = 0f,
@@ -282,14 +272,13 @@ class PlaylistViewModel @Inject constructor(
         coverShapeDetail2: Float? = null,
         coverShapeDetail3: Float? = null,
         coverShapeDetail4: Float? = null,
-        source: String = "LOCAL", // Mark source
+        source: String = "LOCAL",
         smartRuleKey: String? = null
     ) {
         viewModelScope.launch {
             var savedCoverPath: String? = null
 
             if (coverImageUri != null) {
-                // Generate a unique ID for the image file since we don't have the playlist ID yet
                 val imageId = UUID.randomUUID().toString()
                 savedCoverPath = saveCoverImageToInternalStorage(
                     Uri.parse(coverImageUri),
@@ -373,7 +362,6 @@ class PlaylistViewModel @Inject constructor(
     ): String? {
         return withContext(Dispatchers.IO) {
             try {
-                // Robust bitmap loading (Content URI or Local File)
                 val originalBitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     val source = when {
                         uri.scheme == "content" -> ImageDecoder.createSource(context.contentResolver, uri)
@@ -396,63 +384,43 @@ class PlaylistViewModel @Inject constructor(
 
                 if (originalBitmap == null) return@withContext null
 
-                // Target dimensions (Square)
                 val targetSize = 1024
 
-                // create target bitmap
                 val targetBitmap = Bitmap.createBitmap(targetSize, targetSize, Bitmap.Config.ARGB_8888)
                 val canvas = android.graphics.Canvas(targetBitmap)
 
-                // Calculate base dimensions (fitting smallest dimension to target)
-                // Logic must match ImageCropView
                 val bitmapWidth = originalBitmap.width.toFloat()
                 val bitmapHeight = originalBitmap.height.toFloat()
                 val bitmapRatio = bitmapWidth / bitmapHeight
 
                 val (baseWidth, baseHeight) = if (bitmapRatio > 1f) {
-                    // Wide: Height matches target
                     targetSize * bitmapRatio to targetSize.toFloat()
                 } else {
-                    // Tall: Width matches target
                     targetSize.toFloat() to targetSize / bitmapRatio
                 }
 
-                // Calculate transformations
-                // Scaled Dimensions
                 val scaledWidth = baseWidth * cropScale
                 val scaledHeight = baseHeight * cropScale
 
-                // Center + Pan
-                // Center of target is targetSize/2
-                // We want to center the Scaled Image at (Center + Pan)
-                // TopLeft = CenterX - ScaledW/2 + PanX
-
-                // Pan is normalized relative to Viewport (TargetSize)
                 val panPxX = cropPanX * targetSize
                 val panPxY = cropPanY * targetSize
 
                 val dx = (targetSize - scaledWidth) / 2f + panPxX
                 val dy = (targetSize - scaledHeight) / 2f + panPxY
 
-                // Draw
-                // We draw the original bitmap scaled to (scaledWidth, scaledHeight) at (dx, dy)
                 val matrix = android.graphics.Matrix()
                 matrix.postScale(scaledWidth / bitmapWidth, scaledHeight / bitmapHeight)
                 matrix.postTranslate(dx, dy)
 
                 canvas.drawBitmap(originalBitmap, matrix, null)
 
-                // Save
                 val fileName = "playlist_cover_$uniqueId.jpg"
                 val file = File(context.filesDir, fileName)
                 FileOutputStream(file).use { out ->
                     targetBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
                 }
 
-                // Recycle
                 if (originalBitmap != targetBitmap) originalBitmap.recycle()
-                // Target bitmap is not recycled here, let GC handle?
-                // Or recycle explicitly if immediate memory pressure concern.
 
                 file.absolutePath
             } catch (e: Exception) {
@@ -540,7 +508,6 @@ class PlaylistViewModel @Inject constructor(
             val isAdjusted = cropScale != 1f || cropPanX != 0f || cropPanY != 0f
 
             if (coverImageUri != null && (isNewImage || isAdjusted)) {
-                // Save new image or re-crop existing one
                 val imageId = UUID.randomUUID().toString()
                 val newPath = saveCoverImageToInternalStorage(
                     Uri.parse(coverImageUri),
@@ -550,7 +517,6 @@ class PlaylistViewModel @Inject constructor(
                     cropPanY
                 )
                 if (newPath != null) {
-                    // Optional: Delete old file if it was a local file managed by us
                     currentPlaylist.coverImageUri?.let { oldPath ->
                         if (oldPath.contains("playlist_cover_")) {
                             try { File(oldPath).delete() } catch (e: Exception) {}
@@ -559,7 +525,6 @@ class PlaylistViewModel @Inject constructor(
                     savedCoverPath = newPath
                 }
             } else if (coverImageUri == null) {
-                // Explicitly removed
                 currentPlaylist.coverImageUri?.let { oldPath ->
                     if (oldPath.contains("playlist_cover_")) {
                         try { File(oldPath).delete() } catch (e: Exception) {}
@@ -581,7 +546,6 @@ class PlaylistViewModel @Inject constructor(
                 coverShapeDetail4 = coverShapeDetail4
             )
 
-            // Optimistic update
             _uiState.update {
                 it.copy(currentPlaylistDetails = updatedPlaylist)
             }
@@ -679,7 +643,6 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    //Sort funs
     fun sortPlaylists(sortOption: SortOption) {
         if (_uiState.value.currentPlaylistSortOption.storageKey == sortOption.storageKey) {
             return
@@ -700,16 +663,13 @@ class PlaylistViewModel @Inject constructor(
     fun sortPlaylistSongs(sortOption: SortOption) {
         val playlistId = _uiState.value.currentPlaylistDetails?.id
 
-        // If SongDefaultOrder is selected, reload the playlist to get original order
         if (sortOption == SortOption.SongDefaultOrder) {
             if (playlistId != null) {
                 viewModelScope.launch {
-                    // Set order mode to Manual (which preserves original order)
                     playlistPreferencesRepository.setPlaylistSongOrderMode(
                         playlistId,
                         MANUAL_ORDER_MODE
                     )
-                    // Reload the playlist to get original song order
                     loadPlaylistDetails(playlistId)
                 }
             }
@@ -718,7 +678,6 @@ class PlaylistViewModel @Inject constructor(
 
         val currentSongs = _uiState.value.currentPlaylistSongs
         viewModelScope.launch {
-            // Sort off the main thread; large playlists otherwise jank the UI on tap.
             val sortedSongs = withContext(Dispatchers.Default) {
                 sortSongsList(currentSongs, sortOption)
             }
@@ -898,15 +857,13 @@ class PlaylistViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                // Get all songs from selected playlists
                 val selectedPlaylists = _uiState.value.playlists.filter { it.id in playlistIds }
                 val mergedSongIds = selectedPlaylists
                     .flatMap { it.songIds }
-                    .distinct() // Remove duplicates
+                    .distinct()
                     .toList()
 
                 if (mergedSongIds.isNotEmpty()) {
-                    // Create new playlist with merged songs
                     playlistPreferencesRepository.createPlaylist(newPlaylistName, mergedSongIds)
                     _playlistCreationEvent.emit(true)
                 }
@@ -944,7 +901,6 @@ class PlaylistViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 Timber.tag("PlaylistViewModel").d("Starting share of ${playlistIds.size} playlists")
-                // Get all selected playlists with their songs
                 val playlistsWithSongs = getPlaylistsWithSongs(playlistIds)
 
                 if (playlistsWithSongs.isEmpty()) {
@@ -958,7 +914,6 @@ class PlaylistViewModel @Inject constructor(
                 val shareMimeType: String
 
                 if (playlistsWithSongs.size == 1) {
-                    // Single playlist: share M3U file directly
                     val (playlist, songs) = playlistsWithSongs.first()
                     val m3uContent = m3uManager.generateM3u(playlist, songs)
                     val sanitizedName = sanitizeFileName(playlist.name)
@@ -968,7 +923,6 @@ class PlaylistViewModel @Inject constructor(
                     shareMimeType = "audio/mpegurl"
                     Timber.tag("PlaylistViewModel").d("Created M3U file: ${shareFile.absolutePath}, size: ${shareFile.length()} bytes")
                 } else {
-                    // Multiple playlists: create ZIP file
                     val firstPlaylistName = sanitizeFileName(playlistsWithSongs.first().first.name)
                     val zipFileName = "Playlists_${firstPlaylistName}_and_${playlistsWithSongs.size - 1}_more.zip"
                     shareFile = File(context.cacheDir, zipFileName)
@@ -999,7 +953,6 @@ class PlaylistViewModel @Inject constructor(
                     Timber.tag("PlaylistViewModel").d("Created ZIP file: ${shareFile.absolutePath}, size: ${shareFile.length()} bytes")
                 }
 
-                // Share the file
                 val uri = androidx.core.content.FileProvider.getUriForFile(
                     context,
                     "${context.packageName}.provider",
@@ -1035,10 +988,8 @@ class PlaylistViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                // Get all playlists first
                 val currentPlaylists = _uiState.value.playlists
 
-                // Get all songs from selected playlists
                 val allSongs = mutableSetOf<String>()
                 playlistIds.forEach { playlistId ->
                     val playlist = currentPlaylists.find { it.id == playlistId }
@@ -1047,7 +998,6 @@ class PlaylistViewModel @Inject constructor(
                     }
                 }
 
-                // Create new playlist with merged songs
                 val newPlaylist = Playlist(
                     id = UUID.randomUUID().toString(),
                     name = newPlaylistName,

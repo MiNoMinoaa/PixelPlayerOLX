@@ -27,9 +27,6 @@ import javax.inject.Singleton
  */
 @Singleton
 class NavidromeApiService @Inject constructor(
-    // Inject singleton OkHttpClient instead of creating a new one.
-    // Use newBuilder() to apply Navidrome-specific timeouts while sharing the base
-    // connection pool and dispatcher, saving ~2-4MB RAM.
     baseOkHttpClient: OkHttpClient
 ) {
 
@@ -40,7 +37,6 @@ class NavidromeApiService @Inject constructor(
         private const val DEFAULT_FORMAT = "json"
     }
 
-    // Current server credentials (can be updated at runtime)
     @Volatile
     private var credentials: NavidromeCredentials? = null
 
@@ -56,11 +52,9 @@ class NavidromeApiService @Inject constructor(
 
     private val okHttpClient: OkHttpClient = baseOkHttpClient.newBuilder()
         .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS) // Longer timeout for streaming
+        .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(15, TimeUnit.SECONDS)
         .build()
-
-    // ─── Credentials Management ─────────────────────────────────────────
 
     /**
      * Set the server credentials for API calls.
@@ -103,8 +97,6 @@ class NavidromeApiService @Inject constructor(
      */
     fun getServerUrl(): String? = credentials?.normalizedServerUrl
 
-    // ─── Authentication ─────────────────────────────────────────────────
-
     /**
      * Build a URL with authentication parameters for a Subsonic API endpoint.
      */
@@ -135,8 +127,6 @@ class NavidromeApiService @Inject constructor(
 
         return urlBuilder.build().toString()
     }
-
-    // ─── Core Request Method ─────────────────────────────────────────────
 
     /**
      * Make a GET request to a Subsonic API endpoint.
@@ -241,8 +231,6 @@ class NavidromeApiService @Inject constructor(
         )
     }
 
-    // ─── System API ──────────────────────────────────────────────────────
-
     /**
      * Ping the server to test connectivity and authentication.
      */
@@ -256,8 +244,6 @@ class NavidromeApiService @Inject constructor(
     suspend fun getLicense(): Result<JSONObject> {
         return requestAndParse("getLicense")
     }
-
-    // ─── Browsing API ────────────────────────────────────────────────────
 
     /**
      * Get all music folders (libraries) configured on the server.
@@ -342,8 +328,6 @@ class NavidromeApiService @Inject constructor(
         return requestAndParse("getSong", mapOf("id" to id))
     }
 
-    // ─── Playlist API ────────────────────────────────────────────────────
-
     /**
      * Get all playlists.
      */
@@ -353,7 +337,6 @@ class NavidromeApiService @Inject constructor(
             val playlists = playlistsContainer?.optJSONArray("playlist")
             
             if (playlists == null) {
-                // Fallback: Some versions might put the array directly under "subsonic-response" or another key
                 val topLevelPlaylists = response.optJSONArray("playlist")
                 if (topLevelPlaylists != null) {
                     return@map (0 until topLevelPlaylists.length()).mapNotNull { topLevelPlaylists.optJSONObject(it) }
@@ -374,7 +357,6 @@ class NavidromeApiService @Inject constructor(
             val songs = playlist.optJSONArray("entry")
             
             if (songs == null) {
-                // Some older Subsonic servers might use "song" or return a different structure
                 val altSongs = playlist.optJSONArray("song")
                 if (altSongs != null) {
                     val songList = (0 until altSongs.length()).mapNotNull { altSongs.optJSONObject(it) }
@@ -387,8 +369,6 @@ class NavidromeApiService @Inject constructor(
             Pair(playlist, songList)
         }
     }
-
-    // ─── Search API ──────────────────────────────────────────────────────
 
     /**
      * Search for songs, albums, and artists.
@@ -446,8 +426,6 @@ class NavidromeApiService @Inject constructor(
             (0 until (artists?.length() ?: 0)).mapNotNull { artists?.optJSONObject(it) }
         }
     }
-
-    // ─── Media Retrieval API ─────────────────────────────────────────────
 
     /**
      * Build a streaming URL for a song.
@@ -508,8 +486,6 @@ class NavidromeApiService @Inject constructor(
             .toString()
     }
 
-    // ─── Lyrics API ──────────────────────────────────────────────────────
-
     /**
      * Get lyrics for a song.
      * Note: Not all servers support this endpoint.
@@ -540,8 +516,6 @@ class NavidromeApiService @Inject constructor(
             }
         }
     }
-
-    // ─── Playback API ────────────────────────────────────────────────────
 
     /**
      * Reports playback timeline state for a song.
@@ -586,8 +560,6 @@ class NavidromeApiService @Inject constructor(
             }
         )
     }
-
-    // ─── Star/Favorite API ───────────────────────────────────────────────
 
     /**
      * Star a song, album, or artist.

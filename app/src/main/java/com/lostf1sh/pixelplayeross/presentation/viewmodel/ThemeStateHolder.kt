@@ -52,8 +52,6 @@ class ThemeStateHolder @Inject constructor(
     fun initialize(scope: CoroutineScope) {
         this.scope = scope
 
-        // Drive activePlayerColorSchemePair from the proper lifecycle-scoped coroutine
-        // instead of the orphaned placeholder CoroutineScope used during field initialisation.
         scope.launch {
             combine(playerThemePreference, _currentAlbumArtColorSchemePair) { playerPref, albumScheme ->
                 when (playerPref) {
@@ -109,7 +107,6 @@ class ThemeStateHolder @Inject constructor(
             }
 
             val uriString = albumArtUriAsUri.toString()
-            // Use the optimized ColorSchemeProcessor with LRU cache
             val schemePair = colorSchemeProcessor.getOrGenerateColorScheme(
                 albumArtUri = uriString,
                 paletteStyle = currentPaletteStyle,
@@ -135,7 +132,6 @@ class ThemeStateHolder @Inject constructor(
         }
     }
 
-    // LRU Cache for individual album schemes
     private val individualAlbumColorSchemes = object : LinkedHashMap<String, MutableStateFlow<ColorSchemePair?>>(
         32, 0.75f, true
     ) {
@@ -184,7 +180,6 @@ class ThemeStateHolder @Inject constructor(
                     colorAccuracyLevel = currentPaletteAccuracy
                 )
             } catch (_: Exception) {
-                // Ignore or log
             } finally {
                 val targets = synchronized(pendingAlbumColorSchemeLock) {
                     pendingAlbumColorSchemeTargets.remove(uriString)?.toList().orEmpty()
@@ -274,14 +269,11 @@ class ThemeStateHolder @Inject constructor(
              )
          }
 
-         // Iterate if there is an active flow for this URI and update it
          val activeFlow = individualAlbumColorSchemes[uriString]
          if (activeFlow != null) {
              activeFlow.value = newScheme
          }
          
-         // Also update the main current album art scheme if it matches the one we are tracking
-         // We use equality check. If they are the same string object or equal content.
          if (_currentAlbumArtUri.value == uriString) {
              Timber.tag("ThemeStateHolder").d("Updating global color scheme flow directly.")
              _currentAlbumArtColorSchemePair.value = newScheme

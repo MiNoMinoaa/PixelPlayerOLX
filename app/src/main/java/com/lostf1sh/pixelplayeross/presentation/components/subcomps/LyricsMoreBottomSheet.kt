@@ -84,14 +84,12 @@ fun LyricsMoreBottomSheet(
     onShowTranslationChange: (Boolean) -> Unit,
     onShowRomanizationChange: (Boolean) -> Unit,
     immersiveLyricsEnabled: Boolean,
-    // BottomToggleRow params
     isShuffleEnabled: Boolean,
     repeatMode: Int,
     isFavoriteProvider: () -> Boolean,
     onShuffleToggle: () -> Unit,
     onRepeatToggle: () -> Unit,
     onFavoriteToggle: () -> Unit,
-    // Colors
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     accentColor: Color = MaterialTheme.colorScheme.primary,
@@ -114,17 +112,14 @@ fun LyricsMoreBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                //.heightIn(max = screenHeight * 0.85f)
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 24.dp + navigationBarsPadding)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // No Title - "Expressive" relies on visual grouping
 
             val itemBackgroundColor = contentColor.copy(alpha = 0.08f)
 
-            // Lyrics Actions Group
             Column(
                 verticalArrangement = Arrangement.spacedBy(2.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -136,7 +131,6 @@ fun LyricsMoreBottomSheet(
                     color = accentColor,
                     style = MaterialTheme.typography.bodyLargeEmphasized
                 )
-                 // Save lyrics to .lrc
                 if (lyrics != null) {
                     ListItem(
                         content = { Text(stringResource(R.string.save_lyrics_dialog_title).substringBefore("?")) },
@@ -162,7 +156,6 @@ fun LyricsMoreBottomSheet(
                     )
                 }
 
-                // Reset imported lyrics
                 val resetShape = if (lyrics != null) {
                     RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 18.dp, bottomEnd = 18.dp)
                 } else {
@@ -221,7 +214,6 @@ fun LyricsMoreBottomSheet(
                 )
             }
 
-            // Appearance Group
             Column(
                 verticalArrangement = Arrangement.spacedBy(2.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -300,7 +292,6 @@ fun LyricsMoreBottomSheet(
                 }
             }
 
-            // Control Settings Group
             val isSyncVisible = showSyncedLyrics
             val isRomanizationVisible = hasRomanizedLyrics
             val isTranslationVisible = hasTranslatedLyrics
@@ -308,7 +299,6 @@ fun LyricsMoreBottomSheet(
             val isKeepScreenOnVisible = true
 
             if (isSyncVisible || isRomanizationVisible || isTranslationVisible || isKeepScreenOnVisible) {
-                // Determine first and last items for rounding
                 val isRomanizationFirst = isRomanizationVisible && !isSyncVisible
                 val isTranslationFirst = isTranslationVisible && !isSyncVisible && !isRomanizationVisible
 
@@ -451,7 +441,6 @@ fun LyricsMoreBottomSheet(
                         )
                     }
 
-                    // Immersive Mode Toggle
                     if (isImmersiveVisible) {
                         ListItem(
                             content = { Text(stringResource(R.string.lyrics_more_disable_immersive_once)) },
@@ -495,7 +484,6 @@ fun LyricsMoreBottomSheet(
                         )
                     }
 
-                    // Keep Screen On Toggle
                     if (isKeepScreenOnVisible) {
                         ListItem(
                             content = { Text(stringResource(R.string.lyrics_more_keep_screen_on)) },
@@ -541,7 +529,6 @@ fun LyricsMoreBottomSheet(
             
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Playback Options
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

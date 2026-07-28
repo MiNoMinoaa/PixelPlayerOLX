@@ -41,10 +41,8 @@ class BackupHistoryRepository @Inject constructor(
     suspend fun addEntry(entry: BackupHistoryEntry) {
         dataStore.edit { preferences ->
             val current = readHistory(preferences)
-            // Remove existing entry with same URI to avoid duplicates
             val updated = current.filter { it.uri != entry.uri }.toMutableList()
-            updated.add(0, entry) // Add at beginning (most recent first)
-            // Limit history size
+            updated.add(0, entry)
             val trimmed = updated.take(MAX_HISTORY_ENTRIES)
             preferences[BACKUP_HISTORY_KEY] = gson.toJson(trimmed)
         }

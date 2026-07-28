@@ -28,20 +28,19 @@ fun ImageCropView(
     imageBitmap: ImageBitmap,
     modifier: Modifier = Modifier,
     scale: Float = 1f,
-    pan: Offset = Offset.Zero, // Normalized (relative to Viewport Width/Height)
+    pan: Offset = Offset.Zero,
     enabled: Boolean = true,
-    onCrop: (Float, Offset) -> Unit // scale, normalizedPan
+    onCrop: (Float, Offset) -> Unit
 ) {
     val density = LocalDensity.current
     
-    // Use updated state to avoid stale closure in pointerInput
     val currentScaleState by rememberUpdatedState(scale)
     val currentPanState by rememberUpdatedState(pan)
     val currentOnCropState by rememberUpdatedState(onCrop)
 
     BoxWithConstraints(
         modifier = modifier
-            .aspectRatio(1f) // Enforce square container
+            .aspectRatio(1f)
             .clipToBounds()
             .background(Color.Black),
         contentAlignment = Alignment.Center
@@ -49,32 +48,24 @@ fun ImageCropView(
         val viewportWidth = constraints.maxWidth.toFloat()
         val viewportHeight = constraints.maxHeight.toFloat()
         
-        // Image Dimensions
         val bitmapW = imageBitmap.width.toFloat()
         val bitmapH = imageBitmap.height.toFloat()
         val bitmapRatio = if(bitmapH > 0) bitmapW / bitmapH else 1f
         val viewportRatio = if (viewportHeight > 0) viewportWidth / viewportHeight else 1f
         
-        // Calculate Base Dimensions (Zoom = 1.0f)
-        // The image should COVER the viewport completely minimalistically.
         val (baseW, baseH) = if (bitmapRatio > viewportRatio) {
-            // Image is wider than viewport: Height constrains
             val h = viewportHeight
             val w = h * bitmapRatio
             w to h
         } else {
-            // Image is taller than viewport: Width constrains
             val w = viewportWidth
             val h = w / bitmapRatio
             w to h
         }
         
-        // Current Dimensions
         val currentW = baseW * scale
         val currentH = baseH * scale
         
-        // Current Pan in Pixels
-        // pan input is normalized: panX * viewportWidth
         val currentPanX = pan.x * viewportWidth
         val currentPanY = pan.y * viewportHeight
         
@@ -85,24 +76,19 @@ fun ImageCropView(
                     if (enabled) {
                         Modifier.pointerInput(baseW, baseH, viewportWidth, viewportHeight) {
                             detectTransformGestures { _, panDelta, zoom, _ ->
-                                // 1. Update Scale using non-stale value
                                 val newScale = (currentScaleState * zoom).coerceAtLeast(1f).coerceAtMost(5f)
                                 
-                                // 2. Update Pan
-                                // We need to re-calculate limits based on new scale
                                 val newW = baseW * newScale
                                 val newH = baseH * newScale
                                 val newMaxPanX = max(0f, (newW - viewportWidth) / 2f)
                                 val newMaxPanY = max(0f, (newH - viewportHeight) / 2f)
                                 
-                                // Apply delta to current pixels (non-stale)
                                 val panPxX = currentPanState.x * viewportWidth
                                 val panPxY = currentPanState.y * viewportHeight
 
                                 val newPanPxX = (panPxX + panDelta.x).coerceIn(-newMaxPanX, newMaxPanX)
                                 val newPanPxY = (panPxY + panDelta.y).coerceIn(-newMaxPanY, newMaxPanY)
                                 
-                                // Normalize
                                 val normX = if(viewportWidth > 0) newPanPxX / viewportWidth else 0f
                                 val normY = if(viewportHeight > 0) newPanPxY / viewportHeight else 0f
                                 
@@ -112,7 +98,6 @@ fun ImageCropView(
                     } else Modifier
                 )
         ) {
-            // Render Image at Base Size, centered, then transform.
             Image(
                 bitmap = imageBitmap,
                 contentDescription = null,

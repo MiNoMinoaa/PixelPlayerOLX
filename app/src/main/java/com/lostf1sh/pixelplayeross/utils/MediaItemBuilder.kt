@@ -140,7 +140,6 @@ object MediaItemBuilder {
         directLocalFileUri(contentUriString, filePath, mimeType)?.let { return it }
         val uri = runCatching { Uri.parse(contentUriString) }.getOrNull()
             ?: return Uri.fromFile(File(contentUriString))
-        // Normalize absolute paths so ExoPlayer always gets a canonical local-file URI.
         return if (uri.scheme.isNullOrBlank() && contentUriString.startsWith("/")) {
             Uri.fromFile(File(contentUriString))
         } else {

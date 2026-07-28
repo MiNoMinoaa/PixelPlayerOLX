@@ -22,7 +22,7 @@ data class PlayerUiState(
     val sortOption: SortOption = SortOption.SongDefaultOrder,
     val isLoadingInitialSongs: Boolean = true,
     val isLoadingLibrary: Boolean = true,
-    val filteredSongs: ImmutableList<Song> = persistentListOf(), // For search filtering within lists
+    val filteredSongs: ImmutableList<Song> = persistentListOf(),
     val isFiltering: Boolean = false,
     val showDismissUndoBar: Boolean = false,
     val dismissedSong: Song? = null,

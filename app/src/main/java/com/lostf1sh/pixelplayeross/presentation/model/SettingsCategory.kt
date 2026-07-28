@@ -35,7 +35,7 @@ enum class SettingsCategory(
         id = "playback",
         titleRes = R.string.settings_category_playback_title,
         subtitleRes = R.string.settings_category_playback_subtitle,
-        icon = Icons.Rounded.MusicNote // Using MusicNote again or maybe PlayCircle if available
+        icon = Icons.Rounded.MusicNote
     ),
     BEHAVIOR(
         id = "behavior",
@@ -65,7 +65,7 @@ enum class SettingsCategory(
         id = "device_capabilities",
         titleRes = R.string.settings_category_device_capabilities_title,
         subtitleRes = R.string.settings_category_device_capabilities_subtitle,
-        icon = Icons.Rounded.DeveloperBoard // Placeholder, maybe Memory or SettingsInputComponent
+        icon = Icons.Rounded.DeveloperBoard
     ),
     ABOUT(
         id = "about",

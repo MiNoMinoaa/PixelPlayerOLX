@@ -14,5 +14,5 @@ data class LyricsEntity(
     @SerializedName(value = "isSynced", alternate = ["is_synced"])
     val isSynced: Boolean = false,
     @SerializedName("source")
-    val source: String? = null // "local", "remote", "embedded" - optional
+    val source: String? = null
 )

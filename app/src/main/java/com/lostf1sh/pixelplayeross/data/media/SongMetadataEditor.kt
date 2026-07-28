@@ -23,7 +23,7 @@ import com.lostf1sh.pixelplayeross.data.worker.collectArtistNames
 import com.lostf1sh.pixelplayeross.utils.AlbumArtUtils
 import com.lostf1sh.pixelplayeross.utils.LocalArtworkUri
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first // Added
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import org.gagravarr.opus.OpusFile
 import org.gagravarr.opus.OpusTags
@@ -291,9 +291,6 @@ class SongMetadataEditor(
                     errorMessage = "Could not find file in media library"
                 )
             }
-
-            // Write permission is now handled upstream via MediaStore.createWriteRequest()
-            // before this method is called. No File.canWrite() check needed.
 
             val finalFilePath = filePath
             val extension = finalFilePath.substringAfterLast('.', "").lowercase(Locale.ROOT)
@@ -581,7 +578,6 @@ class SongMetadataEditor(
                 }
             }
         }
-        // Last resort — non-atomic truncate+overwrite.
         source.inputStream().use { input ->
             FileOutputStream(target, false).use { out ->
                 input.copyTo(out)
@@ -600,7 +596,6 @@ class SongMetadataEditor(
             return FlacAnalysisResult.NotFlac
         }
         
-        // Try to read FLAC header to detect sample rate and bit depth
         return try {
             val file = File(filePath)
             file.inputStream().use { inputStream ->
@@ -611,7 +606,6 @@ class SongMetadataEditor(
                     return FlacAnalysisResult.NotFlac
                 }
                 
-                // Check FLAC signature "fLaC"
                 if (header[0].toInt().toChar() != 'f' ||
                     header[1].toInt().toChar() != 'L' ||
                     header[2].toInt().toChar() != 'a' ||
@@ -620,9 +614,6 @@ class SongMetadataEditor(
                     return FlacAnalysisResult.NotFlac
                 }
                 
-                // STREAMINFO starts at byte 8 (after 4 byte magic + 4 byte block header)
-                // Sample rate is at bytes 18-20 (bits 0-19 of STREAMINFO)
-                // Bit depth is in byte 20-21
                 val sampleRate = ((header[18].toInt() and 0xFF) shl 12) or
                     ((header[19].toInt() and 0xFF) shl 4) or
                     ((header[20].toInt() and 0xF0) shr 4)
@@ -633,7 +624,6 @@ class SongMetadataEditor(
                 Timber.tag(TAG)
                     .d("FLAC analysis: sampleRate=$sampleRate, bitsPerSample=$bitsPerSample")
                 
-                // Consider problematic if sample rate > 96kHz or bit depth > 24
                 val isProblematic = sampleRate > 96000 || bitsPerSample > 24
                 
                 if (isProblematic) {
@@ -646,7 +636,6 @@ class SongMetadataEditor(
             }
         } catch (e: Exception) {
             Timber.tag(TAG).w(e, "Could not analyze FLAC file: $filePath")
-            // If we can't analyze, assume it might be problematic
             FlacAnalysisResult.Unknown
         }
     }
@@ -687,30 +676,24 @@ class SongMetadataEditor(
                 }
                 if (bytesRead < 4) return DetectedContainer.UNKNOWN
                 when {
-                    // "ID3" marker → MP3 with ID3v2 tag
                     header[0] == 'I'.code.toByte() &&
                         header[1] == 'D'.code.toByte() &&
                         header[2] == '3'.code.toByte() -> DetectedContainer.MP3
-                    // MP3 frame sync (0xFFE... 11-bit sync word)
                     header[0] == 0xFF.toByte() &&
                         (header[1].toInt() and 0xE0) == 0xE0 -> DetectedContainer.MP3
-                    // "ftyp" at offset 4 → ISO BMFF (MP4/M4A)
                     bytesRead >= 8 &&
                         header[4] == 'f'.code.toByte() &&
                         header[5] == 't'.code.toByte() &&
                         header[6] == 'y'.code.toByte() &&
                         header[7] == 'p'.code.toByte() -> DetectedContainer.MP4
-                    // "fLaC"
                     header[0] == 'f'.code.toByte() &&
                         header[1] == 'L'.code.toByte() &&
                         header[2] == 'a'.code.toByte() &&
                         header[3] == 'C'.code.toByte() -> DetectedContainer.FLAC
-                    // "OggS"
                     header[0] == 'O'.code.toByte() &&
                         header[1] == 'g'.code.toByte() &&
                         header[2] == 'g'.code.toByte() &&
                         header[3] == 'S'.code.toByte() -> detectOggContainer(header, bytesRead)
-                    // "RIFF" + "WAVE"
                     bytesRead >= 12 &&
                         header[0] == 'R'.code.toByte() &&
                         header[1] == 'I'.code.toByte() &&
@@ -767,18 +750,15 @@ class SongMetadataEditor(
         replayGainAlbumUpdate: ReplayGainUpdate = ReplayGainUpdate.Keep,
         coverArtUpdate: CoverArtUpdate? = null
     ): Boolean {
-        // Check for problematic FLAC files first
         when (val flacResult = isProblematicFlacFile(filePath)) {
             is FlacAnalysisResult.Problematic -> {
                 Timber.tag(TAG)
                     .w("TAGLIB: Skipping file modification for high-resolution FLAC (${flacResult.sampleRate}Hz, ${flacResult.bitsPerSample}bit)")
                 Timber.tag(TAG)
                     .w("TAGLIB: High-res FLAC files may not work correctly with TagLib. Will update MediaStore only.")
-                // Return true to indicate we should proceed with MediaStore-only update
-                // The calling code will still update MediaStore and local DB
                 return true
             }
-            else -> { /* Continue with normal processing */ }
+            else -> { }
         }
         
         return try {
@@ -789,9 +769,7 @@ class SongMetadataEditor(
             }
             Timber.tag(TAG).e("TAGLIB: Opening file: $filePath")
 
-            // Open file with read/write permissions
             ParcelFileDescriptor.open(audioFile, ParcelFileDescriptor.MODE_READ_WRITE).use { fd ->
-                // Get existing metadata or create empty map
                 Timber.tag(TAG).e("TAGLIB: Getting existing metadata...")
                 val metadataFd = fd.dup()
                 val existingMetadata = TagLib.getMetadata(metadataFd.detachFd())
@@ -799,7 +777,6 @@ class SongMetadataEditor(
                     .e("TAGLIB: Existing metadata: ${existingMetadata?.propertyMap?.keys}")
                 val propertyMap = HashMap(existingMetadata?.propertyMap ?: emptyMap())
 
-                // Update metadata fields
                 propertyMap["TITLE"] = arrayOf(newTitle)
                 propertyMap["ARTIST"] = arrayOf(newArtist)
                 propertyMap["ALBUM"] = arrayOf(newAlbum)
@@ -819,7 +796,6 @@ class SongMetadataEditor(
                 propertyMap.applyReplayGainUpdate(REPLAYGAIN_ALBUM_GAIN_KEY, replayGainAlbumUpdate)
                 Timber.tag(TAG).e("TAGLIB: Updated property map, saving...")
 
-                // Save metadata
                 val saveFd = fd.dup()
                 val metadataSaved = TagLib.savePropertyMap(saveFd.detachFd(), propertyMap)
                 Timber.tag(TAG).e("TAGLIB: savePropertyMap result: $metadataSaved")
@@ -828,7 +804,6 @@ class SongMetadataEditor(
                     return false
                 }
 
-                // Update cover art if provided
                 coverArtUpdate?.let { update ->
                     val pictures = if (update.isDeletion) {
                         emptyArray<Picture>()
@@ -859,7 +834,6 @@ class SongMetadataEditor(
                 }
             }
 
-            // Force file system sync to ensure data is written to disk
             try {
                 java.io.RandomAccessFile(audioFile, "rw").use { raf ->
                     raf.fd.sync()
@@ -896,13 +870,11 @@ class SongMetadataEditor(
         val targetFile = File(filePath)
         
         return try {
-            // Suppress JAudioTagger's verbose logging
             java.util.logging.Logger.getLogger("org.jaudiotagger").level = java.util.logging.Level.OFF
             
             val audioFile = AudioFileIO.read(targetFile)
             val tag = audioFile.tag ?: audioFile.createDefaultTag()
             
-            // Update text fields
             tag.setField(FieldKey.TITLE, newTitle)
             tag.setField(FieldKey.ARTIST, newArtist)
             tag.setField(FieldKey.ALBUM, newAlbum)
@@ -936,7 +908,6 @@ class SongMetadataEditor(
             tag.applyReplayGainUpdate(REPLAYGAIN_TRACK_GAIN_KEY, replayGainTrackUpdate)
             tag.applyReplayGainUpdate(REPLAYGAIN_ALBUM_GAIN_KEY, replayGainAlbumUpdate)
 
-            // Update cover art if provided
             coverArtUpdate?.let { update ->
                 if (update.isDeletion) {
                     tag.deleteArtworkField()
@@ -947,9 +918,8 @@ class SongMetadataEditor(
                         val artwork = AndroidArtwork()
                         artwork.binaryData = update.bytes
                         artwork.mimeType = update.mimeType
-                        artwork.pictureType = 3 // Standard value for "Front Cover"
+                        artwork.pictureType = 3
                         
-                        // Extract dimensions using Android native BitmapFactory to avoid ImageIO crash
                         val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
                         BitmapFactory.decodeByteArray(update.bytes, 0, update.bytes.size, options)
                         artwork.width = options.outWidth
@@ -1004,7 +974,6 @@ class SongMetadataEditor(
 
             Timber.tag(TAG).e("VORBISJAVA: Reading Opus file: $filePath")
             
-            // Read existing file
             val sourceOpusFile = OpusFile(audioFile)
             opusFile = sourceOpusFile
             val tags = sourceOpusFile.tags ?: OpusTags()
@@ -1046,7 +1015,6 @@ class SongMetadataEditor(
             sourceOpusFile.close()
             opusFile = null
             
-            // Verify temp file was created and has content
             if (!tempFile.exists() || tempFile.length() == 0L) {
                 Timber.tag(TAG).e("VORBISJAVA: Temp file creation failed or is empty")
                 return false
@@ -1320,7 +1288,6 @@ private fun AbstractID3v2Tag.removeReplayGainId3Field(key: String) {
 
 private fun replayGainMp4FieldId(key: String): String = "----:$MP4_REVERSE_DNS_ISSUER:$key"
 
-// Data classes
 data class SongMetadataEditResult(
     val success: Boolean,
     val updatedAlbumArtUri: String?,

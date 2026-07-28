@@ -41,7 +41,6 @@ import javax.inject.Singleton
 class SleepTimerStateHolder @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
-    // Timer State
     private val _sleepTimerEndTimeMillis = MutableStateFlow<Long?>(null)
 
     private val _isEndOfTrackTimerActive = MutableStateFlow(value = false)
@@ -57,11 +56,9 @@ class SleepTimerStateHolder @Inject constructor(
     private val _playCount = MutableStateFlow(1f)
     val playCount: StateFlow<Float> = _playCount.asStateFlow()
 
-    // Internal jobs
     private var sleepTimerJob: Job? = null
     private var eotSongMonitorJob: Job? = null
 
-    // Dependencies that will be injected via initialize
     private val alarmManager: AlarmManager =
         context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
@@ -96,9 +93,6 @@ class SleepTimerStateHolder @Inject constructor(
         songTitleResolver: (String?) -> String
     ) {
         this.scope = scope
-        // Store the suspend lambda as-is: call sites already invoke it inside scope.launch,
-        // so wrapping it in another scope.launch here would nest a second coroutine per toast
-        // and capture this (possibly stale after re-initialize) scope in the closure.
         this.toastEmitter = toastEmitter
         this.mediaControllerProvider = mediaControllerProvider
         this.currentSongIdProvider = currentSongIdProvider
@@ -112,7 +106,6 @@ class SleepTimerStateHolder @Inject constructor(
     fun setSleepTimer(durationMinutes: Int) {
         val scope = this.scope ?: return
 
-        // Cancel any existing EOT timer first
         if (_isEndOfTrackTimerActive.value) {
             eotSongMonitorJob?.cancel()
             cancelSleepTimer(suppressDefaultToast = true)
@@ -128,7 +121,6 @@ class SleepTimerStateHolder @Inject constructor(
             durationMinutes
         )
 
-        // Schedule alarm for reliable triggering
         val pendingIntent = sleepTimerPendingIntent()
 
         try {
@@ -215,11 +207,10 @@ class SleepTimerStateHolder @Inject constructor(
             sleepTimerJob?.cancel()
             _sleepTimerEndTimeMillis.value = null
 
-            // Monitor for song changes
             eotSongMonitorJob?.cancel()
             eotSongMonitorJob = scope.launch {
                 currentSongIdProvider?.invoke()
-                    ?.filterNotNull() // skip initial null emission from stateIn initialValue
+                    ?.filterNotNull()
                     ?.collect { newSongId ->
                         if (_isEndOfTrackTimerActive.value &&
                             (EotStateHolder.eotTargetSongId.value != null) &&
@@ -264,26 +255,21 @@ class SleepTimerStateHolder @Inject constructor(
         val scope = this.scope ?: return
         val wasAnythingActive = _activeTimerValueDisplay.value != null
 
-        // Cancel Alarm
         val pendingIntent = sleepTimerPendingIntent()
         alarmManager.cancel(pendingIntent)
 
-        // Cancel duration timer
         sleepTimerJob?.cancel()
         sleepTimerJob = null
         _sleepTimerEndTimeMillis.value = null
 
-        // Cancel EOT timer
         eotSongMonitorJob?.cancel()
         eotSongMonitorJob = null
         _isEndOfTrackTimerActive.value = false
         EotStateHolder.setEotTargetSong(null)
 
-        // Clear display
         _activeTimerDurationMinutes.value = null
         _activeTimerValueDisplay.value = null
 
-        // Handle toast
         when {
             overrideToastMessage != null -> scope.launch { toastEmitter?.invoke(overrideToastMessage) }
             !suppressDefaultToast && wasAnythingActive -> scope.launch {

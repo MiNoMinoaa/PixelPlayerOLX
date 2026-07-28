@@ -60,7 +60,6 @@ class MediaStorePagingSource(
 
             val songs = fetchSongDetails(idsToLoad)
 
-            // Sort songs to match the order of idsToLoad (because "IN" query doesn't guarantee order)
             val songsMap = songs.associateBy { it.id.toLong() }
             val orderedSongs = idsToLoad.mapNotNull { songsMap[it] }
 
@@ -108,7 +107,7 @@ class MediaStorePagingSource(
             projection,
             selection,
             null,
-            null // Order doesn't matter here, we sort in memory
+            null
         )?.use { cursor ->
             val idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
             val titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
@@ -150,7 +149,7 @@ class MediaStorePagingSource(
                     duration = cursor.getLong(durationCol),
                     genre = songIdToGenreMap[id],
                     lyrics = null,
-                    isFavorite = false, // Not critical for paging source display usually, or passed in?
+                    isFavorite = false,
                     trackNumber = cursor.getInt(trackCol) % 1000,
                     year = cursor.getInt(yearCol),
                     dateAdded = cursor.getLong(dateAddedCol),

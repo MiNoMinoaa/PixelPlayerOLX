@@ -158,13 +158,6 @@ fun AnimatedPlaybackControls(
                 animationSpec = pressAnimationSpec,
                 label = "playWeight"
             )
-            // Bounded tween instead of a spring with StiffnessMedium. The old spring
-            // took ~600 ms to settle and read playCorner in the composition phase,
-            // recomposing AnimatedPlaybackControls every frame for the entire settle.
-            // A 220 ms tween (matching the icon morph's visual beat) keeps the
-            // recomposition window small enough that it doesn't overlap with a
-            // subsequent sheet-collapse gesture. The icon morph itself animates in
-            // the draw phase only, so it doesn't contribute recompositions.
             val playCorner by animateDpAsState(
                 targetValue = if (!playPauseVisualState) playPauseCornerPlaying else playPauseCornerPaused,
                 animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),

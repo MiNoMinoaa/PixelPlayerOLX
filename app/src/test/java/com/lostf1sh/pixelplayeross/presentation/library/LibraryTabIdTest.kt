@@ -22,7 +22,7 @@ class LibraryTabIdTest {
             LibraryTabId.Liked.stableKey,
             "UNKNOWN",
             LibraryTabId.Playlists.stableKey,
-            LibraryTabId.Liked.stableKey // duplicate should be ignored
+            LibraryTabId.Liked.stableKey
         )
         val order = decodeLibraryTabOrder(Json.encodeToString(storedKeys))
 

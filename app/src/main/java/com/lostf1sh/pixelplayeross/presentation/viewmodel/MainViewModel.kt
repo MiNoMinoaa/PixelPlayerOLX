@@ -36,7 +36,7 @@ class MainViewModel @Inject constructor(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = true // Optimistic strategy: assume synced by default
+            initialValue = true
         )
 
     /**
@@ -86,8 +86,6 @@ class MainViewModel @Inject constructor(
     fun startSync() {
         LogUtils.i(this, "startSync called")
         viewModelScope.launch {
-            // For fresh installs after setup, SetupViewModel.setSetupComplete() triggers sync
-            // For returning users (setup already complete), we trigger sync here
             if (isSetupComplete.value == true) {
                 syncManager.sync()
             }

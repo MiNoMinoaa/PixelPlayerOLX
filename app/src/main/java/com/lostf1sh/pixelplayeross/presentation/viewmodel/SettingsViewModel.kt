@@ -78,7 +78,6 @@ data class SettingsUiState(
     val appRebrandDialogShown: Boolean = false,
     val fullPlayerLoadingTweaks: FullPlayerLoadingTweaks = FullPlayerLoadingTweaks(),
     val showPlayerFileInfo: Boolean = true,
-    // Developer Options
     val albumArtQuality: AlbumArtQuality = AlbumArtQuality.MEDIUM,
     val albumArtCacheLimitMb: Int = 200,
     val tapBackgroundClosesPlayer: Boolean = false,
@@ -122,7 +121,6 @@ data class LyricsRefreshProgress(
     val hasFailedSongs: Boolean get() = failedSongs.isNotEmpty()
 }
 
-// Helper classes for consolidated combine() collectors to reduce coroutine overhead
 private sealed interface SettingsUiUpdate {
     data class Group1(
         val appRebrandDialogShown: Boolean,
@@ -204,8 +202,6 @@ class SettingsViewModel @Inject constructor(
             initialValue = SyncProgress()
         )
 
-    // Channel instead of SharedFlow: backup/restore results must survive the window
-    // where the collector is torn down (config change, backstack) and re-subscribes.
     private val _dataTransferEvents = Channel<String>(Channel.BUFFERED)
     val dataTransferEvents: Flow<String> = _dataTransferEvents.receiveAsFlow()
 
@@ -233,17 +229,12 @@ class SettingsViewModel @Inject constructor(
     val dataTransferProgress: StateFlow<BackupTransferProgressUpdate?> = _dataTransferProgress.asStateFlow()
 
     init {
-        // One-time device capability check — result is cached inside HiFiCapabilityChecker
         _uiState.update {
             it.copy(
                 hiFiModeDeviceSupported = HiFiCapabilityChecker.isSupported()
             )
         }
 
-        // Consolidated collectors using combine() to reduce coroutine overhead
-        // Instead of 20 separate coroutines, we use 2 combined flows
-        
-        // Group 1: Core UI settings (theme, navigation, appearance)
         viewModelScope.launch {
             combine<Any?, SettingsUiUpdate.Group1>(
                 userPreferencesRepository.appRebrandDialogShownFlow,
@@ -296,7 +287,6 @@ class SettingsViewModel @Inject constructor(
             }
         }
         
-        // Group 2: Playback and system settings
         viewModelScope.launch {
             combine<Any?, SettingsUiUpdate.Group2>(
                 userPreferencesRepository.keepPlayingInBackgroundFlow,
@@ -358,7 +348,6 @@ class SettingsViewModel @Inject constructor(
             }
         }
         
-        // Group 3: Remaining individual collectors (loading state, tweaks)
         viewModelScope.launch {
             userPreferencesRepository.fullPlayerLoadingTweaksFlow.collect { tweaks ->
                 _uiState.update { it.copy(fullPlayerLoadingTweaks = tweaks) }
@@ -395,7 +384,6 @@ class SettingsViewModel @Inject constructor(
             }
         }
 
-        // Beta Features Collectors
         viewModelScope.launch {
             userPreferencesRepository.albumArtQualityFlow.collect { quality ->
                 _uiState.update { it.copy(albumArtQuality = quality) }
@@ -493,7 +481,6 @@ class SettingsViewModel @Inject constructor(
 
     fun explorerRoot(): File = fileExplorerStateHolder.rootDirectory()
 
-    // Method to save the player theme preference
     fun setPlayerThemePreference(preference: String) {
         viewModelScope.launch {
             themePreferencesRepository.setPlayerThemePreference(preference)
@@ -774,7 +761,6 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             if (durationMs == _uiState.value.minSongDuration) return@launch
             userPreferencesRepository.setMinSongDuration(durationMs)
-            // Trigger a library rescan so the change takes effect in the database
             syncManager.fullSync(deepScan = false)
         }
     }
@@ -837,8 +823,6 @@ class SettingsViewModel @Inject constructor(
             userPreferencesRepository.setInitialSetupDone(false)
         }
     }
-
-    // ===== Developer Options =====
 
     val albumArtQuality: StateFlow<AlbumArtQuality> = userPreferencesRepository.albumArtQualityFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AlbumArtQuality.MEDIUM)

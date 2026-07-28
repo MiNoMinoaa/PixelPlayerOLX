@@ -35,7 +35,6 @@ class RestoreExecutor @Inject constructor(
         val totalSteps = selectedModules.size * 2 + 3
         var step = 0
 
-        // ---- PHASE 1: SNAPSHOT ----
         reportProgress(onProgress, ++step, totalSteps, "Creating safety snapshots", "Capturing current state for rollback.")
 
         val snapshots = mutableMapOf<BackupSection, String>()
@@ -51,7 +50,6 @@ class RestoreExecutor @Inject constructor(
             return@withContext RestoreResult.TotalFailure("Failed to capture current state: ${e.message}")
         }
 
-        // ---- PHASE 2: READ, VALIDATE, RESTORE ----
         reportProgress(onProgress, ++step, totalSteps, "Preparing restore", "Selected modules will be processed one at a time.")
 
         val restoredModules = mutableListOf<BackupSection>()
@@ -71,7 +69,6 @@ class RestoreExecutor @Inject constructor(
 
                 val payload = backupReader.readModulePayload(uri, section.key).getOrThrow()
 
-                // Validate each module payload
                 val validationResult = validationPipeline.validateModulePayload(
                     section, payload, plan.manifest
                 )
@@ -102,7 +99,6 @@ class RestoreExecutor @Inject constructor(
             }
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Restore failed while processing backup module, rolling back")
-            // Roll back in reverse restore order, including the module that failed mid-restore.
             var rollbackSuccess = true
             val rollbackOrder = (restoredModules + listOfNotNull(currentSection)).distinct().asReversed()
             rollbackOrder.forEach { section ->
@@ -134,7 +130,6 @@ class RestoreExecutor @Inject constructor(
             )
         }
 
-        // ---- PHASE 3: FINALIZE ----
         reportProgress(onProgress, ++step, totalSteps, "Restore complete", "All selected modules were restored successfully.")
 
         RestoreResult.Success

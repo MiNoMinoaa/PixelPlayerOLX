@@ -597,7 +597,6 @@ private fun ServiceIcon(service: ExternalServiceAccount, tint: Color, modifier: 
             modifier = modifier,
             contentAlignment = Alignment.CenterStart
         ) {
-            // Subsonic icon (Bottom) - No outer container
             Icon(
                 imageVector = ImageVector.vectorResource(id = R.drawable.ic_subsonic),
                 contentDescription = null,
@@ -606,7 +605,6 @@ private fun ServiceIcon(service: ExternalServiceAccount, tint: Color, modifier: 
                     .size(32.dp)
             )
             
-            // Navidrome icon (Top) - Closer horizontal offset, no outer container
             Icon(
                 imageVector = ImageVector.vectorResource(id = R.drawable.ic_navidrome),
                 contentDescription = null,

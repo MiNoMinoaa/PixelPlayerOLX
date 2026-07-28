@@ -38,7 +38,6 @@ class SurroundDownmixProcessor : AudioProcessor {
         /** Largest supported surround layout (7.1). */
         private const val MAX_SUPPORTED_CHANNELS = 8
 
-        // 5.1 channel indices (FFmpeg order)
         private const val FL_51  = 0
         private const val FR_51  = 1
         private const val FC_51  = 2
@@ -46,7 +45,6 @@ class SurroundDownmixProcessor : AudioProcessor {
         private const val SL_51  = 4
         private const val SR_51  = 5
 
-        // 7.1 channel indices (FFmpeg order)
         private const val FL_71  = 0
         private const val FR_71  = 1
         private const val FC_71  = 2
@@ -72,14 +70,14 @@ class SurroundDownmixProcessor : AudioProcessor {
             inputFormat = inputAudioFormat
             outputFormat = AudioFormat(
                 inputAudioFormat.sampleRate,
-                /* channelCount = */ 2,
+                2,
                 inputAudioFormat.encoding
             )
             outputFormat
         } else {
             inputFormat = AudioFormat.NOT_SET
             outputFormat = AudioFormat.NOT_SET
-            inputAudioFormat // pass-through
+            inputAudioFormat
         }
     }
 

@@ -15,7 +15,6 @@ class ManifestValidator @Inject constructor() {
     fun validate(manifest: BackupManifest): BackupValidationResult {
         val errors = mutableListOf<ValidationError>()
 
-        // Schema version check
         if (manifest.schemaVersion < BackupManifest.MIN_SUPPORTED_VERSION) {
             errors.add(ValidationError("SCHEMA_TOO_OLD", "Backup schema version ${manifest.schemaVersion} is not supported."))
         }
@@ -27,16 +26,14 @@ class ManifestValidator @Inject constructor() {
             ))
         }
 
-        // Timestamp check
         val now = System.currentTimeMillis()
-        if (manifest.createdAt > now + 86_400_000) { // 1 day tolerance
+        if (manifest.createdAt > now + 86_400_000) {
             errors.add(ValidationError("TIMESTAMP_FUTURE", "Backup has a timestamp in the future.", severity = Severity.WARNING))
         }
-        if (manifest.createdAt < 1_700_000_000_000) { // Before ~Nov 2023
+        if (manifest.createdAt < 1_700_000_000_000) {
             errors.add(ValidationError("TIMESTAMP_OLD", "Backup has an unusually old timestamp.", severity = Severity.WARNING))
         }
 
-        // Module keys check
         val knownKeys = BackupSection.entries.map { it.key }.toSet()
         manifest.modules.keys.forEach { key ->
             if (key !in knownKeys) {

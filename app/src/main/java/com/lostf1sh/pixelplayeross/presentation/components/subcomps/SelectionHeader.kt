@@ -83,11 +83,9 @@ fun SelectionHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        // Left side: Stacked cover arts + count
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Stacked album arts (up to 5, overlapping)
             StackedCoverArts(
                 songs = remember(selectedSongs) { selectedSongs.take(5).toImmutableList() },
                 totalCount = selectedSongs.size
@@ -95,17 +93,14 @@ fun SelectionHeader(
             
             Spacer(modifier = Modifier.width(16.dp))
             
-            // Selection count with animated number
             Column {
                 AnimatedContent(
                     targetState = selectedSongs.size,
                     transitionSpec = {
                         if (targetState > initialState) {
-                            // Counting up
                             scaleIn(spring(dampingRatio = Spring.DampingRatioMediumBouncy)) + fadeIn() togetherWith
                                 scaleOut() + fadeOut()
                         } else {
-                            // Counting down
                             scaleIn() + fadeIn() togetherWith
                                 scaleOut() + fadeOut()
                         }
@@ -129,12 +124,10 @@ fun SelectionHeader(
             }
         }
         
-        // Right side: Action buttons
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Share button
             FilledTonalIconButton(
                 onClick = onShareClick,
                 colors = IconButtonDefaults.filledTonalIconButtonColors(
@@ -150,7 +143,6 @@ fun SelectionHeader(
                 )
             }
             
-            // Like button
             FilledIconButton(
                 onClick = onLikeClick,
                 colors = IconButtonDefaults.filledIconButtonColors(
@@ -166,7 +158,6 @@ fun SelectionHeader(
                 )
             }
             
-            // Play button (larger, primary action)
             MediumExtendedFloatingActionButton(
                 onClick = onPlayClick,
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -200,7 +191,7 @@ private fun StackedCoverArts(
     modifier: Modifier = Modifier
 ) {
     val imageSize = 48.dp
-    val overlap = 20.dp // How much images overlap
+    val overlap = 20.dp
     
     Box(
         modifier = modifier,
@@ -238,7 +229,6 @@ private fun StackedCoverArts(
             }
         }
         
-        // Show "+N" indicator if more songs are selected than displayed
         if (totalCount > songs.size) {
             val offsetX = songs.size * (imageSize.value - overlap.value)
             Box(

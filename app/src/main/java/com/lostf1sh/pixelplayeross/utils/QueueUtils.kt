@@ -81,7 +81,6 @@ object QueueUtils {
             }
         }
 
-        // Fisher-Yates with periodic yield for very large pools
         for (i in pool.lastIndex downTo 1) {
             val swapIndex = random.nextInt(i + 1)
             if (i != swapIndex) {
@@ -150,7 +149,6 @@ object QueueUtils {
         var cursor = 0
         var workSinceYield = 0
         
-        // Fill pool with everything EXCEPT the anchor
         for (i in 0 until size) {
             if (i != clampedAnchor) {
                 pool[cursor++] = i
@@ -162,7 +160,6 @@ object QueueUtils {
             }
         }
         
-        // Fisher-Yates shuffle the pool
         for (i in pool.lastIndex downTo 1) {
             val swapIndex = random.nextInt(i + 1)
             if (i != swapIndex) {
@@ -177,7 +174,6 @@ object QueueUtils {
             }
         }
         
-        // Construct final order: Anchor is ALWAYS at 0, followed by shuffled pool
         val order = IntArray(size)
         order[0] = clampedAnchor
         

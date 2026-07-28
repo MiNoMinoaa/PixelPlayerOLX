@@ -20,7 +20,7 @@ fun HomeOptionsBottomSheet(
     onNavigateToMashup: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier.padding(bottom = 32.dp)) { // Padding for gesture bar
+    Column(modifier.padding(bottom = 32.dp)) {
         ListItem(
             content = { Text(stringResource(R.string.home_option_dj_mashup)) },
             leadingContent = {

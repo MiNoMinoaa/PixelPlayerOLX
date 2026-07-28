@@ -160,7 +160,6 @@ fun DailyMixScreen(
             },
             onDeleteFromDevice = playerViewModel::deleteFromDevice,
             onNavigateToAlbum = {
-                // Assuming Screen object has a method to create a route
                 navController.navigateSafely(Screen.AlbumDetail.createRoute(song.albumId))
                 showSongInfoSheet = false
             },
@@ -332,7 +331,6 @@ fun DailyMixScreen(
             )
         }
 
-        // Bottom Gradient
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -351,7 +349,6 @@ fun DailyMixScreen(
 
         }
 
-        //Top Gradient
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -433,7 +430,6 @@ private fun ExpressiveDailyMixHeader(
                                 }
                             }
                         ) {
-                            // This is the content that gets measured and drawn.
                             Box(
                                 modifier = Modifier
                                     .graphicsLayer { rotationZ = rotation }
@@ -498,7 +494,6 @@ private fun ExpressiveDailyMixHeader(
             ) {
                 Text(
                     text = dailyMixHeaderTitle,
-//                    style = MaterialTheme.typography.headlineLarge,
                     style = titleStyle,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -531,7 +526,6 @@ private fun rememberDailyMixTitleStyle(): TextStyle {
                     variationSettings = FontVariation.Settings(
                         FontVariation.weight(436),
                         FontVariation.width(102f),
-                        //FontVariation.grade(40),
                         FontVariation.Setting("ROND", 100f),
                         FontVariation.Setting("XTRA", 520f),
                         FontVariation.Setting("YOPQ", 90f),
@@ -541,8 +535,6 @@ private fun rememberDailyMixTitleStyle(): TextStyle {
             ),
             fontWeight = FontWeight(760),
             fontSize = 44.sp,
-            //lineHeight = 62.sp,
-//            letterSpacing = (-0.4).sp
         )
     }
 }

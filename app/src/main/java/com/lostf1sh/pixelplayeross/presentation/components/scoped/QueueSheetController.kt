@@ -48,7 +48,6 @@ internal class QueueSheetController(
                 pendingDragTarget = null
                 queueSheetOffset.snapTo(target)
 
-                // Coalesce high-frequency deltas into frame-paced updates.
                 if (coroutineContext[MonotonicFrameClock] != null) {
                     withFrameNanos { }
                 } else {
@@ -62,8 +61,6 @@ internal class QueueSheetController(
         val hiddenOffset = hiddenOffsetProvider()
         if (hiddenOffset <= 0f) return
         val targetOffset = if (showQueueSheetProvider()) {
-            // If open was requested before we knew the measured height, offset can still be off-range.
-            // In that case, honor the open request by snapping to fully expanded.
             if (queueSheetOffset.value > hiddenOffset) 0f
             else queueSheetOffset.value.coerceIn(0f, hiddenOffset)
         } else {
@@ -154,7 +151,6 @@ internal class QueueSheetController(
         val hiddenOffset = hiddenOffsetProvider()
         if (hiddenOffset == 0f || !allowInteractionProvider()) return
 
-        // Freeze pending deltas before deciding snap target.
         val settledOffset = pendingDragTarget ?: dragOffsetCache ?: queueSheetOffset.value
         resetDragPipeline()
 
@@ -162,15 +158,10 @@ internal class QueueSheetController(
         val isFastDownward = velocity > 450f
         val minFlingTravelPx = minFlingTravelPxProvider()
         val hasMeaningfulUpwardTravel = totalDrag < -minFlingTravelPx
-        // Quick upward flicks on full player can be short in travel but high in intent.
         val hasQuickUpwardTravel = totalDrag < -(minFlingTravelPx * 0.35f)
         val shouldExpandFromQuickFling = isFastUpward && hasQuickUpwardTravel
         val dragThresholdPx = dragThresholdPxProvider()
 
-        // Directional intent: a clear drag past the threshold in either direction
-        // commits to that direction. This makes dismissing from the header reliable
-        // (downward drag past threshold → close) while still letting upward drags
-        // from the closed state open the sheet.
         val hasCommittedDownwardDrag = totalDrag > dragThresholdPx
         val hasCommittedUpwardDrag = totalDrag < -dragThresholdPx
 
@@ -180,7 +171,6 @@ internal class QueueSheetController(
             isFastDownward -> false
             hasCommittedDownwardDrag -> false
             hasCommittedUpwardDrag -> true
-            // Tiny residual drag: snap to whichever half the sheet ended in.
             else -> settledOffset < hiddenOffset * 0.5f
         }
 

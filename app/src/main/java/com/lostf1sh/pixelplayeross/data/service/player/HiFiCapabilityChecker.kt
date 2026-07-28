@@ -28,7 +28,6 @@ object HiFiCapabilityChecker {
     }
 
     private fun runCheck(): Boolean {
-        // Stage 1: buffer-size probe (no allocation)
         val minBuf = AudioTrack.getMinBufferSize(
             44_100,
             AudioFormat.CHANNEL_OUT_STEREO,
@@ -39,7 +38,6 @@ object HiFiCapabilityChecker {
             return false
         }
 
-        // Stage 2: actual AudioTrack creation (definitive hardware check)
         return try {
             val track = AudioTrack.Builder()
                 .setAudioFormat(

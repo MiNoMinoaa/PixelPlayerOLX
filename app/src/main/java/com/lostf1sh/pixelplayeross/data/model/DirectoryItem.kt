@@ -9,5 +9,5 @@ data class DirectoryItem(
     val isAllowed: Boolean
 ) {
     val displayName: String
-        get() = File(path).name.ifEmpty { path } // Shows the folder name, or the path if it's the root
+        get() = File(path).name.ifEmpty { path }
 }

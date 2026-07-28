@@ -296,7 +296,6 @@ fun SongInfoBottomSheet(
         },
         sheetState = sheetState,
     ) {
-        // HERE WE APPLY THE FIX: Null out the overscroll factory for everything inside here
         CompositionLocalProvider(
             LocalOverscrollFactory provides null
         ) {
@@ -312,7 +311,6 @@ fun SongInfoBottomSheet(
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                     ) {
-                        // Row for the album art and the title (Always visible)
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -363,7 +361,6 @@ fun SongInfoBottomSheet(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Swipeable Content
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -380,7 +377,7 @@ fun SongInfoBottomSheet(
                             verticalAlignment = Alignment.Top
                         ) { page ->
                             when (page) {
-                                0 -> { // Options / Actions
+                                0 -> {
                                     LazyColumn(
                                         modifier = Modifier
                                             .fillMaxWidth(),
@@ -589,7 +586,7 @@ fun SongInfoBottomSheet(
                                         }
                                     }
                                 }
-                                1 -> { // Details / Info
+                                1 -> {
                                     LazyColumn(
                                         modifier = Modifier
                                             .fillMaxWidth(),
@@ -681,7 +678,6 @@ fun SongInfoBottomSheet(
                     }
                 }
 
-                // Bottom Tab Bar
                 PrimaryTabRow(
                     selectedTabIndex = pagerState.currentPage,
                     modifier = Modifier

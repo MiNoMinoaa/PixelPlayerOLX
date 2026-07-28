@@ -2,6 +2,5 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <corners android:radius="16dp" />
-    <!-- A slightly lighter/darker tint to emulate secondary container -->
     <solid android:color="#11000000" />
 </shape>

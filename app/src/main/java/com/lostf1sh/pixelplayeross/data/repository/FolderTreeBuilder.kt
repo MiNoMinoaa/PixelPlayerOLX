@@ -25,10 +25,8 @@ class FolderTreeBuilder @Inject constructor() {
         folderSource: FolderSource,
         context: Context
     ): List<MusicFolder> {
-        // 1. Resolve Rules
         val resolver = DirectoryRuleResolver(allowedDirs, blockedDirs)
 
-        // 2. Filter Songs based on Directory Rules
         val filteredSongs = if (isFolderFilterActive && blockedDirs.isNotEmpty()) {
             folderSongs.filter { song ->
                 val normalizedParent = normalizePath(song.parentDirectoryPath)
@@ -40,7 +38,6 @@ class FolderTreeBuilder @Inject constructor() {
 
         if (filteredSongs.isEmpty()) return emptyList()
 
-        // 3. Determine Root Path based on Source
         val storages = StorageUtils.getAvailableStorages(context)
         val internalStorageRoot = storages
             .firstOrNull { it.storageType == StorageType.INTERNAL }
@@ -114,16 +111,13 @@ class FolderTreeBuilder @Inject constructor() {
             val parentPath = normalizePath(song.parentDirectoryPath)
             if (parentPath.isBlank()) continue
 
-            // Get or create the folder for this song
             val folder = getOrCreateTempFolder(parentPath, folderMap, getNameFromPath(parentPath))
             folder.songs.add(song.toFolderStubSong())
             
-            // Ensure hierarchy
             var currentPath = parentPath
             while (currentPath.length > normalizedSelectedRoot.length && isPathAtOrUnder(currentPath, normalizedSelectedRoot)) {
                 val parentOfCurrent = getParentPath(currentPath) ?: break
                 
-                // If we went above root, stop
                 if (!isPathAtOrUnder(parentOfCurrent, normalizedSelectedRoot)) break
                 
                 val parentFolder = getOrCreateTempFolder(parentOfCurrent, folderMap, getNameFromPath(parentOfCurrent))
@@ -207,7 +201,6 @@ class FolderTreeBuilder @Inject constructor() {
     private fun buildImmutableFolder(path: String, map: Map<String, TempFolder>): MusicFolder? {
         val temp = map[path] ?: return null
         
-        // Recursively build subfolders
         val subFolders = temp.subFolderPaths
             .mapNotNull { subPath -> buildImmutableFolder(subPath, map) }
             .sortedBy { it.name.lowercase() }

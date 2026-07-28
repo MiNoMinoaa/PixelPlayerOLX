@@ -51,7 +51,7 @@ class ManifestValidatorTest {
     fun `timestamp far in the future emits warning`() {
         val manifest = BackupManifest(
             schemaVersion = 3,
-            createdAt = System.currentTimeMillis() + 86_400_000 * 2 // 2 days ahead
+            createdAt = System.currentTimeMillis() + 86_400_000 * 2
         )
         val result = validator.validate(manifest)
         assertTrue(result is BackupValidationResult.Invalid)
@@ -63,7 +63,7 @@ class ManifestValidatorTest {
     fun `old timestamp emits warning`() {
         val manifest = BackupManifest(
             schemaVersion = 3,
-            createdAt = 1_000_000_000_000 // ~2001
+            createdAt = 1_000_000_000_000
         )
         val result = validator.validate(manifest)
         assertTrue(result is BackupValidationResult.Invalid)
@@ -110,9 +110,6 @@ class ManifestValidatorTest {
 
     @Test
     fun `verifyChecksum fails when no checksum in manifest`() {
-        // BackupWriter and LegacyPayloadAdapter always emit sha256 checksums, so a missing
-        // module entry can only come from a corrupted or tampered archive — it must fail
-        // verification rather than silently bypass it.
         val manifest = BackupManifest(modules = emptyMap())
         assertFalse(validator.verifyChecksum("favorites", "any payload", manifest))
     }

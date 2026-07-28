@@ -54,23 +54,19 @@ class NavidromeCoilFetcher(
     override suspend fun fetch(): FetchResult? {
         Timber.v("$TAG: Fetching $uri")
 
-        // Parse URI: navidrome_cover://coverArtId
         val coverArtId = uri.host ?: uri.path?.removePrefix("/")
         if (coverArtId.isNullOrBlank()) {
             Timber.w("$TAG: Invalid URI format: $uri")
             return null
         }
 
-        // Check if user is logged in
         if (!repository.isLoggedIn) {
             Timber.v("$TAG: Not logged in, skipping fetch")
             return null
         }
 
-        // Check for size parameter
         val sizeParam = uri.getQueryParameter("size")?.toIntOrNull() ?: 500
 
-        // Check cache first
         val cachedFile = File(cacheDir, "navidrome_cover_${coverArtId}_$sizeParam.jpg")
         if (cachedFile.exists() && cachedFile.length() > 0) {
             Timber.v("$TAG: Using cached cover for $coverArtId")
@@ -84,7 +80,6 @@ class NavidromeCoilFetcher(
             )
         }
 
-        // Get the cover art URL from the repository
         val coverArtUrl = repository.getCoverArtUrl(coverArtId, sizeParam)
         if (coverArtUrl.isNullOrBlank()) {
             if (shouldLogFailure("no_url_$coverArtId")) {
@@ -93,7 +88,6 @@ class NavidromeCoilFetcher(
             return null
         }
 
-        // Download the image
         return try {
             downloadImage(coverArtUrl, cachedFile)
         } catch (e: Exception) {
@@ -124,7 +118,6 @@ class NavidromeCoilFetcher(
                     return null
                 }
 
-                // Save to cache
                 FileOutputStream(cacheFile).use { fos ->
                     fos.write(bytes)
                 }

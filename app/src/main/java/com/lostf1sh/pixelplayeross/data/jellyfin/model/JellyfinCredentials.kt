@@ -59,7 +59,6 @@ data class JellyfinCredentials(
             return "Server URL must not contain embedded credentials"
         }
 
-        // Warn about cleartext HTTP on public hosts
         if (!parsed.isHttps) {
             val host = parsed.host.lowercase()
             if (!isHttpAllowedHost(host)) {

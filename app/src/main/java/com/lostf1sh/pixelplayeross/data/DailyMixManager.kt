@@ -30,11 +30,8 @@ class DailyMixManager @Inject constructor(
     private val fileLock = Any()
     private val statsType = object : TypeToken<MutableMap<String, SongEngagementStats>>() {}.type
 
-    // Migration is lazy: it runs inside the first caller that needs migrated data,
-    // on that caller's scope, instead of a fire-and-forget launch at construction.
     private val migrationMutex = Mutex()
 
-    // Flag to track if we've migrated legacy data
     @Volatile
     private var legacyMigrationComplete = false
 
@@ -65,7 +62,6 @@ class DailyMixManager @Inject constructor(
             return
         }
 
-        // Read legacy data within the lock (only file I/O —  no suspend calls allowed inside synchronized)
         val entitiesToInsert: List<SongEngagementEntity>? = synchronized(fileLock) {
             if (legacyMigrationComplete) return@synchronized null
 
@@ -87,13 +83,11 @@ class DailyMixManager @Inject constructor(
             }
         }
 
-        // Perform the suspend DB call outside the synchronized block
         if (entitiesToInsert != null) {
             try {
                 engagementDao.upsertEngagements(entitiesToInsert)
                 Timber.tag(TAG).i("Migrated ${entitiesToInsert.size} engagement records from JSON to Room")
 
-                // Rename legacy file as backup instead of deleting
                 val backupFile = File(context.filesDir, "song_scores.json.bak")
                 legacyScoresFile.renameTo(backupFile)
             } catch (e: Exception) {
@@ -332,7 +326,7 @@ class DailyMixManager @Inject constructor(
             val noveltyScore = computeNoveltyScore(song.dateAdded, now)
             val favoriteScore = if (favoriteSongIds.contains(song.id)) 1.0 else 0.0
             val baselineScore = if (stats == null) 0.1 else 0.0
-            val noise = random.nextDouble() * 0.005 // Significantly reduced noise
+            val noise = random.nextDouble() * 0.005
 
             val finalScore = (preferenceScore * 0.45) +
                 (affinityScore * 0.25) +

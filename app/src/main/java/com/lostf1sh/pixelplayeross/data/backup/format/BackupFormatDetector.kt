@@ -24,23 +24,19 @@ class BackupFormatDetector {
             if (header.size < 8) return Format.PXPL_V2_GZIP
             val afterMagic0 = header[4]
             val afterMagic1 = header[5]
-            // ZIP local file header: PK\x03\x04
             if (afterMagic0 == 'P'.code.toByte() && afterMagic1 == 'K'.code.toByte()) {
                 return Format.PXPL_V3_ZIP
             }
-            // GZIP magic: 1f 8b
             if (afterMagic0 == 0x1f.toByte() && afterMagic1 == 0x8b.toByte()) {
                 return Format.PXPL_V2_GZIP
             }
             return Format.PXPL_V2_GZIP
         }
 
-        // No PXPL magic: check for raw GZIP
         if (header[0] == 0x1f.toByte() && header[1] == 0x8b.toByte()) {
             return Format.LEGACY_GZIP
         }
 
-        // Check for raw JSON (starts with '{')
         if (header[0] == '{'.code.toByte()) {
             return Format.LEGACY_RAW
         }

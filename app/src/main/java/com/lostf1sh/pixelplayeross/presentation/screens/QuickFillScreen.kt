@@ -49,7 +49,7 @@ import kotlinx.collections.immutable.toImmutableList
 @Composable
 fun QuickFillDialog(
     visible: Boolean,
-    songs: ImmutableList<Song>, // Initial list of songs (from Unknown genre)
+    songs: ImmutableList<Song>,
     customGenres: Set<String>,
     customGenreIcons: Map<String, Int>,
     onDismiss: () -> Unit,
@@ -82,7 +82,7 @@ fun QuickFillContent(
     onApply: (List<Song>, String) -> Unit,
     onAddCustomGenre: (String, Int) -> Unit
 ) {
-    var step by remember { mutableIntStateOf(0) } // 0: Select Songs, 1: Select Genre
+    var step by remember { mutableIntStateOf(0) }
     val selectedSongIds = remember { mutableStateMapOf<String, Boolean>() }
     var selectedGenre by remember { mutableStateOf<String?>(null) }
     var searchQuery by remember { mutableStateOf("") }
@@ -172,7 +172,7 @@ fun QuickFillContent(
                             selectedSongIds = selectedSongIds,
                             modifier = Modifier.weight(1f),
                             albumShape = CircleShape,
-                            contentPadding = PaddingValues(bottom = 100.dp) // Space for docked toolbar
+                            contentPadding = PaddingValues(bottom = 100.dp)
                         )
                     }
                 } else {
@@ -188,14 +188,13 @@ fun QuickFillContent(
             }
         }
         
-        // Docked Toolbar
         val isNextEnabled = if (step == 0) selectedSongIds.containsValue(true) else selectedGenre != null
         
         Surface(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(16.dp)
-                .padding(bottom = 16.dp) // System bars handling?
+                .padding(bottom = 16.dp)
                 .fillMaxWidth()
                 .height(64.dp)
                 .imePadding(),
@@ -205,16 +204,14 @@ fun QuickFillContent(
             shadowElevation = 4.dp
         ) {
             Row(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 10.dp), // Symmetric 10dp horizontal padding
+                modifier = Modifier.fillMaxSize().padding(horizontal = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (step == 0) {
-                    // Segmented Buttons: Select All | Clear
                     Row(
                         modifier = Modifier.height(44.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Select All (Left Segment)
                         FilledTonalButton(
                             onClick = { songs.forEach { selectedSongIds[it.id] = true } },
                             shape = RoundedCornerShape(topStart = 50.dp, bottomStart = 50.dp, topEnd = 4.dp, bottomEnd = 4.dp),
@@ -227,10 +224,8 @@ fun QuickFillContent(
                             Text(stringResource(R.string.presentation_batch_b_select_all), style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                         
-                        // Divider/Spacer
                         Spacer(modifier = Modifier.width(2.dp))
                         
-                        // Clear (Right Segment)
                         FilledTonalButton(
                             onClick = { selectedSongIds.clear() },
                             shape = RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp, topEnd = 50.dp, bottomEnd = 50.dp),
@@ -261,10 +256,9 @@ fun QuickFillContent(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f)
                     )
-                    Spacer(modifier = Modifier.width(16.dp)) // Added separation
+                    Spacer(modifier = Modifier.width(16.dp))
                 }
 
-                // Action Button
                 Button(
                     onClick = {
                         if (step == 0) {
@@ -320,7 +314,6 @@ fun GenreValidatorContent(
     val selectIconLabel = stringResource(R.string.presentation_batch_b_select_icon)
     val addLabel = stringResource(R.string.presentation_batch_b_add)
 
-    // Merge standard genres and custom genres
     val allGenres = remember(customGenres) {
         (GenreIconProvider.DEFAULT_GENRES + customGenres.toList()).sorted()
     }
@@ -331,14 +324,13 @@ fun GenreValidatorContent(
             start = 16.dp, 
             end = 16.dp, 
             top = 16.dp, 
-            bottom = contentPadding.calculateBottomPadding() + 16.dp // Respect passed padding
+            bottom = contentPadding.calculateBottomPadding() + 16.dp
         ),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxSize()
     ) {
         item {
-            // Add Custom Button
             Card(
                 onClick = { showCustomDialog = true },
                 colors = CardDefaults.cardColors(
@@ -423,12 +415,11 @@ fun GenreValidatorContent(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     
-                    // Icon Picker Grid
                     LazyVerticalGrid(
                         columns = GridCells.Adaptive(minSize = 48.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.height(200.dp) // Fixed height for scrollability inside dialog
+                        modifier = Modifier.height(200.dp)
                     ) {
                         items(GenreIconProvider.SELECTABLE_ICONS, key = { it }) { iconRes ->
                             val isSelected = selectedIcon == iconRes

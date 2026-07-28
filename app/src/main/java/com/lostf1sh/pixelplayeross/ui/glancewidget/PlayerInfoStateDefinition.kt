@@ -18,18 +18,15 @@ import java.io.File
 object PlayerInfoStateDefinition : GlanceStateDefinition<PlayerInfo> {
     private const val DATASTORE_FILE_NAME = "pixelPlayPlayerInfo_v1_json"
 
-    // Json instance for serialization. Could be injected if this object were a class.
-    // For simplicity here, using a default configured instance.
-    // Ideally, use the one provided by AppModule.
     private val json = Json {
         ignoreUnknownKeys = true
         isLenient = true
-        coerceInputValues = true // Important if some default values in PlayerInfo might be null initially
+        coerceInputValues = true
     }
 
     private val Context.playerInfoDataStore: DataStore<PlayerInfo> by dataStore(
         fileName = DATASTORE_FILE_NAME,
-        serializer = PlayerInfoJsonSerializer(json) // Use new JSON serializer
+        serializer = PlayerInfoJsonSerializer(json)
     )
 
     override suspend fun getDataStore(context: Context, fileKey: String): DataStore<PlayerInfo> {
@@ -42,12 +39,12 @@ object PlayerInfoStateDefinition : GlanceStateDefinition<PlayerInfo> {
 }
 
 class PlayerInfoJsonSerializer(private val json: Json) : Serializer<PlayerInfo> {
-    override val defaultValue: PlayerInfo = PlayerInfo() // Default instance of the data class
+    override val defaultValue: PlayerInfo = PlayerInfo()
 
     override suspend fun readFrom(input: InputStream): PlayerInfo {
         try {
             val string = input.bufferedReader().use { it.readText() }
-            if (string.isBlank()) return defaultValue // Handle empty file case
+            if (string.isBlank()) return defaultValue
             return json.decodeFromString<PlayerInfo>(string)
         } catch (exception: SerializationException) {
             throw CorruptionException("Cannot read json.", exception)

@@ -36,8 +36,6 @@ object DuplicateFinder {
             .forEach { (_, sameNamed) ->
                 if (sameNamed.size < 2) return@forEach
 
-                // Within a title+artist bucket, cluster by similar duration so genuinely
-                // different recordings of the same name aren't merged.
                 val sorted = sameNamed.sortedBy { it.duration }
                 var cluster = mutableListOf(sorted.first())
                 for (i in 1 until sorted.size) {

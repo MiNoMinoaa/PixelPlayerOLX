@@ -55,7 +55,6 @@ import kotlin.math.PI
 import kotlin.math.max
 import kotlin.math.sin
 
-// Roman Multilang
 object MultiLangRomanizer {
     private val kuromojiTokenizer: Tokenizer? by lazy {
         try {
@@ -109,10 +108,8 @@ object MultiLangRomanizer {
     private val MACEDONIAN_SPECIFIC_CYRILLIC_LETTERS = setOf("Ѓ", "ѓ", "Ѕ", "ѕ", "Ќ", "ќ")
 
     fun isJapanese(text: String, entireLyricsHasKana: Boolean = false): Boolean {
-        // Detect Hiragana or Katakana
         if (text.any { it in '\u3040'..'\u309F' || it in '\u30A0'..'\u30FF' }) return true
         
-        // Treat Kanji-only lines as Japanese only when the overall lyrics contain kana.
         return entireLyricsHasKana && text.any { it in '\u4E00'..'\u9FFF' }
     }
     fun isKorean(text: String) = text.any { it in '\uAC00'..'\uD7A3' }
@@ -124,13 +121,13 @@ object MultiLangRomanizer {
     fun isScriptThatNeedsRomanization(text: String): Boolean {
         return text.any { char ->
             val code = char.code
-            code in 0x3040..0x309F || // Hiragana
-            code in 0x30A0..0x30FF || // Katakana
-            code in 0x4E00..0x9FFF || // CJK Unified Ideographs (Chinese)
-            code in 0xAC00..0xD7A3 || // Hangul (Korean)
-            code in 0x0900..0x097F || // Devanagari (Hindi)
-            code in 0x0A00..0x0A7F || // Gurmukhi (Punjabi)
-            code in 0x0400..0x04FF    // Cyrillic
+            code in 0x3040..0x309F ||
+            code in 0x30A0..0x30FF ||
+            code in 0x4E00..0x9FFF ||
+            code in 0xAC00..0xD7A3 ||
+            code in 0x0900..0x097F ||
+            code in 0x0A00..0x0A7F ||
+            code in 0x0400..0x04FF
         }
     }
 
@@ -148,14 +145,12 @@ object MultiLangRomanizer {
         return try {
             val tokens = tokenizer.tokenize(japaneseText)
 
-            // ── Pass 1: resolve readings ──────────────────────────────────────
             val readings = mutableListOf<Triple<String, String, String>>()
             var i = 0
             while (i < tokens.size) {
                 val token = tokens[i]
                 val next  = tokens.getOrNull(i + 1)
 
-                // Irregular lexical compounds
                 when {
                     token.surface == "一" && next?.surface == "人" -> {
                         readings += Triple("ヒトリ", "名詞", "一般"); i += 2; continue
@@ -192,7 +187,6 @@ object MultiLangRomanizer {
                 i++
             }
 
-            // ── Pass 2: build katakana string with spacing ────────────────────
             val kataBuf = StringBuilder()
             readings.forEachIndexed { idx, (kata, pos1, pos2) ->
                 val prevKata = readings.getOrNull(idx - 1)?.first ?: ""
@@ -209,7 +203,6 @@ object MultiLangRomanizer {
 
             val katakanaText = kataBuf.toString().replace("\\s+".toRegex(), " ").trim()
 
-            // ── Pass 3: Katakana → Latin via ICU transliterator ───────────────
             val latin = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 android.icu.text.Transliterator
                     .getInstance("Katakana-Latin; Lower")
@@ -218,9 +211,6 @@ object MultiLangRomanizer {
                 katakanaText
             }
 
-            // ── Pass 4: context-sensitive post-processing ─────────────────────
-            // Fix ん before b/p → "m" (standard Hepburn).
-            // Fix word-initial false "m" that is actually "n".
             latin
                 .replace(Regex("n(?=[bp])"), "m")
                 .replace(Regex("\\s+"), " ")
@@ -232,124 +222,68 @@ object MultiLangRomanizer {
         }
     }
 
-    // ── 多音字 (polyphone) override table ────────────────────────────────────
-    // Pinyin4j always returns the statistically most common reading which is
-    // wrong in many song-lyric contexts. This table provides the dominant
-    // lyric-usage reading for the most frequent polyphonies.
-    // Format: Char → preferred pinyin (no tone, lowercase, matches Pinyin4j output format)
     private val POLYPHONE_OVERRIDE = mapOf(
-        // 中 zhōng (middle/China) vs zhòng (hit/heavy) — zhong far more common in lyrics
         '中' to "zhong",
-        // 行 xíng (walk/OK) vs háng (row/profession)
         '行' to "xing",
-        // 乐 lè (happy) vs yuè (music) — context: 音乐→yue, 快乐→le; default to le
-        // (handled contextually below)
-        // 长 cháng (long) vs zhǎng (grow/leader)
         '长' to "chang",
-        // 重 zhòng (heavy/important) vs chóng (repeat/again)
         '重' to "zhong",
-        // 好 hǎo (good) vs hào (like/hobby)
         '好' to "hao",
-        // 觉 jué (feel/sense) vs jiào (sleep)
         '觉' to "jue",
-        // 得 de (structural particle) vs dé (get) vs děi (must)
         '得' to "de",
-        // 地 dì (earth) vs de (structural particle)
-        // context: after adjective → de; standalone → di; default di
         '地' to "di",
-        // 的 de (possessive particle) — always de in lyrics
         '的' to "de",
-        // 了 le (completion particle) vs liǎo (finish/understand)
         '了' to "le",
-        // 还 hái (still/yet) vs huán (return)
         '还' to "hai",
-        // 只 zhǐ (only) vs zhī (measure word for animals)
         '只' to "zhi",
-        // 着 zhe (progressive particle) vs zháo (touch) vs zhāo (trick)
         '着' to "zhe",
-        // 没 méi (not have) vs mò (sink/drown)
         '没' to "mei",
-        // 为 wèi (for/because) vs wéi (be/act as)
         '为' to "wei",
-        // 难 nán (difficult) vs nàn (disaster)
         '难' to "nan",
-        // 空 kōng (empty/sky) vs kòng (free time/gap)
         '空' to "kong",
-        // 间 jiān (between/room) vs jiàn (interval)
         '间' to "jian",
-        // 数 shù (number) vs shǔ (count) vs shuò (frequent)
         '数' to "shu",
-        // 差 chā (difference) vs chà (bad/differ) vs chāi (dispatch)
         '差' to "cha",
-        // 调 diào (tune/transfer) vs tiáo (adjust)
         '调' to "diao",
-        // 传 chuán (pass/spread) vs zhuàn (biography)
         '传' to "chuan",
-        // 弹 tán (play instrument/flick) vs dàn (bullet/bomb)
         '弹' to "tan",
-        // 发 fā (send/emit) vs fà (hair)
         '发' to "fa",
-        // 分 fēn (minute/divide) vs fèn (portion/share)
         '分' to "fen",
-        // 过 guò (pass/experience) — always guo as particle
         '过' to "guo",
-        // 和 hé (and/harmonious) vs hè (respond in singing) vs huó (mix)
         '和' to "he",
-        // 会 huì (can/meeting) vs kuài (fast — dialectal)
         '会' to "hui",
-        // 看 kàn (look) vs kān (watch over)
         '看' to "kan",
-        // 乐 — handled contextually: 音乐 yuè, 快乐/高兴 lè
-        // 男 nán — only one reading, but Pinyin4j sometimes fails
         '男' to "nan",
-        // 女 nǚ
         '女' to "nu",
-        // 儿 ér (child/Erhua marker)
         '儿' to "er",
-        // 那 nà (that) vs nǎ (which) vs nèi (contraction)
         '那' to "na",
-        // 哪 nǎ (which)
         '哪' to "na",
-        // 啊 a (exclamation) — always a
         '啊' to "a",
-        // 吗 ma (question particle)
         '吗' to "ma",
-        // 呢 ne (particle)
         '呢' to "ne",
-        // 吧 ba (particle)
         '吧' to "ba",
-        // 嗯 ń/ňg — approximated
         '嗯' to "en",
-        // 哦 ó/ò — approximated
         '哦' to "o",
-        // 喔 ō
         '喔' to "o",
-        // 哇 wā (wow)
         '哇' to "wa",
-        // 咦 yí (surprise)
         '咦' to "yi",
-        // 呀 ya (particle)
         '呀' to "ya",
-        // 嘛 ma (obviously particle)
         '嘛' to "ma"
     )
 
-    // Context-sensitive overrides: when character follows specific preceding characters
-    // Map: prevChar → Map<thisChar, pinyin>
     private val CONTEXT_PINYIN = mapOf(
-        '音' to mapOf('乐' to "yue"),   // 音乐 = yīnyuè (music)
-        '快' to mapOf('乐' to "le"),    // 快乐 = kuàilè (happy)
-        '欢' to mapOf('乐' to "le"),    // 欢乐 = huānlè
-        '娱' to mapOf('乐' to "le"),    // 娱乐 = yúlè
-        '生' to mapOf('长' to "zhang"), // 生长 = shēngzhǎng (grow)
-        '成' to mapOf('长' to "zhang"), // 成长 = chéngzhǎng (grow up)
-        '长' to mapOf('大' to "da"),    // 长大 = zhǎngdà
-        '重' to mapOf('复' to "fu"),    // 重复 = chóngfù (repeat) — prev char triggers
-        '再' to mapOf('重' to "chong"), // 再重 → chong context
-        '严' to mapOf('重' to "zhong"), // 严重 = yánzhòng (serious)
-        '地' to mapOf('方' to "di"),    // 地方 = dìfāng
-        '大' to mapOf('地' to "di"),    // 大地 = dàdì
-        '土' to mapOf('地' to "di")     // 土地 = tǔdì
+        '音' to mapOf('乐' to "yue"),
+        '快' to mapOf('乐' to "le"),
+        '欢' to mapOf('乐' to "le"),
+        '娱' to mapOf('乐' to "le"),
+        '生' to mapOf('长' to "zhang"),
+        '成' to mapOf('长' to "zhang"),
+        '长' to mapOf('大' to "da"),
+        '重' to mapOf('复' to "fu"),
+        '再' to mapOf('重' to "chong"),
+        '严' to mapOf('重' to "zhong"),
+        '地' to mapOf('方' to "di"),
+        '大' to mapOf('地' to "di"),
+        '土' to mapOf('地' to "di")
     )
 
     fun romanizeChinese(text: String): String? {
@@ -368,29 +302,25 @@ object MultiLangRomanizer {
                 val next = chars.getOrNull(idx + 1)
 
                 when {
-                    // ── Erhua: 儿 after a non-儿 Hanzi becomes an "r" suffix ──
                     next == '儿' && idx + 1 < chars.size
                         && c.toString().matches(Regex("[\u4E00-\u9FA5]"))
                         && c != '儿' -> {
                         val base = getPinyin(c, format, prevChar = chars.getOrNull(idx - 1))
-                        // Append base pinyin with trailing 'r' (drop final -n/-ng if present)
                         val erhua = base
                             .replace(Regex("ng$"), "r")
                             .replace(Regex("n$"), "r")
                             .let { if (!it.endsWith("r")) it + "r" else it }
                         sb.append(erhua).append(" ")
-                        idx += 2 // consume both 儿 and current char
+                        idx += 2
                         continue
                     }
 
-                    // ── Regular Hanzi ─────────────────────────────────────────
                     c.toString().matches(Regex("[\u4E00-\u9FA5]")) -> {
                         sb.append(getPinyin(c, format, prevChar = chars.getOrNull(idx - 1))).append(" ")
                         idx++
                         continue
                     }
 
-                    // ── Non-Hanzi passthrough ─────────────────────────────────
                     else -> {
                         sb.append(c)
                         idx++
@@ -417,15 +347,12 @@ object MultiLangRomanizer {
         format: HanyuPinyinOutputFormat,
         prevChar: Char? = null
     ): String {
-        // 1. Context-sensitive override
         prevChar?.let { prev ->
             CONTEXT_PINYIN[prev]?.get(c)?.let { return it }
         }
 
-        // 2. Polyphone override
         POLYPHONE_OVERRIDE[c]?.let { return it }
 
-        // 3. Pinyin4j fallback
         return try {
             PinyinHelper.toHanyuPinyinStringArray(c, format)
                 ?.firstOrNull()
@@ -565,18 +492,14 @@ object MultiLangRomanizer {
                 val nextChar = word.getOrNull(charIndex + 1)
                 val prevChar = word.getOrNull(charIndex - 1)
 
-                // ── ъ hard sign: acts as separator (reset palatalization context) ──
                 if (charStr == "ъ" || charStr == "Ъ") {
-                    // Silent in modern Russian — skip but do not merge with next
                     charIndex++; continue
                 }
 
-                // ── ь soft sign: palatalize the *previous* output consonant ─────────
-                // Rewrites last output character(s) if they form a known palatal pair.
                 if (charStr == "ь" || charStr == "Ь") {
                     val built = romajiBuilder.toString()
                     val palatalized = when {
-                        built.endsWith("t")  -> built.dropLast(1) + "tʲ"   // tʲ → "tʼ"
+                        built.endsWith("t")  -> built.dropLast(1) + "tʲ"
                         built.endsWith("d")  -> built.dropLast(1) + "dʲ"
                         built.endsWith("n")  -> built.dropLast(1) + "ny"
                         built.endsWith("l")  -> built.dropLast(1) + "ly"
@@ -591,13 +514,12 @@ object MultiLangRomanizer {
                         built.endsWith("k")  -> built.dropLast(1) + "ky"
                         built.endsWith("g")  -> built.dropLast(1) + "gy"
                         built.endsWith("kh") -> built.dropLast(2) + "khy"
-                        else -> built // no change for already-soft consonants
+                        else -> built
                     }
                     romajiBuilder.clear(); romajiBuilder.append(palatalized)
                     charIndex++; continue
                 }
 
-                // ── Russian: е after consonant → "e", word-initial/after vowel → "ye" ──
                 if (isRussian && (charStr == "е" || charStr == "Е")) {
                     val afterVowelOrStart = charIndex == 0
                         || prevChar == null
@@ -612,22 +534,17 @@ object MultiLangRomanizer {
                     charIndex++; continue
                 }
 
-                // ── ё always = "yo" (Russian) ──────────────────────────────────────
                 if (charStr == "ё" || charStr == "Ё") {
                     romajiBuilder.append(if (char.isUpperCase()) "Yo" else "yo")
                     charIndex++; continue
                 }
 
-                // ── жи, ши, ци → always hard vowel "i" despite Cyrillic и ──────────
-                // (already handled by base map, but double-check context)
                 if ((charStr == "и" || charStr == "И") && prevChar != null) {
                     val prevOut = romajiBuilder.toString()
-                    // After zh/sh/ts the "и" is always hard — map to "i" (already correct in base map)
                     romajiBuilder.append(specificMap[charStr] ?: GENERAL_CYRILLIC_ROMAJI_MAP[charStr] ?: charStr)
                     charIndex++; continue
                 }
 
-                // ── Multi-char lookups (3-char first, then 2-char) ──────────────────
                 var consumed = false
                 if (charIndex + 2 < word.length) {
                     val three = word.substring(charIndex, charIndex + 3)
@@ -713,11 +630,6 @@ object LyricsUtils {
     private val TRANSLATION_CREDIT_REGEX = Regex("^\\s*by\\s*[:：].+", RegexOption.IGNORE_CASE)
     private val LRC_METADATA_PATTERN = Pattern.compile("^\\[[a-zA-Z]+:.*]$")
 
-    // Kugou / Paxsenix word-by-word format:
-    //   Line header : [lineStartMs,lineDurationMs]
-    //   Word token  : <wordOffsetMs,wordDurationMs,flags>word
-    // The line-start value is always > 999 ms, which distinguishes it from a
-    // standard LRC minute value (max 99).
     private val KUGOU_LINE_REGEX = Pattern.compile("^\\[(\\d+),(\\d+)](.*)$")
     private val KUGOU_WORD_PATTERN = Pattern.compile("<(\\d+),(\\d+),(\\d+)>([^<]*)")
 
@@ -740,10 +652,6 @@ object LyricsUtils {
             return parseLyrics(converted)
         }
 
-        // Kugou / Paxsenix word-by-word detection:
-        // If any non-metadata line matches [number,number] where the first
-        // number is > 999 (i.e. milliseconds, not minutes), treat the whole
-        // file as Kugou format.
         if (looksLikeKugouFormat(lyricsText)) {
             return parseKugouLyrics(lyricsText)
         }
@@ -768,7 +676,6 @@ object LyricsUtils {
                 val millis = if (lineMatcher.group(3)?.length == 2) fraction * 10 else fraction
                 val lineTimestamp = minutes * 60 * 1000 + seconds * 1000 + millis
 
-                // Enhanced word-by-word parsing
                 if (text.contains(LRC_WORD_TAG_REGEX)) {
                     val words = mutableListOf<SyncedWord>()
                     val parts = text.split(LRC_WORD_SPLIT_REGEX)
@@ -805,9 +712,6 @@ object LyricsUtils {
                                 )
                             }
                         } else {
-                            // Preserve only leading untagged text as a timed word.
-                            // Trailing untagged chunks (e.g. inline translations) should remain visible in line text
-                            // but must not steal word highlight timing.
                             if (words.isEmpty()) {
                                 val leading = stripFormatCharacters(part)
                                 val startsNewWord = pendingWordBoundary || leading.firstOrNull()?.isWhitespace() == true
@@ -837,19 +741,14 @@ object LyricsUtils {
                     syncedLines.add(SyncedLine(lineTimestamp.toInt(), text))
                 }
             } else {
-                // Line WITHOUT timestamp
                 val stripped = stripLrcTimestamps(stripFormatCharacters(line))
-                // If the file was already detected as synced and at least one SyncedLine
-                // exists, treat this line as a continuation of the previous one.
                 if (isSynced && syncedLines.isNotEmpty()) {
                     val last = syncedLines.removeAt(syncedLines.lastIndex)
-                    // Keep the previous text and append the new line with a newline break.
                     val mergedLineText = if (last.line.isEmpty()) {
                         stripped
                     } else {
                         last.line + "\n" + stripped
                     }
-                    // Preserve the existing synced word list if present.
                     val merged = if (last.words?.isNotEmpty() == true) {
                         SyncedLine(last.time, mergedLineText, last.words)
                     } else {
@@ -858,7 +757,6 @@ object LyricsUtils {
 
                     syncedLines.add(merged)
                 } else {
-                    // No sync markers found — treat as plain text.
                     plainLines.add(stripped)
                 }
             }
@@ -906,8 +804,6 @@ object LyricsUtils {
         }
     }
 
-    // ── Kugou / Paxsenix word-by-word helpers ─────────────────────────────
-
     /**
      * Returns true when the raw text contains at least one line in Kugou format:
      *   [lineStartMs,lineDurationMs]…
@@ -917,7 +813,6 @@ object LyricsUtils {
         return text.lines().any { raw ->
             val line = raw.trim()
             if (line.isEmpty()) return@any false
-            // Skip metadata tags like [ti:…] [ar:…] [offset:…]
             if (LRC_METADATA_PATTERN.matcher(line).matches()) return@any false
             val m = KUGOU_LINE_REGEX.matcher(line)
             m.matches() && (m.group(1)?.toLongOrNull() ?: 0L) > 999L
@@ -954,17 +849,15 @@ object LyricsUtils {
             val headerMatcher = KUGOU_LINE_REGEX.matcher(line)
             if (!headerMatcher.matches()) continue
             val lineStartMs = (headerMatcher.group(1)?.toLongOrNull() ?: continue) + globalOffsetMs
-            if (lineStartMs <= 999L && globalOffsetMs == 0L) continue // guard: not a Kugou line
+            if (lineStartMs <= 999L && globalOffsetMs == 0L) continue
             val body = headerMatcher.group(3) ?: ""
 
-            // Build word list
             val words = mutableListOf<SyncedWord>()
             val wordMatcher = KUGOU_WORD_PATTERN.matcher(body)
-            var previousEndsWithSpace = true // first word always starts a new word
+            var previousEndsWithSpace = true
 
             while (wordMatcher.find()) {
                 val wordOffsetMs = wordMatcher.group(1)?.toLongOrNull() ?: 0L
-                // group(2) = duration, group(3) = flags — both unused for display
                 val rawText = wordMatcher.group(4) ?: ""
 
                 val startsNew = previousEndsWithSpace || rawText.firstOrNull()?.isWhitespace() == true
@@ -982,7 +875,6 @@ object LyricsUtils {
                 )
             }
 
-            // Plain text: strip all <…> tokens
             val plainText = KUGOU_WORD_PATTERN.toRegex().replace(body) { it.groupValues[4] }.trim()
             if (plainText.isEmpty() && words.isEmpty()) continue
 
@@ -1079,7 +971,6 @@ object LyricsUtils {
      * @return A string with each line separated by a newline.
      */
     fun plainToString(plainLines: List<String>): String {
-        // Strip auto-generated romanization (if present after \n) when converting back to string for storage.
         return plainLines.joinToString("\n") { it.substringBefore('\n') }
     }
 
@@ -1214,7 +1105,6 @@ fun BubblesLine(
     val isCurrent = position in time until nextTime
     val transition = rememberInfiniteTransition(label = "bubbles_transition")
 
-    // Slowed-down animation to better appreciate the effect.
     val animatedValue by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
@@ -1231,7 +1121,6 @@ fun BubblesLine(
 
     if (show) {
         val density = LocalDensity.current
-        // Smaller circles to accentuate the scale animation.
         val bubbleRadius = remember(density) { with(density) { 4.dp.toPx() } }
 
         val (morphableCircle, morphableNote) = remember(bubbleRadius) {
@@ -1256,10 +1145,8 @@ fun BubblesLine(
                     else -> 0f
                 }.coerceIn(0f, 1f)
 
-                // Scale animation is more pronounced.
                 val scale = lerpFloat(1.0f, 1.4f, morphProgress)
 
-                // Dynamic horizontal offset that activates with morphing.
                 val xOffsetCorrection = lerpFloat(0f, bubbleRadius * 1.8f, morphProgress)
 
                 val morphedPath = lerpPath(
@@ -1268,13 +1155,10 @@ fun BubblesLine(
                     fraction = morphProgress
                 ).toPath()
 
-                // Position the animation container in its column.
                 translate(left = (size.width / (bubbleCount + 1)) * (i + 1)) {
-                    // Apply vertical offset (wave) and horizontal correction.
                     val drawOffset = Offset(x = xOffsetCorrection, y = size.height / 2 + yOffset)
 
                     translate(left = drawOffset.x, top = drawOffset.y) {
-                        // Apply the scale transform before drawing.
                         scale(scale = scale, pivot = Offset.Zero) {
                             drawPath(
                                 path = morphedPath,
@@ -1287,8 +1171,6 @@ fun BubblesLine(
         }
     }
 }
-
-// --- Path Morphing Logic ---
 
 private fun lerpPath(start: List<PathNode>, stop: List<PathNode>, fraction: Float): List<PathNode> {
     return start.mapIndexed { index, startNode ->
@@ -1358,7 +1240,6 @@ private fun createVectorNotePathNodes(targetSize: Float): MutableList<PathNode> 
     val finalWidth = bounds.width * groupScale * scale
     val finalHeight = bounds.height * groupScale * scale
 
-    // Center the path at origin (0,0) without static corrections.
     matrix.translate(x = -finalWidth / 2f, y = -finalHeight / 2f)
 
     return parser.toNodes().toAbsolute().transform(matrix).toCurvesOnly()
@@ -1376,8 +1257,6 @@ private fun createCirclePathNodes(radius: Float): MutableList<PathNode> {
         PathNode.Close
     )
 }
-
-// --- PathNode Extension Functions ---
 
 private fun List<PathNode>.toAbsolute(): MutableList<PathNode> {
     val absoluteNodes = mutableListOf<PathNode>()

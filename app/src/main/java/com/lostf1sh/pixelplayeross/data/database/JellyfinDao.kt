@@ -10,8 +10,6 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface JellyfinDao {
 
-    // ─── Songs ─────────────────────────────────────────────────────────
-
     @Query("SELECT * FROM jellyfin_songs ORDER BY date_added DESC")
     fun getAllJellyfinSongs(): Flow<List<JellyfinSongEntity>>
 
@@ -41,8 +39,6 @@ interface JellyfinDao {
 
     @Query("DELETE FROM jellyfin_songs WHERE playlist_id = :playlistId")
     suspend fun deleteSongsByPlaylist(playlistId: String)
-
-    // ─── Playlists ─────────────────────────────────────────────────────
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlaylist(playlist: JellyfinPlaylistEntity)
@@ -83,8 +79,6 @@ interface JellyfinDao {
         clearLibrarySongs()
         insertSongs(songs)
     }
-
-    // ─── Clear All ─────────────────────────────────────────────────────
 
     @Query("DELETE FROM jellyfin_songs")
     suspend fun clearAllSongs()

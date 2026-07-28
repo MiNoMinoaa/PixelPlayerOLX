@@ -20,9 +20,9 @@ data class Lyrics(
 data class SyncedLine(
     val time: Int,
     val line: String,
-    val words: List<SyncedWord>? = null, // Null if not a word-by-word synced lyric
-    val translation: String? = null, // Translation text paired by identical timestamp
-    val romanization: String? = null // Romanization text paired by identical timestamp
+    val words: List<SyncedWord>? = null,
+    val translation: String? = null,
+    val romanization: String? = null
 )
 
 @Serializable

@@ -55,7 +55,6 @@ import timber.log.Timber
 class PixelPlayerGlanceWidget : GlanceAppWidget() {
 
     companion object {
-        // Sizes defined for different widget configurations
         private val VERY_THIN_LAYOUT_SIZE = DpSize(width = 200.dp, height = 60.dp)
         private val THIN_LAYOUT_SIZE = DpSize(width = 250.dp, height = 80.dp)
         private val SMALL_HORIZONTAL_LAYOUT_SIZE = DpSize(width = 110.dp, height = 60.dp)
@@ -257,7 +256,7 @@ class PixelPlayerGlanceWidget : GlanceAppWidget() {
             modifier = modifier
                 .background(backgroundColor)
                 .cornerRadius(bgCornerRadius)
-                .padding(16.dp) // Padding applied to the outer box
+                .padding(16.dp)
         ) {
             Row(
                 modifier = GlanceModifier
@@ -334,7 +333,7 @@ class PixelPlayerGlanceWidget : GlanceAppWidget() {
             modifier = modifier
                 .background(backgroundColor)
                 .cornerRadius(bgCornerRadius)
-                .padding(16.dp) // Padding applied to the outer box
+                .padding(16.dp)
         ) {
             Row(
                 modifier = GlanceModifier
@@ -630,7 +629,7 @@ class PixelPlayerGlanceWidget : GlanceAppWidget() {
             modifier = modifier
                 .background(backgroundColor)
                 .cornerRadius(bgCornerRadius)
-                .padding(12.dp) // Using 12dp for this smaller layout
+                .padding(12.dp)
         ) {
             Column(
                 modifier = GlanceModifier.fillMaxSize(),
@@ -716,19 +715,16 @@ class PixelPlayerGlanceWidget : GlanceAppWidget() {
         val buttonCornerRadius = 60.dp
         val playButtonCornerRadius = if (isPlaying) 14.dp else 60.dp
 
-        // *** FIX: Apply padding to the outer Box for consistency ***
         Box(
             modifier = modifier
                 .background(backgroundColor)
                 .cornerRadius(bgCornerRadius)
                 .padding(16.dp)
         ) {
-            // *** FIX: Removed padding from the inner Column ***
             Column(
                 modifier = GlanceModifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Top part: Album Art + Title/Artist
                 Row(
                     modifier = GlanceModifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -760,10 +756,8 @@ class PixelPlayerGlanceWidget : GlanceAppWidget() {
                     }
                 }
 
-                // Spacer to push buttons down
                 Spacer(GlanceModifier.height(12.dp))
 
-                // Bottom part: Control Buttons
                 Row(
                     modifier = GlanceModifier
                         .defaultWeight()
@@ -816,14 +810,12 @@ class PixelPlayerGlanceWidget : GlanceAppWidget() {
         textColor: ColorProvider,
         context: Context
     ) {
-        // *** FIX: Apply padding to the outer Box for consistency ***
         Box(
             modifier = modifier
                 .background(backgroundColor)
                 .cornerRadius(bgCornerRadius)
                 .padding(16.dp)
         ) {
-            // *** FIX: Removed padding from the inner Column ***
             Column(modifier = GlanceModifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = GlanceModifier.fillMaxWidth().padding(bottom = 8.dp)) {
                     AlbumArtImageGlance(
@@ -851,10 +843,8 @@ class PixelPlayerGlanceWidget : GlanceAppWidget() {
                     Spacer(GlanceModifier.width(8.dp))
                 }
                 Spacer(GlanceModifier.height(4.dp))
-                // Progress bar commented out as in original code
                 Spacer(GlanceModifier.height(10.dp))
 
-                // Control Buttons Row
                 Row(
                     modifier = GlanceModifier
                         .fillMaxWidth()
@@ -911,16 +901,13 @@ class PixelPlayerGlanceWidget : GlanceAppWidget() {
     ) {
         val playButtonCornerRadius = if (isPlaying) 16.dp else 60.dp
 
-        // *** FIX: Apply padding to the outer Box for consistency ***
         Box(
             modifier = modifier
                 .background(backgroundColor)
                 .cornerRadius(bgCornerRadius)
                 .padding(16.dp)
         ) {
-            // *** FIX: Removed padding from the inner Column ***
             Column(modifier = GlanceModifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-                // Top Row: Album Art & Info
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = GlanceModifier.fillMaxWidth()
@@ -949,7 +936,6 @@ class PixelPlayerGlanceWidget : GlanceAppWidget() {
 
                 Spacer(GlanceModifier.height(14.dp))
 
-                // Bottom Row: Controls
                 Row(
                     modifier = GlanceModifier
                         .defaultWeight()
@@ -996,7 +982,7 @@ class PixelPlayerGlanceWidget : GlanceAppWidget() {
                     )
                 }
 
-                Spacer(GlanceModifier.defaultWeight()) // Pushes the content down
+                Spacer(GlanceModifier.defaultWeight())
 
                 Box(
                     modifier = GlanceModifier
@@ -1075,7 +1061,7 @@ class PixelPlayerGlanceWidget : GlanceAppWidget() {
         if (bitmapData != null) Timber.tag(TAG_AAIG).d("bitmapData size: ${bitmapData.size} bytes")
 
         val sizingModifier = if (size != null) modifier.size(size) else modifier
-        val widgetDpSize = LocalSize.current // Get the actual size of the composable
+        val widgetDpSize = LocalSize.current
 
         val imageProvider = bitmapData?.let { data ->
             val cacheKey = AlbumArtBitmapCache.getKey(data)
@@ -1095,18 +1081,15 @@ class PixelPlayerGlanceWidget : GlanceAppWidget() {
                     val imageWidth = options.outWidth
                     var inSampleSize = 1
 
-                    // Determine target size in pixels
                     val targetWidthPx: Int
                     val targetHeightPx: Int
                     with(context.resources.displayMetrics) {
                         if (size != null) {
-                            // If size is provided, use it for both width and height (maintains square logic)
                             val targetSizePx = (size.value * density).toInt()
                             targetWidthPx = targetSizePx
                             targetHeightPx = targetSizePx
                             Timber.tag(TAG_AAIG).d("Target Px size for Dp $size: $targetSizePx")
                         } else {
-                            // If size is not provided, use the actual widget size
                             targetWidthPx = (widgetDpSize.width.value * density).toInt()
                             targetHeightPx = (widgetDpSize.height.value * density).toInt()
                             Timber.tag(TAG_AAIG).d("Target Px size from widget DpSize ${widgetDpSize}: ${targetWidthPx}x${targetHeightPx}")
@@ -1116,8 +1099,6 @@ class PixelPlayerGlanceWidget : GlanceAppWidget() {
                     if (imageHeight > targetHeightPx || imageWidth > targetWidthPx) {
                         val halfHeight: Int = imageHeight / 2
                         val halfWidth: Int = imageWidth / 2
-                        // Calculate the largest inSampleSize value that is a power of 2 and keeps both
-                        // height and width larger than the requested height and width.
                         while (halfHeight / inSampleSize >= targetHeightPx && halfWidth / inSampleSize >= targetWidthPx) {
                             inSampleSize *= 2
                         }
@@ -1376,7 +1357,6 @@ class PixelPlayerGlanceWidget : GlanceAppWidget() {
     }
 }
 
-// Helper to format duration in Glance (cannot use TimeUnit directly)
 private fun formatDurationGlance(millis: Long): String {
     if (millis < 0) return "00:00"
     val totalSeconds = millis / 1000

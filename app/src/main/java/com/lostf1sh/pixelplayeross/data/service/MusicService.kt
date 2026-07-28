@@ -97,8 +97,6 @@ import coil.size.Precision
 import javax.inject.Inject
 import androidx.core.net.toUri
 
-// Custom actions for compatibility with the existing widget
-
 suspend fun loadArtworkBytesViaCoil(context: Context, uri: Uri): ByteArray? {
     val appContext = context.applicationContext
     val request = ImageRequest.Builder(appContext)
@@ -176,10 +174,7 @@ class MusicService : MediaLibraryService() {
     private var userSelectedVolume = 1f
     private var expectedReplayGainVolume: Float? = null
     private var pendingReplayGainVolume: Float? = null
-    // Last successfully applied RG volume — used to avoid a full-volume spike
-    // during the IO read for the next track (Repeat/Shuffle/Queue changes).
     private var lastAppliedReplayGainVolume: Float? = null
-    // MediaId for which lastAppliedReplayGainVolume was computed.
     private var lastReplayGainMediaId: String? = null
 
     private var favoriteSongIds = emptySet<String>()
@@ -188,9 +183,7 @@ class MusicService : MediaLibraryService() {
     private var keepPlayingInBackground = true
     private var isManualShuffleEnabled = false
     private var persistentShuffleEnabled = false
-    // Holds the previous main-thread UncaughtExceptionHandler so we can restore it in onDestroy.
     private var previousMainThreadExceptionHandler: Thread.UncaughtExceptionHandler? = null
-    // Sleep timers (duration + end-of-track) and counted play, extracted for testability.
     private val playbackTimerController by lazy {
         PlaybackTimerController(
             playerProvider = { mediaSession?.player ?: engine.masterPlayer },
@@ -216,9 +209,6 @@ class MusicService : MediaLibraryService() {
         const val ACTION_SLEEP_TIMER_EXPIRED = "com.lostf1sh.pixelplayeross.ACTION_SLEEP_TIMER_EXPIRED"
         const val EXTRA_FORCE_FOREGROUND_ON_START =
             "com.lostf1sh.pixelplayeross.extra.FORCE_FOREGROUND_ON_START"
-        // Queue/index/flags snapshot is only used for restore on process death. A full-queue
-        // JSON+DataStore rewrite on every Media3 event (track transition fires 3-4 listeners
-        // within ~200ms) is unnecessary work. 1500ms coalesces those without harming restore.
         private const val PLAYBACK_SNAPSHOT_DEBOUNCE_MS = 1500L
         private const val FORCED_WIDGET_STATE_DEBOUNCE_MS = 250L
         private const val MEDIA_SESSION_BUTTON_DEBOUNCE_MS = 250L
@@ -293,13 +283,6 @@ class MusicService : MediaLibraryService() {
     }
 
     private fun prepareReplayGainForTransitionPlayer(player: Player) {
-        // Pre-compute ReplayGain for the incoming track while the crossfade is still running.
-        // isTransitionRunning() is true here, so applyReplayGain stores the result as
-        // pendingReplayGainVolume. onTransitionFinished() applies it cleanly once the fade
-        // loop ends, avoiding any volume jump on the incoming track.
-        //
-        // Also try to set incomingTrackReplayGainVolume immediately from cache so the
-        // fade loop can use the correct final volume even before the IO coroutine finishes.
         val incomingItem = player.currentMediaItem
         val cachedVolume = getCachedReplayGainVolume(incomingItem)
         if (cachedVolume != null) {
@@ -351,8 +334,6 @@ class MusicService : MediaLibraryService() {
     }
 
     override fun onCreate() {
-        // Intercept ForegroundServiceStartNotAllowedException on the main thread before it
-        // reaches ActivityThread and crashes the process during delayed media-service updates.
         val existingHandler = Thread.currentThread().uncaughtExceptionHandler
         previousMainThreadExceptionHandler = existingHandler
         Thread.currentThread().setUncaughtExceptionHandler { thread, throwable ->
@@ -365,11 +346,6 @@ class MusicService : MediaLibraryService() {
             }
         }
 
-        // A media-button startForegroundService() can reach MusicService directly (not always
-        // through PixelPlayerMediaButtonReceiver), so the pending counter is only a hint. Promote
-        // immediately on cold start before super.onCreate(): Hilt injection and MediaLibraryService
-        // startup can otherwise consume Android's 5-second FGS deadline before onStartCommand()
-        // receives the media-button intent.
         temporaryForegroundStartedInOnCreate =
             consumePendingMediaButtonForegroundStart() || Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
         if (temporaryForegroundStartedInOnCreate) {
@@ -379,14 +355,12 @@ class MusicService : MediaLibraryService() {
         super.onCreate()
         listeningStatsTracker.initialize(appScope)
         
-        // Ensure engine is ready (re-initialize if service was restarted)
         engine.initialize()
         userSelectedVolume = engine.masterPlayer.volume.coerceIn(0f, 1f)
         syncLocalListeningStatsFromPlayer(engine.masterPlayer)
 
         engine.masterPlayer.addListener(playerListener)
 
-        // Handle player swaps (crossfade) to keep MediaSession in sync
         engine.setOnPlayerAboutToBeReleasedListener { oldPlayer ->
             oldPlayer.removeListener(playerListener)
         }
@@ -397,8 +371,6 @@ class MusicService : MediaLibraryService() {
         controller.initialize()
         registerHeadsetReconnectMonitor()
 
-        // Restore equalizer state from preferences and only attach audio effects when
-        // the user actually has at least one effect enabled for the current session.
         serviceScope.launch {
             val eqEnabled = equalizerPreferencesRepository.equalizerEnabledFlow.first()
             val presetName = equalizerPreferencesRepository.equalizerPresetFlow.first()
@@ -422,7 +394,6 @@ class MusicService : MediaLibraryService() {
                 equalizerManager.attachToAudioSessionIfNeeded(sessionId)
             }
 
-            // Re-attach equalizer whenever the active audio session changes (e.g. crossfade)
             engine.activeAudioSessionId.collect { newSessionId ->
                 if (newSessionId != 0) {
                     equalizerManager.attachToAudioSessionIfNeeded(newSessionId)
@@ -430,9 +401,6 @@ class MusicService : MediaLibraryService() {
             }
         }
 
-        // Let external audio effect apps (ViPER4Android, JamesDSP, Wavelet, OEM effect panels)
-        // attach to our session. Independent of the built-in equalizer state: those apps must be
-        // able to process our output even when every built-in effect is switched off.
         serviceScope.launch {
             engine.activeAudioSessionId.collect { sessionId ->
                 externalAudioEffectSession.open(sessionId)
@@ -466,24 +434,19 @@ class MusicService : MediaLibraryService() {
             }
         }
 
-        // ReplayGain preference collectors
         serviceScope.launch {
             userPreferencesRepository.replayGainEnabledFlow.collect { enabled ->
                 replayGainEnabled = enabled
-                // Re-apply to current track when toggled
                 applyReplayGain(mediaSession?.player?.currentMediaItem)
             }
         }
         serviceScope.launch {
             userPreferencesRepository.replayGainUseAlbumGainFlow.collect { useAlbum ->
                 replayGainUseAlbumGain = useAlbum
-                // Re-apply to current track when mode changes
                 applyReplayGain(mediaSession?.player?.currentMediaItem)
             }
         }
 
-        // Playback speed preference — applied to whichever player is currently master,
-        // and re-applied on player swaps/crossfades (see the swap/transition listeners).
         serviceScope.launch {
             userPreferencesRepository.playbackSpeedFlow.collect { speed ->
                 userPlaybackSpeed = speed
@@ -491,7 +454,6 @@ class MusicService : MediaLibraryService() {
             }
         }
 
-        // Initialize shuffle state from preferences
         serviceScope.launch {
             val persistent = userPreferencesRepository.persistentShuffleEnabledFlow.first()
             if (persistent) {
@@ -518,9 +480,6 @@ class MusicService : MediaLibraryService() {
                 val defaultResult = super.onConnect(session, controller)
                 val sessionCommandsBuilder = SessionCommands.Builder()
                     .addSessionCommands(defaultResult.availableSessionCommands.commands)
-                // Custom commands mutate app state (favorites, timers, shuffle, close), so they
-                // are only advertised to our own controllers and system-trusted ones
-                // (notification, System UI, Auto/Wear companions).
                 if (isPrivilegedController(controller)) {
                     val customCommands = listOf(
                         MusicNotificationProvider.CUSTOM_COMMAND_CLOSE_PLAYER,
@@ -712,7 +671,6 @@ class MusicService : MediaLibraryService() {
                 query: String,
                 params: MediaLibraryService.LibraryParams?
             ): ListenableFuture<LibraryResult<Void>> {
-                // Signal that search is supported; results delivered via onGetSearchResult
                 return Futures.immediateFuture(LibraryResult.ofVoid())
             }
 
@@ -826,9 +784,6 @@ class MusicService : MediaLibraryService() {
             .setSilent(true)
             .setOngoing(true)
             .build()
-        // Pass mediaPlayback explicitly. On API 34+ a missing/mismatched type can throw
-        // MissingForegroundServiceTypeException; ServiceCompat picks the right overload
-        // per API level and matches the manifest-declared foregroundServiceType.
         try {
             ServiceCompat.startForeground(
                 this,
@@ -936,7 +891,6 @@ class MusicService : MediaLibraryService() {
                     mediaSession?.let { session ->
                         updateManualShuffleState(session, enabled = newState, broadcast = true)
                     } ?: run {
-                        // Fallback if session not ready
                         isManualShuffleEnabled = newState
                         requestWidgetFullUpdate(force = true)
                     }
@@ -1018,12 +972,9 @@ class MusicService : MediaLibraryService() {
 
     private fun reportNavidromePlayback(state: String, mediaItem: MediaItem? = engine.masterPlayer.currentMediaItem) {
         val player = engine.masterPlayer
-        // Ensure we capture player state on main thread to avoid IllegalStateException
         val targetItem = mediaItem ?: return
         val navidromeId = getNavidromeId(targetItem) ?: return
 
-        // If reporting for current item, use player position.
-        // If reporting "stopped" for a transition, use the item's duration as final position.
         val positionMs = if (targetItem === player.currentMediaItem) {
             player.currentPosition
         } else {
@@ -1031,7 +982,6 @@ class MusicService : MediaLibraryService() {
         }
         val playbackRate = player.playbackParameters.speed
 
-        // Use appScope for the network call so it survives if serviceScope is cancelled
         appScope.launch(Dispatchers.IO) {
             navidromeRepository.reportPlayback(
                 navidromeId = navidromeId,
@@ -1048,7 +998,7 @@ class MusicService : MediaLibraryService() {
         navidromePlaybackReportJob?.cancel()
         navidromePlaybackReportJob = serviceScope.launch {
             while (true) {
-                delay(30_000) // Report every 30 seconds
+                delay(30_000)
                 val player = engine.masterPlayer
                 if (player.isPlaying && isNavidromeMediaItem(player.currentMediaItem)) {
                     reportNavidromePlayback("playing")
@@ -1062,7 +1012,6 @@ class MusicService : MediaLibraryService() {
         navidromePlaybackReportJob = null
     }
 
-    // Guards against an infinite skip loop when many consecutive tracks fail to play.
     private var consecutivePlaybackErrors = 0
     private val maxConsecutivePlaybackErrors = 5
 
@@ -1081,9 +1030,6 @@ class MusicService : MediaLibraryService() {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             val player = mediaSession?.player ?: engine.masterPlayer
             Timber.tag(TAG).d("onIsPlayingChanged: $isPlaying. Duration: ${player.duration}, Seekable: ${player.isCurrentMediaItemSeekable}")
-            // Surface playback state to background workers so they can defer
-            // non-urgent work (incremental sync, artwork, metadata) while audio
-            // is producing — keeps thermal headroom and battery for playback.
             PlaybackActivityTracker.setPlaybackActive(isPlaying)
             syncLocalListeningStatsFromPlayer(player)
 
@@ -1096,13 +1042,9 @@ class MusicService : MediaLibraryService() {
                 stopNavidromePlaybackReporting()
             }
 
-            // Re-apply the last known RG volume immediately when resuming playback.
-            // After a pause, ExoPlayer may reset the audio track volume internally,
-            // causing a brief full-volume spike before the IO coroutine finishes.
             if (isPlaying && !engine.isTransitionRunning()) {
                 lastAppliedReplayGainVolume?.let { setPlayerVolume(player, it) }
             }
-            // Push widget and media-session state immediately so system media surfaces stay current.
             requestWidgetFullUpdate(force = true)
             mediaSession?.let { refreshMediaSessionUi(it) }
             schedulePlaybackSnapshotPersist()
@@ -1133,7 +1075,6 @@ class MusicService : MediaLibraryService() {
         override fun onPlaybackStateChanged(playbackState: Int) {
             Timber.tag(TAG).d("Playback state changed: $playbackState")
             if (playbackState == Player.STATE_READY) {
-                // A track started successfully; reset the consecutive-error guard.
                 consecutivePlaybackErrors = 0
             }
             if (playbackState == Player.STATE_ENDED) {
@@ -1158,7 +1099,6 @@ class MusicService : MediaLibraryService() {
         override fun onTimelineChanged(timeline: Timeline, reason: Int) {
             requestWidgetFullUpdate(force = true)
             schedulePlaybackSnapshotPersist(immediate = timeline.isEmpty)
-            // Pre-fetch RG for the next track so the cache is warm before playback starts
             val player = engine.masterPlayer
             val nextIndex = player.nextMediaItemIndex
             if (nextIndex != androidx.media3.common.C.INDEX_UNSET) {
@@ -1196,13 +1136,10 @@ class MusicService : MediaLibraryService() {
                 val oldMediaId = oldPosition.mediaItem?.mediaId
                 val newMediaId = newPosition.mediaItem?.mediaId
                 if (oldMediaId != null && oldMediaId == newMediaId) {
-                    // Same track (e.g. repeat, seek) — no IO needed, apply last known RG volume
-                    // immediately to avoid a spike while the coroutine reads tags again.
                     lastAppliedReplayGainVolume?.let {
                         if (!engine.isTransitionRunning()) setPlayerVolume(engine.masterPlayer, it)
                     }
                 } else {
-                    // Different track — full recompute needed
                     applyReplayGain(currentItem)
                 }
             }
@@ -1222,28 +1159,20 @@ class MusicService : MediaLibraryService() {
 
             playbackTimerController.handleMediaItemTransition(mediaItem, reason)
             applyReplayGain(mediaSession?.player?.currentMediaItem)
-            // Pre-fetch RG for the track after this one so it's cached when needed
             val player = engine.masterPlayer
             val nextIndex = player.nextMediaItemIndex
             if (nextIndex != androidx.media3.common.C.INDEX_UNSET) {
                 runCatching { prefetchReplayGain(player.getMediaItemAt(nextIndex)) }
             }
-            // Optimization: Don't force-update widgets on every rapid skip.
-            // Let the debounced updater handle it to prevent UI freezes.
             requestWidgetFullUpdate(force = false)
             mediaSession?.let { refreshMediaSessionUi(it) }
             schedulePlaybackSnapshotPersist()
         }
 
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-            // Some devices/apps deliver title/artist/art after transition callback.
-            // Force an immediate publish for real-time widget/media metadata.
             requestWidgetFullUpdate(force = true)
             mediaSession?.let { refreshMediaSessionUiWithFollowUp(it) }
             val activePlayer = mediaSession?.player ?: engine.masterPlayer
-            // Only recompute RG if the track actually changed — onMediaMetadataChanged
-            // also fires on queue edits (add/remove) without a track change, which would
-            // launch a redundant IO coroutine and cause a brief volume spike.
             val currentMediaId = activePlayer.currentMediaItem?.mediaId
             if (currentMediaId != null && currentMediaId != lastReplayGainMediaId) {
                 applyReplayGain(activePlayer.currentMediaItem)
@@ -1271,8 +1200,6 @@ class MusicService : MediaLibraryService() {
         override fun onPlayerError(error: PlaybackException) {
             val player = mediaSession?.player ?: engine.masterPlayer
             Timber.tag(TAG).e(error, "Player error on item %s", player.currentMediaItem?.mediaId)
-            // Skip a single unplayable track instead of halting the whole queue, but
-            // bail out after several consecutive failures to avoid an infinite skip loop.
             if (player.hasNextMediaItem() && consecutivePlaybackErrors < maxConsecutivePlaybackErrors) {
                 consecutivePlaybackErrors++
                 player.seekToNextMediaItem()
@@ -1325,13 +1252,10 @@ class MusicService : MediaLibraryService() {
 
         val useAlbumGain = replayGainUseAlbumGain
 
-        // Apply the last known RG volume immediately so there is no full-volume spike
-        // while the IO coroutine reads the tags for the new track.
         if (!engine.isTransitionRunning()) {
             lastAppliedReplayGainVolume?.let { setPlayerVolume(engine.masterPlayer, it) }
         }
 
-        // Read ReplayGain tags on IO thread to avoid blocking main
         replayGainJob = serviceScope.launch {
             val rgValues = withContext(Dispatchers.IO) {
                 replayGainManager.readReplayGain(filePath)
@@ -1353,9 +1277,6 @@ class MusicService : MediaLibraryService() {
             )
 
             if (engine.isTransitionRunning()) {
-                // Store for application after transition completes.
-                // Also pass to engine so the crossfade loop ends at the correct RG
-                // volume instead of hard-coding 1f, preventing the audible jump.
                 pendingReplayGainVolume = volume
                 engine.incomingTrackReplayGainVolume = volume
                 Timber.tag(TAG).d("ReplayGain: Stored pending volume=%.2f for %s (transition running)",
@@ -1420,15 +1341,10 @@ class MusicService : MediaLibraryService() {
         }
 
         if (pending != null) {
-            // The crossfade loop ramps to this value; apply it now as the stable post-fade volume.
-            // Also update lastAppliedReplayGainVolume so any subsequent onPositionDiscontinuity
-            // (REASON_AUTO_TRANSITION fires right after crossfade ends) uses this value
-            // immediately instead of launching a new IO coroutine and causing a spike.
             lastAppliedReplayGainVolume = pending
             setPlayerVolume(player, pending)
             Timber.tag(TAG).d("ReplayGain: Transition finished, applied pending volume=%.2f", pending)
         } else {
-            // No pending volume was computed during transition, trigger full computation
             applyReplayGain(mediaSession?.player?.currentMediaItem)
             Timber.tag(TAG).d("ReplayGain: Transition finished, no pending volume — triggering full recomputation")
         }
@@ -1734,7 +1650,7 @@ class MusicService : MediaLibraryService() {
             action = "com.lostf1sh.pixelplayeross.action.OPEN_PLAYER"
             addCategory(Intent.CATEGORY_DEFAULT)
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra("ACTION_SHOW_PLAYER", true) // Signal to MainActivity to show the player
+            putExtra("ACTION_SHOW_PLAYER", true)
         }
         return PendingIntent.getActivity(
             this,
@@ -1744,7 +1660,6 @@ class MusicService : MediaLibraryService() {
         )
     }
 
-    // --- WIDGET AND DATA UPDATE LOGIC ---
     private var debouncedWidgetUpdateJob: Job? = null
     private var followUpMediaSessionUiRefreshJob: Job? = null
     private var mediaSessionButtonRefreshJob: Job? = null
@@ -1773,7 +1688,6 @@ class MusicService : MediaLibraryService() {
         if (old.artistName != new.artistName) return true
         if (old.isPlaying != new.isPlaying) return true
         if (old.albumArtUri != new.albumArtUri) return true
-        // Detect when artwork bytes arrive (null → non-null) or are cleared
         if ((old.albumArtBitmapData == null) != (new.albumArtBitmapData == null)) return true
         if (old.isFavorite != new.isFavorite) return true
         if (old.queue != new.queue) return true
@@ -1799,7 +1713,6 @@ class MusicService : MediaLibraryService() {
 
     private suspend fun buildPlayerInfo(): PlayerInfo {
         val player = engine.masterPlayer
-        // Batch all main-thread reads into a single context switch (was 7 separate hops → 1)
         var currentItem: MediaItem? = null
         var isPlaying = false
         var repeatMode = Player.REPEAT_MODE_OFF
@@ -1817,7 +1730,7 @@ class MusicService : MediaLibraryService() {
             snapshotTimeline = player.currentTimeline
         }
 
-        var shuffleEnabled = isManualShuffleEnabled // Manual shuffle for sync with PlayerViewModel
+        var shuffleEnabled = isManualShuffleEnabled
 
         var title = currentItem?.mediaMetadata?.title?.toString().orEmpty()
         var artist = currentItem?.mediaMetadata?.artist?.toString().orEmpty()
@@ -1835,7 +1748,6 @@ class MusicService : MediaLibraryService() {
             artUris = artworkCandidates,
         )
 
-        // Merge theme preference reads into a single context switch
         val (playerTheme, paletteStyle, colorAccuracyLevel) = withContext(Dispatchers.IO) {
             Triple(
                 themePreferencesRepository.playerThemePreferenceFlow.first(),
@@ -1851,7 +1763,6 @@ class MusicService : MediaLibraryService() {
                     dark = dynamicDarkColorScheme(applicationContext)
                 )
             artUriString != null ->
-                // Skip heavy palette recomputation when art, style, and accuracy haven't changed
                 if (
                     artUriString == cachedSchemeArtUri &&
                     paletteStyle == cachedSchemePaletteStyle &&
@@ -1902,14 +1813,11 @@ class MusicService : MediaLibraryService() {
         }
         val isFavorite = isSongFavorite(mediaId)
         val queueItems = mutableListOf<com.lostf1sh.pixelplayeross.data.model.QueueItem>()
-        // Reuse snapshotTimeline / snapshotWindowIndex captured at the top — no extra main-thread hop
         if (!snapshotTimeline.isEmpty) {
             val window = Timeline.Window()
 
-            // Start from the next song in the queue
             val startIndex = if (snapshotWindowIndex + 1 < snapshotTimeline.windowCount) snapshotWindowIndex + 1 else 0
 
-            // Limit the number of queue items to 4
             val endIndex = (startIndex + 4).coerceAtMost(snapshotTimeline.windowCount)
             for (i in startIndex until endIndex) {
                 snapshotTimeline.getWindow(i, window)
@@ -1951,7 +1859,6 @@ class MusicService : MediaLibraryService() {
         )
     }
 
-    // Color scheme cache: skip recomputation when art URI, palette style, and accuracy haven't changed
     private var cachedSchemeArtUri: String? = null
     private var cachedSchemePaletteStyle: AlbumArtPaletteStyle? = null
     private var cachedSchemeColorAccuracy: Int = AlbumArtColorAccuracy.DEFAULT
@@ -1967,7 +1874,6 @@ class MusicService : MediaLibraryService() {
         embeddedArt: ByteArray?,
         artUris: List<Uri>,
     ): Pair<ByteArray?, String?> = withContext(Dispatchers.IO) {
-        // Try embedded art first — but fall through to URI loading if sanitization fails
         val sanitizedFromEmbedded = embeddedArt?.takeIf { it.isNotEmpty() }?.let { bytes ->
             runCatching {
                 ArtworkTransportSanitizer.sanitizeEncodedBytes(
@@ -2174,8 +2080,6 @@ class MusicService : MediaLibraryService() {
     }
 
     private fun readBytesCapped(input: java.io.InputStream, maxBytes: Int): ByteArray? {
-        // Pre-size to 4× the read-buffer to reduce reallocation churn on typical album art
-        // (50–300 KB). Still far below the maxBytes cap enforced in the loop below.
         val output = ByteArrayOutputStream(DEFAULT_STREAM_BUFFER_SIZE * 4)
         val buffer = ByteArray(DEFAULT_STREAM_BUFFER_SIZE)
         var totalRead = 0
@@ -2244,10 +2148,6 @@ class MusicService : MediaLibraryService() {
     override fun onUpdateNotification(session: MediaSession, startInForegroundRequired: Boolean) {
         val hasPlaybackIntent = session.player.hasForegroundPlaybackIntent()
 
-        // Android 12+ (API 31+): keep the service foreground while playback is intended,
-        // even if an OEM offload path reports READY/BUFFERING without audio for a moment.
-        // That gives the generic offload fallback time to rebuild the player instead of
-        // letting task removal/backgrounding tear the session down first.
         val shouldStartInForeground = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             startInForegroundRequired || hasPlaybackIntent
         } else {
@@ -2262,14 +2162,6 @@ class MusicService : MediaLibraryService() {
     }
 
     override fun startForegroundService(serviceIntent: Intent?): ComponentName? {
-        // Android 12+ (API 31+): Media3 calls startForegroundService asynchronously
-        // (e.g. after bitmap loading callbacks). By that time the app may
-        // already be in the background, causing ForegroundServiceStartNotAllowedException.
-        // Do not fall back to startService(): on Android 12+ that turns the original
-        // foreground-service exception into BackgroundServiceStartNotAllowedException,
-        // which Media3 does not handle and crashes the process. If the service is
-        // already foreground, Media3's subsequent startForeground() call will simply
-        // update the notification.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             return try {
                 super.startForegroundService(serviceIntent)
@@ -2280,9 +2172,6 @@ class MusicService : MediaLibraryService() {
                 )
                 serviceIntent?.component ?: ComponentName(this, javaClass)
             } catch (e: BackgroundServiceStartNotAllowedException) {
-                // Thrown when startForegroundService() itself is called while the app is in a
-                // background-cached state (distinct from ForegroundServiceStartNotAllowedException).
-                // Safe to swallow: the service is either already running or Media3 will retry.
                 Timber.tag(TAG).w(
                     e,
                     "startForegroundService blocked (app in background); ignoring self-start request"
@@ -2314,12 +2203,6 @@ class MusicService : MediaLibraryService() {
             }
 
             val buttons = buildMediaButtonPreferences(session)
-            // setMediaButtonPreferences triggers a notification update internally via
-            // MediaControllerListener.onMediaButtonPreferencesChanged → onUpdateNotificationInternal,
-            // which correctly determines if the service should run in foreground.
-            // Do NOT manually call onUpdateNotification(session, false) here — that bypasses
-            // Media3's shouldRunInForeground logic and can remove foreground status, leading to
-            // ForegroundServiceStartNotAllowedException when async callbacks fire later.
             session.setMediaButtonPreferences(buttons)
             lastAppliedMediaButtonSignature = latestSignature
         }
@@ -2591,11 +2474,6 @@ class MusicService : MediaLibraryService() {
             .setSlots(CommandButton.SLOT_OVERFLOW)
             .build()
 
-        // Let Media3 provide the primary previous/play-next transport buttons from player
-        // commands instead of advertising custom back/forward slots here. When custom
-        // SLOT_BACK/SLOT_FORWARD buttons are present, Media3 strips the legacy
-        // ACTION_SKIP_TO_PREVIOUS/NEXT flags from PlaybackStateCompat, which causes some
-        // OEM compact system players (including ColorOS Control Center) to gray out skip.
         return listOf(likeButton, closeButton, shuffleButton, repeatButton)
     }
 

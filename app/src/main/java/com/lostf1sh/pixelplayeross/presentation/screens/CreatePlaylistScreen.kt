@@ -293,44 +293,35 @@ private fun CreatePlaylistContent(
 ) {
     val context = LocalContext.current
 
-    // Shared State
     var playlistName by remember { mutableStateOf("") }
     
-    // Step 1: Info State
-    var currentStep by remember { mutableStateOf(0) } // 0: Info, 1: Songs
-    var selectedTab by remember { mutableStateOf(0) } // 0: Default, 1: Image, 2: Icon
+    var currentStep by remember { mutableStateOf(0) }
+    var selectedTab by remember { mutableStateOf(0) }
     var creationMode by remember { mutableStateOf(PlaylistCreationMode.MANUAL) }
     var selectedSmartRule by remember { mutableStateOf(SmartPlaylistRule.TOP_PLAYED) }
     
-    // Songs State
     val selectedSongIds = remember { mutableStateMapOf<String, Boolean>() }
     
-    // Image State
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var showCropUi by remember { mutableStateOf(false) }
-    // Lifted Bitmap State for Preview Consistency
     var imageBitmap by remember(selectedImageUri) { mutableStateOf<ImageBitmap?>(null) }
 
-    // Crop State
     var cropScale by remember { androidx.compose.runtime.mutableFloatStateOf(1f) }
     var cropOffset by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
 
-    // Custom Color/Icon State
     val defaultColor = MaterialTheme.colorScheme.primaryContainer.toArgb()
     var selectedColor by remember { mutableStateOf<Int?>(defaultColor) }
     var selectedIconName by remember { mutableStateOf<String?>("MusicNote") }
 
-    // Shape State
     var selectedShapeType by remember { mutableStateOf(PlaylistShapeType.Circle) }
     
-    // SmoothRect Params
-    var smoothRectCornerRadius by remember { androidx.compose.runtime.mutableFloatStateOf(20f) } // 0-50
-    var smoothRectSmoothness by remember { androidx.compose.runtime.mutableFloatStateOf(60f) } // 0-100
+    var smoothRectCornerRadius by remember { androidx.compose.runtime.mutableFloatStateOf(20f) }
+    var smoothRectSmoothness by remember { androidx.compose.runtime.mutableFloatStateOf(60f) }
     
-    var starCurve by remember { androidx.compose.runtime.mutableDoubleStateOf(0.15) } // 0.0 - 0.5
-    var starRotation by remember { androidx.compose.runtime.mutableFloatStateOf(0f) } // 0 - 360
-    var starScale by remember { androidx.compose.runtime.mutableFloatStateOf(1f) } // 0.5 - 1.5
-    var starSides by remember { androidx.compose.runtime.mutableIntStateOf(5) } // 3 - 20
+    var starCurve by remember { androidx.compose.runtime.mutableDoubleStateOf(0.15) }
+    var starRotation by remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
+    var starScale by remember { androidx.compose.runtime.mutableFloatStateOf(1f) }
+    var starSides by remember { androidx.compose.runtime.mutableIntStateOf(5) }
 
     LaunchedEffect(selectedImageUri) {
          if (selectedImageUri != null) {
@@ -363,7 +354,6 @@ private fun CreatePlaylistContent(
         }
     }
     
-    // Back Handler for navigation flow
     BackHandler(enabled = showCropUi || (currentStep == 1 && creationMode == PlaylistCreationMode.MANUAL)) {
         when {
             showCropUi -> showCropUi = false
@@ -524,7 +514,7 @@ private fun CreatePlaylistContent(
                     shape = CircleShape,
                     modifier = Modifier
                         .padding(bottom = 8.dp, end = 8.dp)
-                        .height(56.dp), // Standard height, feels substantial
+                        .height(56.dp),
                     containerColor = if (currentStep == 0 && playlistName.isBlank()) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.tertiaryContainer,
                     contentColor = if (currentStep == 0 && playlistName.isBlank()) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f) else MaterialTheme.colorScheme.onTertiaryContainer,
                 )
@@ -729,20 +719,12 @@ fun EditPlaylistContent(
 ) {
     val context = LocalContext.current
     
-    // Initial State Setup
     var playlistName by remember { mutableStateOf(initialName) }
     
-    // Determine initial tab
-    // 0=Default, 1=Image, 2=Icon
-    // Logic: If imageUri present -> Image. If Color/Icon present -> Icon. Else Default.
-    // NOTE: existing playlist usually has one of these.
     var selectedTab by remember { 
         mutableStateOf(
             when {
-                // If it's a file path or content URI
                 initialImageUri != null -> 1 
-                // If it has specific color/icon (and not just defaults potentially, though defaults are allowed)
-                // We check if image is null. If image is null, do we have custom icon?
                 initialColor != null || initialIconName != null -> 2
                 else -> 0
             }
@@ -753,8 +735,6 @@ fun EditPlaylistContent(
     var showCropUi by remember { mutableStateOf(false) }
     var imageBitmap by remember(selectedImageUri) { mutableStateOf<ImageBitmap?>(null) }
     
-    // Crop: We don't store crop params in DB currently for playlist updates properly unless we re-save image.
-    // But assuming we start with scale 1f if editing.
     var cropScale by remember { androidx.compose.runtime.mutableFloatStateOf(1f) }
     var cropOffset by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
 
@@ -764,7 +744,6 @@ fun EditPlaylistContent(
 
     var selectedShapeType by remember { mutableStateOf(initialShapeType ?: PlaylistShapeType.Circle) }
     
-    // Shape Params
     var smoothRectCornerRadius by remember { androidx.compose.runtime.mutableFloatStateOf(initialShapeDetail1 ?: 20f) }
     var smoothRectSmoothness by remember { androidx.compose.runtime.mutableFloatStateOf(initialShapeDetail2 ?: 60f) }
     
@@ -773,10 +752,8 @@ fun EditPlaylistContent(
     var starScale by remember { androidx.compose.runtime.mutableFloatStateOf(initialShapeDetail3 ?: 1f) }
     var starSides by remember { androidx.compose.runtime.mutableIntStateOf(initialShapeDetail4?.toInt() ?: 5) }
 
-    // Constants needed for Form
-    val searchQuery = "" // Not used in Edit
+    val searchQuery = ""
 
-    // Image Loader
     LaunchedEffect(selectedImageUri) {
          if (selectedImageUri != null) {
              val loader = ImageLoader(context)
@@ -804,7 +781,7 @@ fun EditPlaylistContent(
             cropScale = 1f
             cropOffset = androidx.compose.ui.geometry.Offset.Zero
             showCropUi = true
-            selectedTab = 1 // Force switch to image tab
+            selectedTab = 1
         }
     }
 
@@ -982,7 +959,6 @@ private fun PlaylistFormContent(
     onImageUriChange: (Uri?) -> Unit
 ) {
     if (showCropUi) {
-         // Fullscreen Crop UI overrides normal content
          Box(
              modifier = modifier
                  .fillMaxSize()
@@ -1055,7 +1031,6 @@ private fun PlaylistFormContent(
         .fillMaxSize()
         .imePadding()) {
         
-         // PREVIEW SECTION
         AnimatedContent(
              targetState = selectedTab,
              transitionSpec = {
@@ -1073,7 +1048,7 @@ private fun PlaylistFormContent(
                 contentAlignment = Alignment.Center
             ) {
                 when (targetTab) {
-                    0 -> { // Default
+                    0 -> {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Box(
                                 modifier = Modifier
@@ -1097,8 +1072,7 @@ private fun PlaylistFormContent(
                             )
                         }
                     }
-                    1 -> { // Image
-                         // Image Preview
+                    1 -> {
                          if (imageBitmap != null) {
                              Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                  Box(
@@ -1167,7 +1141,7 @@ private fun PlaylistFormContent(
                              }
                          }
                     }
-                    2 -> { // Icon / Custom Shape
+                    2 -> {
                          AnimatedContent(
                              targetState = selectedShapeType,
                              transitionSpec = {
@@ -1237,7 +1211,6 @@ private fun PlaylistFormContent(
             }
         }
 
-        // CONTROL SECTION
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1345,7 +1318,6 @@ private fun PlaylistFormContent(
                      modifier = Modifier.padding(top = 14.dp),
                      verticalArrangement = Arrangement.spacedBy(16.dp)
                  ) {
-                     // Colors
                      Text(
                          modifier = Modifier.padding(start = 22.dp),
                          text = stringResource(R.string.presentation_batch_f_background_color),
@@ -1402,7 +1374,6 @@ private fun PlaylistFormContent(
                      
                      Spacer(Modifier.height(8.dp))
 
-                     // Icons
                      Text(
                          modifier = Modifier.padding(start = 22.dp),
                          text = stringResource(R.string.presentation_batch_f_icon_symbol),
@@ -1444,7 +1415,6 @@ private fun PlaylistFormContent(
 
                      Spacer(Modifier.height(16.dp))
 
-                     // Shapes
                      Text(
                          modifier = Modifier.padding(start = 22.dp),
                          text = stringResource(R.string.presentation_batch_f_shape_style),
@@ -1501,7 +1471,6 @@ private fun PlaylistFormContent(
                          }
                      }
                      
-                     // Params
                      AnimatedVisibility(visible = selectedShapeType == PlaylistShapeType.SmoothRect) {
                          Column(
                              modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp, vertical = 8.dp),
@@ -1559,12 +1528,12 @@ fun ExpressiveButtonGroup(
     Row(
         modifier = modifier
             .clip(CircleShape)
-            .background(Color.Transparent, CircleShape), // Optional container background
-        horizontalArrangement = Arrangement.spacedBy(4.dp) // Gap between buttons
+            .background(Color.Transparent, CircleShape),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         items.forEachIndexed { index, title ->
             val isSelected = selectedIndex == index
-            val shape = if (isSelected) CircleShape else RoundedCornerShape(10.dp) // Pill vs RoundedRect
+            val shape = if (isSelected) CircleShape else RoundedCornerShape(10.dp)
             val containerColor by animateColorAsState(
                 if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh,
                 label = "ButtonColor"
@@ -1577,7 +1546,7 @@ fun ExpressiveButtonGroup(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(48.dp) // Taller button
+                    .height(48.dp)
                     .clip(shape)
                     .background(containerColor)
                     .clickable { onItemClick(index) },
@@ -1643,7 +1612,6 @@ fun ShapeParameterCard(
                 )
             }
             
-            // Custom Thick Slider
             ThickSlider(
                 value = value,
                 onValueChange = onValueChange,
@@ -1694,5 +1662,3 @@ fun ThickSlider(
 fun getThemeContentColor(colorArgb: Int, scheme: androidx.compose.material3.ColorScheme): Color {
     return resolvePlaylistCoverContentColor(colorArgb, scheme)
 }
-
-// End of file

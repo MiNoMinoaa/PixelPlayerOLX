@@ -118,9 +118,6 @@ fun AlbumDetailScreen(
     playlistViewModel: PlaylistViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    // Only the "is a song loaded" transition matters at screen level — per-song playback
-    // highlighting is isolated inside LibraryPlaybackAwareSongItem so the song list does
-    // not recompose wholesale on every playback-state change.
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
     val isMiniPlayerVisible by remember {
         derivedStateOf { stablePlayerState.currentSong != null }
@@ -319,7 +316,7 @@ fun AlbumDetailScreen(
                             top = minTopBarHeight + 8.dp,
                             start = 16.dp,
                             end = if (showScrollBar) 24.dp else 16.dp,
-                            bottom = fabBottomPadding + 80.dp // To account for FAB
+                            bottom = fabBottomPadding + 80.dp
                         ),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -341,8 +338,6 @@ fun AlbumDetailScreen(
                                 key = { song -> "album_song_${song.id}" },
                                 contentType = { "album_song" }
                             ) { song ->
-                                // Per-item playback observation (see LibraryPlaybackAwareSongItem):
-                                // keeps a track change from recomposing every visible row.
                                 LibraryPlaybackAwareSongItem(
                                     song = song,
                                     playerViewModel = playerViewModel,
@@ -651,7 +646,6 @@ private fun CollapsingAlbumTopBar(
             alpha = 0.4f
         )
 
-    // Animation Values
     val fabScale = 1f - collapseFraction
     val backgroundAlpha = collapseFraction
     val headerContentAlpha = 1f - (collapseFraction * 2).coerceAtMost(1f)
@@ -682,7 +676,6 @@ private fun CollapsingAlbumTopBar(
         lerpColor(expandedStatusBarFallback, surfaceColor, solidAlpha)
     }
 
-    // Title animation
     val titleScale = lerp(1f, 0.75f, collapseFraction)
     val titlePaddingStart = lerp(24.dp, 58.dp, collapseFraction)
     val titleMaxLines = if (collapseFraction < 0.5f) 2 else 1
@@ -732,7 +725,6 @@ private fun CollapsingAlbumTopBar(
                     .align(Alignment.TopCenter)
             )
 
-            // Top bar content (buttons, title, etc.)
             Box(
                 modifier = Modifier
                     .fillMaxSize()

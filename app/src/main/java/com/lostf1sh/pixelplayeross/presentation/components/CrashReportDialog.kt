@@ -83,7 +83,6 @@ fun CrashReportDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Crash info card
                 Surface(
                     color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
                     shape = RoundedCornerShape(12.dp),
@@ -141,7 +140,6 @@ fun CrashReportDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Action buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)

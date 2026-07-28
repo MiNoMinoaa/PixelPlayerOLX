@@ -56,12 +56,12 @@ object JellyfinResponseParser {
             albumArtist = albumArtist,
             album = json.optString("Album", "Unknown Album"),
             albumId = json.optString("AlbumId").takeIf { it.isNotBlank() },
-            duration = (json.optLong("RunTimeTicks", 0L) / 10_000), // Ticks to milliseconds
+            duration = (json.optLong("RunTimeTicks", 0L) / 10_000),
             trackNumber = json.optInt("IndexNumber", 0),
             discNumber = json.optInt("ParentIndexNumber", 0),
             year = json.optInt("ProductionYear", 0),
             genre = genres.firstOrNull(),
-            bitRate = firstSource?.optInt("Bitrate")?.let { it / 1000 }, // bps to kbps
+            bitRate = firstSource?.optInt("Bitrate")?.let { it / 1000 },
             contentType = firstSource?.optString("Container")?.let { containerToMimeType(it) },
             path = firstSource?.optString("Path", "") ?: json.optString("Path", ""),
             size = firstSource?.optLong("Size"),

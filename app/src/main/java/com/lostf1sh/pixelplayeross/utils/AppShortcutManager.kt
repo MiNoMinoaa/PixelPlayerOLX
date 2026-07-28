@@ -40,13 +40,12 @@ class AppShortcutManager @Inject constructor(
      * @param playlistName The display name of the playlist
      */
     fun updateLastPlaylistShortcut(playlistId: String, playlistName: String) {
-        // Persist to DataStore so the QS tile can read it when the app is closed
         scope.launch {
             userPreferencesRepository.setLastPlaylist(playlistId, playlistName)
         }
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N_MR1) {
-            return // Launcher shortcuts not supported before API 25
+            return
         }
 
         val intent = Intent(context, MainActivity::class.java).apply {
@@ -61,7 +60,6 @@ class AppShortcutManager @Inject constructor(
             .setIntent(intent)
             .build()
 
-        // Remove old shortcut first to force icon refresh
         ShortcutManagerCompat.removeDynamicShortcuts(context, listOf(SHORTCUT_ID_LAST_PLAYLIST))
         ShortcutManagerCompat.pushDynamicShortcut(context, shortcut)
     }

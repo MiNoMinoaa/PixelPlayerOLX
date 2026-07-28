@@ -64,7 +64,6 @@ import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import kotlinx.collections.immutable.persistentListOf
 
 
-// 2) DailyMixSection y DailyMixCard quedan igual de ligeras...
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun DailyMixSection(
@@ -186,7 +185,6 @@ private fun DailyMixCard(
     playerViewModel: PlayerViewModel,
     onMoreOptionsClick: (Song) -> Unit
 ) {
-    // O(n) copies — keyed on songs so they don't re-allocate on every recomposition.
     val headerSongs = remember(songs) { songs.take(3).toImmutableList() }
     val visibleSongs = remember(songs) { songs.take(4).toImmutableList() }
     val cornerRadius = 30.dp
@@ -241,7 +239,7 @@ fun DailyMixHeader(thumbnails: ImmutableList<Song>) {
             if (index == 1) {
                 return Modifier.size(44.dp).aspectRatio(1f).padding(bottom = 4.dp)
             }
-            return Modifier.size(48.dp) //.padding( = 4.dp)
+            return Modifier.size(48.dp)
         }
     }
 
@@ -252,8 +250,8 @@ fun DailyMixHeader(thumbnails: ImmutableList<Song>) {
             .background(
                 brush = Brush.horizontalGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.primary, //.copy(alpha = 0.7f),
-                        MaterialTheme.colorScheme.tertiary //.copy(alpha = 0.7f)
+                        MaterialTheme.colorScheme.primary,
+                        MaterialTheme.colorScheme.tertiary
                     )
                 )
             ),
@@ -305,8 +303,8 @@ fun DailyMixHeader(thumbnails: ImmutableList<Song>) {
 }
 
 @Composable
-fun threeShapeSwitch(index: Int, thirdShapeCornerRadius: Dp = 16.dp): Shape { // Ensure the function returns a Shape
-    return when (index) { // Return the result of the when expression
+fun threeShapeSwitch(index: Int, thirdShapeCornerRadius: Dp = 16.dp): Shape {
+    return when (index) {
         0 -> RoundedStarShape(
             sides = 6,
             rotation = 10f
@@ -322,7 +320,7 @@ fun threeShapeSwitch(index: Int, thirdShapeCornerRadius: Dp = 16.dp): Shape { //
             smoothnessAsPercentTL = 60,
             smoothnessAsPercentBR = 60
         )
-        else -> CircleShape // It's good practice to have a default case
+        else -> CircleShape
     }
 }
 

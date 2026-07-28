@@ -55,22 +55,18 @@ class LyricsStateHolder @Inject constructor(
     private var loadingJob: Job? = null
     private var loadCallback: LyricsLoadCallback? = null
 
-    // Sync offset per song in milliseconds
     private val _currentSongSyncOffset = MutableStateFlow(0)
     val currentSongSyncOffset: StateFlow<Int> = _currentSongSyncOffset.asStateFlow()
 
-    // Lyrics search UI state
     private val _searchUiState = MutableStateFlow<LyricsSearchUiState>(LyricsSearchUiState.Idle)
     val searchUiState: StateFlow<LyricsSearchUiState> = _searchUiState.asStateFlow()
 
-    // Event to notify ViewModel of song updates (e.g. lyrics added)
     private val _songUpdates = kotlinx.coroutines.flow.MutableSharedFlow<Pair<Song, Lyrics?>>(
         extraBufferCapacity = 1,
         onBufferOverflow = kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
     )
     val songUpdates = _songUpdates.asSharedFlow()
 
-    // Event for Toasts
     private val _messageEvents = kotlinx.coroutines.flow.MutableSharedFlow<String>(
         extraBufferCapacity = 1,
         onBufferOverflow = kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
@@ -187,10 +183,6 @@ class LyricsStateHolder @Inject constructor(
                 }
             }
 
-            // Build ordered list of local source checks based on user preference.
-            // API_FIRST: skip local sources, go straight to remote.
-            // EMBEDDED_FIRST: check embedded, then local .lrc, then remote.
-            // LOCAL_FIRST: check local .lrc, then embedded, then remote.
             val localSourceChecks: List<suspend () -> Pair<String, Int>?> = when (sourcePreference) {
                 LyricsSourcePreference.API_FIRST -> emptyList()
                 LyricsSourcePreference.EMBEDDED_FIRST -> listOf(
@@ -203,7 +195,6 @@ class LyricsStateHolder @Inject constructor(
                 )
             }
 
-            // Try local sources in priority order.
             for (sourceCheck in localSourceChecks) {
                 val result = withContext(Dispatchers.IO) { sourceCheck() }
                 if (result != null) {
@@ -225,7 +216,6 @@ class LyricsStateHolder @Inject constructor(
                 }
             }
 
-            // Fall through to remote fetch.
             if (forcePickResults) {
                 musicRepository.searchRemoteLyrics(song)
                     .onSuccess { (query, results) ->
@@ -244,7 +234,6 @@ class LyricsStateHolder @Inject constructor(
                     }
                     .onFailure { error ->
                         if (error is NoLyricsFoundException) {
-                            // Fallback to search
                             musicRepository.searchRemoteLyrics(song)
                                 .onSuccess { (query, results) ->
                                     _searchUiState.value = LyricsSearchUiState.PickResult(query, results.toImmutableList())
@@ -281,16 +270,13 @@ class LyricsStateHolder @Inject constructor(
         scope?.launch {
             _searchUiState.value = LyricsSearchUiState.Success(result.lyrics)
 
-            // 1. Update DB cache
             currentSong.id.toLongOrNull()?.let { songId ->
                 musicRepository.updateLyrics(songId, result.rawLyrics)
             }
 
-            // 2. Attempt metadata write-back to the audio file
             val refreshedAlbumArtUri = persistLyricsToFileMetadataIfPossible(currentSong, result.rawLyrics)
             val updatedSong = currentSong.withPersistedLyrics(result.rawLyrics, refreshedAlbumArtUri)
 
-            // 3. Notify
             _songUpdates.emit(updatedSong to result.lyrics)
         }
     }
@@ -417,8 +403,6 @@ class LyricsStateHolder @Inject constructor(
 internal fun Song.withPersistedLyrics(rawLyrics: String, refreshedAlbumArtUri: String?): Song {
     return copy(
         lyrics = rawLyrics,
-        // Lyrics writes can refresh the cached cover-art file path. Carry it forward immediately
-        // so the full player doesn't keep rendering a deleted image URI until the next app reload.
         albumArtUriString = refreshedAlbumArtUri ?: albumArtUriString
     )
 }

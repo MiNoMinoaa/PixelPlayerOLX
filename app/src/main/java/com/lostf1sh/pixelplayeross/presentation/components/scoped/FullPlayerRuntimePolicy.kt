@@ -32,7 +32,6 @@ internal fun rememberFullPlayerRuntimePolicy(
     val allowRealtimeUpdates by remember(currentSheetState, bottomSheetOpenFraction) {
         derivedStateOf {
             val ef = expansionFraction.value
-            // Compute content alpha inline (same formula as FullPlayerVisualState).
             val alpha = (ef - 0.25f).coerceIn(0f, 0.75f) / 0.75f
             val isOccluded = bottomSheetOpenFraction >= 0.08f
 

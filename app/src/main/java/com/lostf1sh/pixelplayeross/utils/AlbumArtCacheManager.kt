@@ -81,14 +81,12 @@ object AlbumArtCacheManager {
     }
 
     private suspend fun cleanCacheIfNeededInternal(context: Context, maxCacheSizeBytes: Long): Int = withContext(Dispatchers.IO) {
-        // Skip if cleaned recently
         val now = System.currentTimeMillis()
         if (now - lastCleanupTime < MIN_CLEANUP_INTERVAL_MS) {
             return@withContext 0
         }
         
         cleanupMutex.withLock {
-            // Double-check after acquiring lock
             if (now - lastCleanupTime < MIN_CLEANUP_INTERVAL_MS) {
                 return@withLock 0
             }
@@ -108,9 +106,6 @@ object AlbumArtCacheManager {
             
             Timber.tag(TAG).d("Cache size ${currentSize / 1024 / 1024}MB exceeds limit, cleaning...")
             
-            // Snapshot lastModified before sorting. The timestamp is mutated elsewhere to
-            // implement LRU reads, so re-reading it during TimSort can violate comparator
-            // transitivity and crash with "Comparison method violates its general contract!".
             val filesToDelete = snapshotFilesForCleanup(
                 artFiles = artFiles,
                 cleanupPercentage = CLEANUP_PERCENTAGE
@@ -282,10 +277,8 @@ object AlbumArtCacheManager {
      */
     private fun extractSongIdFromFilename(filename: String): Long? {
         return try {
-            // Remove prefix "song_art_"
             val withoutPrefix = filename.removePrefix(CACHE_PREFIX)
             
-            // Extract the ID (before any underscore or dot)
             val idPart = withoutPrefix
                 .substringBefore("_")
                 .substringBefore(".")

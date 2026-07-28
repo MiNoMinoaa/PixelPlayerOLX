@@ -110,7 +110,6 @@ fun PlaylistMultiSelectionBottomSheet(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
             ) {
-                // Header with stacked playlist covers and count - matching song sheet layout
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -118,7 +117,6 @@ fun PlaylistMultiSelectionBottomSheet(
                     horizontalArrangement = Arrangement.spacedBy(0.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Stacked playlist covers
                     val stackedImageSize = 66.dp
                     val stackedOverlap = 33.dp
                     val stackedCount = selectedPlaylists.take(4).size
@@ -135,7 +133,6 @@ fun PlaylistMultiSelectionBottomSheet(
 
                     Spacer(modifier = Modifier.width(16.dp))
 
-                    // Playlist count and label
                     Column {
                         Text(
                             text = stringResource(R.string.multi_selection_playlists_count_upper, selectedPlaylists.size),
@@ -156,13 +153,11 @@ fun PlaylistMultiSelectionBottomSheet(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Actions list
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth(),
                     contentPadding = PaddingValues(bottom = 32.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // Row 1: Delete, Export
                     item {
                         Row(
                             modifier = Modifier
@@ -217,7 +212,6 @@ fun PlaylistMultiSelectionBottomSheet(
                         }
                     }
 
-                    // Row 2: Merge, Share
                     item {
                         Row(
                             modifier = Modifier
@@ -305,7 +299,6 @@ private fun StackedPlaylistCovers(
                     .size(imageSize)
                     .background(borderColor, CircleShape)
             ) {
-                // Inner cover, inset by border width
                 Box(
                     modifier = Modifier
                         .matchParentSize()
@@ -327,7 +320,6 @@ private fun StackedPlaylistCovers(
                                 .background(Color(playlist.coverColorArgb)),
                             contentAlignment = Alignment.Center
                         ) {
-                            // Show icon if available, otherwise show first letter of playlist name
                             val contentColor = resolvePlaylistCoverContentColor(
                                 playlist.coverColorArgb,
                                 MaterialTheme.colorScheme
@@ -350,7 +342,6 @@ private fun StackedPlaylistCovers(
                             }
                         }
                     } else {
-                        // Default fallback: show playlist icon or first letter with theme color
                         Box(
                             modifier = Modifier
                                 .matchParentSize()

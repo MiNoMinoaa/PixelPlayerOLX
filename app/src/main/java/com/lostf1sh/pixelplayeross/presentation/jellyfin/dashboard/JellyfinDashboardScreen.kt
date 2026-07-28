@@ -152,7 +152,6 @@ private fun JellyfinDashboardContent(
             .fillMaxSize()
             .padding(paddingValues)
     ) {
-        // Sync status banner
         AnimatedVisibility(
             visible = syncMessage != null,
             enter = slideInVertically(
@@ -194,7 +193,6 @@ private fun JellyfinDashboardContent(
             }
         }
 
-        // User info header
         username?.let { name ->
             Card(
                 modifier = Modifier
@@ -258,7 +256,6 @@ private fun JellyfinDashboardContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Playlists header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -285,7 +282,6 @@ private fun JellyfinDashboardContent(
             }
         }
 
-        // Playlist list
         if (playlists.isEmpty() && !isSyncing) {
             Box(
                 modifier = Modifier
@@ -753,7 +749,6 @@ private fun JellyfinPlaylistCard(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Playlist cover
             Box(
                 modifier = Modifier
                     .size(56.dp)

@@ -16,8 +16,6 @@ object NavidromeResponseParser {
 
     private const val TAG = "NavidromeParser"
 
-    // ─── Music Folder Parsing ────────────────────────────────────────────
-
     /**
      * Parse a music folder from JSON.
      */
@@ -31,8 +29,6 @@ object NavidromeResponseParser {
     fun parseMusicFolders(jsonArray: List<JSONObject>): List<NavidromeMusicFolder> {
         return jsonArray.map { parseMusicFolder(it) }
     }
-
-    // ─── Artist Parsing ──────────────────────────────────────────────────
 
     /**
      * Parse an artist from JSON (ArtistID3 format).
@@ -54,8 +50,6 @@ object NavidromeResponseParser {
         return jsonArray.map { parseArtist(it) }
     }
 
-    // ─── Album Parsing ───────────────────────────────────────────────────
-
     /**
      * Parse an album from JSON (AlbumID3 format).
      */
@@ -67,7 +61,7 @@ object NavidromeResponseParser {
             artistId = json.optString("artistId").takeIf { it.isNotEmpty() },
             coverArt = json.optString("coverArt").takeIf { it.isNotEmpty() },
             songCount = json.optInt("songCount", 0),
-            duration = json.optLong("duration", 0L) * 1000L, // Convert seconds to milliseconds
+            duration = json.optLong("duration", 0L) * 1000L,
             playCount = json.optInt("playCount", 0),
             year = json.optInt("year", 0),
             genre = json.optString("genre").takeIf { it.isNotEmpty() }
@@ -80,8 +74,6 @@ object NavidromeResponseParser {
     fun parseAlbums(jsonArray: List<JSONObject>): List<NavidromeAlbum> {
         return jsonArray.map { parseAlbum(it) }
     }
-
-    // ─── Song Parsing ────────────────────────────────────────────────────
 
     /**
      * Parse a song from JSON (Child format from Subsonic API).
@@ -96,7 +88,7 @@ object NavidromeResponseParser {
             album = json.optString("album", "Unknown Album"),
             albumId = json.optString("albumId").takeIf { it.isNotEmpty() },
             coverArt = json.optString("coverArt").takeIf { it.isNotEmpty() },
-            duration = json.optLong("duration", 0L) * 1000L, // Convert seconds to milliseconds
+            duration = json.optLong("duration", 0L) * 1000L,
             trackNumber = json.optInt("track", 0),
             discNumber = json.optInt("discNumber", 0),
             year = json.optInt("year", 0),
@@ -134,8 +126,6 @@ object NavidromeResponseParser {
         }
     }
 
-    // ─── Playlist Parsing ────────────────────────────────────────────────
-
     /**
      * Parse a playlist from JSON.
      */
@@ -146,7 +136,7 @@ object NavidromeResponseParser {
             comment = json.optString("comment").takeIf { it.isNotEmpty() },
             owner = json.optString("owner").takeIf { it.isNotEmpty() },
             songCount = json.optInt("songCount", json.optInt("entryCount", 0)),
-            duration = json.optLong("duration", 0L) * 1000L, // Convert seconds to milliseconds
+            duration = json.optLong("duration", 0L) * 1000L,
             coverArt = json.optString("coverArt").takeIf { it.isNotEmpty() },
             public = json.optBoolean("public", false),
             created = parseTimestamp(json.optString("created")),
@@ -180,8 +170,6 @@ object NavidromeResponseParser {
 
         return Pair(playlist, songs)
     }
-
-    // ─── Search Result Parsing ───────────────────────────────────────────
 
     /**
      * Parse search results from search3 response.
@@ -225,20 +213,15 @@ object NavidromeResponseParser {
         return SearchResults(artists, albums, songs)
     }
 
-    // ─── Utility Methods ─────────────────────────────────────────────────
-
     /**
      * Parse ISO 8601 timestamp string to epoch milliseconds.
      */
     private fun parseTimestamp(timestamp: String?): Long {
         if (timestamp.isNullOrBlank()) return 0L
         return try {
-            // Subsonic API returns ISO 8601 format: "2023-01-15T10:30:00"
-            // Try parsing as ISO 8601
             java.time.OffsetDateTime.parse(timestamp).toInstant().toEpochMilli()
         } catch (e: Exception) {
             try {
-                // Fallback: try without timezone
                 java.time.LocalDateTime.parse(timestamp)
                     .atZone(java.time.ZoneId.systemDefault())
                     .toInstant()

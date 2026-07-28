@@ -48,7 +48,6 @@ class LibraryStateHolder @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository
 ) {
 
-    // --- State ---
     private val _allSongs = MutableStateFlow<ImmutableList<Song>>(persistentListOf())
     val allSongs = _allSongs.asStateFlow()
 
@@ -70,11 +69,9 @@ class LibraryStateHolder @Inject constructor(
     private val _isLoadingCategories = MutableStateFlow(false)
     val isLoadingCategories = _isLoadingCategories.asStateFlow()
 
-    // Sort Options
     private val _currentSongSortOption = MutableStateFlow<SortOption>(SortOption.SongDefaultOrder)
     val currentSongSortOption = _currentSongSortOption.asStateFlow()
 
-    // Filter Options
     private val _currentStorageFilter = MutableStateFlow(com.lostf1sh.pixelplayeross.data.model.StorageFilter.ALL)
     val currentStorageFilter = _currentStorageFilter.asStateFlow()
 
@@ -188,14 +185,10 @@ class LibraryStateHolder @Inject constructor(
         .flowOn(Dispatchers.Default)
 
 
-    // Internal state
     private var scope: CoroutineScope? = null
-
-    // --- Initialization ---
 
     fun initialize(scope: CoroutineScope) {
         this.scope = scope
-        // Initial load of sort preferences
         scope.launch {
             val songSortKey = userPreferencesRepository.songsSortOptionFlow.first()
             _currentSongSortOption.value = SortOption.SONGS.find { it.storageKey == songSortKey } ?: SortOption.SongDefaultOrder
@@ -212,7 +205,6 @@ class LibraryStateHolder @Inject constructor(
             val likedSortKey = userPreferencesRepository.likedSongsSortOptionFlow.first()
             _currentFavoriteSortOption.value = SortOption.LIKED.find { it.storageKey == likedSortKey } ?: SortOption.LikedSongDateLiked
 
-            // Restore last storage filter (All / Cloud / Local)
             _currentStorageFilter.value = userPreferencesRepository.lastStorageFilterFlow.first()
         }
     }
@@ -220,8 +212,6 @@ class LibraryStateHolder @Inject constructor(
     fun onCleared() {
         scope = null
     }
-
-    // --- Data Loading ---
 
     private var songsJob: Job? = null
     private var albumsJob: Job? = null
@@ -246,16 +236,12 @@ class LibraryStateHolder @Inject constructor(
         songsJob = scope?.launch {
             _isLoadingLibrary.value = true
             musicRepository.getAudioFiles().conflate().collect { songs ->
-                // Process heavy list conversions on Default dispatcher to avoid blocking UI
                 val immutableSongs = withContext(Dispatchers.Default) { songs.toImmutableList() }
                 val songsMap = withContext(Dispatchers.Default) { songs.associateBy { it.id } }
 
                 _allSongs.value = immutableSongs
                 _allSongsById.value = songsMap
 
-                // When the repository emits a new list (triggered by directory changes),
-                // we update our state and re-apply current sorting.
-                // Apply sort to the new data
                 sortSongs(_currentSongSortOption.value, persist = false)
                 _isLoadingLibrary.value = false
             }
@@ -307,7 +293,6 @@ class LibraryStateHolder @Inject constructor(
         }
     }
 
-    // Deprecated imperative loaders - redirected to observer start
     fun loadSongsFromRepository() {
         startObservingLibraryData()
     }
@@ -324,13 +309,6 @@ class LibraryStateHolder @Inject constructor(
         startObservingLibraryData()
     }
 
-    // --- Lazy Loading Checks ---
-
-    // --- Lazy Loading Checks ---
-    // We replace conditional "check if empty" with "ensure observing".
-    // If we are already observing, startObservingLibraryData returns early.
-    // If we are not (e.g. process death recovery?), it restarts.
-
     fun loadSongsIfNeeded() {
         startObservingLibraryData()
     }
@@ -343,8 +321,6 @@ class LibraryStateHolder @Inject constructor(
         startObservingLibraryData()
     }
 
-    // --- Sorting ---
-
     fun sortSongs(sortOption: SortOption, persist: Boolean = true) {
         scope?.launch {
             if (persist && _currentSongSortOption.value.storageKey == sortOption.storageKey) {
@@ -353,7 +329,6 @@ class LibraryStateHolder @Inject constructor(
             if (persist) {
                 userPreferencesRepository.setSongsSortOption(sortOption.storageKey)
             }
-            // Updating the sort option triggers songsPagingFlow to reload with new sort at DB level
             _currentSongSortOption.value = sortOption
         }
     }
@@ -527,7 +502,6 @@ class LibraryStateHolder @Inject constructor(
                 userPreferencesRepository.setLikedSongsSortOption(sortOption.storageKey)
             }
             _currentFavoriteSortOption.value = sortOption
-            // The actual filtering/sorting of favorites happens in ViewModel using this flow
         }
     }
 

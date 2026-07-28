@@ -24,9 +24,6 @@ android {
 }
 
 baselineProfile {
-    // warnings {
-    //     maxAgpVersion = false
-    // }
     useConnectedDevices = true
 }
 

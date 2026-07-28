@@ -78,7 +78,7 @@ import com.lostf1sh.pixelplayeross.ui.theme.RoundedSans
 import java.io.File
 import androidx.compose.ui.res.stringResource
 
-val defaultShape = RoundedCornerShape(26.dp) // Fallback shape
+val defaultShape = RoundedCornerShape(26.dp)
 val genHeight = 42.dp
 
 @Composable
@@ -94,14 +94,12 @@ fun LibraryActionRow(
     onImportM3uClick: () -> Unit = {},
     isFoldersTab: Boolean,
     modifier: Modifier = Modifier,
-    // Breadcrumb parameters
     currentFolder: MusicFolder?,
     folderRootPath: String,
     folderRootLabel: String,
     onFolderClick: (String) -> Unit,
     onNavigateBack: () -> Unit,
     isShuffleEnabled: Boolean = false,
-    // Storage Filter
     showStorageFilterButton: Boolean = false,
     currentStorageFilter: com.lostf1sh.pixelplayeross.data.model.StorageFilter = com.lostf1sh.pixelplayeross.data.model.StorageFilter.ALL,
     onStorageFilterClick: () -> Unit = {}
@@ -119,10 +117,10 @@ fun LibraryActionRow(
             targetState = isFoldersTab,
             label = "ActionRowContent",
             transitionSpec = {
-                if (targetState) { // Transition to Folders (Breadcrumbs)
+                if (targetState) {
                     slideInVertically { height -> height } + fadeIn() togetherWith
                             slideOutVertically { height -> -height } + fadeOut()
-                } else { // Transition to other tabs (Buttons)
+                } else {
                     slideInVertically { height -> -height } + fadeIn() togetherWith
                             slideOutVertically { height -> height } + fadeOut()
                 }
@@ -151,7 +149,6 @@ fun LibraryActionRow(
                     label = "ImportButtonStartCorner"
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Determine button colors based on shuffle state (not for playlist tab)
                     val buttonContainerColor = MaterialTheme.colorScheme.tertiaryContainer
                     val buttonContentColor = MaterialTheme.colorScheme.onTertiaryContainer
                     
@@ -204,7 +201,7 @@ fun LibraryActionRow(
                         visible = shouldShowImport,
                         enter = fadeIn() + expandHorizontally(
                             expandFrom = Alignment.Start,
-                            clip = false, // <— avoids the 「clipping」 during the expansion
+                            clip = false,
                             animationSpec = spring(
                                 dampingRatio = Spring.DampingRatioMediumBouncy,
                                 stiffness = Spring.StiffnessLow
@@ -212,7 +209,7 @@ fun LibraryActionRow(
                         ),
                         exit = fadeOut() + shrinkHorizontally(
                             shrinkTowards = Alignment.Start,
-                            clip = false, // <— avoids the 「clipping」 during the expansion
+                            clip = false,
                             animationSpec = spring(
                                 dampingRatio = Spring.DampingRatioNoBouncy,
                                 stiffness = Spring.StiffnessMedium
@@ -273,30 +270,19 @@ fun LibraryActionRow(
         if (showSortButton) {
             val outerCorner = 26.dp
             
-            // Logic for Sort Button (Rightmost)
             val sortStartCorner by animateDpAsState(
                 targetValue = if (showLocateButton || showStorageFilterButton) 8.dp else outerCorner,
                 label = "SortStartCorner"
             )
 
-            // Logic for Filter Button (Middle or Left if Locate hidden)
-            // Filter is visible if showStorageFilterButton is true
-            val filterEndCorner = 8.dp // Connected to Sort
+            val filterEndCorner = 8.dp
             val filterStartCorner by animateDpAsState(
                 targetValue = if (showLocateButton) 8.dp else outerCorner,
                 label = "FilterStartCorner"
             )
             
-            // Logic for Locate Button (Leftmost)
-            val locateEndCorner = 8.dp // Connected to Filer or Sort
+            val locateEndCorner = 8.dp
 
-            // Gaps
-            // If Filter is shown, gap is between Filter and Sort? OR if we use connected buttons, gap is 4dp between groups or 0dp between connected?
-            // Existing code used 4dp gap and 8dp corner. 
-            // "SortButtonsGap" was 4dp if showLocateButton else 0dp.
-            // If we want "connected" look (segmented), gap should be small (1dp or 2dp) or 0.
-            // But existing code uses `4.dp`.
-            
             val gapBetweenLocateAndNext by animateDpAsState(
                 targetValue = if (showLocateButton) 4.dp else 0.dp,
                 label = "GapLocate"
@@ -308,7 +294,6 @@ fun LibraryActionRow(
 
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Locate Button
                 AnimatedVisibility(
                     visible = showLocateButton,
                     enter = slideInHorizontally(initialOffsetX = { it / 2 }) + fadeIn(),
@@ -333,7 +318,6 @@ fun LibraryActionRow(
                 
                 Spacer(modifier = Modifier.width(gapBetweenLocateAndNext))
 
-                // Storage Filter Button
                 AnimatedVisibility(
                     visible = showStorageFilterButton,
                     enter = slideInHorizontally(initialOffsetX = { it / 2 }) + fadeIn(),
@@ -381,7 +365,6 @@ fun LibraryActionRow(
 
                 Spacer(modifier = Modifier.width(gapBetweenFilterAndSort))
 
-                // Sort Button
                 FilledTonalIconButton(
                     onClick = onSortClick,
                     shape = RoundedCornerShape(
@@ -460,33 +443,25 @@ fun Breadcrumbs(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .weight(1f)
-                // 1. Force the content to be drawn in a separate layer.
                 .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
                 .drawWithContent {
-                    // 2. Draw the original content (the LazyRow).
                     drawContent()
 
-                    // 3. Draw the gradients that act as "erase masks".
                     val gradientWidth = 24.dp.toPx()
 
-                    // Mask for the LEFT edge
                     if (showStartFade) {
                         drawRect(
                             brush = Brush.horizontalGradient(
-                                // Gradient from transparent to opaque (black)
                                 colors = listOf(Color.Transparent, Color.Black),
                                 endX = gradientWidth
                             ),
-                            // DstIn keeps the LazyRow content only where this layer is opaque.
                             blendMode = BlendMode.DstIn
                         )
                     }
 
-                    // Mask for the RIGHT edge
                     if (showEndFade) {
                         drawRect(
                             brush = Brush.horizontalGradient(
-                                // Gradient from opaque (black) to transparent
                                 colors = listOf(Color.Black, Color.Transparent),
                                 startX = this.size.width - gradientWidth
                             ),

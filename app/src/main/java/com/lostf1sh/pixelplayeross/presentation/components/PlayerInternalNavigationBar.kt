@@ -34,11 +34,10 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-internal val NavBarContentHeight = 90.dp // Navigation bar content height
+internal val NavBarContentHeight = 90.dp
 internal val NavBarCompactContentHeight = 64.dp
-internal val NavBarContentHeightFullWidth = NavBarContentHeight // Navigation bar content height in full-width mode
+internal val NavBarContentHeightFullWidth = NavBarContentHeight
 private val MainScreenBottomGradientExtraHeight = MiniPlayerHeight + MiniPlayerBottomSpacer + 8.dp
-// Some OEM freeform/floating-window modes can report a bottom inset close to the whole window height.
 internal val MaxNavigationBarBottomInset = 96.dp
 
 internal fun sanitizeNavigationBarBottomInset(systemNavBarInset: Dp): Dp {
@@ -100,9 +99,6 @@ private fun PlayerInternalNavigationItemsRow(
     val navBarInsetPadding = sanitizeNavigationBarBottomInset(
         WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     )
-    // Maintain invariant: bottomBarPadding + innerRowPadding = the sanitized system nav bar inset.
-    // This prevents nav items from appearing behind the gesture bar during style transitions,
-    // e.g. FULL_WIDTH→DEFAULT where bottomBarPadding starts at 0 and animates to systemNavBarInset.
     val innerRowPadding = (navBarInsetPadding - bottomBarPadding).coerceAtLeast(0.dp)
     val latestCurrentRoute by rememberUpdatedState(currentRoute)
     val latestOnSearchIconDoubleTap by rememberUpdatedState(onSearchIconDoubleTap)

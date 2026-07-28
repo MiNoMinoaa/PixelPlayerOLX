@@ -238,9 +238,6 @@ class DeviceCapabilitiesViewModel @Inject constructor(
                 .distinct()
             if (types.isEmpty()) continue
 
-            // On many Samsung devices, c2.sec.* codecs are high-performance hardware paths,
-            // but the platform doesn't always flag them as hardwareAccelerated in the manifest.
-            // We force report them as hardware in the UI if the name starts with c2.sec.
             val isHardware = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 codecInfo.isHardwareAccelerated || (isSamsung && codecInfo.name.startsWith("c2.sec."))
             } else {

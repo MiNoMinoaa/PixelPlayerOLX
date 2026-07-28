@@ -118,7 +118,6 @@ fun ReorderTabsSheet(
             localTabs = localTabs.toMutableList().apply {
                 add(to.index, removeAt(from.index))
             }.toImmutableList()
-            // Haptic feedback on reorder
             performAppCompatHapticFeedback(
                 view,
                 appHapticsConfig,
@@ -153,12 +152,12 @@ fun ReorderTabsSheet(
             floatingActionButton = {
                 FloatingToolBar(
                     modifier = Modifier,
-                    onReset = { showResetDialog = true }, // This will now trigger the dialog
+                    onReset = { showResetDialog = true },
                     onDismiss = onDismiss,
                     onClick = {
                         scope.launch {
                             isLoading = true
-                            delay(700) // Simulate network/db operation
+                            delay(700)
                             onReorder(localTabs)
                             isLoading = false
                             onDismiss()
@@ -262,7 +261,7 @@ fun FloatingToolBar(
         ) {
             IconButton(
                 modifier = Modifier.align(Alignment.CenterVertically),
-                onClick = onReset // This now calls the lambda from the parent
+                onClick = onReset
             ) {
                 Icon(
                     painter = painterResource(R.drawable.outline_restart_alt_24),

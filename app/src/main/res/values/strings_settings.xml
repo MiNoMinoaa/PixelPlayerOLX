@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Main settings screen -->
     <string name="settings_top_bar_title">Settings</string>
     <string name="settings_accounts_row_title">Accounts</string>
     <string name="settings_accounts_row_subtitle">Manage Navidrome and Jellyfin services</string>
 
-    <!-- SettingsCategory enum (grid) -->
     <string name="settings_category_library_title">Music Management</string>
     <string name="settings_category_library_subtitle">Manage folders, refresh library, parsing options</string>
     <string name="settings_category_appearance_title">Appearance</string>
@@ -25,7 +23,6 @@
     <string name="settings_category_about_title">About</string>
     <string name="settings_category_about_subtitle">App info, version, and credits</string>
 
-    <!-- Common toggles / labels used in ThemeSelectorItem maps -->
     <string name="label_on">On</string>
     <string name="label_off">Off</string>
     <string name="label_enabled">Enabled</string>
@@ -35,7 +32,6 @@
     <string name="cd_clear_selection">Clear selection</string>
     <string name="cd_close_notice">Close notice</string>
 
-    <!-- Library category -->
     <string name="setcat_library_structure">Library Structure</string>
     <string name="setcat_excluded_directories_title">Excluded Directories</string>
     <string name="setcat_excluded_directories_subtitle">Folders here will be skipped when scanning your library.</string>
@@ -65,7 +61,6 @@
     <string name="setcat_reset_imported_lyrics_title">Reset Imported Lyrics</string>
     <string name="setcat_reset_imported_lyrics_subtitle">Remove all imported lyrics from the database.</string>
 
-    <!-- Appearance -->
     <string name="setcat_global_theme">Global Theme</string>
     <string name="setcat_app_theme_label">App Theme</string>
     <string name="setcat_app_theme_desc">Switch between light, dark, or follow system appearance.</string>
@@ -119,7 +114,6 @@
     <string name="setcat_library_nav_tab_row">Tab row (default)</string>
     <string name="setcat_library_nav_compact_pill">Compact pill &amp; grid</string>
 
-    <!-- Playback -->
     <string name="setcat_background_playback">Background Playback</string>
     <string name="setcat_keep_playing_label">Keep playing after closing</string>
     <string name="setcat_keep_playing_desc">If off, removing the app from recents will stop playback.</string>
@@ -145,7 +139,6 @@
     <string name="setcat_show_queue_history_title">Show queue history</string>
     <string name="setcat_show_queue_history_subtitle">Show previously played songs in the queue.</string>
 
-    <!-- Behavior -->
     <string name="setcat_folders">Folders</string>
     <string name="setcat_folder_back_gesture_title">Back gesture controls folders</string>
     <string name="setcat_folder_back_gesture_subtitle">In Folders tab, system back navigates folder stack before leaving Library.</string>
@@ -157,7 +150,6 @@
     <string name="setcat_haptic_feedback_subtitle">Enable vibration feedback across the app.</string>
 
 
-    <!-- Backup / developer / dialogs -->
     <string name="setcat_create_backup">Create Backup</string>
     <string name="setcat_export_backup_title">Export Backup</string>
     <string name="setcat_export_backup_subtitle">%1$s Creates a .pxpl backup file.</string>
@@ -237,7 +229,6 @@
     <string name="setcat_select_export">Select &amp; Export</string>
     <string name="setcat_select_restore">Select &amp; Restore</string>
 
-    <!-- Import backup flow (SettingsCategoryScreen) -->
     <string name="import_backup_toolbar_title">Import Backup</string>
     <string name="import_inspecting">Inspecting…</string>
     <string name="import_browse_file">Browse for file</string>

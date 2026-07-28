@@ -60,7 +60,6 @@ fun SyncProgressBar(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // Header with status text
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -85,7 +84,6 @@ fun SyncProgressBar(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Progress bar
             LinearWavyProgressIndicator(
                 progress = { animatedProgress },
                 modifier = Modifier.fillMaxWidth(),
@@ -95,7 +93,6 @@ fun SyncProgressBar(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // File count information
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -112,7 +109,6 @@ fun SyncProgressBar(
                 )
 
                 if (syncProgress.isRunning) {
-                    // Small indeterminate indicator for ongoing work
                     LoadingIndicator(
                         modifier = Modifier.size(16.dp),
                         color = MaterialTheme.colorScheme.primary
@@ -127,7 +123,6 @@ fun SyncProgressBar(
                 }
             }
 
-            // Optional cancel button
             if (showCancelButton && syncProgress.isRunning) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(

@@ -104,10 +104,8 @@ class LyricsRepositoryImpl @Inject constructor(
     companion object {
         private const val TAG = "LyricsRepository"
         
-        // Cache sizes (matching Rhythm)
         private const val MAX_LYRICS_CACHE_SIZE = 150
         
-        // API rate limiting constants (matching Rhythm)
         private const val LRCLIB_MIN_DELAY = 100L
         private const val MAX_CALLS_PER_MINUTE = 30
         private const val NETWORK_RETRY_ATTEMPTS = 3
@@ -170,17 +168,13 @@ class LyricsRepositoryImpl @Inject constructor(
         )
     }
 
-    // Repository scope for background tasks
     private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    // Thread-safe LRU cache to avoid race conditions across concurrent lyrics requests.
     private val lyricsCache = LruCache<String, Lyrics>(MAX_LYRICS_CACHE_SIZE)
 
-    // Thread-safe rate limiting state.
     private val lastApiCalls = ConcurrentHashMap<String, Long>()
     private val apiCallCounts = ConcurrentHashMap<String, Int>()
 
-    // Gson for JSON cache
     private val gson = Gson()
 
     private suspend fun isExternalLyricsEnabled(): Boolean =
@@ -273,10 +267,8 @@ class LyricsRepositoryImpl @Inject constructor(
             return minDelay - timeSinceLastCall
         }
 
-        // Check if we're making too many calls per minute
         val callsInLastMinute = apiCallCounts[apiName] ?: 0
         if (callsInLastMinute >= MAX_CALLS_PER_MINUTE) {
-            // Exponential backoff
             return minDelay * 2
         }
 
@@ -289,11 +281,9 @@ class LyricsRepositoryImpl @Inject constructor(
     private fun updateLastApiCall(apiName: String, timestamp: Long) {
         lastApiCalls[apiName] = timestamp
 
-        // Update call count for rate limiting
         val currentCount = apiCallCounts[apiName] ?: 0
         apiCallCounts[apiName] = currentCount + 1
 
-        // Reset counter every minute
         if (currentCount == 0) {
             repositoryScope.launch {
                 delay(60000)
@@ -314,7 +304,6 @@ class LyricsRepositoryImpl @Inject constructor(
         
         Timber.tag(TAG).d("===== FETCH LYRICS START: ${song.displayArtist} - ${song.title} (forceRefresh=$forceRefresh, source=$sourcePreference) =====")
 
-        // Check in-memory cache unless force refresh (early return - matching Rhythm)
         if (!forceRefresh) {
             lyricsCache.get(cacheKey)?.let { cached ->
                 Timber.tag(TAG).d("===== RETURNING IN-MEMORY CACHED LYRICS =====")
@@ -338,7 +327,6 @@ class LyricsRepositoryImpl @Inject constructor(
         val fetchFromEmbedded: Pair<String, suspend () -> Lyrics?> = "Embedded" to { loadEmbeddedLyricsFromMetadata(song) }
         val fetchFromLocal: Pair<String, suspend () -> Lyrics?> = "Local" to { findLocalLyricsFile(song) }
 
-        // Try sources in order based on preference, removing remote lookup when it is disabled.
         val sourceFetchers = when (sourcePreference) {
             LyricsSourcePreference.API_FIRST -> buildList {
                 if (remoteLyricsEnabled) add(fetchFromApi)
@@ -357,17 +345,14 @@ class LyricsRepositoryImpl @Inject constructor(
             }
         }
 
-        // Try each source in order until we find lyrics (early return on success)
         for ((sourceName, fetcher) in sourceFetchers) {
             try {
                 val lyrics = fetcher()
                 if (lyrics != null && lyrics.isValid()) {
                     Timber.tag(TAG).d("Found lyrics from $sourceName for: ${song.displayArtist} - ${song.title}")
                     
-                    // Cache the result
                     lyricsCache.put(cacheKey, lyrics)
                     
-                    // Save to JSON disk cache if from API
                     if (sourceName == "API") {
                         saveLocalLyricsJson(song, lyrics)
                     }
@@ -376,11 +361,9 @@ class LyricsRepositoryImpl @Inject constructor(
                 }
             } catch (e: Exception) {
                 Timber.tag(TAG).w("Error fetching from source $sourceName: ${e.message}")
-                // Continue to next source
             }
         }
 
-        // No lyrics found from any source
         Timber.tag(TAG).d("No lyrics found from any source for: ${song.displayArtist} - ${song.title}")
         return@withContext null
     }
@@ -396,14 +379,12 @@ class LyricsRepositoryImpl @Inject constructor(
      * Fetches lyrics from LRCLIB API with rate limiting (matching Rhythm)
      */
     private suspend fun fetchLyricsFromAPI(song: Song): Lyrics? = withContext(Dispatchers.IO) {
-        // Check JSON disk cache first (matching Rhythm)
         val cachedJson = loadLocalLyricsJson(song)
         if (cachedJson != null) {
             Timber.tag(TAG).d("===== LOADED LYRICS FROM JSON DISK CACHE =====")
             return@withContext cachedJson
         }
 
-        // Apply rate limiting
         val currentTime = System.currentTimeMillis()
         val delayNeeded = calculateApiDelay("lrclib", currentTime)
         if (delayNeeded > 0) {
@@ -439,7 +420,6 @@ class LyricsRepositoryImpl @Inject constructor(
                     )
                 }
                 
-                // Smart title cleanup strategy (removes leading digits/spaces and truncates at -, (, ))
                 val smartTitle = cleanTitleSmart(cleanTitle)
                 if (smartTitle != cleanTitle && smartTitle.isNotBlank()) {
                     Timber.tag(TAG).d("Adding smart search strategy for: '$smartTitle' (orig: '$cleanTitle')")
@@ -451,7 +431,6 @@ class LyricsRepositoryImpl @Inject constructor(
 
             var results = runSearchStrategiesFast(searchStrategies)
 
-            // Strategy 4: Aggressive fallback - remove artist and trim title at separators
             if (results.isEmpty()) {
                  val separators = charArrayOf('-', ',', '(', ')', '$', '#', ':', '%')
                  val index = cleanTitle.indexOfAny(separators)
@@ -489,7 +468,6 @@ class LyricsRepositoryImpl @Inject constructor(
                     if (parsedLyrics.isValid()) {
                         Timber.tag(TAG).d("LRCLIB lyrics found - Synced: ${!bestMatch.syncedLyrics.isNullOrBlank()}, Plain: ${!bestMatch.plainLyrics.isNullOrBlank()}")
                         
-                        // Save to database
                         try {
                             lyricsDao.insert(
                                 com.lostf1sh.pixelplayeross.data.database.LyricsEntity(
@@ -874,8 +852,6 @@ class LyricsRepositoryImpl @Inject constructor(
                 if (parsed.isValid()) {
                     val hasWordTimestamps = parsed.synced?.any { !it.words.isNullOrEmpty() } == true
                     if (!hasWordTimestamps && data.wordByWordLyrics.isNullOrBlank()) {
-                        // Legacy cache may have flattened word-by-word lines.
-                        // Recover richer raw lyrics from DB when available.
                         val persistedContent = song.id.toLongOrNull()
                             ?.let { lyricsDao.getLyrics(it)?.content }
                             ?.takeIf { it.isNotBlank() }
@@ -889,7 +865,6 @@ class LyricsRepositoryImpl @Inject constructor(
                         }
 
                         if (looksLikeFlattenedWordByWordCache(parsed)) {
-                            // Force a remote re-fetch instead of serving degraded cache.
                             return null
                         }
                     }
@@ -953,7 +928,6 @@ class LyricsRepositoryImpl @Inject constructor(
             return@withContext null
         }
 
-        // Then try to read from file metadata
         return@withContext try {
             val uri = song.contentUriString.toUri()
             val tempFile = createTempFileFromUri(uri)
@@ -1065,8 +1039,6 @@ class LyricsRepositoryImpl @Inject constructor(
         return gson.fromJson(json, LyricsData::class.java)
     }
 
-    // ========== Original methods (kept for backward compatibility) ==========
-
     override suspend fun fetchFromRemote(song: Song): Result<Pair<Lyrics, String>> = withContext(Dispatchers.IO) {
         try {
             LogUtils.d(this@LyricsRepositoryImpl, "Fetching lyrics from remote for: ${song.title}")
@@ -1085,12 +1057,10 @@ class LyricsRepositoryImpl @Inject constructor(
                 return@withContext Result.failure(LyricsException(context.getString(R.string.lyrics_remote_disabled)))
             }
 
-            // First, try the search API which is more flexible, then pick the best match
             val searchResult = searchRemote(song)
             if (searchResult.isSuccess) {
                 val (_, results) = searchResult.getOrThrow()
                 if (results.isNotEmpty()) {
-                    // Pick the first result (already sorted by synced priority)
                     val best = results.first()
                     val rawLyricsToSave = best.rawLyrics
 
@@ -1115,7 +1085,6 @@ class LyricsRepositoryImpl @Inject constructor(
                 }
             }
 
-            // Fallback: Try the exact match API (less likely to succeed, but worth a shot)
             val response = withNetworkRetry(operationName = "lrclib_get_lyrics") {
                 lrcLibApiService.getLyrics(
                     trackName = song.title,
@@ -1184,8 +1153,6 @@ class LyricsRepositoryImpl @Inject constructor(
             val cleanTitle = song.title.trim()
             val cleanArtist = song.displayArtist.trim()
 
-            // FAST STRATEGY: run all requests in parallel, keep first non-empty batch
-            // FAST STRATEGY: run all requests in parallel, keep first non-empty batch
             val strategies = buildList {
                 add(RemoteSearchStrategy("query+artist") {
                     lrcLibApiService.searchLyrics(query = combinedQuery, artistName = cleanArtist)
@@ -1194,7 +1161,6 @@ class LyricsRepositoryImpl @Inject constructor(
                     lrcLibApiService.searchLyrics(trackName = cleanTitle, artistName = cleanArtist)
                 })
                 
-                // Smart title cleanup strategy
                 val smartTitle = cleanTitleSmart(cleanTitle)
                 if (smartTitle != cleanTitle && smartTitle.isNotBlank()) {
                     LogUtils.d(this@LyricsRepositoryImpl, "Adding smart search strategy for: '$smartTitle' (orig: '$cleanTitle')")
@@ -1282,7 +1248,6 @@ class LyricsRepositoryImpl @Inject constructor(
                 }
             }
 
-            // Run both in parallel and take the first non-empty result set.
             val responses = runSearchStrategiesFast(strategies)
 
             if (responses.isEmpty()) {
@@ -1342,7 +1307,6 @@ class LyricsRepositoryImpl @Inject constructor(
             Timber.tag(TAG).w(e, "Error removing lyrics from DB for ID: $songId")
         }
         
-        // Also remove JSON cache
         try {
             val file = File(context.filesDir, "lyrics/${songId}.json")
             if (file.exists()) file.delete()
@@ -1356,7 +1320,6 @@ class LyricsRepositoryImpl @Inject constructor(
         lyricsCache.evictAll()
         lyricsDao.deleteAll()
         
-        // Also clear JSON cache directory
         try {
             val lyricsDir = File(context.filesDir, "lyrics")
             if (lyricsDir.exists()) {
@@ -1382,7 +1345,6 @@ class LyricsRepositoryImpl @Inject constructor(
             .flatMap { chunk -> lyricsDao.getSongIdsWithLyrics(chunk) }
             .toHashSet()
 
-        // Only scan songs that don't already have persisted lyrics.
         val songsToScan = songs.filter { song ->
             val songId = song.id.toLongOrNull()
             song.lyrics.isNullOrBlank() && (songId == null || songId !in idsWithPersistedLyrics)
@@ -1398,21 +1360,19 @@ class LyricsRepositoryImpl @Inject constructor(
             return@withContext 0
         }
 
-        val semaphore = Semaphore(8) // Limit concurrency
+        val semaphore = Semaphore(8)
 
         coroutineScope {
             songsToScan.map { song ->
                 async {
                     semaphore.withPermit {
                         try {
-                            // Find lyrics file
                             val songFile = File(song.path)
                             val directory = songFile.parentFile
                             
                             if (directory != null && directory.exists()) {
                                 var foundFile: File? = null
                                 
-                                // Strategy 1: Exact match name
                                 for (extension in LyricsImportSecurity.supportedFileExtensions()) {
                                     val exactMatch = File(directory, "${songFile.nameWithoutExtension}.$extension")
                                     if (exactMatch.exists() && exactMatch.canRead()) {
@@ -1421,7 +1381,6 @@ class LyricsRepositoryImpl @Inject constructor(
                                     }
                                 }
                                 
-                                // Strategy 2: Artist - Title
                                 if (foundFile == null) {
                                     val cleanArtist = song.displayArtist.replace(Regex("[^a-zA-Z0-9]"), "_")
                                     val cleanTitle = song.title.replace(Regex("[^a-zA-Z0-9]"), "_")
@@ -1501,16 +1460,11 @@ class LyricsRepositoryImpl @Inject constructor(
     }
 
     private fun cleanTitleSmart(title: String): String {
-        // 1. Remove leading digits/spaces/dots/hyphens (e.g., "01 ", "01. ", "01 - ")
         var cleaned = title.replace(Regex("^[\\d\\s.\\-]+"), "")
         
-        // 2. Truncate at first special char (-, (, ))
-        // "Taare Ginn - Envy" -> "Taare Ginn "
-        // "Song (Feat. X)" -> "Song "
         val splitRegex = Regex("[-()]")
         cleaned = cleaned.split(splitRegex).firstOrNull() ?: cleaned
         
-        // 3. Trim whitespace
         return cleaned.trim()
     }
 }

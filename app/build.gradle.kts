@@ -10,7 +10,6 @@ plugins {
     id("kotlin-parcelize")
 }
 
-// Load keystore properties early to avoid unresolved references inside the android block
 val keystoreProperties = Properties().apply {
     val propFile = rootProject.file("keystore.properties")
     if (propFile.exists()) {
@@ -153,12 +152,9 @@ android {
 }
 
 composeCompiler {
-    // StrongSkipping is now enabled by default.
 }
 
 baselineProfile {
-    // Keep release builds fast to invoke locally, but make generated profiles usable as
-    // startup dex-layout input once they are checked into the app.
     automaticGenerationDuringBuild = false
     saveInSrc = true
     dexLayoutOptimization = true
@@ -190,12 +186,10 @@ kotlin {
 }
 
 dependencies {
-    // Core & Optimization
     coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(libs.androidx.profileinstaller)
     "baselineProfile"(project(":baselineprofile"))
 
-    // AndroidX & Compose
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
@@ -217,7 +211,6 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.appcompat)
 
-    // DI & Navigation
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
@@ -227,7 +220,6 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.navigation.runtime.ktx)
 
-    // Storage & Paging
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
@@ -236,7 +228,6 @@ dependencies {
     implementation(libs.androidx.paging.compose)
     implementation(libs.androidx.paging.common)
 
-    // Media & Files
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.session)
@@ -251,7 +242,6 @@ dependencies {
     implementation(libs.wavy.slider)
     implementation(libs.androidx.graphics.shapes)
 
-    // Networking & Serialization
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.okhttp)
@@ -262,11 +252,9 @@ dependencies {
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.cio)
 
-    // Identity & Background
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.security.crypto)
 
-    // UI Utilities & Extra
     implementation(libs.timber)
     implementation(libs.smooth.corner.rect.android.compose)
     implementation(libs.reorderables)
@@ -285,11 +273,9 @@ dependencies {
         exclude(group = "androidx.compose.ui")
     }
 
-    // Testing (Unit)
     testImplementation(libs.junit.jupiter.api)
     testImplementation(libs.junit.jupiter.params)
     testRuntimeOnly(libs.junit.jupiter.engine)
-    // JUnit 4 (Vintage) — required for legacy JUnit 4 tests under useJUnitPlatform()
     testImplementation(libs.junit)
     testRuntimeOnly(libs.junit.vintage.engine)
     testRuntimeOnly(libs.junitplatformlauncher)
@@ -302,7 +288,6 @@ dependencies {
     testImplementation(libs.androidx.junit)
     testImplementation(kotlin("test"))
 
-    // Testing (Instrumentation)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.test.core)
@@ -314,13 +299,11 @@ dependencies {
     androidTestImplementation(libs.androidx.benchmark.macro.junit4)
     androidTestImplementation(libs.androidx.uiautomator)
 
-    // Debug
     debugImplementation(platform(libs.androidx.compose.bom))
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
     constraints {
-        // Fix vulnerabilities in transitive dependencies
         implementation(libs.netty.common)
         implementation(libs.netty.handler)
         implementation(libs.netty.codec.http)

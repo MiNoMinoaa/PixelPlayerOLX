@@ -28,7 +28,7 @@ data class NavidromePlaylist(
     val comment: String? = null,
     val owner: String? = null,
     val songCount: Int = 0,
-    val duration: Long = 0L, // milliseconds
+    val duration: Long = 0L,
     val coverArt: String? = null,
     val public: Boolean = false,
     val created: Long = 0L,

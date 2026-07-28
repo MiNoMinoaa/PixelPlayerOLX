@@ -48,7 +48,6 @@ fun AlbumArtImage(
                 BitmapFactory.decodeByteArray(data, 0, data.size, options)
 
                 var inSampleSize = 1
-                // Calculate target size in pixels
                 val targetSizePx = (size.value * context.resources.displayMetrics.density).toInt()
 
                 if (options.outHeight > targetSizePx || options.outWidth > targetSizePx) {
@@ -101,7 +100,6 @@ fun AlbumArtImage(
                 contentScale = ContentScale.Crop
             )
         } else {
-            // Placeholder
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
@@ -164,7 +162,6 @@ fun WidgetIconButton(
     }
 }
 
-// Convenience wrappers for specific actions
 @Composable
 fun PreviousButton(
     modifier: GlanceModifier,

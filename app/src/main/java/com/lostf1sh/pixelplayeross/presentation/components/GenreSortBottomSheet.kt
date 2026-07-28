@@ -62,9 +62,8 @@ fun GenreSortBottomSheet(
         Column(
             modifier = Modifier
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 48.dp) // Extra bottom padding for navigation bar
+                .padding(bottom = 48.dp)
         ) {
-            // Header
             Row(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -77,12 +76,10 @@ fun GenreSortBottomSheet(
                 )
             }
 
-            // Big expresssive buttons for actions
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Shuffle Button (Prominent)
                 Button(
                     onClick = onShuffle,
                     modifier = Modifier.weight(1f).height(56.dp),
@@ -117,7 +114,6 @@ fun GenreSortBottomSheet(
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
-            // Expressive Sort Options (Cards instead of simple rows)
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 SortOptionCard(
                     text = stringResource(R.string.presentation_batch_g_genre_sort_artist),

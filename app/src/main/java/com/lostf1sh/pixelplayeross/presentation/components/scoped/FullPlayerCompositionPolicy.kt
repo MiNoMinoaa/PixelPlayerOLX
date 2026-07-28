@@ -44,20 +44,11 @@ internal fun rememberFullPlayerCompositionPolicy(
         if (currentSheetState == PlayerSheetState.EXPANDED) {
             keepFullPlayerComposed = true
         } else {
-            // Warm the hidden full-player tree after the collapsed state settles.
-            // This moves the expensive first composition out of the expand animation.
             delay(collapsedWarmDelayMs)
             keepFullPlayerComposed = true
         }
     }
 
-    // Monitor expansion fraction via snapshotFlow instead of using it as a
-    // LaunchedEffect key. Once either condition is satisfied
-    // (expansion crossed 0.12f, or the warm-delay coroutine flipped
-    // keepFullPlayerComposed itself) we can exit. The previous `collect`
-    // never terminated — it kept reading expansionFraction on every frame
-    // for the rest of the song's lifetime, even though there was nothing
-    // left to do once keepFullPlayerComposed was true.
     LaunchedEffect(currentSongId) {
         if (currentSongId == null) return@LaunchedEffect
         snapshotFlow {
@@ -66,8 +57,6 @@ internal fun rememberFullPlayerCompositionPolicy(
         if (!keepFullPlayerComposed) keepFullPlayerComposed = true
     }
 
-    // Read expansion fraction inside derivedStateOf so that changes only trigger
-    // recomposition of direct consumers when the Boolean result flips.
     val shouldRenderFullPlayer by remember(currentSongId, currentSheetState) {
         derivedStateOf {
             currentSongId != null && (

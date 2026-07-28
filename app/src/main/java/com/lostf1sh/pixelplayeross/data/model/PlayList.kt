@@ -16,12 +16,12 @@ data class Playlist(
     val coverImageUri: String? = null,
     val coverColorArgb: Int? = null,
     val coverIconName: String? = null,
-    val coverShapeType: String? = null, // "Circle", "SmoothRect", etc. Storing as String to avoid Enum import issues if moved
-    val coverShapeDetail1: Float? = null, // e.g., CornerRadius / StarCurve
-    val coverShapeDetail2: Float? = null, // e.g., Smoothness / StarRotation
-    val coverShapeDetail3: Float? = null, // e.g., StarScale
-    val coverShapeDetail4: Float? = null, // e.g., Star Sides (Int)
-    val source: String = "LOCAL" // Source: "LOCAL", "SMART:<rule>", or self-hosted service IDs.
+    val coverShapeType: String? = null,
+    val coverShapeDetail1: Float? = null,
+    val coverShapeDetail2: Float? = null,
+    val coverShapeDetail3: Float? = null,
+    val coverShapeDetail4: Float? = null,
+    val source: String = "LOCAL"
 )
 
 enum class PlaylistShapeType {

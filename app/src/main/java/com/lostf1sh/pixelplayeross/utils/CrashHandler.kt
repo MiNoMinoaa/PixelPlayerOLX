@@ -64,10 +64,8 @@ object CrashHandler : Thread.UncaughtExceptionHandler {
         try {
             saveCrashLog(throwable)
         } catch (e: Exception) {
-            // Ignore any errors during crash saving
         }
 
-        // Call the default handler to allow normal crash behavior
         defaultHandler?.uncaughtException(thread, throwable)
     }
 
@@ -76,14 +74,12 @@ object CrashHandler : Thread.UncaughtExceptionHandler {
         val stackTrace = getStackTraceString(throwable)
         val exceptionMessage = throwable.message ?: throwable.javaClass.simpleName
 
-        // Use commit() instead of apply() to ensure data is written synchronously
-        // before the process terminates
         prefs.edit().apply {
             putBoolean(KEY_HAS_CRASH, true)
             putLong(KEY_TIMESTAMP, timestamp)
             putString(KEY_EXCEPTION_MESSAGE, exceptionMessage)
             putString(KEY_STACK_TRACE, stackTrace)
-            commit() // Synchronous write - ensures data is saved before process dies
+            commit()
         }
     }
 

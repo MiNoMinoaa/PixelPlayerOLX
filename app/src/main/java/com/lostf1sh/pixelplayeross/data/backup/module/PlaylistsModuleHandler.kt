@@ -38,22 +38,16 @@ class PlaylistsModuleHandler @Inject constructor(
     override suspend fun export(): String = withContext(Dispatchers.IO) {
         val allPlaylists = playlistPreferencesRepository.getPlaylistsOnce()
 
-        // Only export local playlists. Cloud playlists are tied to service auth
-        // and would be empty on restore.
         val playlists = allPlaylists.filter { isBackedUpPlaylistSource(it.source) }
 
-        // Build a set of cloud song IDs to exclude from backup
         val cloudSongIds = buildCloudSongIdSet()
 
-        // Get metadata for local songs so we can match them on restore
         val allLocalSummaries = musicDao.getAllLocalSongSummaries()
         val summaryById = allLocalSummaries.associateBy { it.id.toString() }
 
-        // Filter cloud songs out of playlists and collect metadata
         val songMetadata = mutableMapOf<String, SongMetadataEntry>()
         val filteredPlaylists = playlists.map { playlist ->
             val localSongIds = playlist.songIds.filter { id -> id !in cloudSongIds }
-            // Collect metadata for matched local songs
             localSongIds.forEach { id ->
                 if (id !in songMetadata) {
                     summaryById[id]?.let { summary ->
@@ -69,7 +63,6 @@ class PlaylistsModuleHandler @Inject constructor(
             playlist.copy(songIds = localSongIds)
         }
 
-        // Encode cover images as Base64
         val coverImages = mutableMapOf<String, String>()
         filteredPlaylists.forEach { playlist ->
             val uri = playlist.coverImageUri ?: return@forEach
@@ -95,7 +88,6 @@ class PlaylistsModuleHandler @Inject constructor(
     }
 
     override suspend fun snapshot(): String = withContext(Dispatchers.IO) {
-        // Snapshot captures the current state as-is (including cloud songs) for rollback
         val payload = PlaylistsBackupPayload(
             playlists = playlistPreferencesRepository.getPlaylistsOnce(),
             playlistSongOrderModes = playlistPreferencesRepository.playlistSongOrderModesFlow.first(),
@@ -111,9 +103,6 @@ class PlaylistsModuleHandler @Inject constructor(
             return@withContext
         }
 
-        // A payload that fails to deserialize must abort the restore (the executor rolls back
-        // the snapshot) — silently treating it as an empty payload would wipe all playlists
-        // via replaceAllPlaylists(emptyList()) below while reporting success.
         val parsed = runCatching {
             gson.fromJson(payload, PlaylistsBackupPayload::class.java)
         }.getOrElse { e ->
@@ -124,15 +113,12 @@ class PlaylistsModuleHandler @Inject constructor(
         val songMetadata = parsed.songMetadata
         val coverImages = parsed.coverImages
 
-        // Resolve song IDs against the current device library
         val resolvedPlaylists = if (songMetadata != null && songMetadata.isNotEmpty()) {
             resolvePlaylists(backupPlaylists, songMetadata)
         } else {
-            // No metadata available (legacy backup or snapshot rollback) — keep IDs as-is
             backupPlaylists
         }
 
-        // Restore cover images and update playlist URIs
         val finalPlaylists = if (coverImages != null && coverImages.isNotEmpty()) {
             restoreCoverImages(resolvedPlaylists, coverImages)
         } else {
@@ -148,8 +134,6 @@ class PlaylistsModuleHandler @Inject constructor(
     }
 
     override suspend fun rollback(snapshot: String) = restore(snapshot)
-
-    // ---- Cover image helpers ----
 
     private fun readFileAsBase64(path: String): String? {
         return try {
@@ -182,8 +166,6 @@ class PlaylistsModuleHandler @Inject constructor(
         }
     }
 
-    // ---- Song matching ----
-
     /**
      * Resolves backup song IDs to current device song IDs using metadata matching.
      *
@@ -201,14 +183,12 @@ class PlaylistsModuleHandler @Inject constructor(
         val localSummaries = musicDao.getAllLocalSongSummaries()
         val currentSongsById = localSummaries.associateBy { it.id.toString() }
 
-        // Build index for metadata matching: normalized "title|artist" → list of candidates
         val metadataIndex = mutableMapOf<String, MutableList<SongSummary>>()
         localSummaries.forEach { song ->
             val key = normalizeMatchKey(song.title, song.artistName)
             metadataIndex.getOrPut(key) { mutableListOf() }.add(song)
         }
 
-        // Build the resolution map: backup songId → resolved songId (or null if unresolved)
         val resolutionCache = mutableMapOf<String, String?>()
         var totalSongs = 0
         var resolvedCount = 0
@@ -229,7 +209,6 @@ class PlaylistsModuleHandler @Inject constructor(
             Timber.tag(TAG).w("Playlist restore: $resolvedCount/$totalSongs songs resolved, $unresolvedCount unresolved")
         }
 
-        // Apply resolution to playlists, dropping unresolved songs
         return playlists.map { playlist ->
             val resolvedSongIds = playlist.songIds.mapNotNull { songId ->
                 resolutionCache[songId]
@@ -246,26 +225,20 @@ class PlaylistsModuleHandler @Inject constructor(
     ): String? {
         val meta = songMetadata[backupSongId]
 
-        // 1. Try direct ID match
         val directMatch = currentSongsById[backupSongId]
         if (directMatch != null) {
             if (meta == null) {
-                // No metadata to verify — accept direct match (same-device restore)
                 return backupSongId
             }
-            // Verify metadata matches to avoid false positives (e.g., reused MediaStore ID)
             if (metadataMatches(meta, directMatch)) {
                 return backupSongId
             }
-            // Direct ID exists but is a different song — fall through to metadata matching
         }
 
-        // 2. No metadata available — can't do metadata matching
         if (meta == null) {
             return if (directMatch != null) backupSongId else null
         }
 
-        // 3. Try metadata matching
         val matchKey = normalizeMatchKey(meta.title, meta.artist)
         val candidates = metadataIndex[matchKey] ?: return null
 
@@ -273,7 +246,6 @@ class PlaylistsModuleHandler @Inject constructor(
             return candidates[0].id.toString()
         }
 
-        // Multiple candidates — disambiguate with album and duration
         val albumMatch = candidates.filter { candidate ->
             normalizeText(candidate.albumName) == normalizeText(meta.album)
         }
@@ -281,7 +253,6 @@ class PlaylistsModuleHandler @Inject constructor(
             return albumMatch[0].id.toString()
         }
 
-        // Try duration (within 2 second tolerance)
         val durationCandidates = (albumMatch.ifEmpty { candidates }).filter { candidate ->
             kotlin.math.abs(candidate.duration - meta.duration) <= DURATION_TOLERANCE_MS
         }
@@ -289,7 +260,6 @@ class PlaylistsModuleHandler @Inject constructor(
             return durationCandidates[0].id.toString()
         }
 
-        // Ambiguous — no confident match
         return null
     }
 
@@ -312,8 +282,6 @@ class PlaylistsModuleHandler @Inject constructor(
         musicDao.getAllJellyfinSongIds().mapTo(cloudIds) { it.toString() }
         return cloudIds
     }
-
-    // ---- Legacy format ----
 
     private suspend fun restoreLegacyPreferenceEntries(payload: String) {
         val type = TypeToken.getParameterized(List::class.java, PreferenceBackupEntry::class.java).type
@@ -352,8 +320,6 @@ class PlaylistsModuleHandler @Inject constructor(
         playlistPreferencesRepository.setPlaylistsSortOption(playlistsSortOption)
         userPreferencesRepository.clearLegacyUserPlaylists()
     }
-
-    // ---- Data classes ----
 
     /** Song metadata stored alongside playlists for cross-device matching. */
     data class SongMetadataEntry(

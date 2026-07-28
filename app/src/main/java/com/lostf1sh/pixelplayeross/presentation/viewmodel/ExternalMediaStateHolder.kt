@@ -116,8 +116,6 @@ class ExternalMediaStateHolder @Inject constructor(
         val candidates = if (startIndex != -1) {
             siblings.drop(startIndex + 1)
         } else {
-            // Include everything except target if not found in list (fallback) or logic implies future only?
-            // "drop startIndex + 1" implies queue continues AFTER current song.
             siblings.filterNot { (itemUri, displayName) ->
                 itemUri == originalUri ||
                     itemUri.toString() == normalizedTargetUri ||
@@ -217,10 +215,8 @@ class ExternalMediaStateHolder @Inject constructor(
             Timber.e(e, "Error querying MediaStore for uri: $uri")
         }
 
-        // Fallback or read from file metadata
         val metadata = AudioMetadataReader.read(context, uri) ?: return@withContext null
 
-        // Try to persist artwork
         val albumArtUriString = metadata.artwork?.let { artwork ->
              if (isValidImageData(artwork.bytes)) {
                  persistExternalAlbumArt(uri, artwork.bytes, artwork.mimeType)
@@ -230,7 +226,6 @@ class ExternalMediaStateHolder @Inject constructor(
         val finalTitle = storeTitle ?: metadata.title ?: displayName ?: "Unknown Title"
         val finalArtist = storeArtist ?: metadata.artist ?: "Unknown Artist"
         val finalAlbum = storeAlbum ?: metadata.album ?: "Unknown Album"
-        // Use metadata duration if store duration is missing or 0
         val finalDuration = storeDuration?.takeIf { it > 0 } ?: metadata.durationMs ?: 0L
 
         val mimeType = context.contentResolver.getType(uri) ?: "audio/*"
@@ -256,15 +251,15 @@ class ExternalMediaStateHolder @Inject constructor(
             id = songId, 
             title = finalTitle,
             artist = finalArtist,
-            artistId = -1, // No DB ID
+            artistId = -1,
             album = finalAlbum,
-            albumId = -1, // No DB ID
+            albumId = -1,
             albumArtist = metadata.albumArtist,
             path = playbackPath,
             contentUriString = playbackContentUriString,
             albumArtUriString = albumArtUriString,
             duration = finalDuration,
-            genre = metadata.genre, // Metadata reader might provide genre
+            genre = metadata.genre,
             trackNumber = storeTrack ?: metadata.trackNumber ?: 0,
             year = storeYear ?: metadata.year ?: 0,
             dateAdded = storeDateAddedSeconds ?: (System.currentTimeMillis() / 1000),

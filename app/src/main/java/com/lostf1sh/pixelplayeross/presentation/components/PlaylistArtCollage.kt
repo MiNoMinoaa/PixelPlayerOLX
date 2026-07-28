@@ -117,7 +117,6 @@ fun PlaylistArtCollage(
                         modifier = Modifier.fillMaxSize()
                     ) { measurables, constraints ->
                         val separation = 2.dp.toPx()
-                        // Recalculate itemSize based on the total width required for the triangle base
                         val itemSize = floor((constraints.maxWidth * 2f / (2f + sqrt(3f))) - separation).toInt()
 
 
@@ -130,9 +129,7 @@ fun PlaylistArtCollage(
                             )
                         }
 
-                        // The side length of the triangle formed by the centers
                         val L = itemSize + separation
-                        // The height of the triangle formed by the centers
                         val h = L * sqrt(3f) / 2f
 
                         val collageHeight = h + itemSize
@@ -143,17 +140,14 @@ fun PlaylistArtCollage(
 
 
                         layout(constraints.maxWidth, constraints.maxHeight) {
-                            // Place top circle
                             placeables[0].placeRelative(
                                 x = (offsetX + (collageWidth - itemSize) / 2f).toInt(),
                                 y = offsetY
                             )
-                            // Place bottom-left circle
                             placeables[1].placeRelative(
                                 x = offsetX,
                                 y = (offsetY + h).toInt()
                             )
-                            // Place bottom-right circle
                             placeables[2].placeRelative(
                                 x = (offsetX + L).toInt(),
                                 y = (offsetY + h).toInt()

@@ -179,14 +179,13 @@ class PlaybackTimerController(
         val player = playerProvider()
         val currentItem = player.currentMediaItem ?: return
 
-        stopCountedPlay() // reset previous
+        stopCountedPlay()
 
         countedPlayTarget = count
         countedPlayCount = 1
         countedOriginalId = currentItem.mediaId
         countedPlayActive = true
 
-        // Force repeat-one
         player.repeatMode = Player.REPEAT_MODE_ONE
 
         val listener = object : Player.Listener {
@@ -212,15 +211,12 @@ class PlaybackTimerController(
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 if (!countedPlayActive) return
 
-                // If user manually changes the song -> cancel
                 if (mediaItem?.mediaId != countedOriginalId) {
                     stopCountedPlay()
                 }
             }
 
             override fun onRepeatModeChanged(repeatMode: Int) {
-                // User explicitly changed repeat mode while counted play is active:
-                // cancel counted play and accept the new mode instead of fighting back.
                 if (countedPlayActive && repeatMode != Player.REPEAT_MODE_ONE) {
                     stopCountedPlay(restoreRepeatMode = false)
                 }
@@ -244,7 +240,6 @@ class PlaybackTimerController(
         }
         countedPlayListener = null
 
-        // Restore normal repeat mode (OFF) only when not triggered by a user repeat-mode change
         if (restoreRepeatMode) {
             playerProvider().repeatMode = Player.REPEAT_MODE_OFF
         }

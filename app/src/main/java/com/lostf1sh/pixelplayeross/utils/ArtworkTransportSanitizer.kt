@@ -125,7 +125,6 @@ object ArtworkTransportSanitizer {
             }
             quality -= config.jpegQualityStep
         }
-        // Return the smallest encoding even if over maxBytes — better than no art
         return lastValidBytes
     }
 }

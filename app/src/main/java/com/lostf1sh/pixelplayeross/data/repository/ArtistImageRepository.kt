@@ -41,8 +41,8 @@ class ArtistImageRepository @Inject constructor(
 ) {
     companion object {
         private const val TAG = "ArtistImageRepository"
-        private const val CACHE_SIZE = 100 // Number of artist images to cache in memory
-        private const val PREFETCH_CONCURRENCY = 3 // Limit parallel API calls
+        private const val CACHE_SIZE = 100
+        private const val PREFETCH_CONCURRENCY = 3
         private val deezerSizeRegex = Regex("/\\d{2,4}x\\d{2,4}([\\-.])")
         private const val NETWORK_RETRY_ATTEMPTS = 3
         private const val NETWORK_RETRY_INITIAL_DELAY_MS = 500L
@@ -50,7 +50,7 @@ class ArtistImageRepository @Inject constructor(
         private const val MAX_CUSTOM_IMAGE_DIMENSION_PX = 16_384
         private const val MAX_CUSTOM_IMAGE_TOTAL_PIXELS = 80_000_000L
         private const val TARGET_CUSTOM_IMAGE_MAX_DIMENSION_PX = 2_048
-        private const val TARGET_CUSTOM_IMAGE_MAX_PIXELS = 4_194_304L // 2048x2048
+        private const val TARGET_CUSTOM_IMAGE_MAX_PIXELS = 4_194_304L
 
         internal fun calculateCustomImageSampleSize(width: Int, height: Int): Int {
             var sampleSize = 1
@@ -65,17 +65,13 @@ class ArtistImageRepository @Inject constructor(
         }
     }
 
-    // In-memory LRU cache for quick access
     private val memoryCache = LruCache<String, String>(CACHE_SIZE)
     
-    // Mutex to prevent duplicate API calls for the same artist
     private val fetchMutex = Mutex()
     private val pendingFetches = mutableSetOf<String>()
     
-    // Semaphore to limit concurrent API calls during prefetch
     private val prefetchSemaphore = Semaphore(PREFETCH_CONCURRENCY)
     
-    // Set to track artists for whom image fetching failed (e.g. not found), to avoid retrying in the same session
     private val failedFetches = mutableSetOf<String>()
 
     /**
@@ -90,17 +86,14 @@ class ArtistImageRepository @Inject constructor(
 
         val normalizedName = artistName.trim().lowercase()
 
-        // Check memory cache first
         memoryCache.get(normalizedName)?.let { cachedUrl ->
             return cachedUrl
         }
         
-        // Check if previously failed
         if (failedFetches.contains(normalizedName)) {
             return null
         }
 
-        // Resolve canonical DB artist row by name to avoid MediaStore-ID/DB-ID mismatches.
         val (resolvedArtistId, dbCachedUrl) = withContext(Dispatchers.IO) {
             val canonicalArtistId = musicDao.getArtistIdByNormalizedName(artistName) ?: artistId
             val cachedUrl = musicDao.getArtistImageUrl(canonicalArtistId)
@@ -118,7 +111,6 @@ class ArtistImageRepository @Inject constructor(
             return upgradedDbUrl
         }
 
-        // Fetch from Deezer API
         return fetchAndCacheArtistImage(artistName, resolvedArtistId, normalizedName)
     }
 
@@ -129,9 +121,6 @@ class ArtistImageRepository @Inject constructor(
     suspend fun prefetchArtistImages(artists: List<Pair<Long, String>>) = withContext(Dispatchers.IO) {
         if (!userPreferencesRepository.externalArtistImagesEnabledFlow.first()) return@withContext
 
-        // Process in small chunks to avoid creating hundreds of coroutines simultaneously.
-        // Without this, a library with 500 artists creates 500 coroutine objects at once, all
-        // suspended at the semaphore, exhausting the heap and triggering OOM in coroutine machinery.
         artists.chunked(PREFETCH_CONCURRENCY * 4).forEach { chunk ->
             chunk.map { (artistId, artistName) ->
                 async {
@@ -142,7 +131,7 @@ class ArtistImageRepository @Inject constructor(
                                 getArtistImageUrl(artistName, artistId)
                             }
                         } else {
-                            Timber.tag(TAG).d("Skipping prefetch for $artistName") //check
+                            Timber.tag(TAG).d("Skipping prefetch for $artistName")
                         }
                     } catch (e: CancellationException) {
                         throw e
@@ -154,17 +143,14 @@ class ArtistImageRepository @Inject constructor(
         }
     }
     
-    // ... fetchAndCacheArtistImage method ...
-    
     private suspend fun fetchAndCacheArtistImage(
         artistName: String,
         artistId: Long,
         normalizedName: String
     ): String? {
-        // Prevent duplicate fetches for the same artist
         fetchMutex.withLock {
             if (pendingFetches.contains(normalizedName)) {
-                return null // Already fetching
+                return null
             }
             pendingFetches.add(normalizedName)
         }
@@ -185,10 +171,8 @@ class ArtistImageRepository @Inject constructor(
                         )?.let(::upgradeToHighResDeezerUrl)
 
                     if (!imageUrl.isNullOrEmpty()) {
-                        // Cache in memory
                         memoryCache.put(normalizedName, imageUrl)
                         
-                        // Cache in database
                         musicDao.updateArtistImageUrl(artistId, imageUrl)
 
                         Timber.tag(TAG).d("Fetched and cached image for $artistName: $imageUrl")
@@ -198,7 +182,7 @@ class ArtistImageRepository @Inject constructor(
                     }
                 } else {
                     Timber.tag(TAG).d("No Deezer artist found for: $artistName")
-                    failedFetches.add(normalizedName) // Mark as failed
+                    failedFetches.add(normalizedName)
                     null
                 }
             }
@@ -206,7 +190,6 @@ class ArtistImageRepository @Inject constructor(
             throw e
         } catch (e: Exception) {
             Timber.tag(TAG).e("Error fetching artist image for $artistName: ${e.message}")
-            // Consider transient errors? For now treating as failed to avoid spam.
             if(e !is java.net.SocketTimeoutException) {
                 failedFetches.add(normalizedName)
             }
@@ -274,7 +257,6 @@ class ArtistImageRepository @Inject constructor(
                 val bitmap = decodeCustomArtistBitmap(context, sourceUri) ?: return@withContext null
                 val scaledBitmap = scaleBitmapIfNeeded(bitmap)
                 try {
-                    // 2. Write to internal storage as JPEG (compact and predictable for caching)
                     val destFile = File(context.filesDir, "artist_art_${artistId}.jpg")
                     FileOutputStream(destFile).use { out ->
                         scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
@@ -282,11 +264,8 @@ class ArtistImageRepository @Inject constructor(
 
                     val internalPath = destFile.absolutePath
 
-                    // 3. Persist to DB
                     musicDao.updateArtistCustomImage(artistId, internalPath)
 
-                    // 4. The ViewModel reloads the effective image URL on success, so we only need
-                    // to persist the internal file path here.
                     Timber.tag(TAG).d("Custom artist image saved: $internalPath")
                     internalPath
                 } finally {
@@ -324,8 +303,6 @@ class ArtistImageRepository @Inject constructor(
             inJustDecodeBounds = true
         }
         
-        // Fetch dimensions without loading the full bitmap into memory.
-        // decodeStream returns null when inJustDecodeBounds is true.
         resolver.openInputStream(sourceUri)?.use { inputStream ->
             BitmapFactory.decodeStream(inputStream, null, bounds)
         }
@@ -384,13 +361,11 @@ class ArtistImageRepository @Inject constructor(
     suspend fun clearCustomArtistImage(context: Context, artistId: Long) {
         withContext(Dispatchers.IO) {
             try {
-                // Delete the internal file if it exists
                 val destFile = File(context.filesDir, "artist_art_${artistId}.jpg")
                 if (destFile.exists()) {
                     destFile.delete()
                     Timber.tag(TAG).d("Deleted custom artist image file: ${destFile.absolutePath}")
                 }
-                // Clear from DB
                 musicDao.updateArtistCustomImage(artistId, null)
             } catch (e: Exception) {
                 Timber.tag(TAG)

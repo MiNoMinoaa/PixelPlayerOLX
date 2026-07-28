@@ -19,8 +19,6 @@ class ImageCacheManager @Inject constructor(
         val diskCache = imageLoader.diskCache
         if (memoryCache == null && diskCache == null) return
 
-        // Known Coil size request keys/transformations often append params.
-        // This is a best-effort invalidation for common sizes.
         val knownSizeSuffixes = listOf(null, "128x128", "150x150", "168x168", "256x256", "300x300", "512x512", "600x600", "800x800")
 
         uriStrings.mapNotNull { it?.takeIf(String::isNotBlank) }.forEach { baseUri ->

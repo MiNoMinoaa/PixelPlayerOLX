@@ -54,7 +54,7 @@ class QueueUtilsTest {
         }
 
         started.await()
-        yield() // Let heartbeat run at least once before measuring.
+        yield()
         val beforeShuffleHeartbeat = heartbeat
 
         withTimeout(5_000L) {

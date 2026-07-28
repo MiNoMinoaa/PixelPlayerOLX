@@ -78,7 +78,7 @@ val DarkColorScheme = darkColorScheme(
     onSecondary = PixelPlayerWhite,
     onTertiary = PixelPlayerWhite,
     onBackground = PixelPlayerWhite,
-    onSurface = PixelPlayerLightPurple, // Text on surfaces
+    onSurface = PixelPlayerLightPurple,
     error = Color(0xFFFF5252),
     onError = PixelPlayerWhite
 )
@@ -117,19 +117,15 @@ fun PixelPlayerTheme(
     val context = LocalContext.current
     val finalColorScheme = when {
         colorSchemePairOverride == null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            // System dynamic theme as priority if there is no override
             try {
                 if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
             } catch (e: Exception) {
-                // Fall back to the defaults if dynamic colors fail (rare, but possible on some devices)
                 if (darkTheme) DarkColorScheme else LightColorScheme
             }
         }
         colorSchemePairOverride != null -> {
-            // Use the album scheme if one is provided
             if (darkTheme) colorSchemePairOverride.dark else colorSchemePairOverride.light
         }
-        // Final fallback to the defaults if there is no override or applicable dynamic colors
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }

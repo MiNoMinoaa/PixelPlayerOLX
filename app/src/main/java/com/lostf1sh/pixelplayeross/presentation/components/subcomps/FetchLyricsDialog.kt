@@ -82,7 +82,7 @@ fun FetchLyricsDialog(
             modifier = Modifier
                 .padding(24.dp)
                 .fillMaxWidth(),
-            shape = RoundedCornerShape(32.dp), // Heavily rounded shape (Expressive)
+            shape = RoundedCornerShape(32.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 6.dp
         ) {
@@ -108,7 +108,7 @@ fun FetchLyricsDialog(
                         PickResultContent(
                             results = uiState.results,
                             onPickResult = onPickResult,
-                            onCancel = onDismiss // Use a cancel button instead of an X
+                            onCancel = onDismiss
                         )
                     }
                     is LyricsSearchUiState.NotFound -> {
@@ -134,10 +134,6 @@ fun FetchLyricsDialog(
     }
 }
 
-// --------------------------------------------------------------------------
-// State sub-components (Internal)
-// --------------------------------------------------------------------------
-
 @Composable
 private fun IdleContent(
     currentSong: Song?,
@@ -147,7 +143,6 @@ private fun IdleContent(
     onImport: () -> Unit,
     onCancel: () -> Unit
 ) {
-    // Large decorative icon
     Box(
         modifier = Modifier
             .size(72.dp)
@@ -155,8 +150,7 @@ private fun IdleContent(
                 sides = 8,
                 curve = 0.1,
                 rotation = 0f,
-                //iterations = 45
-            )) // Pleasant "Squircle" shape
+            ))
             .background(MaterialTheme.colorScheme.secondaryContainer),
         contentAlignment = Alignment.Center
     ) {
@@ -170,7 +164,6 @@ private fun IdleContent(
 
     Spacer(modifier = Modifier.height(20.dp))
 
-    // Title and song
     if (currentSong != null) {
         Text(
             text = currentSong.title,
@@ -244,7 +237,6 @@ private fun IdleContent(
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    // Action buttons (vertical for a better touch target)
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth()
@@ -273,7 +265,6 @@ private fun IdleContent(
             Text(stringResource(R.string.import_file))
         }
 
-        // Cancel button (replaces the X)
         TextButton(
             onClick = onCancel,
             modifier = Modifier.fillMaxWidth().height(52.dp),
@@ -317,9 +308,8 @@ private fun PickResultContent(
 
     Spacer(modifier = Modifier.height(24.dp))
 
-    // Optimized scrollable list
     LazyColumn(
-        modifier = Modifier.heightIn(max = 350.dp), // Dynamic max height
+        modifier = Modifier.heightIn(max = 350.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(bottom = 8.dp)
     ) {
@@ -339,7 +329,6 @@ private fun PickResultContent(
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    // Cancel button at the end of the list
     TextButton(
         onClick = onCancel,
         modifier = Modifier.fillMaxWidth(),
@@ -366,7 +355,6 @@ private fun ResultItemCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icon indicator
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -484,7 +472,6 @@ fun NotFoundContent(
 
     Spacer(Modifier.height(16.dp))
 
-    // Title input
     Column(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
@@ -504,7 +491,6 @@ fun NotFoundContent(
 
     Spacer(Modifier.height(8.dp))
 
-    // Artist input
     Column(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {

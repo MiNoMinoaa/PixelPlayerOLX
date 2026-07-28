@@ -247,7 +247,6 @@ private fun EditSongContent(
         )
     }
 
-    // Color definitions for the TextFields
     val textFieldColors = TextFieldDefaults.colors(
         focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -257,7 +256,6 @@ private fun EditSongContent(
         disabledIndicatorColor = Color.Transparent,
     )
 
-    // Shape definition for the TextFields
     val textFieldShape = AbsoluteSmoothCornerShape(
         cornerRadiusTL = 10.dp,
         smoothnessAsPercentBL = 60,
@@ -273,7 +271,6 @@ private fun EditSongContent(
         exitDirection = FloatingToolbarExitDirection.Bottom
     )
 
-    // --- Info Dialog ---
     if (showInfoDialog) {
         AlertDialog(
             onDismissRequest = { showInfoDialog = false },
@@ -357,7 +354,6 @@ private fun EditSongContent(
                 )
             }
 
-            // --- Title Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -379,7 +375,6 @@ private fun EditSongContent(
                 }
             }
 
-            // --- Artist Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -401,7 +396,6 @@ private fun EditSongContent(
                 }
             }
 
-            // --- Album Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -423,7 +417,6 @@ private fun EditSongContent(
                 }
             }
 
-            // --- Album Artist Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -445,7 +438,6 @@ private fun EditSongContent(
                 }
             }
 
-            // --- Genre Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -467,7 +459,6 @@ private fun EditSongContent(
                 }
             }
 
-            // --- Composer Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -489,7 +480,6 @@ private fun EditSongContent(
                 }
             }
 
-            // --- Track Number Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -512,7 +502,6 @@ private fun EditSongContent(
                 }
             }
 
-            // --- Disc Number Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -535,7 +524,6 @@ private fun EditSongContent(
                 }
             }
 
-            // --- ReplayGain Track Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -564,7 +552,6 @@ private fun EditSongContent(
                 }
             }
 
-            // --- ReplayGain Album Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -593,7 +580,6 @@ private fun EditSongContent(
                 }
             }
 
-            // --- Lyrics Field ---
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -1085,15 +1071,12 @@ private fun clampOffset(
 ): Offset {
     if (containerSize <= 0f || bitmapWidth <= 0 || bitmapHeight <= 0) return Offset.Zero
 
-    // When using ContentScale.Crop, the image is scaled to fill the container size.
-    // The base scale factor is the maximum of the width and height ratios.
     val baseScale = maxOf(containerSize / bitmapWidth, containerSize / bitmapHeight)
     val totalScale = baseScale * scale
 
     val scaledWidth = bitmapWidth * totalScale
     val scaledHeight = bitmapHeight * totalScale
 
-    // Calculate maximum translation bounds (half of the overflow).
     val maxX = maxOf(0f, (scaledWidth - containerSize) / 2f)
     val maxY = maxOf(0f, (scaledHeight - containerSize) / 2f)
 

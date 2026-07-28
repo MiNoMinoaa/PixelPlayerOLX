@@ -269,8 +269,6 @@ fun QueueBottomSheet(
         isFabExpanded = false
     }
 
-    // Use the real player index from MediaController if available to resolve duplicates.
-    // Fall back to ID search only if index is invalid (-1).
     val currentSongIndex = remember(queue, currentSongId, currentMediaItemIndex) {
         if (currentMediaItemIndex in queue.indices && queue[currentMediaItemIndex].id == currentSongId) {
             currentMediaItemIndex
@@ -279,15 +277,11 @@ fun QueueBottomSheet(
         }
     }
 
-    // Read show queue history preference
     val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
     val showQueueHistory = settingsState.showQueueHistory
 
-    // Offset to convert display indices to queue indices when history is hidden.
     val queueIndexOffset = if (showQueueHistory || currentSongIndex < 0) 0 else currentSongIndex
 
-    // Show full queue including history (Apple Music style) OR only from current song.
-    // Use subList when possible to avoid copying large queues.
     val displaySongs = remember(queue, queueIndexOffset) {
         if (queueIndexOffset == 0) {
             queue
@@ -298,7 +292,6 @@ fun QueueBottomSheet(
         }
     }
 
-    // Calculate the display index of the current song (depends on whether we show history or not).
     val currentSongDisplayIndex = remember(currentSongIndex, queueIndexOffset) {
         if (currentSongIndex < 0) -1 else currentSongIndex - queueIndexOffset
     }
@@ -307,21 +300,16 @@ fun QueueBottomSheet(
     val queueCoroutineScope = rememberCoroutineScope()
     val displaySongCount = displaySongs.size
 
-    // Local order used only while previewing a drag reorder.
     var reorderPreviewOrder by remember { mutableStateOf<List<Int>?>(null) }
     var reorderPreviewKeys by remember { mutableStateOf<List<Long>?>(null) }
     var reorderPreviewBaseQueue by remember { mutableStateOf<List<Song>?>(null) }
     var pendingReorderExpectedIds by remember { mutableStateOf<List<String>?>(null) }
     var pendingReorderGraceUpdates by remember { mutableIntStateOf(0) }
 
-    // Stable keys for queue rows to prevent state recycling glitches on remove/reorder.
-    // Start empty so opening the sheet does not eagerly allocate IDs/keys for the entire queue.
     var committedDisplaySongIds by remember { mutableStateOf<List<String>>(emptyList()) }
     var committedDisplayKeys by remember { mutableStateOf<List<Long>>(emptyList()) }
     var nextStableQueueItemKey by remember { mutableLongStateOf(0L) }
 
-    // Track queue order by content (not list identity) to avoid clearing preview
-    // when upstream emits equivalent list instances during drag.
     var reorderPreviewQueueSignature by remember { mutableStateOf<Int?>(null) }
     val displaySongsSignature = remember(displaySongs, queueIndexOffset) {
         (queueIndexOffset * 31) + System.identityHashCode(displaySongs)
@@ -335,7 +323,6 @@ fun QueueBottomSheet(
     fun activeKeyAt(index: Int): Long =
         activeKeys?.getOrNull(index) ?: (queueIndexOffset + index).toLong()
 
-    // --- REORDER STATE ---
     var lastMovedFrom by remember { mutableStateOf<Int?>(null) }
     var lastMovedTo by remember { mutableStateOf<Int?>(null) }
     var reorderHandleInUse by remember { mutableStateOf(false) }
@@ -361,7 +348,6 @@ fun QueueBottomSheet(
     }
 
     fun remapCommittedKeysForDisplay(newSongs: List<Song>) {
-        // Fast path: common queue-skip case where display list is just a suffix of previous display list.
         if (committedDisplaySongIds.isNotEmpty() && newSongs.isNotEmpty()) {
             val firstNewId = newSongs.first().id
             val startIndex = committedDisplaySongIds.indexOf(firstNewId)
@@ -408,7 +394,6 @@ fun QueueBottomSheet(
         nextStableQueueItemKey = nextKey
     }
 
-    // Reset local reorder preview only when the queue truly changes to something new.
     LaunchedEffect(displaySongsSignature, queueIndexOffset) {
         val expectedIds = pendingReorderExpectedIds
 
@@ -445,7 +430,6 @@ fun QueueBottomSheet(
         }
 
         if (reorderPreviewQueueSignature != null && reorderPreviewQueueSignature != displaySongsSignature) {
-            // Queue data changed from external source - safe to clear preview
             reorderPreviewOrder = null
             reorderPreviewKeys = null
             reorderPreviewBaseQueue = null
@@ -495,10 +479,7 @@ fun QueueBottomSheet(
         derivedStateOf { reorderableState.isAnyItemDragging }
     }
     val updatedIsReordering by rememberUpdatedState(isReordering)
-    // ----------------------
 
-    // Only jump to current song when the actual current song changes (e.g. track skip).
-    // This prevents annoying jumps when adding/removing other items in the queue.
     var isFirstScrollByCurrentSongId by remember(currentSongId) { mutableStateOf(true) }
 
     LaunchedEffect(currentSongId) {
@@ -541,7 +522,6 @@ fun QueueBottomSheet(
             lastMovedTo = null
 
             if (fromIndex != null && toIndex != null) {
-                // Convert display indices to queue indices by adding the offset
                 val fromQueueIndex = fromIndex + queueIndexOffset
                 val toQueueIndex = toIndex + queueIndexOffset
 
@@ -555,14 +535,11 @@ fun QueueBottomSheet(
                         ?.takeIf { it.size == displaySongCount }
                     pendingReorderExpectedIds = expectedIds
                     pendingReorderGraceUpdates = if (expectedIds != null) 6 else 0
-                    // Keep reorderPreviewOrder alive so items don't snap back
-                    // while we wait for the new queue data to propagate.
                     onReorder(fromQueueIndex, toQueueIndex)
                     return@LaunchedEffect
                 }
             }
 
-            // Only clear preview if no valid reorder was dispatched
             reorderPreviewOrder = null
             reorderPreviewKeys = null
             reorderPreviewBaseQueue = null

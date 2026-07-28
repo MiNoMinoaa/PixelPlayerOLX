@@ -18,9 +18,6 @@ import java.io.InputStream
 object AlbumArtUtils {
     private const val CACHE_VERSION_SUFFIX = "_v4"
 
-    // P2-1: Dedicated app-level scope to replace GlobalScope.
-    // SupervisorJob ensures child failures don't cancel sibling coroutines.
-    // Appropriate for fire-and-forget tasks like cache cleanup that outlive any single component.
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val commonArtworkFileNames = listOf(
         "cover.jpg", "cover.png", "cover.jpeg",
@@ -246,7 +243,7 @@ object AlbumArtUtils {
 
         return try {
             appContext.contentResolver.openFileDescriptor(potentialUri, "r")?.use {
-                potentialUri // only return if open succeeded
+                potentialUri
             }
         } catch (e: Exception) {
             null
@@ -277,9 +274,6 @@ object AlbumArtUtils {
         ).forEach { it.delete() }
     }
 
-    // Album art lives in filesDir (persistent) instead of cacheDir, because Android can
-    // wipe cacheDir at any time under storage pressure — taking every cached cover with
-    // it and leaving the UI blank. The size is bounded by AlbumArtCacheManager's LRU.
     private const val ALBUM_ART_DIR_NAME = "album_art"
 
     fun getAlbumArtDir(appContext: Context): File {
@@ -329,7 +323,6 @@ object AlbumArtUtils {
         }
         noArtMarkerFile(appContext, songId).delete()
 
-        // Trigger async cache cleanup if needed
         appScope.launch {
             AlbumArtCacheManager.cleanCacheIfNeeded(appContext, AlbumArtCacheManager.configuredCacheLimitMb)
         }

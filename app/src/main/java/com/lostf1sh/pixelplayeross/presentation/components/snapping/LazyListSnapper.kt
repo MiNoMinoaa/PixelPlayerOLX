@@ -396,5 +396,5 @@ class SnapperFlingBehavior internal constructor(
 }
 
 private object SnapperLog {
-    inline fun d(message: () -> String) { /* no-op */ }
+    inline fun d(message: () -> String) { }
 }

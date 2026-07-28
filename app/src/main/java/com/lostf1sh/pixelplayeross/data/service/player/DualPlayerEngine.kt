@@ -90,9 +90,6 @@ internal fun shouldDisableAudioOffloadByDefaultForDevice(
         brandName == "poco"
     if (isXiaomiFamilyDevice && sdkInt >= 36) return true
 
-    // Google Pixel devices on SDK 37+ (Android 16 QPR / 17 preview) exhibit an audio
-    // offload HAL bug where the Opus position counter jumps ~49 seconds at a time,
-    // causing audible skips and incorrect position restoration on player rebuild.
     val isGooglePixelDevice = manufacturerName == "google" || brandName == "google"
     if (isGooglePixelDevice && sdkInt >= 37) return true
 
@@ -174,17 +171,10 @@ class DualPlayerEngine @Inject constructor(
 ) {
     private companion object {
         private const val AUDIO_OFFLOAD_STALL_FALLBACK_MS = 4_000L
-        // Grace window after a crossfade/transition finishes. Within this window an early
-        // STATE_BUFFERING on the new master is expected (the swapped player is still
-        // settling) — without the guard the HAL-offload-reset heuristic would disable offload
-        // for the whole session (losing the battery saving) and rebuild the player (an
-        // audible glitch right after the fade). This keeps offload enabled across crossfades.
         private const val POST_TRANSITION_OFFLOAD_GUARD_MS = 2_000L
         private const val MAX_AUXILIARY_TIMELINE_ITEMS = 200
         private val LOCAL_MEDIA_SCHEMES = setOf("content", "file", "android.resource")
         private val REMOTE_MEDIA_SCHEMES = setOf("http", "https", "navidrome", "jellyfin")
-        // Subset of REMOTE_MEDIA_SCHEMES: schemes that need proxy resolution.
-        // http/https resolve directly and must NOT enter the resolvedUriCache lookup path.
         private val CLOUD_PROXY_SCHEMES = setOf("navidrome", "jellyfin")
     }
 
@@ -221,40 +211,21 @@ class DualPlayerEngine @Inject constructor(
         onPlayerAboutToBeReleasedListener = listener
     }
     
-    // Active Audio Session ID Flow
     private val _activeAudioSessionId = MutableStateFlow(0)
     val activeAudioSessionId: StateFlow<Int> = _activeAudioSessionId.asStateFlow()
 
     private val _activeDecoderInfo = MutableStateFlow<ActiveDecoderInfo?>(null)
     val activeDecoderInfo: StateFlow<ActiveDecoderInfo?> = _activeDecoderInfo.asStateFlow()
 
-    // One audio session shared by player A, player B and every rebuilt player.
-    //
-    // Left to itself ExoPlayer mints a session id per instance, which breaks audio effects twice
-    // over: the effect stack (the built-in equalizer *and* external DSP apps such as
-    // ViPER4Android or JamesDSP, see ExternalAudioEffectSession) only ever covers the current
-    // master player, so the incoming half of a crossfade plays unprocessed, and every player
-    // rebuild (Hi-Fi toggle, offload fallback) forces the whole stack to be torn down and
-    // re-attached to a brand new session.
     private var sharedAudioSessionId: Int = C.AUDIO_SESSION_ID_UNSET
 
-    // Audio Focus Management
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
     private var isFocusLossPause = false
     private var lastPlayWhenReadyAtMs: Long = 0L
     private var lastPlayingAtMs: Long = 0L
-    // Used to distinguish a STATE_BUFFERING caused by a user seek from a real HAL offload
-    // reset (where audio underflows mid-playback). Without this, seeking shortly after
-    // playback starts re-enters BUFFERING within the HAL-reset window and triggers a full
-    // player rebuild, which leaves the MediaSession briefly pointing at the released player
-    // and silently drops any subsequent seeks.
     private var lastSeekAtMs: Long = 0L
-    // Timestamp when the most recent crossfade/transition finished. Used to give the new
-    // master a grace window before the HAL-offload-reset heuristic can fire, so a crossfade
-    // can never spuriously disable audio offload (battery) or trigger a player rebuild.
     private var lastTransitionFinishedAtMs: Long = 0L
-    // Used to distinguish a STATE_BUFFERING caused by a song transition from a real HAL offload reset.
     private var lastMediaItemTransitionAtMs: Long = 0L
 
     /**
@@ -298,7 +269,6 @@ class DualPlayerEngine @Inject constructor(
         }
     }
 
-    // Listener to attach to the active master player (playerA)
     private val masterPlayerListener = object : Player.Listener, AnalyticsListener, ExoPlayer.AudioOffloadListener {
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
             if (playWhenReady) {
@@ -307,10 +277,6 @@ class DualPlayerEngine @Inject constructor(
                 scheduleAudioOffloadFallbackIfNeeded(playerA)
             } else {
                 cancelAudioOffloadFallback()
-                // Keep focus across user pauses so a quick resume doesn't have to re-acquire it.
-                // Focus is abandoned explicitly on AUDIOFOCUS_LOSS and on release(); anything in
-                // between (user pause/play) keeps the request alive to avoid contention races
-                // that occasionally caused press-play to auto-pause after a short wait.
             }
         }
 
@@ -336,9 +302,6 @@ class DualPlayerEngine @Inject constructor(
         @Suppress("UnsafeOptInUsageError")
         override fun onSleepingForOffloadChanged(sleepingForOffload: Boolean) {
             if (!::playerA.isInitialized) return
-            // Only override the wake mode for local media. Remote schemes need
-            // C.WAKE_MODE_NETWORK to keep the wifi lock; we never want to drop
-            // that to NONE.
             val baseMode = wakeModeFor(playerA.currentMediaItem)
             val desiredMode = if (sleepingForOffload && baseMode == C.WAKE_MODE_LOCAL) {
                 C.WAKE_MODE_NONE
@@ -383,22 +346,18 @@ class DualPlayerEngine @Inject constructor(
             lastMediaItemTransitionAtMs = SystemClock.elapsedRealtime()
             cancelAudioOffloadFallback()
             
-            // If the transition was not automatic (e.g. user skip or playlist change),
-            // immediately cancel any background crossfade logic to ensure responsiveness.
             if (reason != Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
                 cancelNext()
             }
 
             applyWakeModeForCurrentItem()
 
-            // --- Pre-Resolve Next/Prev Tracks with Debounce to prevent flooding ---
             preResolutionJob?.cancel()
             preResolutionJob = scope.launch {
-                delay(600) // Wait for user to stop skipping/navigating
+                delay(600)
                 try {
                     val currentIndex = playerA.currentMediaItemIndex
                     if (currentIndex != C.INDEX_UNSET) {
-                        // Resolve each neighbour directly — no intermediate list allocation.
                         if (currentIndex + 1 < playerA.mediaItemCount) {
                             playerA.getMediaItemAt(currentIndex + 1).localConfiguration?.uri
                                 ?.takeIf { it.scheme in CLOUD_PROXY_SCHEMES }
@@ -568,7 +527,7 @@ class DualPlayerEngine @Inject constructor(
 
             if (adjacentCloudUris.isNotEmpty()) {
                 preResolutionJob = scope.launch {
-                    delay(600) // Wait for user to stop skipping/navigating
+                    delay(600)
                     try {
                         for (uriToResolve in adjacentCloudUris) {
                             resolveCloudUri(uriToResolve)
@@ -595,9 +554,9 @@ class DualPlayerEngine @Inject constructor(
         if (::playerA.isInitialized) {
             removeMasterPlayerListeners(playerA)
             onPlayerAboutToBeReleasedListener?.invoke(playerA)
-            try { playerA.release() } catch (e: Exception) { /* Ignore */ }
+            try { playerA.release() } catch (e: Exception) { }
         }
-        playerB?.let { try { it.release() } catch (e: Exception) { /* Ignore */ } }
+        playerB?.let { try { it.release() } catch (e: Exception) { } }
         playerB = null
 
         playerA = buildPlayer()
@@ -623,9 +582,6 @@ class DualPlayerEngine @Inject constructor(
         val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
             .setAudioAttributes(attributes)
             .setOnAudioFocusChangeListener(focusChangeListener)
-            // Let the system queue our request behind a transient holder instead of failing.
-            // Pairs with the AUDIOFOCUS_GAIN handler below: on DELAYED we pause and mark the
-            // pause as focus-driven so the eventual GAIN callback resumes playback.
             .setAcceptsDelayedFocusGain(true)
             .build()
 
@@ -747,12 +703,8 @@ class DualPlayerEngine @Inject constructor(
         cancelAudioOffloadFallback()
 
         val desiredPlayWhenReady = playerA.playWhenReady
-        // Guard against snapshotting a position that landed during a bad early-startup seek
-        // (e.g. an offload stall rebuild firing while the player is at a spurious offset).
-        // Positions under 5s on first playback are more likely noise than intent.
         val positionMs = if (playerA.currentPosition > 5_000L) playerA.currentPosition else 0L
         val currentIndex = playerA.currentMediaItemIndex.coerceAtLeast(0)
-        // Pre-sized ArrayList avoids the IntRange object and the extra copy produced by .map.
         val mediaItemCount = playerA.mediaItemCount
         val mediaItems = ArrayList<MediaItem>(mediaItemCount)
         for (i in 0 until mediaItemCount) mediaItems.add(playerA.getMediaItemAt(i))
@@ -801,31 +753,23 @@ class DualPlayerEngine @Inject constructor(
     private fun buildAdaptiveLoadControl(): DefaultLoadControl {
         val isLowRam = (context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager)
             .isLowRamDevice
-        // setPrioritizeTimeOverSizeThresholds(true): instructs ExoPlayer to use buffered
-        // *duration* (not buffered *bytes*) as the criterion for deciding when to start
-        // playback and when to stop buffering. This is required for correct behaviour with
-        // high-bitrate and lossless formats (FLAC, hi-res ALAC, WAV) where a short byte
-        // window would be exhausted almost immediately, causing repeated rebuffering.
-        // Without this flag ExoPlayer falls back to a default byte threshold that was
-        // designed for typical compressed audio (~128–320 kbps) and will underperform on
-        // files with bitrates above ~1 Mbps.
         return if (isLowRam) {
             DefaultLoadControl.Builder()
                 .setBufferDurationsMs(
-                    /* minBufferMs                      */ 15_000,
-                    /* maxBufferMs                      */ 30_000,
-                    /* bufferForPlaybackMs              */  2_500,
-                    /* bufferForPlaybackAfterRebufferMs */  5_000
+                    15_000,
+                    30_000,
+                    2_500,
+                    5_000
                 )
                 .setPrioritizeTimeOverSizeThresholds(true)
                 .build()
         } else {
             DefaultLoadControl.Builder()
                 .setBufferDurationsMs(
-                    /* minBufferMs                      */ 30_000,
-                    /* maxBufferMs                      */ 60_000,
-                    /* bufferForPlaybackMs              */  2_500,
-                    /* bufferForPlaybackAfterRebufferMs */  5_000
+                    30_000,
+                    60_000,
+                    2_500,
+                    5_000
                 )
                 .setPrioritizeTimeOverSizeThresholds(true)
                 .build()
@@ -889,7 +833,6 @@ class DualPlayerEngine @Inject constructor(
                 allowedVideoJoiningTimeMs: Long,
                 out: ArrayList<Renderer>
             ) {
-                // Audio-only player: skip video renderers to save memory and "renderers" count.
             }
 
             override fun buildTextRenderers(
@@ -899,7 +842,6 @@ class DualPlayerEngine @Inject constructor(
                 extensionRendererMode: Int,
                 out: ArrayList<Renderer>
             ) {
-                // Audio-only player: skip text renderers.
             }
 
             override fun buildCameraMotionRenderers(
@@ -907,7 +849,6 @@ class DualPlayerEngine @Inject constructor(
                 extensionRendererMode: Int,
                 out: ArrayList<Renderer>
             ) {
-                // Audio-only player: skip camera motion renderers.
             }
         }.setEnableAudioFloatOutput(hiFiModeEnabled)
          .setMediaCodecSelector(mediaCodecSelector)
@@ -941,12 +882,6 @@ class DualPlayerEngine @Inject constructor(
         val dataSourceFactory = DefaultDataSource.Factory(context)
         val resolvingFactory = ResolvingDataSource.Factory(dataSourceFactory, resolver)
         val extractorsFactory = DefaultExtractorsFactory()
-            // FLAG_WORKAROUND_IGNORE_EDIT_LISTS intentionally removed: it breaks Opus files
-            // by discarding the edit list that encodes the pre-skip (encoder delay), causing
-            // ExoPlayer to seek ~44-52s into the track on first playback.
-            // FLAG_ENABLE_CONSTANT_BITRATE_SEEKING (not _ALWAYS): fallback-only CBR seeking
-            // so VBR MP3s with proper Xing/VBRI headers still use their seek table and land
-            // on the exact frame instead of jumping ±30 s on a VBR file.
             .setMp3ExtractorFlags(Mp3Extractor.FLAG_ENABLE_CONSTANT_BITRATE_SEEKING)
             .setFlacExtractorFlags(FlacExtractor.FLAG_DISABLE_ID3_METADATA)
 
@@ -1066,8 +1001,6 @@ class DualPlayerEngine @Inject constructor(
     suspend fun resolveMediaItem(mediaItem: MediaItem): MediaItem {
         val uri = mediaItem.localConfiguration?.uri ?: return mediaItem
         val scheme = uri.scheme
-        // Use CLOUD_PROXY_SCHEMES: http/https resolve directly via ExoPlayer and never
-        // reach resolveCloudUri, so checking them wastes an IO dispatch.
         if (scheme !in CLOUD_PROXY_SCHEMES) return mediaItem
         val resolvedUri = resolveCloudUri(uri)
         return if (resolvedUri == uri) mediaItem else mediaItem.buildUpon().setUri(resolvedUri).build()
@@ -1113,7 +1046,6 @@ class DualPlayerEngine @Inject constructor(
                 preparedPlayerUsesWindowedQueue = count > MAX_AUXILIARY_TIMELINE_ITEMS
                 auxiliaryPlayer.setMediaItems(windowItems, targetIndex - start, startPositionMs)
             } else {
-                // Fallback for single item if not found in current timeline
                 resetPreparedWindowState()
                 auxiliaryPlayer.setMediaItem(resolvedItem)
                 auxiliaryPlayer.seekTo(startPositionMs)
@@ -1137,7 +1069,7 @@ class DualPlayerEngine @Inject constructor(
             try {
                 auxiliaryPlayer.stop()
                 auxiliaryPlayer.clearMediaItems()
-            } catch (e: Exception) { /* Ignore */ }
+            } catch (e: Exception) { }
         }
         if (::playerA.isInitialized) {
             playerA.volume = 1f
@@ -1247,8 +1179,6 @@ class DualPlayerEngine @Inject constructor(
     }
 
     private fun ensureQueueSnapshot(): List<MediaItem> {
-        // Single guard: isEmpty() short-circuits the windowed-queue size check, so
-        // refreshQueueSnapshotFromMaster() is called at most once per invocation.
         if (queueSnapshot.isEmpty() ||
             (!activePlayerUsesWindowedQueue && queueSnapshot.size != playerA.mediaItemCount)
         ) {

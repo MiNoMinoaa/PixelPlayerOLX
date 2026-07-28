@@ -694,7 +694,6 @@ fun ExperimentalSettingsScreen(
                 }
             }
             
-            // Divider for new section
             item(key = "divider_visuals") { 
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
@@ -723,7 +722,7 @@ fun ExperimentalSettingsScreen(
                     title = stringResource(R.string.presentation_batch_f_exp_album_art_resolution),
                     icon = {
                         Icon(
-                            imageVector = Icons.Rounded.MusicNote, // Or Image/Photo icon
+                            imageVector = Icons.Rounded.MusicNote,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -738,11 +737,7 @@ fun ExperimentalSettingsScreen(
                             modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                           // Quality Selector using a Dialog or a custom Picker?
-                           // Using a series of Radio Buttons or a clickable list item that opens a dialog is common.
-                           // For simplicity and quick access as requested ("selector or slider"), let's use a segmented style or a simple list of options.
                            
-                           // Using a loop to create selectable items for each enum value
                            AlbumArtQuality.entries.forEach { quality ->
                                val isSelected = quality == albumArtQuality
                                val qualityLine = albumArtQualityLine(quality)
@@ -778,7 +773,7 @@ fun ExperimentalSettingsScreen(
                                        
                                        if (isSelected) {
                                             Icon(
-                                                imageVector = Icons.Rounded.LinearScale, // Check icon
+                                                imageVector = Icons.Rounded.LinearScale,
                                                 contentDescription = stringResource(R.string.presentation_batch_f_cd_selected),
                                                 tint = MaterialTheme.colorScheme.primary
                                             )

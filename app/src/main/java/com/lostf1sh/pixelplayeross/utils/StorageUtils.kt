@@ -40,11 +40,9 @@ object StorageUtils {
         val storageVolumes = storageManager.storageVolumes
         val storages = mutableListOf<StorageInfo>()
 
-        // Counter for multiple USB devices
         var usbCounter = 0
 
         for (volume in storageVolumes) {
-            // Skip volumes that are not mounted
             if (volume.state != Environment.MEDIA_MOUNTED) continue
 
             val path = getVolumePath(volume) ?: continue
@@ -69,7 +67,6 @@ object StorageUtils {
             )
         }
 
-        // Sort: Internal first, then SD Card, then USB devices
         return storages.sortedBy { it.storageType.ordinal }
     }
 
@@ -78,10 +75,8 @@ object StorageUtils {
      */
     private fun getVolumePath(volume: StorageVolume): File? {
         return try {
-            // Use directory property (API 30+)
             volume.directory
         } catch (e: Exception) {
-            // Fallback for older approach
             try {
                 val getPath = volume.javaClass.getMethod("getPath")
                 val path = getPath.invoke(volume) as? String
@@ -96,18 +91,14 @@ object StorageUtils {
      * Determine the storage type based on StorageVolume properties
      */
     private fun determineStorageType(volume: StorageVolume): StorageType {
-        // Primary storage is always internal
         if (volume.isPrimary) {
             return StorageType.INTERNAL
         }
 
-        // Check if it's removable
         if (!volume.isRemovable) {
             return StorageType.INTERNAL
         }
 
-        // Try to determine if it's SD card or USB
-        // SD cards typically have specific descriptions or are emulated
         val description = volume.getDescription(null)?.lowercase() ?: ""
         
         return when {

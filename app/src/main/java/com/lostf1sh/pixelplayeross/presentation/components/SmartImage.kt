@@ -33,7 +33,7 @@ import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.CachePolicy
 import coil.request.ImageRequest
-import coil.size.Size // Import Coil's Size
+import coil.size.Size
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
 import com.lostf1sh.pixelplayeross.R
@@ -68,7 +68,6 @@ fun SmartImage(
         safeAlbumArtTargetSize(targetSize)
     }
 
-    // Handle direct models (Bitmap, Vector, etc) early to avoid ImageRequest overhead
     if (model == null || model is ImageVector || model is Painter || model is ImageBitmap || model is Bitmap) {
         if (model == null) {
             Placeholder(

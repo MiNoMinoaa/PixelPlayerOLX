@@ -205,10 +205,6 @@ class MusicServiceWorkflowTest {
         assertThat(disableResult.resultCode).isEqualTo(SessionResult.RESULT_SUCCESS)
     }
 
-    // ------------------------------------------------------------------
-    // Helpers
-    // ------------------------------------------------------------------
-
     private suspend fun seedLibrary(mediaFile: File) {
         val artist = ArtistEntity(id = TEST_ARTIST_ID, name = "Workflow Test Artist", trackCount = 3)
         val album = AlbumEntity(
@@ -281,16 +277,15 @@ class MusicServiceWorkflowTest {
         buffer.putInt(36 + dataSize)
         buffer.put("WAVE".toByteArray())
         buffer.put("fmt ".toByteArray())
-        buffer.putInt(16)               // PCM chunk size
-        buffer.putShort(1)              // audio format: PCM
-        buffer.putShort(1)              // channels: mono
+        buffer.putInt(16)
+        buffer.putShort(1)
+        buffer.putShort(1)
         buffer.putInt(sampleRate)
-        buffer.putInt(sampleRate * 2)   // byte rate
-        buffer.putShort(2)              // block align
-        buffer.putShort(16)             // bits per sample
+        buffer.putInt(sampleRate * 2)
+        buffer.putShort(2)
+        buffer.putShort(16)
         buffer.put("data".toByteArray())
         buffer.putInt(dataSize)
-        // Remaining bytes are already zero — silence.
         return buffer.array()
     }
 

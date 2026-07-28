@@ -80,7 +80,6 @@ class ControlWidget4x2 : GlanceAppWidget() {
                 modifier = GlanceModifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Top Row: Album Art + Info
                 Row(
                     modifier = GlanceModifier.fillMaxWidth(),
                     verticalAlignment = Alignment.Top
@@ -123,7 +122,6 @@ class ControlWidget4x2 : GlanceAppWidget() {
 
                 Spacer(GlanceModifier.defaultWeight())
 
-                // Bottom Row: Controls
                 Row(
                     modifier = GlanceModifier
                         .fillMaxWidth(),
@@ -134,7 +132,6 @@ class ControlWidget4x2 : GlanceAppWidget() {
                         .defaultWeight()
                         .height(48.dp)
 
-                    // Shuffle Button
                     ShuffleButton(
                         modifier = buttonModifier,
                         backgroundColor = if (isShuffleEnabled) colors.onSurface else colors.prevNextBackground,
@@ -144,7 +141,6 @@ class ControlWidget4x2 : GlanceAppWidget() {
 
                     Spacer(GlanceModifier.width(6.dp))
 
-                    // Previous Button
                     PreviousButton(
                         modifier = buttonModifier,
                         backgroundColor = colors.prevNextBackground,
@@ -154,7 +150,6 @@ class ControlWidget4x2 : GlanceAppWidget() {
 
                     Spacer(GlanceModifier.width(6.dp))
 
-                    // Play/Pause Button
                     PlayPauseButton(
                         modifier = buttonModifier,
                         isPlaying = isPlaying,
@@ -165,7 +160,6 @@ class ControlWidget4x2 : GlanceAppWidget() {
 
                     Spacer(GlanceModifier.width(6.dp))
 
-                    // Next Button
                     NextButton(
                         modifier = buttonModifier,
                         backgroundColor = colors.prevNextBackground,
@@ -175,7 +169,6 @@ class ControlWidget4x2 : GlanceAppWidget() {
 
                     Spacer(GlanceModifier.width(6.dp))
 
-                    // Repeat Button
                     val buttonColor = when (repeatMode) {
                         Player.REPEAT_MODE_OFF -> colors.prevNextBackground
                         else -> colors.onSurface

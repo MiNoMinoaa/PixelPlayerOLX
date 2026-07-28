@@ -105,7 +105,6 @@ class MusicRepositoryImpl @Inject constructor(
         enablePlaceholders = true,
         maxSize = 250
     )
-    // Tracks the active prefetch job so a new flow emission cancels the previous one.
     @Volatile private var prefetchJob: Job? = null
     @Volatile private var currentSongArtistPrefetchJob: Job? = null
     @Volatile private var currentSongArtistPrefetchSongId: Long? = null
@@ -218,8 +217,6 @@ class MusicRepositoryImpl @Inject constructor(
                     Pager(
                         config = defaultLibraryPagingConfig,
                         pagingSourceFactory = {
-                            // "Group by Album Artist" collapses the tab onto each song's effective
-                            // album artist; otherwise it lists every track-level artist as before.
                             if (groupByAlbumArtist) {
                                 musicDao.getArtistsPaginatedByAlbumArtist(
                                     allowedParentDirs = allowedParentDirs,
@@ -409,12 +406,8 @@ class MusicRepositoryImpl @Inject constructor(
                 .distinctUntilChanged()
                 .map { entities ->
                     val artists = entities.map { it.toArtist() }
-                    // Trigger prefetch for missing images (non-blocking)
                     val missingImages = artists.missingImageCandidates()
                     if (missingImages.isNotEmpty()) {
-                        // Cancel any in-flight prefetch before starting a new one — the flow
-                        // can emit multiple times during sync, and concurrent launches would
-                        // create N × artist-count coroutines simultaneously.
                         prefetchJob?.cancel()
                         prefetchJob = repositoryScope.launch {
                             artistImageRepository.prefetchArtistImages(missingImages)
@@ -451,8 +444,6 @@ class MusicRepositoryImpl @Inject constructor(
                         currentSongArtistPrefetchJob?.cancel()
                         currentSongArtistPrefetchSongId = songId
                     } else if (currentSongArtistPrefetchJob?.isActive == true) {
-                        // Room re-emits as artist rows are updated; keep the current song batch
-                        // alive so one successful image write does not cancel the remaining fetches.
                         return@onEach
                     }
 
@@ -467,8 +458,6 @@ class MusicRepositoryImpl @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getSongsForArtist(artistId: Long): Flow<List<Song>> {
         return userPreferencesRepository.groupByAlbumArtistFlow.flatMapLatest { groupByAlbumArtist ->
-            // Mirror the Artists tab: in album-artist mode the detail shows the songs whose
-            // effective album artist is this id, keeping tab and detail consistent.
             if (groupByAlbumArtist) {
                 musicDao.getSongsForArtistByAlbumArtist(artistId)
             } else {
@@ -504,8 +493,6 @@ class MusicRepositoryImpl @Inject constructor(
             uriStrings.mapNotNull { it.toUri() }
         }.flowOn(Dispatchers.IO)
     }
-
-    // --- Search Methods ---
 
     override fun searchSongs(query: String, titleOnly: Boolean): Flow<List<Song>> {
         if (query.isBlank()) return flowOf(emptyList())
@@ -652,7 +639,6 @@ class MusicRepositoryImpl @Inject constructor(
         if (longIds.isEmpty()) return flowOf(emptyList())
         return musicDao.getSongsByIds(longIds, emptyList(), false).map { entities ->
             val songMap = entities.associate { it.id.toString() to it.toSong() }
-            // Preserve the requested order
             songIds.mapNotNull { songMap[it] }
         }.flowOn(Dispatchers.IO)
     }
@@ -667,7 +653,6 @@ class MusicRepositoryImpl @Inject constructor(
         Timber.tag("MusicRepo").i("invalidateCachesDependentOnAllowedDirectories called. Reactive flows will update automatically.")
     }
 
-    // Implementation of the new suspend functions for one-shot loading
     override suspend fun getAllSongsOnce(): List<Song> = withContext(Dispatchers.IO) {
         val allowedDirs = userPreferencesRepository.allowedDirectoriesFlow.first()
         val blockedDirs = userPreferencesRepository.blockedDirectoriesFlow.first()
