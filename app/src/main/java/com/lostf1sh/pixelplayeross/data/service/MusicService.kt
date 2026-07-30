@@ -97,6 +97,18 @@ import coil.size.Precision
 import javax.inject.Inject
 import androidx.core.net.toUri
 
+/**
+ * Task removal must never tear down active playback when the user has opted into
+ * background playback; in every other case the service should shut down cleanly
+ * instead of lingering half-alive until the system reclaims it.
+ */
+internal fun shouldContinuePlaybackAfterTaskRemoved(
+    hasForegroundPlaybackIntent: Boolean,
+    keepPlayingInBackground: Boolean
+): Boolean {
+    return hasForegroundPlaybackIntent && keepPlayingInBackground
+}
+
 suspend fun loadArtworkBytesViaCoil(context: Context, uri: Uri): ByteArray? {
     val appContext = context.applicationContext
     val request = ImageRequest.Builder(appContext)
@@ -924,11 +936,33 @@ class MusicService : MediaLibraryService() {
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = mediaSession
 
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        val session = mediaSession
+        val continuePlayback = shouldContinuePlaybackAfterTaskRemoved(
+            hasForegroundPlaybackIntent = session?.player?.hasForegroundPlaybackIntent() == true,
+            keepPlayingInBackground = keepPlayingInBackground
+        )
+        if (continuePlayback && session != null) {
+            // Media3's default onTaskRemoved pauses all players and stops the service
+            // whenever it is not in foreground state, and OEMs freeze cached processes
+            // that have no foreground service — either way playback dies with the task.
+            if (!isPlaybackOngoing()) {
+                Timber.tag(TAG).w(
+                    "Task removed while playing without foreground state; re-promoting."
+                )
+                onUpdateNotification(session, startInForegroundRequired = true)
+            }
+            return
+        }
+        stopPlaybackAndUnload(reason = "task_removed")
+    }
+
     override fun onDestroy() {
         PlaybackActivityTracker.setPlaybackActive(false)
         listeningStatsTracker.finalizeCurrentSession(forceSynchronousPersistence = true)
         reportNavidromePlayback("stopped")
         stopNavidromePlaybackReporting()
+        flushPendingPlaybackSnapshotOnDestroy()
         playbackSnapshotPersistJob?.cancel()
         mediaSessionButtonRefreshJob?.cancel()
         followUpMediaSessionUiRefreshJob?.cancel()
@@ -2271,6 +2305,22 @@ class MusicService : MediaLibraryService() {
                 Timber.tag(TAG).w(e, "Failed to persist playback snapshot during unload")
             }
         }
+    }
+
+    /**
+     * A debounced snapshot persist that is still pending at [onDestroy] would be
+     * silently cancelled, leaving a stale "playing" snapshot behind — reopening the
+     * app would then fake-resume playback that the system already tore down. Flush
+     * it now, forced to a paused state, so the next restore comes back paused at
+     * the correct position.
+     */
+    private fun flushPendingPlaybackSnapshotOnDestroy() {
+        if (isPlaybackUnloadInProgress || isRestoringPlaybackSnapshot) return
+        if (playbackSnapshotPersistJob?.isActive != true) return
+        playbackSnapshotPersistJob?.cancel()
+        val snapshot = capturePlaybackSnapshotFromPlayer(playWhenReadyOverride = false)
+            ?: return
+        writePlaybackSnapshotOnUnload(snapshot)
     }
 
     private fun refreshMediaSessionUiWithFollowUp(
