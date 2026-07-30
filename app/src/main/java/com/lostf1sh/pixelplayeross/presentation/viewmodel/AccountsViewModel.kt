@@ -3,6 +3,7 @@ package com.lostf1sh.pixelplayeross.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lostf1sh.pixelplayeross.data.jellyfin.JellyfinRepository
+import com.lostf1sh.pixelplayeross.data.listenbrainz.InvalidServerUrlException
 import com.lostf1sh.pixelplayeross.data.listenbrainz.ListenBrainzRepository
 import com.lostf1sh.pixelplayeross.data.navidrome.NavidromeRepository
 import com.lostf1sh.pixelplayeross.data.preferences.ListenBrainzPreferencesRepository
@@ -39,6 +40,7 @@ data class ListenBrainzUiModel(
     val userName: String?,
     val pendingCount: Int,
     val needsReauth: Boolean,
+    val serverUrl: String?,
     val scrobbleLocal: Boolean,
     val scrobbleNavidrome: Boolean,
     val scrobbleJellyfin: Boolean
@@ -48,7 +50,7 @@ sealed interface ListenBrainzConnectState {
     data object Idle : ListenBrainzConnectState
     data object Connecting : ListenBrainzConnectState
     data object Success : ListenBrainzConnectState
-    data object Failed : ListenBrainzConnectState
+    data class Failed(val invalidUrl: Boolean = false) : ListenBrainzConnectState
 }
 
 data class AccountsUiState(
@@ -93,6 +95,7 @@ class AccountsViewModel @Inject constructor(
                 userName = account.userName,
                 pendingCount = pendingCount,
                 needsReauth = account.needsReauth,
+                serverUrl = account.serverUrl,
                 scrobbleLocal = local,
                 scrobbleNavidrome = navidrome,
                 scrobbleJellyfin = jellyfin
@@ -210,15 +213,17 @@ class AccountsViewModel @Inject constructor(
         }
     }
 
-    fun connectListenBrainz(token: String) {
+    fun connectListenBrainz(token: String, serverUrl: String) {
         if (_listenBrainzConnectState.value == ListenBrainzConnectState.Connecting) return
         viewModelScope.launch {
             _listenBrainzConnectState.value = ListenBrainzConnectState.Connecting
-            val result = listenBrainzRepository.connect(token)
+            val result = listenBrainzRepository.connect(token, serverUrl)
             _listenBrainzConnectState.value = if (result.isSuccess) {
                 ListenBrainzConnectState.Success
             } else {
-                ListenBrainzConnectState.Failed
+                ListenBrainzConnectState.Failed(
+                    invalidUrl = result.exceptionOrNull() is InvalidServerUrlException
+                )
             }
         }
     }

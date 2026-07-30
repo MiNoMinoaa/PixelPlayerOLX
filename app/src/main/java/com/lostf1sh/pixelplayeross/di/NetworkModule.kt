@@ -1,6 +1,7 @@
 package com.lostf1sh.pixelplayeross.di
 
 import com.lostf1sh.pixelplayeross.data.listenbrainz.ListenBrainzApiService
+import com.lostf1sh.pixelplayeross.data.listenbrainz.ListenBrainzEndpoint
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -14,19 +15,27 @@ import retrofit2.converter.gson.GsonConverterFactory
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    /**
-     * Base URL is provided in exactly one place so a user-configurable endpoint
-     * (self-hosted ListenBrainz / Maloja) stays a trivial follow-up.
-     */
-    private const val LISTENBRAINZ_BASE_URL = "https://api.listenbrainz.org/"
-
     @Provides
     @Singleton
     @ListenBrainzRetrofit
-    fun provideListenBrainzRetrofit(okHttpClient: OkHttpClient): Retrofit {
+    fun provideListenBrainzRetrofit(
+        okHttpClient: OkHttpClient,
+        endpoint: ListenBrainzEndpoint
+    ): Retrofit {
+        val client = okHttpClient.newBuilder()
+            .addInterceptor { chain ->
+                val request = chain.request()
+                val rewritten = endpoint.rewrite(request.url)
+                if (rewritten == request.url) {
+                    chain.proceed(request)
+                } else {
+                    chain.proceed(request.newBuilder().url(rewritten).build())
+                }
+            }
+            .build()
         return Retrofit.Builder()
-            .baseUrl(LISTENBRAINZ_BASE_URL)
-            .client(okHttpClient)
+            .baseUrl(ListenBrainzEndpoint.DEFAULT_BASE_URL)
+            .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }

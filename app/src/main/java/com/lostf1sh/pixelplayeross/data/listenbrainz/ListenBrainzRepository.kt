@@ -21,6 +21,9 @@ import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** Connecting failed because the entered server URL is not a usable http(s) URL. */
+class InvalidServerUrlException : IllegalArgumentException("Invalid ListenBrainz server URL")
+
 /**
  * Owns the ListenBrainz account (user token in EncryptedSharedPreferences, mirroring the
  * Navidrome credential pattern) and all API submission paths.
@@ -32,6 +35,7 @@ class ListenBrainzRepository @Inject constructor(
     private val api: ListenBrainzApiService,
     private val listenBrainzDao: ListenBrainzDao,
     private val workManager: WorkManager,
+    private val endpoint: ListenBrainzEndpoint,
     @ApplicationContext private val context: Context
 ) {
     companion object {
@@ -40,6 +44,7 @@ class ListenBrainzRepository @Inject constructor(
         private const val KEY_TOKEN = "token"
         private const val KEY_USER_NAME = "user_name"
         private const val KEY_AUTH_INVALID = "auth_invalid"
+        private const val KEY_SERVER_URL = "server_url"
 
         private const val SUBMISSION_CLIENT = "PixelPlayerOSS"
         private const val MAX_QUEUE_SIZE = 3000
@@ -57,10 +62,17 @@ class ListenBrainzRepository @Inject constructor(
         ListenBrainzAccountState(
             isConnected = cachedToken != null,
             userName = prefs.getString(KEY_USER_NAME, null),
-            needsReauth = prefs.getBoolean(KEY_AUTH_INVALID, false)
+            needsReauth = prefs.getBoolean(KEY_AUTH_INVALID, false),
+            serverUrl = prefs.getString(KEY_SERVER_URL, null)
         )
     )
     val accountState: StateFlow<ListenBrainzAccountState> = _accountState.asStateFlow()
+
+    init {
+        endpoint.setCustom(
+            prefs.getString(KEY_SERVER_URL, null)?.let(ListenBrainzEndpoint::parseBaseUrl)
+        )
+    }
 
     val pendingListenCount = listenBrainzDao.countFlow()
 
@@ -116,35 +128,59 @@ class ListenBrainzRepository @Inject constructor(
     }
 
     /**
-     * Validates [token] against the API and stores it on success.
-     * Returns the ListenBrainz user name on success.
+     * Validates [token] against the chosen server and stores both on success.
+     * A blank [serverUrl] means the official listenbrainz.org endpoint; anything else
+     * must parse into an http(s) URL and may point at any ListenBrainz-compatible
+     * server (self-hosted ListenBrainz, Maloja, …). Returns the user name on success.
      */
-    suspend fun connect(token: String): Result<String> {
+    suspend fun connect(token: String, serverUrl: String? = null): Result<String> {
         val trimmed = token.trim()
         if (trimmed.isEmpty()) return Result.failure(IllegalArgumentException("Empty token"))
+
+        val trimmedUrl = serverUrl?.trim().orEmpty()
+        val customBase = if (trimmedUrl.isEmpty()) {
+            null
+        } else {
+            ListenBrainzEndpoint.parseBaseUrl(trimmedUrl)
+                ?: return Result.failure(InvalidServerUrlException())
+        }
+
+        val previousBase = endpoint.customBaseUrl
+        endpoint.setCustom(customBase)
         return try {
             val response = api.validateToken(authHeader(trimmed))
             val body = response.body()
             if (response.isSuccessful && body?.valid == true) {
+                // Maloja's validate-token replies without a user name; fall back to
+                // an empty name rather than treating the account as invalid.
                 val userName = body.userName.orEmpty()
+                val storedUrl = customBase?.toString()
                 prefs.edit {
                     putString(KEY_TOKEN, trimmed)
                     putString(KEY_USER_NAME, userName)
                     putBoolean(KEY_AUTH_INVALID, false)
+                    if (storedUrl != null) {
+                        putString(KEY_SERVER_URL, storedUrl)
+                    } else {
+                        remove(KEY_SERVER_URL)
+                    }
                 }
                 cachedToken = trimmed
                 _accountState.value = ListenBrainzAccountState(
                     isConnected = true,
                     userName = userName,
-                    needsReauth = false
+                    needsReauth = false,
+                    serverUrl = storedUrl
                 )
                 scheduleFlush()
                 Result.success(userName)
             } else {
+                endpoint.setCustom(previousBase)
                 Result.failure(IllegalStateException("Token rejected by ListenBrainz"))
             }
         } catch (e: Exception) {
             Timber.e(e, "$TAG: Token validation failed")
+            endpoint.setCustom(previousBase)
             Result.failure(e)
         }
     }
@@ -156,8 +192,10 @@ class ListenBrainzRepository @Inject constructor(
                 remove(KEY_TOKEN)
                 remove(KEY_USER_NAME)
                 remove(KEY_AUTH_INVALID)
+                remove(KEY_SERVER_URL)
             }
             cachedToken = null
+            endpoint.setCustom(null)
             _accountState.value = ListenBrainzAccountState()
             listenBrainzDao.clear()
         }

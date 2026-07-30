@@ -47,7 +47,9 @@ data class ListenBrainzAccountState(
     val isConnected: Boolean = false,
     val userName: String? = null,
     /** True when the stored token was rejected (HTTP 401); flushing is paused until reconnect. */
-    val needsReauth: Boolean = false
+    val needsReauth: Boolean = false,
+    /** Custom ListenBrainz-compatible API root; null means the official endpoint. */
+    val serverUrl: String? = null
 )
 
 sealed interface ListenBrainzSubmitResult {

@@ -15,7 +15,11 @@
     <string name="accounts_listenbrainz_token_dialog_body">Paste your user token to scrobble your listens to ListenBrainz. You can find it in your settings on listenbrainz.org.</string>
     <string name="accounts_listenbrainz_token_hint">User token</string>
     <string name="accounts_listenbrainz_connect">Connect</string>
-    <string name="accounts_listenbrainz_connect_failed">Token was rejected. Check it and try again.</string>
+    <string name="accounts_listenbrainz_connect_failed">Couldn\'t connect. Check your token and server URL, then try again.</string>
+    <string name="accounts_listenbrainz_server_hint">Server URL (optional)</string>
+    <string name="accounts_listenbrainz_server_supporting">Leave empty for listenbrainz.org. Works with self-hosted servers that speak the ListenBrainz API, such as Maloja.</string>
+    <string name="accounts_listenbrainz_invalid_url">Enter a valid server URL, like https://maloja.example.com/apis/listenbrainz</string>
+    <string name="accounts_listenbrainz_custom_server">Scrobbling to %1$s</string>
     <string name="accounts_listenbrainz_get_token">Open listenbrainz.org</string>
     <string name="accounts_listenbrainz_needs_reauth">Your token is no longer valid — reconnect to resume scrobbling. Queued listens are kept.</string>
     <string name="accounts_listenbrainz_reconnect">Reconnect</string>

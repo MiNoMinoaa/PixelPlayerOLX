@@ -300,6 +300,7 @@ fun AccountsScreen(
         if (showListenBrainzDialog) {
             ListenBrainzTokenDialog(
                 connectState = listenBrainzConnectState,
+                initialServerUrl = uiState.listenBrainz?.serverUrl,
                 onConnect = viewModel::connectListenBrainz,
                 onDismiss = {
                     showListenBrainzDialog = false
@@ -854,6 +855,13 @@ private fun ListenBrainzCardExtras(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        model.serverUrl?.let { serverUrl ->
+            Text(
+                text = stringResource(R.string.accounts_listenbrainz_custom_server, serverUrl),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 
@@ -883,11 +891,14 @@ private fun ScrobbleSourceToggleRow(
 @Composable
 private fun ListenBrainzTokenDialog(
     connectState: ListenBrainzConnectState,
-    onConnect: (String) -> Unit,
+    initialServerUrl: String?,
+    onConnect: (String, String) -> Unit,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
     var token by remember { mutableStateOf("") }
+    var serverUrl by remember { mutableStateOf(initialServerUrl.orEmpty()) }
+    val failedState = connectState as? ListenBrainzConnectState.Failed
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -903,14 +914,32 @@ private fun ListenBrainzTokenDialog(
                     onValueChange = { token = it },
                     label = { Text(stringResource(R.string.accounts_listenbrainz_token_hint)) },
                     singleLine = true,
-                    isError = connectState == ListenBrainzConnectState.Failed,
+                    isError = failedState != null && !failedState.invalidUrl,
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     modifier = Modifier.fillMaxWidth()
                 )
-                if (connectState == ListenBrainzConnectState.Failed) {
+                OutlinedTextField(
+                    value = serverUrl,
+                    onValueChange = { serverUrl = it },
+                    label = { Text(stringResource(R.string.accounts_listenbrainz_server_hint)) },
+                    supportingText = {
+                        Text(stringResource(R.string.accounts_listenbrainz_server_supporting))
+                    },
+                    singleLine = true,
+                    isError = failedState?.invalidUrl == true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (failedState != null) {
                     Text(
-                        text = stringResource(R.string.accounts_listenbrainz_connect_failed),
+                        text = stringResource(
+                            if (failedState.invalidUrl) {
+                                R.string.accounts_listenbrainz_invalid_url
+                            } else {
+                                R.string.accounts_listenbrainz_connect_failed
+                            }
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -929,7 +958,7 @@ private fun ListenBrainzTokenDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { onConnect(token) },
+                onClick = { onConnect(token, serverUrl) },
                 enabled = token.isNotBlank() && connectState != ListenBrainzConnectState.Connecting
             ) {
                 if (connectState == ListenBrainzConnectState.Connecting) {
