@@ -4,16 +4,23 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lostf1sh.pixelplayeross.data.jellyfin.JellyfinRepository
 import com.lostf1sh.pixelplayeross.data.listenbrainz.InvalidServerUrlException
+import com.lostf1sh.pixelplayeross.data.listenbrainz.ListenBrainzProfileStats
 import com.lostf1sh.pixelplayeross.data.listenbrainz.ListenBrainzRepository
 import com.lostf1sh.pixelplayeross.data.navidrome.NavidromeRepository
 import com.lostf1sh.pixelplayeross.data.preferences.ListenBrainzPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -21,6 +28,8 @@ import kotlinx.coroutines.launch
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+
+private const val PROFILE_STATS_POLL_MS = 20_000L
 
 enum class ExternalServiceAccount {
     NAVIDROME,
@@ -41,10 +50,21 @@ data class ListenBrainzUiModel(
     val pendingCount: Int,
     val needsReauth: Boolean,
     val serverUrl: String?,
+    val statsState: ListenBrainzStatsUiState,
     val scrobbleLocal: Boolean,
     val scrobbleNavidrome: Boolean,
     val scrobbleJellyfin: Boolean
 )
+
+sealed interface ListenBrainzStatsUiState {
+    /** First fetch is in flight — show skeleton placeholders. */
+    data object Loading : ListenBrainzStatsUiState
+
+    /** The connected server doesn't expose profile endpoints (Maloja) — show nothing. */
+    data object Unavailable : ListenBrainzStatsUiState
+
+    data class Loaded(val stats: ListenBrainzProfileStats) : ListenBrainzStatsUiState
+}
 
 sealed interface ListenBrainzConnectState {
     data object Idle : ListenBrainzConnectState
@@ -83,22 +103,57 @@ class AccountsViewModel @Inject constructor(
         connected to playlistCount
     }
 
+    /**
+     * Re-fetched on a fixed cadence, but only while something downstream collects [uiState],
+     * so the polling stops as soon as the Accounts screen goes away.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val listenBrainzStatsFlow = listenBrainzRepository.accountState
+        .map { it.isConnected to it.userName }
+        .distinctUntilChanged()
+        .flatMapLatest { (connected, userName) ->
+            if (!connected || userName.isNullOrBlank()) {
+                flowOf(ListenBrainzStatsUiState.Unavailable)
+            } else {
+                flow<ListenBrainzStatsUiState> {
+                    emit(ListenBrainzStatsUiState.Loading)
+                    var lastLoaded: ListenBrainzProfileStats? = null
+                    while (true) {
+                        // A transient poll failure keeps showing the last good numbers
+                        // instead of collapsing the section.
+                        val stats = listenBrainzRepository.fetchProfileStats() ?: lastLoaded
+                        if (stats != null) {
+                            lastLoaded = stats
+                            emit(ListenBrainzStatsUiState.Loaded(stats))
+                        } else {
+                            emit(ListenBrainzStatsUiState.Unavailable)
+                        }
+                        delay(PROFILE_STATS_POLL_MS)
+                    }
+                }
+            }
+        }
+
     private val listenBrainzStateFlow = combine(
         listenBrainzRepository.accountState,
         listenBrainzRepository.pendingListenCount,
+        listenBrainzStatsFlow,
         listenBrainzPreferences.scrobbleLocalFlow,
-        listenBrainzPreferences.scrobbleNavidromeFlow,
-        listenBrainzPreferences.scrobbleJellyfinFlow
-    ) { account, pendingCount, local, navidrome, jellyfin ->
+        combine(
+            listenBrainzPreferences.scrobbleNavidromeFlow,
+            listenBrainzPreferences.scrobbleJellyfinFlow
+        ) { navidrome, jellyfin -> navidrome to jellyfin }
+    ) { account, pendingCount, statsState, local, remoteToggles ->
         if (account.isConnected) {
             ListenBrainzUiModel(
                 userName = account.userName,
                 pendingCount = pendingCount,
                 needsReauth = account.needsReauth,
                 serverUrl = account.serverUrl,
+                statsState = statsState,
                 scrobbleLocal = local,
-                scrobbleNavidrome = navidrome,
-                scrobbleJellyfin = jellyfin
+                scrobbleNavidrome = remoteToggles.first,
+                scrobbleJellyfin = remoteToggles.second
             )
         } else {
             null

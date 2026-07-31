@@ -27,6 +27,11 @@
     <string name="accounts_listenbrainz_scrobble_navidrome">Scrobble Subsonic streaming</string>
     <string name="accounts_listenbrainz_scrobble_jellyfin">Scrobble Jellyfin streaming</string>
     <string name="accounts_listenbrainz_toggle_hint">If your server already scrobbles to ListenBrainz, turn that source off here to avoid duplicate listens.</string>
+    <string name="accounts_listenbrainz_stat_listens">Total listens</string>
+    <string name="accounts_listenbrainz_stat_queued">Queued</string>
+    <string name="accounts_listenbrainz_now_playing_label">Scrobbling now</string>
+    <string name="accounts_listenbrainz_now_playing_format">%1$s — %2$s</string>
+    <string name="accounts_listenbrainz_now_playing_idle">Nothing playing right now</string>
     <string name="accounts_available_services">Available services</string>
     <string name="import_file">Import</string>
     <string name="search">Search</string>

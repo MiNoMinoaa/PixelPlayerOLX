@@ -201,6 +201,27 @@ class ListenBrainzRepository @Inject constructor(
         }
     }
 
+    /**
+     * Reads the connected account's public profile numbers. Returns null when the account has no
+     * user name (Maloja replies without one) or the server exposes neither endpoint, so the UI
+     * hides the stats instead of surfacing an error.
+     */
+    suspend fun fetchProfileStats(): ListenBrainzProfileStats? {
+        val token = cachedToken ?: return null
+        val userName = _accountState.value.userName?.takeIf { it.isNotBlank() } ?: return null
+        val auth = authHeader(token)
+        val listenCount = runCatching {
+            api.getListenCount(auth, userName).takeIf { it.isSuccessful }?.body()?.payload?.count
+        }.getOrNull()
+        val playingNowResponse = runCatching { api.getPlayingNow(auth, userName) }.getOrNull()
+        return buildProfileStats(
+            listenCount = listenCount,
+            playingNowAvailable = playingNowResponse?.isSuccessful == true,
+            nowPlaying = playingNowResponse?.takeIf { it.isSuccessful }
+                ?.body()?.payload?.listens?.firstOrNull()?.trackMetadata
+        )
+    }
+
     suspend fun submitListens(listens: List<ListenBrainzPendingListenEntity>): ListenBrainzSubmitResult {
         val token = cachedToken ?: return ListenBrainzSubmitResult.AuthFailed
         val submission = ListenBrainzSubmission(

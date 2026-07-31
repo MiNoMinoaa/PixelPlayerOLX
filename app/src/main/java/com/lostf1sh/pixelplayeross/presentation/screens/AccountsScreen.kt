@@ -6,9 +6,16 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,6 +61,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,8 +70,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -81,6 +94,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lostf1sh.pixelplayeross.R
+import com.lostf1sh.pixelplayeross.data.listenbrainz.ListenBrainzProfileStats
 import com.lostf1sh.pixelplayeross.presentation.components.CollapsibleCommonTopBar
 import com.lostf1sh.pixelplayeross.presentation.components.MiniPlayerHeight
 import com.lostf1sh.pixelplayeross.presentation.jellyfin.auth.JellyfinLoginActivity
@@ -89,7 +103,9 @@ import com.lostf1sh.pixelplayeross.presentation.viewmodel.AccountsViewModel
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.ExternalAccountUiModel
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.ExternalServiceAccount
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.ListenBrainzConnectState
+import com.lostf1sh.pixelplayeross.presentation.viewmodel.ListenBrainzStatsUiState
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.ListenBrainzUiModel
+import java.text.NumberFormat
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
@@ -206,13 +222,6 @@ fun AccountsScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            item {
-                AccountsHeroSection(
-                    connectedCount = uiState.connectedAccounts.size,
-                    disconnectedCount = uiState.disconnectedServices.size
-                )
-            }
-
             if (uiState.connectedAccounts.isNotEmpty()) {
                 item {
                     Text(
@@ -312,57 +321,7 @@ fun AccountsScreen(
 }
 
 @Composable
-private fun AccountsHeroSection(
-    connectedCount: Int,
-    disconnectedCount: Int
-) {
-    val connectedHeroTitle = stringResource(R.string.presentation_batch_b_accounts_connected_hero_title)
-    val connectedHeroBody = stringResource(R.string.presentation_batch_b_accounts_connected_hero_body)
-    val statActive = stringResource(R.string.presentation_batch_b_accounts_stat_active)
-    val statAvailable = stringResource(R.string.presentation_batch_b_accounts_stat_available)
-    val sectionShape = AbsoluteSmoothCornerShape(30.dp, 60)
-    Card(
-        shape = sectionShape,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Text(
-                text = connectedHeroTitle,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = connectedHeroBody,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                HeroStatTile(
-                    title = statActive,
-                    value = connectedCount.toString(),
-                    modifier = Modifier.weight(1f)
-                )
-                HeroStatTile(
-                    title = statAvailable,
-                    value = (connectedCount + disconnectedCount).toString(),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun HeroStatTile(
+private fun StatTile(
     title: String,
     value: String,
     modifier: Modifier = Modifier
@@ -813,7 +772,19 @@ private fun ListenBrainzCardExtras(
     onToggleJellyfin: (Boolean) -> Unit,
     onReconnect: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (model.statsState != ListenBrainzStatsUiState.Unavailable) {
+            Crossfade(targetState = model.statsState, label = "listenBrainzStats") { state ->
+                when (state) {
+                    ListenBrainzStatsUiState.Loading -> ListenBrainzStatsSkeleton()
+                    is ListenBrainzStatsUiState.Loaded -> ListenBrainzStatsContent(
+                        stats = state.stats,
+                        pendingCount = model.pendingCount
+                    )
+                    ListenBrainzStatsUiState.Unavailable -> {}
+                }
+            }
+        }
         if (model.needsReauth) {
             Surface(
                 shape = AbsoluteSmoothCornerShape(14.dp, 60),
@@ -861,6 +832,176 @@ private fun ListenBrainzCardExtras(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+@Composable
+private fun ListenBrainzStatsContent(
+    stats: ListenBrainzProfileStats,
+    pendingCount: Int
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            stats.listenCount?.let { count ->
+                StatTile(
+                    title = stringResource(R.string.accounts_listenbrainz_stat_listens),
+                    value = NumberFormat.getIntegerInstance().format(count),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            StatTile(
+                title = stringResource(R.string.accounts_listenbrainz_stat_queued),
+                value = pendingCount.toString(),
+                modifier = Modifier.weight(1f)
+            )
+        }
+        if (stats.playingNowAvailable) {
+            ListenBrainzNowPlayingRow(
+                track = stats.nowPlayingTrack,
+                artist = stats.nowPlayingArtist
+            )
+        }
+    }
+}
+
+@Composable
+private fun ListenBrainzStatsSkeleton() {
+    val shimmer = rememberInfiniteTransition(label = "lbSkeleton")
+    val progress = shimmer.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(1300, easing = LinearEasing)),
+        label = "lbSkeletonSweep"
+    )
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            SkeletonBlock(
+                progress = progress,
+                shape = AbsoluteSmoothCornerShape(18.dp, 60),
+                modifier = Modifier.weight(1f).height(70.dp)
+            )
+            SkeletonBlock(
+                progress = progress,
+                shape = AbsoluteSmoothCornerShape(18.dp, 60),
+                modifier = Modifier.weight(1f).height(70.dp)
+            )
+        }
+        SkeletonBlock(
+            progress = progress,
+            shape = AbsoluteSmoothCornerShape(14.dp, 60),
+            modifier = Modifier.fillMaxWidth().height(44.dp)
+        )
+    }
+}
+
+@Composable
+private fun SkeletonBlock(
+    progress: State<Float>,
+    shape: Shape,
+    modifier: Modifier = Modifier
+) {
+    val baseColor = MaterialTheme.colorScheme.surfaceContainerLow
+    val highlightColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .drawBehind {
+                drawRect(baseColor)
+                val sweepCenter = size.width * (progress.value * 2f - 0.5f)
+                val sweepRadius = size.width * 0.35f
+                drawRect(
+                    brush = Brush.linearGradient(
+                        colors = listOf(Color.Transparent, highlightColor, Color.Transparent),
+                        start = Offset(sweepCenter - sweepRadius, 0f),
+                        end = Offset(sweepCenter + sweepRadius, size.height)
+                    )
+                )
+            }
+    )
+}
+
+@Composable
+private fun ListenBrainzNowPlayingRow(
+    track: String?,
+    artist: String?
+) {
+    val isPlaying = track != null
+    val containerColor = if (isPlaying) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerLow
+    }
+    val contentColor = if (isPlaying) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    Surface(
+        shape = AbsoluteSmoothCornerShape(14.dp, 60),
+        color = containerColor,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val iconModifier = if (isPlaying) {
+                val pulse = rememberInfiniteTransition(label = "scrobblePulse")
+                val pulseAlpha by pulse.animateFloat(
+                    initialValue = 0.35f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(tween(650), RepeatMode.Reverse),
+                    label = "scrobblePulseAlpha"
+                )
+                Modifier.size(16.dp).graphicsLayer { alpha = pulseAlpha }
+            } else {
+                Modifier.size(16.dp)
+            }
+            Icon(
+                imageVector = Icons.Rounded.GraphicEq,
+                contentDescription = null,
+                tint = contentColor,
+                modifier = iconModifier
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+            if (isPlaying) {
+                Column {
+                    Text(
+                        text = stringResource(R.string.accounts_listenbrainz_now_playing_label),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = contentColor
+                    )
+                    Text(
+                        text = if (artist.isNullOrBlank()) {
+                            track.orEmpty()
+                        } else {
+                            stringResource(
+                                R.string.accounts_listenbrainz_now_playing_format,
+                                track.orEmpty(),
+                                artist
+                            )
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = contentColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            } else {
+                Text(
+                    text = stringResource(R.string.accounts_listenbrainz_now_playing_idle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = contentColor
+                )
+            }
         }
     }
 }

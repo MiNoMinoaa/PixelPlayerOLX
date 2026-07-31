@@ -42,6 +42,50 @@ data class ListenBrainzTokenValidation(
     @SerializedName("user_name") val userName: String? = null
 )
 
+/** Response of `GET /1/user/{user}/listen-count`. */
+data class ListenBrainzListenCountResponse(
+    @SerializedName("payload") val payload: ListenBrainzListenCountPayload? = null
+)
+
+data class ListenBrainzListenCountPayload(
+    @SerializedName("count") val count: Long = 0
+)
+
+/** Response of `GET /1/user/{user}/playing-now`. */
+data class ListenBrainzPlayingNowResponse(
+    @SerializedName("payload") val payload: ListenBrainzPlayingNowPayload? = null
+)
+
+data class ListenBrainzPlayingNowPayload(
+    @SerializedName("listens") val listens: List<ListenBrainzListen> = emptyList()
+)
+
+/**
+ * Profile numbers shown on the Accounts screen. Null [listenCount] or a false
+ * [playingNowAvailable] means the connected server doesn't expose that endpoint
+ * (Maloja's ListenBrainz shim only implements submission), not an error state.
+ */
+data class ListenBrainzProfileStats(
+    val listenCount: Long? = null,
+    val playingNowAvailable: Boolean = false,
+    val nowPlayingTrack: String? = null,
+    val nowPlayingArtist: String? = null
+)
+
+internal fun buildProfileStats(
+    listenCount: Long?,
+    playingNowAvailable: Boolean,
+    nowPlaying: ListenBrainzTrackMetadata?
+): ListenBrainzProfileStats? {
+    if (listenCount == null && !playingNowAvailable) return null
+    return ListenBrainzProfileStats(
+        listenCount = listenCount,
+        playingNowAvailable = playingNowAvailable,
+        nowPlayingTrack = nowPlaying?.trackName,
+        nowPlayingArtist = nowPlaying?.artistName
+    )
+}
+
 /** Connection state surfaced on the Accounts screen. */
 data class ListenBrainzAccountState(
     val isConnected: Boolean = false,

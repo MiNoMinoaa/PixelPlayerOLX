@@ -5,6 +5,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 /**
  * Retrofit interface for the ListenBrainz API.
@@ -22,4 +23,16 @@ interface ListenBrainzApiService {
     suspend fun validateToken(
         @Header("Authorization") authorization: String
     ): Response<ListenBrainzTokenValidation>
+
+    @GET("1/user/{userName}/listen-count")
+    suspend fun getListenCount(
+        @Header("Authorization") authorization: String,
+        @Path("userName") userName: String
+    ): Response<ListenBrainzListenCountResponse>
+
+    @GET("1/user/{userName}/playing-now")
+    suspend fun getPlayingNow(
+        @Header("Authorization") authorization: String,
+        @Path("userName") userName: String
+    ): Response<ListenBrainzPlayingNowResponse>
 }
