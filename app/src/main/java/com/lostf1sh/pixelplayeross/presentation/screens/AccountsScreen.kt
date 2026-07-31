@@ -4,10 +4,18 @@ package com.lostf1sh.pixelplayeross.presentation.screens
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,7 +42,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.CloudQueue
+import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Sync
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -44,10 +54,14 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,8 +70,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -67,11 +86,15 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lostf1sh.pixelplayeross.R
+import com.lostf1sh.pixelplayeross.data.listenbrainz.ListenBrainzProfileStats
 import com.lostf1sh.pixelplayeross.presentation.components.CollapsibleCommonTopBar
 import com.lostf1sh.pixelplayeross.presentation.components.MiniPlayerHeight
 import com.lostf1sh.pixelplayeross.presentation.jellyfin.auth.JellyfinLoginActivity
@@ -79,6 +102,10 @@ import com.lostf1sh.pixelplayeross.presentation.navidrome.auth.NavidromeLoginAct
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.AccountsViewModel
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.ExternalAccountUiModel
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.ExternalServiceAccount
+import com.lostf1sh.pixelplayeross.presentation.viewmodel.ListenBrainzConnectState
+import com.lostf1sh.pixelplayeross.presentation.viewmodel.ListenBrainzStatsUiState
+import com.lostf1sh.pixelplayeross.presentation.viewmodel.ListenBrainzUiModel
+import java.text.NumberFormat
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
@@ -93,6 +120,15 @@ fun AccountsScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val listenBrainzConnectState by viewModel.listenBrainzConnectState.collectAsStateWithLifecycle()
+    var showListenBrainzDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(listenBrainzConnectState) {
+        if (listenBrainzConnectState == ListenBrainzConnectState.Success) {
+            showListenBrainzDialog = false
+            viewModel.resetListenBrainzConnectState()
+        }
+    }
 
     val density = LocalDensity.current
     val coroutineScope = rememberCoroutineScope()
@@ -158,6 +194,20 @@ fun AccountsScreen(
         }
     }
 
+    val onConnectService: (ExternalServiceAccount) -> Unit = { service ->
+        if (service == ExternalServiceAccount.LISTENBRAINZ) {
+            showListenBrainzDialog = true
+        } else {
+            openService(
+                context = context,
+                service = service,
+                onOpenNavidromeDashboard = onOpenNavidromeDashboard,
+                onOpenJellyfinDashboard = onOpenJellyfinDashboard,
+                preferDashboard = false
+            )
+        }
+    }
+
     Box(modifier = Modifier.nestedScroll(nestedScrollConnection).fillMaxSize()) {
         val currentTopBarHeightDp = with(density) { topBarHeight.value.toDp() }
 
@@ -172,13 +222,6 @@ fun AccountsScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            item {
-                AccountsHeroSection(
-                    connectedCount = uiState.connectedAccounts.size,
-                    disconnectedCount = uiState.disconnectedServices.size
-                )
-            }
-
             if (uiState.connectedAccounts.isNotEmpty()) {
                 item {
                     Text(
@@ -210,22 +253,45 @@ fun AccountsScreen(
                             painterResource(R.drawable.ic_jellyfin)
                         } else if (account.service == ExternalServiceAccount.NAVIDROME) {
                             painterResource(R.drawable.ic_navidrome_md3)
+                        } else null,
+                        extraContent = if (account.service == ExternalServiceAccount.LISTENBRAINZ) {
+                            {
+                                uiState.listenBrainz?.let { listenBrainz ->
+                                    ListenBrainzCardExtras(
+                                        model = listenBrainz,
+                                        onToggleLocal = viewModel::setListenBrainzScrobbleLocal,
+                                        onToggleNavidrome = viewModel::setListenBrainzScrobbleNavidrome,
+                                        onToggleJellyfin = viewModel::setListenBrainzScrobbleJellyfin,
+                                        onReconnect = { showListenBrainzDialog = true }
+                                    )
+                                }
+                            }
                         } else null
                     )
+                }
+
+                if (uiState.disconnectedServices.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = stringResource(R.string.accounts_available_services),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                        )
+                    }
+                    item {
+                        AvailableServicesCard(
+                            disconnectedServices = uiState.disconnectedServices,
+                            onConnect = onConnectService
+                        )
+                    }
                 }
             } else {
                 item {
                     EmptyAccountsCard(
                         disconnectedServices = uiState.disconnectedServices,
-                        onConnect = { service ->
-                            openService(
-                                context = context,
-                                service = service,
-                                onOpenNavidromeDashboard = onOpenNavidromeDashboard,
-                                onOpenJellyfinDashboard = onOpenJellyfinDashboard,
-                                preferDashboard = false
-                            )
-                        }
+                        onConnect = onConnectService
                     )
                 }
             }
@@ -239,61 +305,23 @@ fun AccountsScreen(
             expandedTitleStartPadding = 20.dp,
             collapsedTitleStartPadding = 68.dp
         )
-    }
-}
 
-@Composable
-private fun AccountsHeroSection(
-    connectedCount: Int,
-    disconnectedCount: Int
-) {
-    val connectedHeroTitle = stringResource(R.string.presentation_batch_b_accounts_connected_hero_title)
-    val connectedHeroBody = stringResource(R.string.presentation_batch_b_accounts_connected_hero_body)
-    val statActive = stringResource(R.string.presentation_batch_b_accounts_stat_active)
-    val statAvailable = stringResource(R.string.presentation_batch_b_accounts_stat_available)
-    val sectionShape = AbsoluteSmoothCornerShape(30.dp, 60)
-    Card(
-        shape = sectionShape,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Text(
-                text = connectedHeroTitle,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+        if (showListenBrainzDialog) {
+            ListenBrainzTokenDialog(
+                connectState = listenBrainzConnectState,
+                initialServerUrl = uiState.listenBrainz?.serverUrl,
+                onConnect = viewModel::connectListenBrainz,
+                onDismiss = {
+                    showListenBrainzDialog = false
+                    viewModel.resetListenBrainzConnectState()
+                }
             )
-            Text(
-                text = connectedHeroBody,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                HeroStatTile(
-                    title = statActive,
-                    value = connectedCount.toString(),
-                    modifier = Modifier.weight(1f)
-                )
-                HeroStatTile(
-                    title = statAvailable,
-                    value = (connectedCount + disconnectedCount).toString(),
-                    modifier = Modifier.weight(1f)
-                )
-            }
         }
     }
 }
 
 @Composable
-private fun HeroStatTile(
+private fun StatTile(
     title: String,
     value: String,
     modifier: Modifier = Modifier
@@ -327,7 +355,8 @@ private fun ConnectedAccountCard(
     account: ExternalAccountUiModel,
     onManage: () -> Unit,
     onLogout: () -> Unit,
-    painter: androidx.compose.ui.graphics.painter.Painter? = null
+    painter: androidx.compose.ui.graphics.painter.Painter? = null,
+    extraContent: (@Composable () -> Unit)? = null
 ) {
     val statusConnected = stringResource(R.string.presentation_batch_b_accounts_status_connected)
     val openService = stringResource(R.string.presentation_batch_b_accounts_open_service)
@@ -441,6 +470,8 @@ private fun ConnectedAccountCard(
                 }
             }
 
+            extraContent?.invoke()
+
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.28f))
 
             FilledTonalButton(
@@ -500,7 +531,6 @@ private fun EmptyAccountsCard(
 ) {
     val noLinkedTitle = stringResource(R.string.presentation_batch_b_accounts_no_linked_title)
     val noLinkedBody = stringResource(R.string.presentation_batch_b_accounts_no_linked_body)
-    val connectTemplate = stringResource(R.string.presentation_batch_b_accounts_connect_service)
     Card(
         shape = AbsoluteSmoothCornerShape(28.dp, 60),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
@@ -523,30 +553,7 @@ private fun EmptyAccountsCard(
             )
 
             disconnectedServices.forEach { service ->
-                val painter = when (service) {
-                    ExternalServiceAccount.JELLYFIN -> painterResource(R.drawable.ic_jellyfin)
-                    ExternalServiceAccount.NAVIDROME -> painterResource(R.drawable.ic_navidrome_md3)
-                }
-                FilledTonalButton(
-                    onClick = { onConnect(service) },
-                    enabled = true,
-                    shape = AbsoluteSmoothCornerShape(18.dp, 60),
-                    colors = androidx.compose.material3.ButtonDefaults.filledTonalButtonColors(
-                        disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    ),
-                    modifier = Modifier.fillMaxWidth().height(48.dp)
-                ) {
-                    Icon(
-                        painter = painter,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Text(
-                        text = connectTemplate.format(serviceDisplayName(service))
-                    )
-                }
+                ConnectServiceButton(service = service, onConnect = onConnect)
             }
         }
     }
@@ -580,6 +587,14 @@ private fun servicePalette(service: ExternalServiceAccount): ServicePalette {
             primaryActionContainer = Color(0xFFE3F2FD),
             primaryActionTint = Color(0xFF1565C0)
         )
+        ExternalServiceAccount.LISTENBRAINZ -> ServicePalette(
+            iconContainer = Color(0xFFEB743B),
+            iconTint = Color.White,
+            statusContainer = Color(0xFFFFE8DC),
+            statusTint = Color(0xFFA84A17),
+            primaryActionContainer = Color(0xFFFFE3D3),
+            primaryActionTint = Color(0xFFA84A17)
+        )
     }
 }
 
@@ -587,6 +602,7 @@ private fun accountIcon(service: ExternalServiceAccount): ImageVector {
     return when (service) {
         ExternalServiceAccount.NAVIDROME -> Icons.Rounded.CloudQueue
         ExternalServiceAccount.JELLYFIN -> Icons.Rounded.CloudQueue
+        ExternalServiceAccount.LISTENBRAINZ -> Icons.Rounded.GraphicEq
     }
 }
 
@@ -636,6 +652,7 @@ private fun serviceDisplayName(service: ExternalServiceAccount): String {
     return when (service) {
         ExternalServiceAccount.NAVIDROME -> stringResource(R.string.cd_subsonic_logo)
         ExternalServiceAccount.JELLYFIN -> stringResource(R.string.auth_jellyfin_title)
+        ExternalServiceAccount.LISTENBRAINZ -> stringResource(R.string.accounts_listenbrainz_title)
     }
 }
 
@@ -667,6 +684,12 @@ private fun openService(
                 )
             }
         }
+        ExternalServiceAccount.LISTENBRAINZ -> {
+            safeStartActivity(
+                context = context,
+                intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://listenbrainz.org"))
+            )
+        }
     }
 }
 
@@ -678,4 +701,418 @@ private fun safeStartActivity(
         .onFailure {
             Toast.makeText(context, context.getString(R.string.accounts_unable_open_screen), Toast.LENGTH_SHORT).show()
         }
+}
+
+@Composable
+private fun AvailableServicesCard(
+    disconnectedServices: ImmutableList<ExternalServiceAccount>,
+    onConnect: (ExternalServiceAccount) -> Unit
+) {
+    Card(
+        shape = AbsoluteSmoothCornerShape(28.dp, 60),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            disconnectedServices.forEach { service ->
+                ConnectServiceButton(service = service, onConnect = onConnect)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ConnectServiceButton(
+    service: ExternalServiceAccount,
+    onConnect: (ExternalServiceAccount) -> Unit
+) {
+    val connectTemplate = stringResource(R.string.presentation_batch_b_accounts_connect_service)
+    FilledTonalButton(
+        onClick = { onConnect(service) },
+        shape = AbsoluteSmoothCornerShape(18.dp, 60),
+        colors = androidx.compose.material3.ButtonDefaults.filledTonalButtonColors(
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        ),
+        modifier = Modifier.fillMaxWidth().height(48.dp)
+    ) {
+        when (service) {
+            ExternalServiceAccount.JELLYFIN -> Icon(
+                painter = painterResource(R.drawable.ic_jellyfin),
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            ExternalServiceAccount.NAVIDROME -> Icon(
+                painter = painterResource(R.drawable.ic_navidrome_md3),
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            ExternalServiceAccount.LISTENBRAINZ -> Icon(
+                imageVector = Icons.Rounded.GraphicEq,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        Spacer(modifier = Modifier.size(8.dp))
+        Text(
+            text = connectTemplate.format(serviceDisplayName(service))
+        )
+    }
+}
+
+@Composable
+private fun ListenBrainzCardExtras(
+    model: ListenBrainzUiModel,
+    onToggleLocal: (Boolean) -> Unit,
+    onToggleNavidrome: (Boolean) -> Unit,
+    onToggleJellyfin: (Boolean) -> Unit,
+    onReconnect: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (model.statsState != ListenBrainzStatsUiState.Unavailable) {
+            Crossfade(targetState = model.statsState, label = "listenBrainzStats") { state ->
+                when (state) {
+                    ListenBrainzStatsUiState.Loading -> ListenBrainzStatsSkeleton()
+                    is ListenBrainzStatsUiState.Loaded -> ListenBrainzStatsContent(
+                        stats = state.stats,
+                        pendingCount = model.pendingCount
+                    )
+                    ListenBrainzStatsUiState.Unavailable -> {}
+                }
+            }
+        }
+        if (model.needsReauth) {
+            Surface(
+                shape = AbsoluteSmoothCornerShape(14.dp, 60),
+                color = MaterialTheme.colorScheme.errorContainer,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
+                    Text(
+                        text = stringResource(R.string.accounts_listenbrainz_needs_reauth),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                    TextButton(onClick = onReconnect) {
+                        Text(
+                            text = stringResource(R.string.accounts_listenbrainz_reconnect),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+        }
+        ScrobbleSourceToggleRow(
+            label = stringResource(R.string.accounts_listenbrainz_scrobble_local),
+            checked = model.scrobbleLocal,
+            onCheckedChange = onToggleLocal
+        )
+        ScrobbleSourceToggleRow(
+            label = stringResource(R.string.accounts_listenbrainz_scrobble_navidrome),
+            checked = model.scrobbleNavidrome,
+            onCheckedChange = onToggleNavidrome
+        )
+        ScrobbleSourceToggleRow(
+            label = stringResource(R.string.accounts_listenbrainz_scrobble_jellyfin),
+            checked = model.scrobbleJellyfin,
+            onCheckedChange = onToggleJellyfin
+        )
+        Text(
+            text = stringResource(R.string.accounts_listenbrainz_toggle_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        model.serverUrl?.let { serverUrl ->
+            Text(
+                text = stringResource(R.string.accounts_listenbrainz_custom_server, serverUrl),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun ListenBrainzStatsContent(
+    stats: ListenBrainzProfileStats,
+    pendingCount: Int
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            stats.listenCount?.let { count ->
+                StatTile(
+                    title = stringResource(R.string.accounts_listenbrainz_stat_listens),
+                    value = NumberFormat.getIntegerInstance().format(count),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            StatTile(
+                title = stringResource(R.string.accounts_listenbrainz_stat_queued),
+                value = pendingCount.toString(),
+                modifier = Modifier.weight(1f)
+            )
+        }
+        if (stats.playingNowAvailable) {
+            ListenBrainzNowPlayingRow(
+                track = stats.nowPlayingTrack,
+                artist = stats.nowPlayingArtist
+            )
+        }
+    }
+}
+
+@Composable
+private fun ListenBrainzStatsSkeleton() {
+    val shimmer = rememberInfiniteTransition(label = "lbSkeleton")
+    val progress = shimmer.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(1300, easing = LinearEasing)),
+        label = "lbSkeletonSweep"
+    )
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            SkeletonBlock(
+                progress = progress,
+                shape = AbsoluteSmoothCornerShape(18.dp, 60),
+                modifier = Modifier.weight(1f).height(70.dp)
+            )
+            SkeletonBlock(
+                progress = progress,
+                shape = AbsoluteSmoothCornerShape(18.dp, 60),
+                modifier = Modifier.weight(1f).height(70.dp)
+            )
+        }
+        SkeletonBlock(
+            progress = progress,
+            shape = AbsoluteSmoothCornerShape(14.dp, 60),
+            modifier = Modifier.fillMaxWidth().height(44.dp)
+        )
+    }
+}
+
+@Composable
+private fun SkeletonBlock(
+    progress: State<Float>,
+    shape: Shape,
+    modifier: Modifier = Modifier
+) {
+    val baseColor = MaterialTheme.colorScheme.surfaceContainerLow
+    val highlightColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .drawBehind {
+                drawRect(baseColor)
+                val sweepCenter = size.width * (progress.value * 2f - 0.5f)
+                val sweepRadius = size.width * 0.35f
+                drawRect(
+                    brush = Brush.linearGradient(
+                        colors = listOf(Color.Transparent, highlightColor, Color.Transparent),
+                        start = Offset(sweepCenter - sweepRadius, 0f),
+                        end = Offset(sweepCenter + sweepRadius, size.height)
+                    )
+                )
+            }
+    )
+}
+
+@Composable
+private fun ListenBrainzNowPlayingRow(
+    track: String?,
+    artist: String?
+) {
+    val isPlaying = track != null
+    val containerColor = if (isPlaying) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerLow
+    }
+    val contentColor = if (isPlaying) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    Surface(
+        shape = AbsoluteSmoothCornerShape(14.dp, 60),
+        color = containerColor,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val iconModifier = if (isPlaying) {
+                val pulse = rememberInfiniteTransition(label = "scrobblePulse")
+                val pulseAlpha by pulse.animateFloat(
+                    initialValue = 0.35f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(tween(650), RepeatMode.Reverse),
+                    label = "scrobblePulseAlpha"
+                )
+                Modifier.size(16.dp).graphicsLayer { alpha = pulseAlpha }
+            } else {
+                Modifier.size(16.dp)
+            }
+            Icon(
+                imageVector = Icons.Rounded.GraphicEq,
+                contentDescription = null,
+                tint = contentColor,
+                modifier = iconModifier
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+            if (isPlaying) {
+                Column {
+                    Text(
+                        text = stringResource(R.string.accounts_listenbrainz_now_playing_label),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = contentColor
+                    )
+                    Text(
+                        text = if (artist.isNullOrBlank()) {
+                            track.orEmpty()
+                        } else {
+                            stringResource(
+                                R.string.accounts_listenbrainz_now_playing_format,
+                                track.orEmpty(),
+                                artist
+                            )
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = contentColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            } else {
+                Text(
+                    text = stringResource(R.string.accounts_listenbrainz_now_playing_idle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = contentColor
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ScrobbleSourceToggleRow(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
+    }
+}
+
+@Composable
+private fun ListenBrainzTokenDialog(
+    connectState: ListenBrainzConnectState,
+    initialServerUrl: String?,
+    onConnect: (String, String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    var token by remember { mutableStateOf("") }
+    var serverUrl by remember { mutableStateOf(initialServerUrl.orEmpty()) }
+    val failedState = connectState as? ListenBrainzConnectState.Failed
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.accounts_listenbrainz_token_dialog_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(R.string.accounts_listenbrainz_token_dialog_body),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                OutlinedTextField(
+                    value = token,
+                    onValueChange = { token = it },
+                    label = { Text(stringResource(R.string.accounts_listenbrainz_token_hint)) },
+                    singleLine = true,
+                    isError = failedState != null && !failedState.invalidUrl,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = serverUrl,
+                    onValueChange = { serverUrl = it },
+                    label = { Text(stringResource(R.string.accounts_listenbrainz_server_hint)) },
+                    supportingText = {
+                        Text(stringResource(R.string.accounts_listenbrainz_server_supporting))
+                    },
+                    singleLine = true,
+                    isError = failedState?.invalidUrl == true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (failedState != null) {
+                    Text(
+                        text = stringResource(
+                            if (failedState.invalidUrl) {
+                                R.string.accounts_listenbrainz_invalid_url
+                            } else {
+                                R.string.accounts_listenbrainz_connect_failed
+                            }
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+                TextButton(
+                    onClick = {
+                        safeStartActivity(
+                            context = context,
+                            intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://listenbrainz.org/settings/"))
+                        )
+                    }
+                ) {
+                    Text(stringResource(R.string.accounts_listenbrainz_get_token))
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConnect(token, serverUrl) },
+                enabled = token.isNotBlank() && connectState != ListenBrainzConnectState.Connecting
+            ) {
+                if (connectState == ListenBrainzConnectState.Connecting) {
+                    LoadingIndicator(modifier = Modifier.size(16.dp))
+                } else {
+                    Text(stringResource(R.string.accounts_listenbrainz_connect))
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }

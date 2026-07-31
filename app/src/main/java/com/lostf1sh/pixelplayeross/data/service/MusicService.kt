@@ -16,6 +16,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.glance.appwidget.GlanceAppWidgetManager
@@ -96,6 +97,18 @@ import coil.size.Precision
 
 import javax.inject.Inject
 import androidx.core.net.toUri
+
+/**
+ * Task removal must never tear down active playback when the user has opted into
+ * background playback; in every other case the service should shut down cleanly
+ * instead of lingering half-alive until the system reclaims it.
+ */
+internal fun shouldContinuePlaybackAfterTaskRemoved(
+    hasForegroundPlaybackIntent: Boolean,
+    keepPlayingInBackground: Boolean
+): Boolean {
+    return hasForegroundPlaybackIntent && keepPlayingInBackground
+}
 
 suspend fun loadArtworkBytesViaCoil(context: Context, uri: Uri): ByteArray? {
     val appContext = context.applicationContext
@@ -202,6 +215,7 @@ class MusicService : MediaLibraryService() {
     private var lastNoisyPauseRealtimeMs = 0L
     private var resumeOnHeadsetReconnectEnabled = false
     private var temporaryForegroundStartedInOnCreate = false
+    private var temporaryForegroundNotificationVisible = false
 
     companion object {
         private const val TAG = "MusicService_PixelPlayer"
@@ -346,8 +360,13 @@ class MusicService : MediaLibraryService() {
             }
         }
 
-        temporaryForegroundStartedInOnCreate =
-            consumePendingMediaButtonForegroundStart() || Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+        // Only promote to foreground here when a media-button start is actually
+        // pending. Promoting unconditionally made every service creation — including
+        // plain in-app binds when the user opens the app — flash the "Processing
+        // playback action…" placeholder notification. Started paths that require
+        // foreground (widget actions, media buttons) are promoted in onStartCommand,
+        // which runs right after onCreate and well within the FGS grace window.
+        temporaryForegroundStartedInOnCreate = consumePendingMediaButtonForegroundStart()
         if (temporaryForegroundStartedInOnCreate) {
             startTemporaryForegroundForCommand()
         }
@@ -740,6 +759,7 @@ class MusicService : MediaLibraryService() {
                 delay(2_000L)
                 if (mediaSession?.player?.hasForegroundPlaybackIntent() != true) {
                     stopForeground(STOP_FOREGROUND_REMOVE)
+                    clearTemporaryForegroundNotification()
                 }
             }
         }
@@ -791,8 +811,25 @@ class MusicService : MediaLibraryService() {
                 notification,
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
             )
+            temporaryForegroundNotificationVisible = true
         } catch (e: Exception) {
             Timber.tag(TAG).w(e, "Failed to promote service to foreground for external command")
+        }
+    }
+
+    /**
+     * Media3's notification provider posts under its own id, so promoting the real
+     * media notification does not replace the temporary placeholder — without an
+     * explicit cancel the "Processing playback action…" notification stays behind
+     * forever once the session notification takes over the foreground.
+     */
+    private fun clearTemporaryForegroundNotification() {
+        if (!temporaryForegroundNotificationVisible) return
+        temporaryForegroundNotificationVisible = false
+        runCatching {
+            NotificationManagerCompat.from(this).cancel(NOTIFICATION_ID)
+        }.onFailure { e ->
+            Timber.tag(TAG).w(e, "Failed to cancel temporary foreground notification")
         }
     }
 
@@ -914,6 +951,7 @@ class MusicService : MediaLibraryService() {
         if (needsTemporaryForeground || startedTemporaryForegroundInOnCreate) {
             if (mediaSession?.player?.hasForegroundPlaybackIntent() != true) {
                 stopForeground(STOP_FOREGROUND_REMOVE)
+                clearTemporaryForegroundNotification()
                 if (needsTemporaryForeground) {
                     stopSelfResult(startId)
                 }
@@ -924,11 +962,33 @@ class MusicService : MediaLibraryService() {
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = mediaSession
 
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        val session = mediaSession
+        val continuePlayback = shouldContinuePlaybackAfterTaskRemoved(
+            hasForegroundPlaybackIntent = session?.player?.hasForegroundPlaybackIntent() == true,
+            keepPlayingInBackground = keepPlayingInBackground
+        )
+        if (continuePlayback && session != null) {
+            // Media3's default onTaskRemoved pauses all players and stops the service
+            // whenever it is not in foreground state, and OEMs freeze cached processes
+            // that have no foreground service — either way playback dies with the task.
+            if (!isPlaybackOngoing()) {
+                Timber.tag(TAG).w(
+                    "Task removed while playing without foreground state; re-promoting."
+                )
+                onUpdateNotification(session, startInForegroundRequired = true)
+            }
+            return
+        }
+        stopPlaybackAndUnload(reason = "task_removed")
+    }
+
     override fun onDestroy() {
         PlaybackActivityTracker.setPlaybackActive(false)
         listeningStatsTracker.finalizeCurrentSession(forceSynchronousPersistence = true)
         reportNavidromePlayback("stopped")
         stopNavidromePlaybackReporting()
+        flushPendingPlaybackSnapshotOnDestroy()
         playbackSnapshotPersistJob?.cancel()
         mediaSessionButtonRefreshJob?.cancel()
         followUpMediaSessionUiRefreshJob?.cancel()
@@ -2156,6 +2216,9 @@ class MusicService : MediaLibraryService() {
 
         try {
             super.onUpdateNotification(session, shouldStartInForeground)
+            if (session.player.mediaItemCount > 0) {
+                clearTemporaryForegroundNotification()
+            }
         } catch (e: Exception) {
             Timber.tag(TAG).w(e, "onUpdateNotification suppressed: ${e.message}")
         }
@@ -2249,6 +2312,7 @@ class MusicService : MediaLibraryService() {
 
         requestWidgetFullUpdate(force = true)
         stopForeground(STOP_FOREGROUND_REMOVE)
+        clearTemporaryForegroundNotification()
 
         stopSelf()
     }
@@ -2271,6 +2335,22 @@ class MusicService : MediaLibraryService() {
                 Timber.tag(TAG).w(e, "Failed to persist playback snapshot during unload")
             }
         }
+    }
+
+    /**
+     * A debounced snapshot persist that is still pending at [onDestroy] would be
+     * silently cancelled, leaving a stale "playing" snapshot behind — reopening the
+     * app would then fake-resume playback that the system already tore down. Flush
+     * it now, forced to a paused state, so the next restore comes back paused at
+     * the correct position.
+     */
+    private fun flushPendingPlaybackSnapshotOnDestroy() {
+        if (isPlaybackUnloadInProgress || isRestoringPlaybackSnapshot) return
+        if (playbackSnapshotPersistJob?.isActive != true) return
+        playbackSnapshotPersistJob?.cancel()
+        val snapshot = capturePlaybackSnapshotFromPlayer(playWhenReadyOverride = false)
+            ?: return
+        writePlaybackSnapshotOnUnload(snapshot)
     }
 
     private fun refreshMediaSessionUiWithFollowUp(
