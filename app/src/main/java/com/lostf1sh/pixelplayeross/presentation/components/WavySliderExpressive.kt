@@ -53,6 +53,17 @@ import kotlinx.coroutines.isActive
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+/**
+ * Normalizes [value] into 0..1. Non-finite input is treated as 0 so a single bad value can never
+ * poison the rendered progress (NaN would survive every later interpolation).
+ */
+private fun normalizeValue(value: Float, valueRange: ClosedFloatingPointRange<Float>): Float {
+    if (!value.isFinite()) return 0f
+    val span = valueRange.endInclusive - valueRange.start
+    if (span == 0f) return 0f
+    return ((value - valueRange.start) / span).coerceIn(0f, 1f)
+}
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun WavySliderExpressive(
@@ -91,22 +102,27 @@ fun WavySliderExpressive(
         Stroke(width = strokeWidthPx, cap = StrokeCap.Round)
     }
 
+    // Read through the latest provider instead of capturing the first one: callers may swap the
+    // state object backing `value` (for example a remember() keyed on the current song), and a
+    // captured lambda would keep reading the abandoned state forever.
+    val latestValueProvider by rememberUpdatedState(value)
+
     val normalizedValueState = remember(valueRange) {
         derivedStateOf {
-            val v = value()
+            val v = latestValueProvider()
             if (valueRange.endInclusive == valueRange.start) 0f
-            else ((v - valueRange.start) / (valueRange.endInclusive - valueRange.start)).coerceIn(0f, 1f)
+            else normalizeValue(v, valueRange)
         }
     }
 
     val safeSemanticsStep = semanticsProgressStep.coerceIn(0.005f, 0.25f)
-    val semanticNormalizedValueState = remember(safeSemanticsStep) {
+    val semanticNormalizedValueState = remember(safeSemanticsStep, normalizedValueState) {
         derivedStateOf {
             val norm = normalizedValueState.value
             ((norm / safeSemanticsStep).roundToInt() * safeSemanticsStep).coerceIn(0f, 1f)
         }
     }
-    val semanticSliderValueState = remember(valueRange) {
+    val semanticSliderValueState = remember(valueRange, semanticNormalizedValueState) {
         derivedStateOf {
             valueRange.start + semanticNormalizedValueState.value * (valueRange.endInclusive - valueRange.start)
         }
@@ -147,13 +163,12 @@ fun WavySliderExpressive(
     }
 
     val renderedNormalizedProgress = remember {
-        val initialVal = value()
         val initialNorm = if (valueRange.endInclusive == valueRange.start) 0f
-            else ((initialVal - valueRange.start) / (valueRange.endInclusive - valueRange.start)).coerceIn(0f, 1f)
+            else normalizeValue(latestValueProvider(), valueRange)
         mutableFloatStateOf(initialNorm)
     }
     var lastProgressUpdateNanos by remember { mutableLongStateOf(0L) }
-    LaunchedEffect(isInteracting, enabled) {
+    LaunchedEffect(isInteracting, enabled, normalizedValueState) {
         snapshotFlow { normalizedValueState.value }.collect { target ->
             if (!enabled || isInteracting) {
                 renderedNormalizedProgress.floatValue = target
@@ -183,15 +198,19 @@ fun WavySliderExpressive(
 
             val durationNanos = (intervalMs * 900_000L).coerceAtLeast(1_000_000L)
             var startFrameNanos = 0L
+            var liveTarget = target
             while (isActive) {
                 val frameNanos = withFrameNanos { it }
                 if (startFrameNanos == 0L) startFrameNanos = frameNanos
+                // Re-read the target every frame so the drawn position keeps converging even if an
+                // upstream emission is missed while this smoothing pass runs.
+                liveTarget = normalizedValueState.value
                 val elapsedNanos = (frameNanos - startFrameNanos).coerceAtLeast(0L)
                 val fraction = (elapsedNanos.toDouble() / durationNanos.toDouble()).toFloat().coerceIn(0f, 1f)
-                renderedNormalizedProgress.floatValue = start + (target - start) * fraction
+                renderedNormalizedProgress.floatValue = start + (liveTarget - start) * fraction
                 if (fraction >= 1f) break
             }
-            renderedNormalizedProgress.floatValue = target
+            renderedNormalizedProgress.floatValue = liveTarget
         }
     }
 
@@ -291,11 +310,14 @@ fun WavySliderExpressive(
                     }
 
                     awaitEachGesture {
+                        var gestureValue: Float? = null
+                        var committed = false
                         try {
                             val down = awaitFirstDown(requireUnconsumed = false)
                             isPointerSeeking = true
                             down.consume()
                             var latestGestureValue = valueForX(down.position.x)
+                            gestureValue = latestGestureValue
                             latestOnValueChange(latestGestureValue)
 
                             var pointerId = down.id
@@ -314,14 +336,26 @@ fun WavySliderExpressive(
                                 if (change.position != change.previousPosition) {
                                     change.consume()
                                     latestGestureValue = valueForX(change.position.x)
+                                    gestureValue = latestGestureValue
                                     latestOnValueChange(latestGestureValue)
                                 }
                             }
 
+                            committed = true
                             latestOnValueCommit?.invoke(latestGestureValue)
                                 ?: latestOnValueChangeFinished?.invoke()
                         } finally {
                             isPointerSeeking = false
+                            // A gesture can be torn down without an up event (pointerInput restart
+                            // or disposal). Always terminate it, otherwise callers that latch a
+                            // "user is scrubbing" flag in onValueChange stay latched forever and
+                            // stop following playback.
+                            if (!committed) {
+                                gestureValue?.let { pendingValue ->
+                                    latestOnValueCommit?.invoke(pendingValue)
+                                        ?: latestOnValueChangeFinished?.invoke()
+                                }
+                            }
                         }
                     }
                 }

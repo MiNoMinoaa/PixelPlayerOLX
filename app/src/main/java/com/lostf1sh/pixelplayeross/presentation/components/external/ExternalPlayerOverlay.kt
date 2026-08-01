@@ -38,6 +38,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -58,6 +60,7 @@ import com.lostf1sh.pixelplayeross.presentation.components.WavySliderExpressive
 import com.lostf1sh.pixelplayeross.presentation.components.player.AnimatedPlaybackControls
 import com.lostf1sh.pixelplayeross.presentation.viewmodel.PlayerViewModel
 import com.lostf1sh.pixelplayeross.utils.formatDuration
+import kotlin.math.abs
 import kotlin.math.roundToLong
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 
@@ -170,13 +173,30 @@ fun ExternalPlayerOverlay(
                     val playPauseContent = colorScheme.onTertiaryFixed
                     val progressColor = colorScheme.primary
 
-                    var sliderPosition by remember(currentSong.id) { mutableStateOf(progressFraction) }
+                    // Keep this state identity stable: WavySliderExpressive tracks the value it is
+                    // given, so replacing the state object mid-playback would strand the slider.
+                    var sliderPosition by remember { mutableStateOf(progressFraction) }
                     var isUserScrubbing by remember { mutableStateOf(false) }
+                    var pendingSeekFraction by remember { mutableFloatStateOf(-1f) }
+                    var pendingSeekAtMs by remember { mutableLongStateOf(0L) }
 
-                    LaunchedEffect(progressFraction) {
-                        if (!isUserScrubbing) {
-                            sliderPosition = progressFraction
+                    LaunchedEffect(currentSong.id) {
+                        isUserScrubbing = false
+                        pendingSeekFraction = -1f
+                        sliderPosition = progressFraction
+                    }
+
+                    LaunchedEffect(progressFraction, isUserScrubbing) {
+                        if (isUserScrubbing) return@LaunchedEffect
+                        if (pendingSeekFraction >= 0f) {
+                            // Hold the committed position until playback reports it, so the slider
+                            // does not jump back to the pre-seek spot for a tick.
+                            val settled = abs(progressFraction - pendingSeekFraction) < 0.04f ||
+                                System.currentTimeMillis() - pendingSeekAtMs > 5000L
+                            if (!settled) return@LaunchedEffect
+                            pendingSeekFraction = -1f
                         }
+                        sliderPosition = progressFraction
                     }
 
                     Column(
@@ -265,6 +285,8 @@ fun ExternalPlayerOverlay(
                                 sliderPosition = finalFraction
                                 val targetPosition = (finalFraction * totalDuration).roundToLong()
                                 playerViewModel.seekTo(targetPosition)
+                                pendingSeekFraction = finalFraction
+                                pendingSeekAtMs = System.currentTimeMillis()
                                 isUserScrubbing = false
                             },
                             activeTrackColor = progressColor,

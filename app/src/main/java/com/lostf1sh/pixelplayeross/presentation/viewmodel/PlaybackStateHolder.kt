@@ -363,7 +363,10 @@ class PlaybackStateHolder @Inject constructor(
     fun previousSong() {
         val controller = activeLocalPlayer()
         if (controller.currentPosition > 10000) {
-            controller.seekTo(0)
+            // Route the restart through seekTo() so the position override, the engine seek hint and
+            // the UI position are updated together; a bare controller.seekTo(0) left a stale
+            // override behind and the displayed position could lag the restart.
+            seekTo(0L)
         } else {
             controller.seekToPrevious()
         }
