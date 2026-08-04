@@ -893,6 +893,10 @@ class DualPlayerEngine @Inject constructor(
             .build().apply {
             sharedAudioSessionIdOrNull()?.let { setAudioSessionId(it) }
             setAudioAttributes(audioAttributes, false)
+            // Gapless support is required, not optional: on a HAL that only advertises plain
+            // offload, the data written ahead for the next item is dropped at the automatic
+            // transition and the track starts seconds in. Devices without gapless offload fall
+            // back to the regular PCM path instead.
             val offloadPreferences = TrackSelectionParameters.AudioOffloadPreferences.Builder()
                 .setAudioOffloadMode(
                     if (audioOffloadEnabled) {
@@ -901,6 +905,7 @@ class DualPlayerEngine @Inject constructor(
                         TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_DISABLED
                     }
                 )
+                .setIsGaplessSupportRequired(true)
                 .build()
             trackSelectionParameters = trackSelectionParameters.buildUpon()
                 .setAudioOffloadPreferences(offloadPreferences)
