@@ -177,10 +177,14 @@ class TransitionController @Inject constructor(
                     settings.mode, settings.durationMs, isEnabled, resolution.source
                 )
 
-                val isGloballyDisabled = resolution.source == TransitionSource.GLOBAL_DEFAULT && !isEnabled
-
-                if (isGloballyDisabled) {
-                    Timber.tag("TransitionDebug").d("Crossfade globally disabled. Using default gap.")
+                // The global toggle is a master kill-switch, deliberately checked before the
+                // resolution source: a playlist or per-track rule picks which settings win, not
+                // whether crossfade runs at all.
+                if (!isEnabled) {
+                    Timber.tag("TransitionDebug").d(
+                        "Crossfade globally disabled (source=%s). Using default gap.",
+                        resolution.source
+                    )
                     engine.cancelNext()
                     engine.setPauseAtEndOfMediaItems(shouldPause = false)
                     return@collectLatest
