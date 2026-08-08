@@ -98,6 +98,33 @@ data class DeviceCapabilitySongRow(
     val sourceType: Int
 )
 
+/**
+ * Single-pass audio aggregates for the diagnostic performance report.
+ * Computed in one SQL pass so it stays cheap even on large libraries —
+ * we never materialize every row. File-size figures are *estimated* from
+ * bitrate × duration because raw byte sizes are not stored in the DB; this
+ * avoids per-file filesystem stat calls just to build a report.
+ */
+data class LibraryAudioStatsRow(
+    val totalCount: Int,
+    val localCount: Int,
+    val cloudCount: Int,
+    val hiResCount: Int,
+    val ultraHiResCount: Int,
+    val likelyExpensiveCount: Int,
+    val maxBitrate: Int?,
+    val minSampleRate: Int?,
+    val maxSampleRate: Int?,
+    val estMinBytes: Long?,
+    val estAvgBytes: Double?,
+    val estMaxBytes: Long?
+)
+
+data class MimeTypeCountRow(
+    val mimeType: String?,
+    val count: Int
+)
+
 @Dao
 interface MusicDao {
 
@@ -472,6 +499,40 @@ interface MusicDao {
         FROM songs
     """)
     suspend fun getDeviceCapabilitySongRows(): List<DeviceCapabilitySongRow>
+
+    /**
+     * Single-pass audio aggregates for the diagnostic performance report.
+     * Hi-res thresholds: > 48 kHz = hi-res, >= 176.4 kHz = ultra-hi-res.
+     * Estimated bytes = bitrate(bps) * duration(ms) / 8000.
+     */
+    @Query("""
+        SELECT
+            COUNT(*) AS totalCount,
+            COALESCE(SUM(CASE WHEN source_type = 0 THEN 1 ELSE 0 END), 0) AS localCount,
+            COALESCE(SUM(CASE WHEN source_type != 0 THEN 1 ELSE 0 END), 0) AS cloudCount,
+            COALESCE(SUM(CASE WHEN sample_rate > 48000 THEN 1 ELSE 0 END), 0) AS hiResCount,
+            COALESCE(SUM(CASE WHEN sample_rate >= 176400 THEN 1 ELSE 0 END), 0) AS ultraHiResCount,
+            COALESCE(SUM(CASE
+                WHEN sample_rate > 48000
+                    OR mime_type LIKE '%flac%'
+                    OR mime_type LIKE '%alac%'
+                    OR mime_type LIKE '%wav%'
+                    OR mime_type LIKE '%aiff%'
+                    OR mime_type LIKE '%ape%'
+                THEN 1 ELSE 0 END), 0) AS likelyExpensiveCount,
+            MAX(bitrate) AS maxBitrate,
+            MIN(NULLIF(sample_rate, 0)) AS minSampleRate,
+            MAX(sample_rate) AS maxSampleRate,
+            MIN(CASE WHEN bitrate > 0 AND duration > 0 THEN bitrate * duration / 8000 END) AS estMinBytes,
+            AVG(CASE WHEN bitrate > 0 AND duration > 0 THEN bitrate * duration / 8000 END) AS estAvgBytes,
+            MAX(CASE WHEN bitrate > 0 AND duration > 0 THEN bitrate * duration / 8000 END) AS estMaxBytes
+        FROM songs
+    """)
+    suspend fun getLibraryAudioStats(): LibraryAudioStatsRow
+
+    /** Per-MIME song counts for the diagnostic performance report. */
+    @Query("SELECT mime_type AS mimeType, COUNT(*) AS count FROM songs GROUP BY mime_type ORDER BY count DESC")
+    suspend fun getMimeTypeCounts(): List<MimeTypeCountRow>
 
     /**
      * Returns random songs for efficient shuffle without loading all songs into memory.
