@@ -87,3 +87,30 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         db.addColumnIfMissing("songs", "mb_artist_id", "`mb_artist_id` TEXT")
     }
 }
+
+/**
+ * v3 -> v4: audio bookmarks — named position markers inside a track (audiobooks, DJ sets,
+ * podcasts), grouped per song on the Bookmarks screen.
+ *
+ * `audio_bookmarks` snapshots song metadata at save time so a bookmark stays presentable even
+ * if the underlying song leaves the library. Additive and idempotent, per the Auto Backup
+ * drift guard above.
+ */
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+                CREATE TABLE IF NOT EXISTS `audio_bookmarks` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `song_id` TEXT NOT NULL,
+                    `song_title` TEXT NOT NULL,
+                    `artist_name` TEXT NOT NULL,
+                    `album_art_uri` TEXT,
+                    `title` TEXT NOT NULL,
+                    `timestamp_ms` INTEGER NOT NULL,
+                    `created_time` INTEGER NOT NULL
+                )
+            """.trimIndent()
+        )
+    }
+}

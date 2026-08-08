@@ -1,5 +1,6 @@
 package com.lostf1sh.pixelplayeross.presentation.navigation
 
+import android.net.Uri
 import androidx.compose.runtime.Immutable
 
 
@@ -76,5 +77,10 @@ sealed class Screen(val route: String) {
     }
     object NavidromeDashboard : Screen("navidrome_dashboard")
     object JellyfinDashboard : Screen("jellyfin_dashboard")
+
+    object AudioBookmarks : Screen("audio_bookmarks")
+    object AudioBookmarkFolder : Screen("audio_bookmarks/{songId}") {
+        fun createRoute(songId: String) = "audio_bookmarks/${Uri.encode(songId)}"
+    }
 
 }

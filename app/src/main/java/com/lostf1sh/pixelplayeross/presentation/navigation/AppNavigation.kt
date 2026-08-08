@@ -34,6 +34,8 @@ import androidx.navigation.navArgument
 import com.lostf1sh.pixelplayeross.data.preferences.LaunchTab
 import com.lostf1sh.pixelplayeross.data.preferences.UserPreferencesRepository
 import com.lostf1sh.pixelplayeross.presentation.screens.AlbumDetailScreen
+import com.lostf1sh.pixelplayeross.presentation.screens.AudioBookmarkFolderScreen
+import com.lostf1sh.pixelplayeross.presentation.screens.AudioBookmarksScreen
 import com.lostf1sh.pixelplayeross.presentation.screens.AccountsScreen
 import com.lostf1sh.pixelplayeross.presentation.screens.ArtistDetailScreen
 import com.lostf1sh.pixelplayeross.presentation.screens.ArtistSettingsScreen
@@ -589,6 +591,33 @@ fun AppNavigation(
                         onBack = { navController.popBackStack() }
                     )
                 }
+            }
+            composable(
+                Screen.AudioBookmarks.route,
+                enterTransition = { enterTransition() },
+                exitTransition = { exitTransition() },
+                popEnterTransition = { popEnterTransition() },
+                popExitTransition = { popExitTransition() },
+            ) {
+                AudioBookmarksScreen(
+                    navController = navController,
+                    playerViewModel = playerViewModel,
+                    onOpenSidebar = onOpenSidebar
+                )
+            }
+            composable(
+                Screen.AudioBookmarkFolder.route,
+                arguments = listOf(navArgument("songId") { type = NavType.StringType }),
+                enterTransition = { enterTransition() },
+                exitTransition = { exitTransition() },
+                popEnterTransition = { popEnterTransition() },
+                popExitTransition = { popExitTransition() },
+            ) { backStackEntry ->
+                AudioBookmarkFolderScreen(
+                    songId = backStackEntry.arguments?.getString("songId").orEmpty(),
+                    navController = navController,
+                    playerViewModel = playerViewModel
+                )
             }
         }
     }
