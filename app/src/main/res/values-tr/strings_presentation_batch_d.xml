@@ -62,6 +62,7 @@
     <string name="presentation_batch_d_reorder_tabs_label">Sekmeleri yeniden sırala</string>
     <string name="presentation_batch_d_reset_to_default">Varsayılana sıfırla</string>
     <string name="presentation_batch_d_sd_card_unavailable">SD kart şu anda kullanılamıyor.</string>
+    <string name="presentation_batch_d_sort_by">Sıralama Kriteri</string>
     <string name="presentation_batch_d_storage_internal">Dahili</string>
     <string name="presentation_batch_d_storage_sd_card">SD Kart</string>
     <string name="presentation_batch_d_transition_active_status">Aktif Durum</string>

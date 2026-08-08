@@ -24,6 +24,7 @@
     <string name="lib_empty_liked_all_title">Henüz beğenilen şarkı yok</string>
     <string name="lib_empty_liked_offline_subtitle">Kaynak filtresini değiştirin veya cihazınızdaki şarkıları beğenin.</string>
     <string name="lib_empty_liked_offline_title">Beğenilen yerel şarkı yok</string>
+    <string name="lib_empty_liked_online_subtitle">Navidrome veya Jellyfin parçalarını bu görünümde görmek için beğenin.</string>
     <string name="lib_empty_liked_online_title">Beğenilen bulut şarkısı yok</string>
     <string name="lib_empty_playlists_subtitle">Kitaplığınızı düzenlemek için ilk çalma listenizi oluşturun.</string>
     <string name="lib_empty_playlists_title">Henüz çalma listesi yok</string>
@@ -31,6 +32,7 @@
     <string name="lib_empty_songs_all_title">Henüz şarkı yok</string>
     <string name="lib_empty_songs_offline_subtitle">Başka bir kaynak filtresi deneyin veya cihaz kitaplığını yeniden tarayın.</string>
     <string name="lib_empty_songs_offline_title">Yerel şarkı bulunamadı</string>
+    <string name="lib_empty_songs_online_subtitle">Navidrome veya Jellyfin şarkılarını senkronize edin ya da yerel kaynağa geçin.</string>
     <string name="lib_empty_songs_online_title">Bulut şarkısı bulunamadı</string>
     <string name="library_action_new">Yeni</string>
     <string name="library_error_loading_albums">Albümler yüklenirken hata oluştu</string>
@@ -39,6 +41,8 @@
     <string name="library_no_songs_in_library_message">Kitaplığınızda şarkı bulunamadı.</string>
     <string name="library_no_songs_rescan_hint">Cihazınızda müzik varsa, ayarlardan kitaplığınızı yeniden taramayı deneyin.</string>
     <string name="library_retry">Yeniden Dene</string>
+    <string name="library_storage_filter_all_songs">Tüm Şarkılar</string>
+    <string name="library_storage_filter_offline">Yerel</string>
     <string name="library_storage_filter_online">Bulut</string>
     <string name="library_tab_albums">Albümler</string>
     <string name="library_tab_artists">Sanatçılar</string>

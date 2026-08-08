@@ -19,6 +19,7 @@
     <string name="presentation_batch_f_cd_add_photo">Fotoğraf Ekle</string>
     <string name="presentation_batch_f_cd_back_or_cancel">Geri veya İptal</string>
     <string name="presentation_batch_f_cd_close">Kapat</string>
+    <string name="presentation_batch_f_cd_refresh_lyrics">Şarkı sözlerini yenile</string>
     <string name="presentation_batch_f_cd_selected">Seçildi</string>
     <string name="presentation_batch_f_change">Değiştir</string>
     <string name="presentation_batch_f_color_accuracy_subtitle">0 mevcut ayarı korur. Daha yüksek değerler, albüm kapağının baskın tonuna daha yakın kalır.</string>
@@ -36,6 +37,8 @@
     <string name="presentation_batch_f_exp_album_art_resolution">Albüm Kapağı Çözünürlüğü</string>
     <string name="presentation_batch_f_exp_album_carousel_subtitle">Panel genişletilene kadar albüm kapağını ve atlıkarıncayı geciktirin.</string>
     <string name="presentation_batch_f_exp_album_carousel_title">Albüm atlıkarıncası</string>
+    <string name="presentation_batch_f_exp_animated_lyrics_subtitle">Şarkı sözleri için yay animasyonları ve görsel efektler kullanır. Düşük donanımlı cihazlarda kare düşmelerine yol açabilir.</string>
+    <string name="presentation_batch_f_exp_animated_lyrics_title">Animasyonlu Şarkı Sözleri (Üst seviye cihazlar)</string>
     <string name="presentation_batch_f_exp_apply_on_close_subtitle">Daraltılırken yer tutuculara geri dönmek için kapatma eşiğini kullanın.</string>
     <string name="presentation_batch_f_exp_apply_on_close_title">Oynatıcı kapatıldığında da uygula</string>
     <string name="presentation_batch_f_exp_blur_strength">Bulanıklık Derecesi</string>
@@ -97,6 +100,9 @@
     <string name="presentation_batch_f_rebuild_database">Veri Tabanını Yeniden Oluştur</string>
     <string name="presentation_batch_f_refresh_library_subtitle">Yeni ve değiştirilmiş dosyalar için kitaplığın tamamını tarayın.</string>
     <string name="presentation_batch_f_refresh_library_title">Kitaplığı Yenile</string>
+    <string name="presentation_batch_f_refresh_lyrics_processing">%2$d şarkıdan %1$d tanesi işleniyor</string>
+    <string name="presentation_batch_f_refresh_lyrics_subtitle">lrclib kullanarak tüm şarkıların sözlerini otomatik olarak getirin.</string>
+    <string name="presentation_batch_f_refresh_lyrics_title">Şarkı Sözlerini Yenile</string>
     <string name="presentation_batch_f_remove">Kaldır</string>
     <string name="presentation_batch_f_rotation">Döndürme</string>
     <string name="presentation_batch_f_save">Kaydet</string>

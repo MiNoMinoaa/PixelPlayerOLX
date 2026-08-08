@@ -81,10 +81,12 @@
     <string name="presentation_batch_g_artist_ex_4_out">A, B</string>
     <string name="presentation_batch_g_artist_ex_5_in">\"AC\\DC\"</string>
     <string name="presentation_batch_g_artist_ex_5_out">AC/DC (kaçışlı)</string>
+    <string name="presentation_batch_g_artist_example_arrow"> → </string>
     <string name="presentation_batch_g_artist_examples_title">Örnekler</string>
     <string name="presentation_batch_g_artist_extract_from_title">Başlıktan Sanatçıları Çıkar</string>
     <string name="presentation_batch_g_artist_extract_from_title_sub">Şarkı başlıklarında feat., ft., with tespit et</string>
     <string name="presentation_batch_g_artist_group_by_album_artist">Albüm Sanatçısına Göre Grupla</string>
+    <string name="presentation_batch_g_artist_group_by_album_artist_sub">Sanatçılar sekmesini ve albümleri albüm sanatçısına göre gruplar; böylece konuk ve derleme sanatçıları listeyi kalabalıklaştırmaz</string>
     <string name="presentation_batch_g_artist_info_title">Çoklu Sanatçı Ayrıştırma Hakkında</string>
     <string name="presentation_batch_g_artist_item_char_delimiters">Karakter Sınırlayıcıları</string>
     <string name="presentation_batch_g_artist_item_char_delimiters_current">Mevcut: %1$s</string>
@@ -98,6 +100,7 @@
     <string name="presentation_batch_g_artist_word_current_prefix">Mevcut: %1$s</string>
     <string name="presentation_batch_g_artist_word_none">Yok</string>
     <string name="presentation_batch_g_backup_app_version">Uygulama Sürümü</string>
+    <string name="presentation_batch_g_backup_cd_clear_selection">Seçimi temizle</string>
     <string name="presentation_batch_g_backup_cd_select_all">Tümünü seç</string>
     <string name="presentation_batch_g_backup_created">Oluşturulma</string>
     <string name="presentation_batch_g_backup_details">Yedek Ayrıntıları</string>
@@ -171,6 +174,7 @@
     <string name="presentation_batch_g_beta_sheet_title_example_3">Özellik: \"Son Eklenenler\" çalma listesi sıralama seçeneği ekle</string>
     <string name="presentation_batch_g_beta_sheet_title_examples_title">İyi sorun başlıkları</string>
     <string name="presentation_batch_g_beta_sheet_welcome_body">Hata, çökme veya deneysel özellikler içerebilecek bir beta yapısı kullanıyorsunuz. Sorunları bildirerek geliştirmemize yardımcı olun.</string>
+    <string name="presentation_batch_g_beta_sheet_welcome_body_stable">Kararlı sürüm yapısını kullanıyorsunuz. Nelerin yeni olduğunu görmek için değişiklik günlüğüne bakın ve düzgün çalışmayan her şeyi bildirin.</string>
     <string name="presentation_batch_g_brick_cd_close">Kapat</string>
     <string name="presentation_batch_g_brick_drag_paddle">Raketi hareket ettirmek için sürükleyin</string>
     <string name="presentation_batch_g_brick_game_over">OYUN BİTTİ</string>
@@ -190,9 +194,18 @@
     <string name="presentation_batch_g_brick_try_again">Tekrar Dene?</string>
     <string name="presentation_batch_g_cd_selected">Seçildi</string>
     <string name="presentation_batch_g_cd_switch_on">Anahtar açık</string>
+    <string name="presentation_batch_g_changelog_sec_improvements">İyileştirmeler</string>
+    <string name="presentation_batch_g_changelog_sec_initial_release">İlk sürüm</string>
+    <string name="presentation_batch_g_changelog_sec_release_readiness">Sürüme hazırlık</string>
+    <string name="presentation_batch_g_changelog_sec_removed_for_foss">FOSS için kaldırılanlar</string>
+    <string name="presentation_batch_g_changelog_sec_security_privacy">Güvenlik ve gizlilik</string>
+    <string name="presentation_batch_g_changelog_sec_under_the_hood">Perde arkası</string>
+    <string name="presentation_batch_g_changelog_sec_whats_new">Yenilikler</string>
     <string name="presentation_batch_g_changelog_title">Değişiklik Günlüğü</string>
+    <string name="presentation_batch_g_changelog_view_github">GitHub\'da görüntüle</string>
     <string name="presentation_batch_g_daily_mix_based_on_history">Geçmişe Dayalı</string>
-    <string name="presentation_batch_g_daily_mix_heading">GÜNLÜK MİX</string>
+    <string name="presentation_batch_g_daily_mix_heading">GÜNLÜK MİKS</string>
+    <string name="presentation_batch_g_daily_mix_queue_name">Günlük Miks</string>
     <string name="presentation_batch_g_daily_mix_see_all">Tüm Günlük Mix\'i Gör</string>
     <string name="presentation_batch_g_device_info_title">Cihaz Bilgisi</string>
     <string name="presentation_batch_g_device_key_android_version">Android Sürümü</string>
@@ -204,7 +217,7 @@
     <string name="presentation_batch_g_device_key_sdk_version">SDK Sürümü</string>
     <string name="presentation_batch_g_device_label_low_latency">Düşük Gecikme Desteği</string>
     <string name="presentation_batch_g_device_label_pro_audio">Profesyonel Ses Desteği</string>
-    <string name="presentation_batch_g_device_label_sample_rate">Önrnekleme Hızı</string>
+    <string name="presentation_batch_g_device_label_sample_rate">Örnekleme Hızı</string>
     <string name="presentation_batch_g_device_section_exoplayer">ExoPlayer Motoru</string>
     <string name="presentation_batch_g_device_value_hz">%1$d Hz</string>
     <string name="presentation_batch_g_file_explorer_cd_close">Kapat</string>
@@ -214,6 +227,7 @@
     <string name="presentation_batch_g_file_explorer_cd_refresh">Yenile</string>
     <string name="presentation_batch_g_file_explorer_done">Bitti</string>
     <string name="presentation_batch_g_file_explorer_empty_folders">Burada alt klasör yok</string>
+    <string name="presentation_batch_g_file_explorer_hint">Varsayılan olarak her şey dahildir. Bir klasörü atlamak için hariç tutun ya da hariç tutulan bir klasörü açıp alt klasörünü geçersiz kılma olarak dahil edin.</string>
     <string name="presentation_batch_g_genre_sort_album">Albüm</string>
     <string name="presentation_batch_g_genre_sort_artist">Sanatçı</string>
     <string name="presentation_batch_g_genre_sort_by">Sıralama Kriteri</string>
@@ -247,8 +261,13 @@
     <string name="presentation_batch_g_presets_saved_title">Kaydedilen Ön Ayarlar</string>
     <string name="presentation_batch_g_recently_played_title">Son Çalınanlar</string>
     <string name="presentation_batch_g_selection_all">Tümü</string>
+    <string name="presentation_batch_g_selection_cd_like">Seçilenleri beğen</string>
     <string name="presentation_batch_g_selection_cd_more">Daha fazla seçenek</string>
+    <string name="presentation_batch_g_selection_cd_share">Seçilenleri paylaş</string>
     <string name="presentation_batch_g_selection_deselect">Seçimi kaldır</string>
+    <string name="presentation_batch_g_selection_n_songs">şarkı seçildi</string>
+    <string name="presentation_batch_g_selection_one_song">şarkı seçildi</string>
+    <string name="presentation_batch_g_selection_overflow_count">+%1$d</string>
     <string name="presentation_batch_g_selection_play">Oynat</string>
     <string name="presentation_batch_g_sort_ascending">Artan</string>
     <string name="presentation_batch_g_sort_descending">Azalan</string>
@@ -351,6 +370,8 @@
     <string name="presentation_batch_g_streaming_subtitle">Bulut hesaplarınızdan müzik akışı yapın</string>
     <string name="presentation_batch_g_streaming_title">Bulut Akışı</string>
     <string name="presentation_batch_g_sync_percent">%1$d%%</string>
+    <string name="presentation_batch_g_topbar_build_debug">Hata Ayıklama</string>
+    <string name="presentation_batch_g_topbar_build_stable">Kararlı</string>
     <string name="presentation_batch_g_topbar_cd_changelog">Değişiklik Günlüğü</string>
     <string name="presentation_batch_g_yes">Evet</string>
 </resources>

@@ -14,6 +14,7 @@
     <string name="presentation_batch_b_clear">Temizle</string>
     <string name="presentation_batch_b_corner_dp_format">%1$d dp</string>
     <string name="presentation_batch_b_corner_radius_label">Köşe Yarıçapı</string>
+    <string name="presentation_batch_b_daily_mix_title">Günlük Miks</string>
     <string name="presentation_batch_b_date_today">Bugün</string>
     <string name="presentation_batch_b_date_yesterday">Dün</string>
     <string name="presentation_batch_b_delete_playlist">Çalma listesini sil</string>
@@ -28,10 +29,12 @@
     <string name="presentation_batch_b_navbar_adjust_subtitle">Kusursuz bir görünüm için gezinme çubuğunun köşelerini cihazınızın fiziksel köşeleriyle eşleştirin.</string>
     <string name="presentation_batch_b_navbar_adjust_title">Köşe Yarıçapını Ayarla</string>
     <string name="presentation_batch_b_new_genre">Yeni Tür</string>
+    <string name="presentation_batch_b_new_name">Yeni ad</string>
     <string name="presentation_batch_b_play_it">Çal</string>
     <string name="presentation_batch_b_play_latest">En sonuncuyu oynat</string>
     <string name="presentation_batch_b_playlist_empty_add_hint">Başlamak için \'Şarkı Ekle\' seçeneğine dokunun.</string>
     <string name="presentation_batch_b_playlist_empty_folder_body">Bu klasör şarkı içermiyor.</string>
+    <string name="presentation_batch_b_playlist_empty_smart_body">Bu akıllı kurala uyan şarkı henüz yok.</string>
     <string name="presentation_batch_b_playlist_empty_title">Bu çalma listesi boş.</string>
     <string name="presentation_batch_b_playlist_options_title">Çalma listesi seçenekleri</string>
     <string name="presentation_batch_b_queue_recently_played">Son Oynatılanlar</string>
@@ -42,6 +45,7 @@
     <string name="presentation_batch_b_recent_empty_title">%1$s içinde son oynatılan yok</string>
     <string name="presentation_batch_b_recently_played_title">Son Oynatılanlar</string>
     <string name="presentation_batch_b_remove_songs">Şarkıları kaldır</string>
+    <string name="presentation_batch_b_rename_playlist_dialog_title">Çalma Listesini Yeniden Adlandır</string>
     <string name="presentation_batch_b_reorder">Yeniden sırala</string>
     <string name="presentation_batch_b_reorder_song">Şarkıyı yeniden sırala</string>
     <string name="presentation_batch_b_reorder_songs">Şarkıları yeniden sırala</string>
