@@ -161,6 +161,7 @@ import com.lostf1sh.pixelplayeross.presentation.navigation.Screen
 import com.lostf1sh.pixelplayeross.presentation.components.MultiSelectionBottomSheet
 import com.lostf1sh.pixelplayeross.presentation.components.AlbumMultiSelectionOptionSheet
 import com.lostf1sh.pixelplayeross.presentation.components.PlaylistMultiSelectionBottomSheet
+import com.lostf1sh.pixelplayeross.presentation.components.DescribePlaylistDialog
 import com.lostf1sh.pixelplayeross.presentation.components.PlaylistCreationTypeDialog
 import com.lostf1sh.pixelplayeross.presentation.components.subcomps.SelectionActionRow
 import com.lostf1sh.pixelplayeross.presentation.components.subcomps.SelectionCountPill
@@ -364,6 +365,7 @@ fun LibraryScreen(
     }.collectAsStateWithLifecycle(initialValue = false)
     var showCreatePlaylistDialog by remember { mutableStateOf(false) }
     var showPlaylistCreationTypeDialog by remember { mutableStateOf(false) }
+    var showDescribePlaylistDialog by remember { mutableStateOf(false) }
 
     val m3uImportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -1411,6 +1413,26 @@ fun LibraryScreen(
         onManualSelected = {
             showPlaylistCreationTypeDialog = false
             showCreatePlaylistDialog = true
+        },
+        onDescribeSelected = {
+            showPlaylistCreationTypeDialog = false
+            showDescribePlaylistDialog = true
+        }
+    )
+
+    val nlpPlaylistPreviewState by playlistViewModel.nlpPlaylistPreviewState.collectAsStateWithLifecycle()
+    DescribePlaylistDialog(
+        visible = showDescribePlaylistDialog,
+        state = nlpPlaylistPreviewState,
+        onGenerate = playlistViewModel::generateNlpPlaylistPreview,
+        onSave = { name, songIds ->
+            playlistViewModel.createPlaylist(name = name, songIds = songIds)
+            playlistViewModel.resetNlpPlaylistPreview()
+            showDescribePlaylistDialog = false
+        },
+        onDismiss = {
+            playlistViewModel.resetNlpPlaylistPreview()
+            showDescribePlaylistDialog = false
         }
     )
 
