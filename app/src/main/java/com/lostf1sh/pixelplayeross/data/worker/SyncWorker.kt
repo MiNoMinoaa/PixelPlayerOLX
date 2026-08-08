@@ -981,10 +981,12 @@ constructor(
                 ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, raw.id)
                         .toString()
 
+        // Scan-time artwork resolution is intentionally lightweight: it never extracts
+        // embedded art (that can allocate a multi-MB ByteArray per song). The stable lazy
+        // URI is stored and the image-loading path extracts/caches artwork on demand.
         var albumArtUriString =
-                AlbumArtUtils.getAlbumArtUri(
+                AlbumArtUtils.getAlbumArtUriForLibraryScan(
                         applicationContext,
-                        raw.filePath,
                         raw.id,
                         forceAlbumArtRefresh
                 )
@@ -1017,7 +1019,7 @@ constructor(
             val file = java.io.File(raw.filePath)
             if (file.exists()) {
                 try {
-                    AudioMetadataReader.read(file)?.let { meta ->
+                    AudioMetadataReader.read(file, readArtwork = false)?.let { meta ->
                         if (!meta.title.isNullOrBlank()) title = meta.title
                         if (!meta.artist.isNullOrBlank()) artist = meta.artist
                         if (!meta.album.isNullOrBlank()) album = meta.album
@@ -1029,10 +1031,6 @@ constructor(
                         if (meta.trackNumber != null) trackNumber = meta.trackNumber
                         if (meta.discNumber != null) discNumber = meta.discNumber
                         if (meta.year != null) year = meta.year
-
-                        meta.artwork?.let { art ->
-                            albumArtUriString = LocalArtworkUri.buildSongUri(raw.id)
-                        }
                     }
                 } catch (e: Exception) {
                     Timber.tag(TAG).w(e, "Failed to read metadata via TagLib for ${raw.filePath}")
