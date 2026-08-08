@@ -1523,8 +1523,18 @@ class MusicService : MediaLibraryService() {
         for (index in 0 until mediaItemCount) {
             val mediaItem = player.getMediaItemAt(index)
             val metadata = mediaItem.mediaMetadata
-            val uri = mediaItem.localConfiguration?.uri?.toString()
-                ?: metadata.extras?.getString(MediaItemBuilder.EXTERNAL_EXTRA_CONTENT_URI)
+            val playerUri = mediaItem.localConfiguration?.uri?.toString()
+            val originalContentUri = metadata.extras?.getString(MediaItemBuilder.EXTERNAL_EXTRA_CONTENT_URI)
+            // A cloud item that resolved through a local stream proxy carries a loopback
+            // URL (http://127.0.0.1:{port}/{secret}/...) whose port and secret die with
+            // this process. Persist the original cloud URI from the extras instead so a
+            // restored queue re-resolves against the live proxy instead of failing with
+            // a source error.
+            val uri = when {
+                playerUri == null -> originalContentUri
+                isEphemeralLoopbackUri(playerUri) && !originalContentUri.isNullOrBlank() -> originalContentUri
+                else -> playerUri
+            }
 
             if (mediaItem.mediaId.isBlank() || uri.isNullOrBlank()) {
                 continue
@@ -1578,6 +1588,13 @@ class MusicService : MediaLibraryService() {
             repeatMode = safeRepeatMode,
             shuffleEnabled = isManualShuffleEnabled,
         )
+    }
+
+    private fun isEphemeralLoopbackUri(uriString: String): Boolean {
+        val uri = runCatching { Uri.parse(uriString) }.getOrNull() ?: return false
+        val scheme = uri.scheme?.lowercase()
+        if (scheme != "http" && scheme != "https") return false
+        return uri.host == "127.0.0.1" || uri.host == "localhost"
     }
 
     private suspend fun restorePlaybackQueueSnapshotIfNeeded() {
