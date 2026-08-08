@@ -375,6 +375,13 @@ object AppModule {
             } else {
                 HttpLoggingInterceptor.Level.NONE
             }
+            redactHeader("Authorization")
+            redactHeader("Proxy-Authorization")
+            redactHeader("Cookie")
+            redactHeader("Set-Cookie")
+            redactHeader("X-Emby-Token")
+            redactHeader("X-Emby-Authorization")
+            redactHeader("X-MediaBrowser-Token")
         }
         
         val connectionPool = okhttp3.ConnectionPool(
