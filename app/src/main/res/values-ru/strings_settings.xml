@@ -60,6 +60,8 @@
     <string name="setcat_album_art_cache_limit">Лимит кэша обложек</string>
     <string name="setcat_album_art_palette_subtitle">Текущий: %1$s. Откройте предпросмотр и выберите стиль.</string>
     <string name="setcat_album_art_palette_title">Стиль палитры обложки</string>
+    <string name="setcat_app_language_desc">Выберите язык интерфейса приложения.</string>
+    <string name="setcat_app_language_label">Язык приложения</string>
     <string name="setcat_app_navigation_section">Навигация приложения</string>
     <string name="setcat_app_theme_desc">Светлая, тёмная тема или настройки системы.</string>
     <string name="setcat_app_theme_label">Тема приложения</string>
@@ -128,6 +130,7 @@
     <string name="setcat_import_backup_title">Импорт резервной копии</string>
     <string name="setcat_keep_playing_desc">Если отключено, удаление приложения из списка недавних остановит воспроизведение.</string>
     <string name="setcat_keep_playing_label">Продолжать воспроизведение после закрытия</string>
+    <string name="setcat_language_system">Системный по умолчанию</string>
     <string name="setcat_library_nav_compact_pill">Компактные вкладки и сетка</string>
     <string name="setcat_library_nav_tab_row">Строка вкладок (по умолчанию)</string>
     <string name="setcat_library_navigation_desc">Выберите способ переключения между вкладками медиатеки.</string>

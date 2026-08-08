@@ -57,6 +57,8 @@
     <string name="setcat_album_art_cache_limit">Cover-Cache-Limit</string>
     <string name="setcat_album_art_palette_subtitle">Aktuell: %1$s – antippen für Vorschau und Stilwahl.</string>
     <string name="setcat_album_art_palette_title">Cover-Palette</string>
+    <string name="setcat_app_language_desc">Sprache der App-Oberfläche festlegen.</string>
+    <string name="setcat_app_language_label">Sprache</string>
     <string name="setcat_app_navigation_section">App-Navigation</string>
     <string name="setcat_app_theme_desc">Hell, Dunkel oder System-Design – ganz nach Geschmack.</string>
     <string name="setcat_app_theme_label">App-Design</string>
@@ -125,6 +127,7 @@
     <string name="setcat_import_backup_title">Backup importieren</string>
     <string name="setcat_keep_playing_desc">Aus: Wiedergabe stoppt, wenn die App aus den letzten Apps entfernt wird.</string>
     <string name="setcat_keep_playing_label">Nach Schließen weiterspielen</string>
+    <string name="setcat_language_system">Systemstandard</string>
     <string name="setcat_library_nav_compact_pill">Kompakte Pill &amp; Raster</string>
     <string name="setcat_library_nav_tab_row">Tab-Leiste (Standard)</string>
     <string name="setcat_library_navigation_desc">Wie zwischen Bibliotheks-Tabs gewechselt wird.</string>

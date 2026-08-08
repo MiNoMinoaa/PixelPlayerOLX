@@ -60,6 +60,8 @@
     <string name="setcat_album_art_cache_limit">Límite de caché de carátulas de álbum</string>
     <string name="setcat_album_art_palette_subtitle">Actual: %1$s. Abre la vista previa en vivo y elige el estilo.</string>
     <string name="setcat_album_art_palette_title">Estilo de paleta de carátula</string>
+    <string name="setcat_app_language_desc">Elige el idioma usado en toda la interfaz de la aplicación.</string>
+    <string name="setcat_app_language_label">Idioma de la app</string>
     <string name="setcat_app_navigation_section">Navegación de la app</string>
     <string name="setcat_app_theme_desc">Cambia entre claro, oscuro o seguir el sistema.</string>
     <string name="setcat_app_theme_label">Tema de la app</string>
@@ -128,6 +130,7 @@
     <string name="setcat_import_backup_title">Importar copia</string>
     <string name="setcat_keep_playing_desc">Si está desactivado, quitar la app de recientes detiene la reproducción.</string>
     <string name="setcat_keep_playing_label">Seguir reproduciendo al cerrar</string>
+    <string name="setcat_language_system">Predeterminado del sistema</string>
     <string name="setcat_library_nav_compact_pill">Píldora compacta y cuadrícula</string>
     <string name="setcat_library_nav_tab_row">Fila de pestañas (predeterminado)</string>
     <string name="setcat_library_navigation_desc">Elige cómo moverte entre las pestañas de la biblioteca.</string>

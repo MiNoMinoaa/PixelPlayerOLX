@@ -14,6 +14,7 @@ import com.lostf1sh.pixelplayeross.data.backup.model.BackupHistoryEntry
 import com.lostf1sh.pixelplayeross.data.backup.model.RestorePlan
 import com.lostf1sh.pixelplayeross.data.backup.model.RestoreResult
 import com.lostf1sh.pixelplayeross.data.backup.model.ValidationError
+import com.lostf1sh.pixelplayeross.data.preferences.AppLanguage
 import com.lostf1sh.pixelplayeross.data.preferences.AppThemeMode
 import com.lostf1sh.pixelplayeross.data.preferences.CarouselStyle
 import com.lostf1sh.pixelplayeross.data.preferences.LibraryNavigationMode
@@ -45,6 +46,7 @@ import com.lostf1sh.pixelplayeross.data.preferences.NavBarStyle
 import com.lostf1sh.pixelplayeross.data.preferences.LaunchTab
 import com.lostf1sh.pixelplayeross.data.model.Song
 import com.lostf1sh.pixelplayeross.data.service.player.HiFiCapabilityChecker
+import com.lostf1sh.pixelplayeross.utils.AppLocaleManager
 import java.io.File
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -52,6 +54,7 @@ import kotlinx.collections.immutable.toImmutableList
 
 data class SettingsUiState(
     val isLoadingDirectories: Boolean = false,
+    val appLanguageTag: String = AppLanguage.SYSTEM.tag,
     val appThemeMode: String = AppThemeMode.FOLLOW_SYSTEM,
     val playerThemePreference: String = ThemePreference.ALBUM_ART,
     val albumArtPaletteStyle: AlbumArtPaletteStyle = AlbumArtPaletteStyle.default,
@@ -237,7 +240,8 @@ class SettingsViewModel @Inject constructor(
     init {
         _uiState.update {
             it.copy(
-                hiFiModeDeviceSupported = HiFiCapabilityChecker.isSupported()
+                hiFiModeDeviceSupported = HiFiCapabilityChecker.isSupported(),
+                appLanguageTag = AppLocaleManager.currentLanguageTag(context)
             )
         }
 
@@ -536,6 +540,12 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.setCollageAutoRotate(enabled)
         }
+    }
+
+    fun setAppLanguage(languageTag: String) {
+        val normalized = AppLanguage.normalize(languageTag)
+        AppLocaleManager.applyLanguage(context, normalized)
+        _uiState.update { it.copy(appLanguageTag = normalized) }
     }
 
     fun setAppThemeMode(mode: String) {

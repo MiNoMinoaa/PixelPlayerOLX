@@ -60,6 +60,8 @@
     <string name="setcat_album_art_cache_limit">Limite cache copertine</string>
     <string name="setcat_album_art_palette_subtitle">Attuale: %1$s. Apri anteprima live e scegli lo stile.</string>
     <string name="setcat_album_art_palette_title">Stile palette copertina album</string>
+    <string name="setcat_app_language_desc">Scegli la lingua usata nell\'interfaccia dell\'app.</string>
+    <string name="setcat_app_language_label">Lingua app</string>
     <string name="setcat_app_navigation_section">Navigazione app</string>
     <string name="setcat_app_theme_desc">Passa tra chiaro, scuro o segui l\'aspetto di sistema.</string>
     <string name="setcat_app_theme_label">Tema app</string>
@@ -128,6 +130,7 @@
     <string name="setcat_import_backup_title">Importa backup</string>
     <string name="setcat_keep_playing_desc">Se disattivato, rimuovere l\'app dalle recenti interromperà la riproduzione.</string>
     <string name="setcat_keep_playing_label">Continua a riprodurre dopo la chiusura</string>
+    <string name="setcat_language_system">Predefinita sistema</string>
     <string name="setcat_library_nav_compact_pill">Pill compatto e griglia</string>
     <string name="setcat_library_nav_tab_row">Riga schede (predefinito)</string>
     <string name="setcat_library_navigation_desc">Scegli come muoverti tra le schede della libreria.</string>

@@ -60,6 +60,8 @@
     <string name="setcat_album_art_cache_limit">专辑封面缓存限制</string>
     <string name="setcat_album_art_palette_subtitle">当前：%1$s。打开实时预览并选择样式。</string>
     <string name="setcat_album_art_palette_title">专辑封面调色板样式</string>
+    <string name="setcat_app_language_desc">选择应用界面的语言。</string>
+    <string name="setcat_app_language_label">应用语言</string>
     <string name="setcat_app_navigation_section">应用导航</string>
     <string name="setcat_app_theme_desc">在浅色、深色之间切换，或跟随系统外观。</string>
     <string name="setcat_app_theme_label">应用主题</string>
@@ -128,6 +130,7 @@
     <string name="setcat_import_backup_title">导入备份</string>
     <string name="setcat_keep_playing_desc">如果关闭此项，从最近任务中移除应用将停止播放。</string>
     <string name="setcat_keep_playing_label">关闭后继续播放</string>
+    <string name="setcat_language_system">跟随系统</string>
     <string name="setcat_library_nav_compact_pill">紧凑胶囊与网格</string>
     <string name="setcat_library_nav_tab_row">标签栏（默认）</string>
     <string name="setcat_library_navigation_desc">选择在媒体库选项卡之间移动的方式。</string>

@@ -55,6 +55,8 @@
     <string name="setcat_album_art_cache_limit">Albüm Kapağı Önbellek Sınırı</string>
     <string name="setcat_album_art_palette_subtitle">Mevcut: %1$s. Canlı önizlemeyi açın ve stil seçin.</string>
     <string name="setcat_album_art_palette_title">Albüm Kapağı Palet Stili</string>
+    <string name="setcat_app_language_desc">Uygulama arayüzünde kullanılacak dili seçin.</string>
+    <string name="setcat_app_language_label">Uygulama Dili</string>
     <string name="setcat_app_navigation_section">Uygulama Gezinmesi</string>
     <string name="setcat_app_theme_desc">Açık, koyu tema arasında geçiş yapın veya sistem görünümünü takip edin.</string>
     <string name="setcat_app_theme_label">Uygulama Teması</string>
@@ -122,6 +124,7 @@
     <string name="setcat_import_backup_title">Yedeği İçe Aktar</string>
     <string name="setcat_keep_playing_desc">Kapalıysa, uygulama son kullanılanlardan kaldırıldığında oynatma durdurulur.</string>
     <string name="setcat_keep_playing_label">Kapatıldıktan sonra oynatmaya devam et</string>
+    <string name="setcat_language_system">Sistem varsayılanı</string>
     <string name="setcat_library_nav_compact_pill">Kompakt buton ve ızgara</string>
     <string name="setcat_library_nav_tab_row">Sekme satırı (varsayılan)</string>
     <string name="setcat_library_navigation_desc">Kitaplık sekmeleri arasında nasıl geçiş yapılacağını seçin.</string>

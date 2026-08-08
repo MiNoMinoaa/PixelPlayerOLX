@@ -60,6 +60,8 @@
     <string name="setcat_album_art_cache_limit">Limite du cache des pochettes</string>
     <string name="setcat_album_art_palette_subtitle">Actuel : %1$s. Ouvrir l\'aperçu en direct et choisir le style.</string>
     <string name="setcat_album_art_palette_title">Style de palette de pochette</string>
+    <string name="setcat_app_language_desc">Choisissez la langue utilisée dans l\'interface de l\'application.</string>
+    <string name="setcat_app_language_label">Langue de l\'application</string>
     <string name="setcat_app_navigation_section">Navigation application</string>
     <string name="setcat_app_theme_desc">Passer du mode clair au mode sombre, ou suivre l\'apparence du système.</string>
     <string name="setcat_app_theme_label">Thème de l\'application</string>
@@ -127,6 +129,7 @@
     <string name="setcat_import_backup_title">Importer une sauvegarde</string>
     <string name="setcat_keep_playing_desc">Si désactivé, supprimer l\'application des récentes arrêtera la lecture.</string>
     <string name="setcat_keep_playing_label">Continuer la lecture après fermeture</string>
+    <string name="setcat_language_system">Système par défaut</string>
     <string name="setcat_library_nav_compact_pill">Pastille compacte et grille</string>
     <string name="setcat_library_nav_tab_row">Barre d\'onglets (défaut)</string>
     <string name="setcat_library_navigation_desc">Choisissez comment passer d\'un onglet à l\'autre dans la bibliothèque.</string>

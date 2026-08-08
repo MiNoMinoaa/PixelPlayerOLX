@@ -60,6 +60,8 @@
     <string name="setcat_album_art_cache_limit">Grense for albumkunst-cache</string>
     <string name="setcat_album_art_palette_subtitle">Gjeldende: %1$s. Åpne forhåndsvisning og velg stil.</string>
     <string name="setcat_album_art_palette_title">Palettstil for albumkunst</string>
+    <string name="setcat_app_language_desc">Velg språket som skal brukes i appen.</string>
+    <string name="setcat_app_language_label">App-språk</string>
     <string name="setcat_app_navigation_section">App-navigasjon</string>
     <string name="setcat_app_theme_desc">Bytt mellom lyst, mørkt eller følg systemets utseende.</string>
     <string name="setcat_app_theme_label">App-tema</string>
@@ -128,6 +130,7 @@
     <string name="setcat_import_backup_title">Importer sikkerhetskopi</string>
     <string name="setcat_keep_playing_desc">Hvis av, vil avspillingen stoppe når appen fjernes fra nylige apper.</string>
     <string name="setcat_keep_playing_label">Fortsett avspilling etter lukking</string>
+    <string name="setcat_language_system">Systemstandard</string>
     <string name="setcat_library_nav_compact_pill">Kompakt pille &amp; rutenett</string>
     <string name="setcat_library_nav_tab_row">Fanerekke (standard)</string>
     <string name="setcat_library_navigation_desc">Velg hvordan du flytter mellom biblioteksfanene.</string>

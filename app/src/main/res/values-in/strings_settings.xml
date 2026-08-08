@@ -60,6 +60,8 @@
     <string name="setcat_album_art_cache_limit">Batas Cache Sampul Album</string>
     <string name="setcat_album_art_palette_subtitle">Saat ini: %1$s. Buka pratinjau langsung dan pilih gaya.</string>
     <string name="setcat_album_art_palette_title">Gaya Palet Sampul Album</string>
+    <string name="setcat_app_language_desc">Pilih bahasa yang digunakan di seluruh antarmuka aplikasi.</string>
+    <string name="setcat_app_language_label">Bahasa Aplikasi</string>
     <string name="setcat_app_navigation_section">Navigasi Aplikasi</string>
     <string name="setcat_app_theme_desc">Beralih antara terang, gelap, atau ikuti tampilan sistem.</string>
     <string name="setcat_app_theme_label">Tema Aplikasi</string>
@@ -128,6 +130,7 @@
     <string name="setcat_import_backup_title">Impor Cadangan</string>
     <string name="setcat_keep_playing_desc">Jika mati, menghapus aplikasi dari daftar terbaru akan menghentikan pemutaran.</string>
     <string name="setcat_keep_playing_label">Tetap putar setelah ditutup</string>
+    <string name="setcat_language_system">Default sistem</string>
     <string name="setcat_library_nav_compact_pill">Pil ringkas &amp; kisi</string>
     <string name="setcat_library_nav_tab_row">Baris tab (default)</string>
     <string name="setcat_library_navigation_desc">Pilih cara berpindah antar tab Pustaka.</string>

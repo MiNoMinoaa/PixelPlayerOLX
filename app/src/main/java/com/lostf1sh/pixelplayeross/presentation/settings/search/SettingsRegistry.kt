@@ -157,6 +157,16 @@ object SettingsRegistry {
 
             // --- APPEARANCE CATEGORY ---
             SettingSpec(
+                id = "appearance_app_language",
+                itemKey = "item_appearance_app_language",
+                titleRes = R.string.setcat_app_language_label,
+                subtitleRes = R.string.setcat_app_language_desc,
+                category = SettingsCategory.APPEARANCE,
+                subscreenRoute = Screen.SettingsCategory.createRoute("appearance"),
+                type = SettingType.NAVIGABLE_CARD,
+                keywordsStatic = listOf("language", "locale", "translation", "english", "region")
+            ),
+            SettingSpec(
                 id = "appearance_app_theme",
                 itemKey = "item_appearance_app_theme",
                 titleRes = R.string.setcat_app_theme_label,
