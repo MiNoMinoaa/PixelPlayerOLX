@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auth_cd_back">Zurück</string>
+    <string name="auth_connect">Verbinden</string>
+    <string name="auth_connecting">Verbinde…</string>
+    <string name="auth_connection_details">Verbindungsdetails</string>
+    <string name="auth_connection_details_subtitle">Server-URL und Zugangsdaten eingeben</string>
+    <string name="auth_hide_password">Passwort verbergen</string>
+    <string name="auth_jellyfin_connection_subtitle">Jellyfin-Server-URL und Zugangsdaten eingeben</string>
+    <string name="auth_jellyfin_footer">Verbindet mit Jellyfin-Servern zum Streamen deiner Musikbibliothek</string>
+    <string name="auth_jellyfin_info_card">Verbindet mit Jellyfin-Servern. HTTP und HTTPS werden für lokale Netzwerkzugriffe unterstützt.</string>
+    <string name="auth_jellyfin_password_hint">Dein Jellyfin-Passwort</string>
+    <string name="auth_jellyfin_subtitle">Mit deinem Jellyfin-Server verbinden</string>
+    <string name="auth_jellyfin_username_hint">Dein Jellyfin-Benutzername</string>
+    <string name="auth_navidrome_footer">Kompatibel mit Navidrome, Gonic, Airsonic und anderen Subsonic-Servern</string>
+    <string name="auth_navidrome_info_card">Unterstützt Navidrome, Airsonic, Gonic, Ampache und andere Subsonic-kompatible Server.</string>
+    <string name="auth_navidrome_password_hint">App-Passwort wird unterstützt, falls der Server das erlaubt</string>
+    <string name="auth_navidrome_subtitle">Mit deinem selbst gehosteten Musikserver verbinden</string>
+    <string name="auth_navidrome_username_hint">Dein Subsonic- oder Navidrome-Benutzername</string>
+    <string name="auth_password">Passwort</string>
+    <string name="auth_password_placeholder">Passwort eingeben</string>
+    <string name="auth_prefill_http">http:// einfügen</string>
+    <string name="auth_server_url">Server-URL</string>
+    <string name="auth_show_password">Passwort anzeigen</string>
+    <string name="auth_username">Benutzername</string>
+    <string name="auth_web_retry">Erneut versuchen</string>
+    <string name="toast_welcome_user">Willkommen, %1$s!</string>
+</resources>

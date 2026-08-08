@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auth_cd_back">Назад</string>
+    <string name="auth_connect">Подключить</string>
+    <string name="auth_connecting">Подключение…</string>
+    <string name="auth_connection_details">Детали подключения</string>
+    <string name="auth_connection_details_subtitle">Введите URL вашего сервера и данные учётной записи.</string>
+    <string name="auth_hide_password">Скрыть пароль</string>
+    <string name="auth_jellyfin_connection_subtitle">Введите URL сервера Jellyfin и данные учётной записи.</string>
+    <string name="auth_jellyfin_footer">Подключение к серверам Jellyfin для стриминга вашей музыкальной библиотеки</string>
+    <string name="auth_jellyfin_info_card">Подключается к серверам Jellyfin. В локальной сети поддерживаются HTTP и HTTPS.</string>
+    <string name="auth_jellyfin_password_hint">Пароль вашей учётной записи Jellyfin.</string>
+    <string name="auth_jellyfin_subtitle">Подключение к вашему медиа-серверу Jellyfin</string>
+    <string name="auth_jellyfin_username_hint">Имя пользователя вашей учётной записи Jellyfin.</string>
+    <string name="auth_navidrome_footer">Совместимо с Navidrome, Gonic, Airsonic и другими серверами с поддержкой Subsonic</string>
+    <string name="auth_navidrome_info_card">Поддерживаются Navidrome, Airsonic, Gonic, Ampache и другие серверы, совместимые с API Subsonic.</string>
+    <string name="auth_navidrome_password_hint">Пароль приложения тоже поддерживается, если ваш сервер это позволяет.</string>
+    <string name="auth_navidrome_subtitle">Подключение к вашему музыкальному серверу</string>
+    <string name="auth_navidrome_username_hint">Это имя вашей учётной записи Subsonic или Navidrome.</string>
+    <string name="auth_password">Пароль</string>
+    <string name="auth_password_placeholder">Введите пароль</string>
+    <string name="auth_prefill_http">Вставить http://</string>
+    <string name="auth_server_url">URL сервера</string>
+    <string name="auth_show_password">Показать пароль</string>
+    <string name="auth_username">Имя пользователя</string>
+    <string name="auth_web_retry">Повторить</string>
+    <string name="toast_welcome_user">Добро пожаловать, %1$s!</string>
+</resources>

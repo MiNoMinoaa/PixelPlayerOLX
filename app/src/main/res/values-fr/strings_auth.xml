@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auth_cd_back">Retour</string>
+    <string name="auth_connect">Se connecter</string>
+    <string name="auth_connecting">Connexion…</string>
+    <string name="auth_connection_details">Détails de la connexion</string>
+    <string name="auth_connection_details_subtitle">Entrez l\'URL de votre serveur et vos identifiants de compte.</string>
+    <string name="auth_hide_password">Masquer le mot de passe</string>
+    <string name="auth_jellyfin_connection_subtitle">Entrez l\'URL de votre serveur Jellyfin et vos identifiants de compte.</string>
+    <string name="auth_jellyfin_footer">Se connecte aux serveurs Jellyfin pour diffuser votre bibliothèque musicale</string>
+    <string name="auth_jellyfin_info_card">Se connecte aux serveurs Jellyfin. HTTP et HTTPS sont tous deux pris en charge pour l\'accès au réseau local.</string>
+    <string name="auth_jellyfin_password_hint">Votre mot de passe Jellyfin.</string>
+    <string name="auth_jellyfin_subtitle">Connectez-vous à votre serveur multimédia Jellyfin</string>
+    <string name="auth_jellyfin_username_hint">Votre nom d\'utilisateur Jellyfin.</string>
+    <string name="auth_navidrome_footer">Compatible avec Navidrome, Gonic, Airsonic et d\'autres serveurs compatibles Subsonic</string>
+    <string name="auth_navidrome_info_card">Prend en charge Navidrome, Airsonic, Gonic, Ampache et d\'autres serveurs compatibles avec l\'API Subsonic.</string>
+    <string name="auth_navidrome_password_hint">Le mot de passe d\'application fonctionne également si votre serveur le prend en charge.</string>
+    <string name="auth_navidrome_subtitle">Connectez-vous à votre propre serveur de musique</string>
+    <string name="auth_navidrome_username_hint">Il s\'agit de votre nom de compte Subsonic ou Navidrome.</string>
+    <string name="auth_password">Mot de passe</string>
+    <string name="auth_password_placeholder">Entrez le mot de passe</string>
+    <string name="auth_prefill_http">Pré-remplir http://</string>
+    <string name="auth_server_url">URL du serveur</string>
+    <string name="auth_show_password">Afficher le mot de passe</string>
+    <string name="auth_username">Nom d\'utilisateur</string>
+    <string name="auth_web_retry">Réessayer</string>
+    <string name="toast_welcome_user">Bienvenue, %1$s !</string>
+</resources>

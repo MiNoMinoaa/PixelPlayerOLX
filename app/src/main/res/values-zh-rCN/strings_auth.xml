@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auth_cd_back">返回</string>
+    <string name="auth_connect">连接</string>
+    <string name="auth_connecting">正在连接……</string>
+    <string name="auth_connection_details">连接信息</string>
+    <string name="auth_connection_details_subtitle">输入你的服务器 URL 和账户凭据。</string>
+    <string name="auth_hide_password">隐藏密码</string>
+    <string name="auth_jellyfin_connection_subtitle">输入你的 Jellyfin 服务器 URL 和账户凭据。</string>
+    <string name="auth_jellyfin_footer">连接到 Jellyfin 服务器以串流你的音乐库</string>
+    <string name="auth_jellyfin_info_card">连接到 Jellyfin 服务器。对于局域网访问，同时支持 HTTP 和 HTTPS。</string>
+    <string name="auth_jellyfin_password_hint">你的 Jellyfin 账户密码。</string>
+    <string name="auth_jellyfin_subtitle">连接到你的 Jellyfin 媒体服务器</string>
+    <string name="auth_jellyfin_username_hint">你的 Jellyfin 账户用户名。</string>
+    <string name="auth_navidrome_footer">兼容 Navidrome、Gonic、Airsonic 及其他 Subsonic 兼容服务器</string>
+    <string name="auth_navidrome_info_card">支持 Navidrome、Airsonic、Gonic、Ampache 以及其他兼容 Subsonic API 的服务器。</string>
+    <string name="auth_navidrome_password_hint">如果服务器支持，也可以使用应用密码。</string>
+    <string name="auth_navidrome_subtitle">连接到你的自托管音乐服务器</string>
+    <string name="auth_navidrome_username_hint">这是你的 Subsonic 或 Navidrome 账户名。</string>
+    <string name="auth_password">密码</string>
+    <string name="auth_password_placeholder">输入密码</string>
+    <string name="auth_prefill_http">预填充 http://</string>
+    <string name="auth_server_url">服务器 URL</string>
+    <string name="auth_show_password">显示密码</string>
+    <string name="auth_username">用户名</string>
+    <string name="auth_web_retry">重试</string>
+    <string name="toast_welcome_user">欢迎，%1$s！</string>
+</resources>
