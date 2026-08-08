@@ -189,6 +189,16 @@
     <string name="backup_dialog_restoring">Restoring Backup</string>
     <string name="backup_step_format">Step %1$d of %2$d</string>
     <string name="backup_entries_will_replace">%1$d entries · Will replace current data</string>
+    <string name="backup_encrypt_title">Encrypt backup</string>
+    <string name="backup_encrypt_subtitle">Protect the file with a password (AES-256). You\'ll need it to restore.</string>
+    <string name="backup_password_hint">Backup password</string>
+    <string name="backup_password_confirm_hint">Confirm password</string>
+    <string name="backup_password_mismatch">Passwords don\'t match.</string>
+    <string name="backup_password_too_short">Use at least 4 characters.</string>
+    <string name="backup_encrypted_prompt_title">Encrypted backup</string>
+    <string name="backup_encrypted_prompt_body">This backup is protected with a password. Enter it to continue.</string>
+    <string name="backup_wrong_password">Incorrect password. Try again.</string>
+    <string name="backup_unlock">Unlock</string>
 
     <string name="dialog_palette_regenerated">Palette regenerated for %1$s</string>
     <string name="dialog_palette_regenerate_failed">Could not regenerate palette for %1$s</string>

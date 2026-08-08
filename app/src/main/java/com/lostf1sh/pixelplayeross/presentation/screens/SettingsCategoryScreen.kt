@@ -83,6 +83,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -128,7 +129,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextGeometricTransform
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -217,6 +221,8 @@ fun SettingsCategoryScreen(
     var showImportFlow by remember { mutableStateOf(false) }
     var exportSections by remember { mutableStateOf(BackupSection.defaultSelection) }
     var importFileUri by remember { mutableStateOf<Uri?>(null) }
+    var showExportEncryptionDialog by remember { mutableStateOf(false) }
+    var exportPassphrase by remember { mutableStateOf<String?>(null) }
     var minSongDurationDraft by remember(uiState.minSongDuration) {
         mutableStateOf(uiState.minSongDuration.toFloat())
     }
@@ -231,8 +237,9 @@ fun SettingsCategoryScreen(
         contract = ActivityResultContracts.CreateDocument("application/octet-stream")
     ) { uri ->
         if (uri != null) {
-            settingsViewModel.exportAppData(uri, exportSections)
+            settingsViewModel.exportAppData(uri, exportSections, exportPassphrase)
         }
+        exportPassphrase = null
     }
 
     val importFilePicker = rememberLauncherForActivityResult(
@@ -1293,8 +1300,31 @@ fun SettingsCategoryScreen(
             onSelectionChanged = { exportSections = it },
             onConfirm = {
                 showExportDataDialog = false
+                showExportEncryptionDialog = true
+            }
+        )
+    }
+
+    if (showExportEncryptionDialog) {
+        BackupEncryptionDialog(
+            onDismiss = { showExportEncryptionDialog = false },
+            onConfirm = { passphrase ->
+                showExportEncryptionDialog = false
+                exportPassphrase = passphrase
                 val fileName = context.getString(R.string.backup_file_name_format, System.currentTimeMillis())
                 exportLauncher.launch(fileName)
+            }
+        )
+    }
+
+    val pendingEncryptedUri = uiState.pendingEncryptedBackupUri
+    if (pendingEncryptedUri != null) {
+        BackupPasswordPromptDialog(
+            wrongPassword = uiState.wrongBackupPassword,
+            isInspecting = uiState.isInspectingBackup,
+            onDismiss = { settingsViewModel.dismissEncryptedBackupPrompt() },
+            onConfirm = { password ->
+                settingsViewModel.inspectBackupFile(Uri.parse(pendingEncryptedUri), password)
             }
         )
     }
@@ -2449,6 +2479,142 @@ private fun PaletteRegenerateSongSheetContent(
             }
         }
     }
+}
+
+/**
+ * Optional-encryption step shown between section selection and the actual
+ * export. Confirms with `null` for a plain backup or the passphrase when the
+ * user enables encryption.
+ */
+@Composable
+private fun BackupEncryptionDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String?) -> Unit
+) {
+    var encryptEnabled by remember { mutableStateOf(false) }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+
+    val passwordTooShort = encryptEnabled && password.isNotEmpty() && password.length < 4
+    val passwordsMismatch = encryptEnabled && confirmPassword.isNotEmpty() && password != confirmPassword
+    val canConfirm = !encryptEnabled || (password.length >= 4 && password == confirmPassword)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.backup_encrypt_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.backup_encrypt_subtitle),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Switch(
+                        checked = encryptEnabled,
+                        onCheckedChange = { encryptEnabled = it }
+                    )
+                }
+                if (encryptEnabled) {
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text(stringResource(R.string.backup_password_hint)) },
+                        singleLine = true,
+                        isError = passwordTooShort,
+                        supportingText = if (passwordTooShort) {
+                            { Text(stringResource(R.string.backup_password_too_short)) }
+                        } else null,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = { confirmPassword = it },
+                        label = { Text(stringResource(R.string.backup_password_confirm_hint)) },
+                        singleLine = true,
+                        isError = passwordsMismatch,
+                        supportingText = if (passwordsMismatch) {
+                            { Text(stringResource(R.string.backup_password_mismatch)) }
+                        } else null,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = canConfirm,
+                onClick = { onConfirm(if (encryptEnabled) password else null) }
+            ) { Text(stringResource(R.string.backup_confirm_export_pxpl), maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel), maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        }
+    )
+}
+
+/** Password prompt for opening an encrypted backup. */
+@Composable
+private fun BackupPasswordPromptDialog(
+    wrongPassword: Boolean,
+    isInspecting: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var password by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = { if (!isInspecting) onDismiss() },
+        title = { Text(stringResource(R.string.backup_encrypted_prompt_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(R.string.backup_encrypted_prompt_body),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text(stringResource(R.string.backup_password_hint)) },
+                    singleLine = true,
+                    enabled = !isInspecting,
+                    isError = wrongPassword,
+                    supportingText = if (wrongPassword) {
+                        { Text(stringResource(R.string.backup_wrong_password)) }
+                    } else null,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (isInspecting) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = password.isNotEmpty() && !isInspecting,
+                onClick = { onConfirm(password) }
+            ) { Text(stringResource(R.string.backup_unlock), maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        },
+        dismissButton = {
+            TextButton(enabled = !isInspecting, onClick = onDismiss) {
+                Text(stringResource(R.string.cancel), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    )
 }
 
 @Composable
