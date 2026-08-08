@@ -46,8 +46,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -873,7 +875,27 @@ class DualPlayerEngine @Inject constructor(
                     if (resolved != null) {
                         return dataSpec.buildUpon().setUri(resolved).build()
                     }
-                    Timber.tag("DualPlayerEngine").d("resolveDataSpec: Cache MISS for %s — using original URI", scheme)
+                    // Cache miss: resolve inline. resolveDataSpec runs on ExoPlayer's
+                    // loading thread, where blocking I/O is allowed. This makes cloud
+                    // playback independent of whether the dispatch path pre-resolved
+                    // the URI — seeks into unresolved queue items, add-to-queue,
+                    // controller-driven playback and restored queues would otherwise
+                    // hand a raw cloud scheme to DefaultDataSource and surface a
+                    // "Source error" toast.
+                    Timber.tag("DualPlayerEngine").d("resolveDataSpec: cache miss for %s — resolving inline", scheme)
+                    val inlineResolved = try {
+                        runBlocking { resolveCloudUri(uri) }
+                    } catch (e: Exception) {
+                        // Keep loader failures on the IOException path: ExoPlayer treats
+                        // unexpected RuntimeExceptions from a DataSource as fatal.
+                        throw IOException("Failed to resolve $scheme stream", e)
+                    }
+                    if (inlineResolved != uri) {
+                        return dataSpec.buildUpon().setUri(inlineResolved).build()
+                    }
+                    // No proxy can serve a raw cloud scheme; fail with a clear cause
+                    // instead of letting DefaultDataSource report an opaque scheme error.
+                    throw IOException("Could not resolve $scheme stream (offline or provider unavailable)")
                 }
                 return dataSpec
             }
