@@ -58,8 +58,8 @@
     <string name="presentation_batch_d_merge_playlists_title">合并播放列表</string>
     <string name="presentation_batch_d_open_settings_cd">设置</string>
     <string name="presentation_batch_d_playlist_view">播放列表视图</string>
-    <string name="presentation_batch_d_reorder_tabs_cd">重新排列标签页</string>
-    <string name="presentation_batch_d_reorder_tabs_label">重新排列标签页</string>
+    <string name="presentation_batch_d_reorder_tabs_cd">重新排序选项卡</string>
+    <string name="presentation_batch_d_reorder_tabs_label">重新排序选项卡</string>
     <string name="presentation_batch_d_reset_to_default">恢复默认</string>
     <string name="presentation_batch_d_sd_card_unavailable">SD 卡目前不可用。</string>
     <string name="presentation_batch_d_sort_by">排序方式</string>

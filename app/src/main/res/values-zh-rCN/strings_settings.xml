@@ -214,7 +214,7 @@
     <string name="settings_search_no_results">没有找到“%1$s”的结果</string>
     <string name="settings_top_bar_title">设置</string>
     <string name="sync_indicator_rebuilding">正在重建数据库</string>
-    <string name="tab_home">主页</string>
+    <string name="tab_home">首页</string>
     <string name="toast_daily_mix_regeneration_started">Daily Mix 重新生成已开始</string>
     <string name="toast_full_rescan_started">已开始完全重新扫描…</string>
     <string name="toast_library_sync_finished">媒体库同步完成</string>

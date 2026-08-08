@@ -81,6 +81,7 @@
     <string name="next_track">Piste suivante</string>
     <string name="no_lyrics_to_save">Aucune parole disponible à enregistrer</string>
     <string name="no_valid_songs">Aucune chanson valide trouvée à lire</string>
+    <string name="ok">OK</string>
     <string name="open_full_player">Ouvrir le lecteur complet</string>
     <string name="play_playback">Lire</string>
     <string name="player_albums_queued_format">%1$d albums mis en file d\'attente (%2$d chansons)</string>

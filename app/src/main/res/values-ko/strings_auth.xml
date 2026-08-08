@@ -11,11 +11,13 @@
     <string name="auth_jellyfin_info_card">Jellyfin 서버에 연결합니다. 로컬 네트워크 액세스를 위해 HTTP와 HTTPS를 모두 지원합니다.</string>
     <string name="auth_jellyfin_password_hint">Jellyfin 계정 비밀번호입니다.</string>
     <string name="auth_jellyfin_subtitle">Jellyfin 미디어 서버에 연결</string>
+    <string name="auth_jellyfin_title">Jellyfin</string>
     <string name="auth_jellyfin_username_hint">Jellyfin 계정 사용자 이름입니다.</string>
     <string name="auth_navidrome_footer">Navidrome, Gonic, Airsonic 및 기타 Subsonic 호환 서버와 호환됩니다.</string>
     <string name="auth_navidrome_info_card">Navidrome, Airsonic, Gonic, Ampache 및 Subsonic API와 호환되는 기타 서버를 지원합니다.</string>
     <string name="auth_navidrome_password_hint">서버가 지원하는 경우 앱 비밀번호도 사용할 수 있습니다.</string>
     <string name="auth_navidrome_subtitle">자체 호스팅 음악 서버에 연결</string>
+    <string name="auth_navidrome_title">Subsonic / Navidrome</string>
     <string name="auth_navidrome_username_hint">Subsonic 또는 Navidrome 계정 이름입니다.</string>
     <string name="auth_password">비밀번호</string>
     <string name="auth_password_placeholder">비밀번호 입력</string>
@@ -23,6 +25,10 @@
     <string name="auth_server_url">서버 URL</string>
     <string name="auth_show_password">비밀번호 표시</string>
     <string name="auth_username">사용자 이름</string>
+    <string name="auth_username_placeholder_admin">admin</string>
     <string name="auth_web_retry">재시도</string>
+    <string name="cd_jellyfin_logo">Jellyfin</string>
+    <string name="cd_navidrome_logo">Navidrome</string>
+    <string name="cd_subsonic_logo">Subsonic</string>
     <string name="toast_welcome_user">%1$s님, 환영합니다!</string>
 </resources>

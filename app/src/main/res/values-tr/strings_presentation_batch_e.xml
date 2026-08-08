@@ -7,6 +7,7 @@
     <string name="presentation_batch_e_cd_hidden">Gizli</string>
     <string name="presentation_batch_e_cd_remove_from_playlist">Çalma listesinden kaldır</string>
     <string name="presentation_batch_e_cd_reset_presets_default">Varsayılana sıfırla</string>
+    <string name="presentation_batch_e_cd_sleep_timer">Uyku zamanlayıcısı</string>
     <string name="presentation_batch_e_cd_toggle_repeat">Tekrarlamayı aç/kapat</string>
     <string name="presentation_batch_e_cd_toggle_shuffle">Karıştırmayı aç/kapat</string>
     <string name="presentation_batch_e_cd_visible">Görünür</string>

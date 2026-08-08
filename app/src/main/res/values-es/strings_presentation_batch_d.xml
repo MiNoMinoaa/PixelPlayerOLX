@@ -58,7 +58,7 @@
     <string name="presentation_batch_d_merge_playlists_title">Combinar listas de reproducción</string>
     <string name="presentation_batch_d_open_settings_cd">Ajustes</string>
     <string name="presentation_batch_d_playlist_view">Vista de listas</string>
-    <string name="presentation_batch_d_reorder_tabs_cd">Reordenar pestañas</string>
+    <string name="presentation_batch_d_reorder_tabs_cd">Reorder pestañas</string>
     <string name="presentation_batch_d_reorder_tabs_label">Reordenar pestañas</string>
     <string name="presentation_batch_d_reset_to_default">Restablecer predeterminado</string>
     <string name="presentation_batch_d_sd_card_unavailable">La tarjeta SD no está disponible ahora.</string>

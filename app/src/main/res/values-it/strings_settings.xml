@@ -214,6 +214,7 @@
     <string name="settings_search_no_results">Nessun risultato per \"%1$s\"</string>
     <string name="settings_top_bar_title">Impostazioni</string>
     <string name="sync_indicator_rebuilding">Ricostruzione database</string>
+    <string name="tab_home">Home</string>
     <string name="toast_daily_mix_regeneration_started">Rigenerazione Daily Mix avviata</string>
     <string name="toast_full_rescan_started">Scansione completa avviata…</string>
     <string name="toast_library_sync_finished">Sincronizzazione libreria completata</string>

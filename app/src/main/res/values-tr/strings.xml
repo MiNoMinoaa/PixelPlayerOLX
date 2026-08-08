@@ -2,6 +2,7 @@
 <resources>
     <string name="a11y_toggle_off">Kapalı</string>
     <string name="a11y_toggle_on">Açık</string>
+    <string name="accounts_listenbrainz_connect">Bağlan</string>
     <string name="album_id_not_found">Albüm kimliği bulunamadı</string>
     <string name="album_not_found">Albüm bulunamadı</string>
     <string name="all_files_access_title">Özel İzin Gerekiyor</string>
@@ -80,6 +81,7 @@
     <string name="next_track">Sonraki parça</string>
     <string name="no_lyrics_to_save">Kaydedilecek şarkı sözü yok</string>
     <string name="no_valid_songs">Oynatılacak geçerli şarkı bulunamadı</string>
+    <string name="ok">Tamam</string>
     <string name="open_full_player">Tam oynatıcıyı aç</string>
     <string name="play_playback">Oynat</string>
     <string name="player_albums_queued_format">%1$d albüm kuyruğa alındı (%2$d şarkı)</string>
@@ -150,11 +152,14 @@
     <string name="sleep_timer_ui_play_count_one_time">1 kez</string>
     <string name="sleep_timer_ui_set_custom_duration">Özel süre ayarla</string>
     <string name="sleep_timer_ui_slider_label_timer">Zamanlayıcı</string>
+    <string name="sleep_timer_ui_title">Uyku zamanlayıcısı</string>
     <string name="sync_complete">Senkronizasyon tamamlandı</string>
     <string name="sync_files_progress">%1$d / %2$d dosya</string>
+    <string name="sync_in_progress">Kitaplık senkronize ediliyor…</string>
     <string name="sync_pending">Bekleniyor…</string>
     <string name="sync_processing">Dosyalar işleniyor…</string>
     <string name="sync_scanning">Müzik dosyaları taranıyor…</string>
+    <string name="syncing_library">Kitaplık senkronize ediliyor…</string>
     <string name="tile_last_playlist">Son Çalma Listesi</string>
     <string name="tile_last_playlist_unavailable">Açılacak çalma listesi yok</string>
     <string name="tile_shuffle_all">Tümünü Karıştır</string>

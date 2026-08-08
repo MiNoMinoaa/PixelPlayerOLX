@@ -211,6 +211,7 @@
     <string name="settings_search_no_results">Keine Ergebnisse für \"%1$s\"</string>
     <string name="settings_top_bar_title">Einstellungen</string>
     <string name="sync_indicator_rebuilding">Datenbank wird neu aufgebaut</string>
+    <string name="tab_home">Home</string>
     <string name="toast_daily_mix_regeneration_started">Daily Mix Regeneration gestartet</string>
     <string name="toast_full_rescan_started">Rescan gestartet…</string>
     <string name="toast_library_sync_finished">Bibliothek synchronisiert</string>

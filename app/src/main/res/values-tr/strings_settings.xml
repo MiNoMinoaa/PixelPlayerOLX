@@ -208,6 +208,7 @@
     <string name="settings_search_no_results">\"%1$s\" için sonuç bulunamadı</string>
     <string name="settings_top_bar_title">Ayarlar</string>
     <string name="sync_indicator_rebuilding">Veri tabanı yeniden oluşturuluyor</string>
+    <string name="tab_home">Ana Sayfa</string>
     <string name="toast_daily_mix_regeneration_started">Günlük Miks yeniden oluşturma işlemi başlatıldı</string>
     <string name="toast_full_rescan_started">Tam yeniden tarama başlatıldı…</string>
     <string name="toast_library_sync_finished">Kitaplık senkronizasyonu tamamlandı</string>

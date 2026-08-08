@@ -93,9 +93,9 @@
     <string name="multi_selection_playlists_count_upper">플레이리스트 %1$d개</string>
     <string name="multi_selection_selected">선택됨</string>
     <string name="multi_selection_songs_count_upper">곡 %1$d개</string>
-    <string name="no_internet_dialog_message">이 콘텐츠는 인터넷 연결이 필요합니다. 네트워크 설정을 확인하고 다시 시도하세요.</string>
+    <string name="no_internet_dialog_message">이 콘텐츠를 이용하려면 인터넷 연결이 필요합니다. 네트워크 설정을 확인하고 다시 시도해 주세요.</string>
     <string name="no_internet_dialog_title">인터넷 연결 없음</string>
-    <string name="offline_screen_message">이 콘텐츠에 액세스하려면 인터넷 연결을 확인하고 다시 시도하세요.</string>
+    <string name="offline_screen_message">이 콘텐츠를 이용하려면 인터넷 연결을 확인하고 다시 시도해 주세요.</string>
     <string name="offline_screen_title">오프라인 상태입니다</string>
     <string name="placeholder_replaygain_album_example">-8.20</string>
     <string name="placeholder_replaygain_track_example">-6.50</string>

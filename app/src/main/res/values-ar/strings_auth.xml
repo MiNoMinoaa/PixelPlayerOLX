@@ -30,7 +30,7 @@
     <string name="auth_username_placeholder_admin">admin</string>
     <string name="auth_web_retry">إعادة المحاولة</string>
     <string name="cd_jellyfin_logo">شعار Jellyfin</string>
-    <string name="cd_navidrome_logo">شعار Navidrome</string>
+    <string name="cd_navidrome_logo">Subsonic / Navidrome</string>
     <string name="cd_subsonic_logo">شعار Subsonic</string>
     <string name="toast_welcome_user">مرحباً، %1$s!</string>
 </resources>

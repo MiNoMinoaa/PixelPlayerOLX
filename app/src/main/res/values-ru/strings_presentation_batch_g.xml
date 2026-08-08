@@ -88,7 +88,7 @@
     <string name="presentation_batch_g_artist_info_title">О поддержке нескольких исполнителей</string>
     <string name="presentation_batch_g_artist_item_char_delimiters">Символьные разделители</string>
     <string name="presentation_batch_g_artist_item_char_delimiters_current">Текущие: %1$s</string>
-    <string name="presentation_batch_g_artist_item_word_delimiters">Слова-разделители</string>
+    <string name="presentation_batch_g_artist_item_word_delimiters">Словесные разделители</string>
     <string name="presentation_batch_g_artist_rescan">Пересканировать</string>
     <string name="presentation_batch_g_artist_rescan_banner_body">Настройки исполнителей изменены. Пересканируйте медиатеку для применения изменений.</string>
     <string name="presentation_batch_g_artist_rescan_banner_title">Требуется повторное сканирование</string>

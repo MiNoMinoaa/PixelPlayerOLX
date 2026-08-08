@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="action_add_to_queue">Legg i kø</string>
+    <string name="action_add_to_queue">Legg til i kø</string>
     <string name="action_create">Opprett</string>
     <string name="action_delete_all">Slett alle</string>
     <string name="action_done">Ferdig</string>
@@ -14,7 +14,7 @@
     <string name="cd_add_all_to_queue">Legg alle i kø</string>
     <string name="cd_add_to_favorites">Legg til i favoritter</string>
     <string name="cd_add_to_playlist">Legg til i spilleliste</string>
-    <string name="cd_add_to_queue">Legg i kø</string>
+    <string name="cd_add_to_queue">Legg til i kø</string>
     <string name="cd_album_icon">Album</string>
     <string name="cd_artist_icon">Artist</string>
     <string name="cd_audio_format_icon">Lydformat</string>

@@ -83,6 +83,7 @@
     <string name="presentation_batch_f_new_playlist">Новый плейлист</string>
     <string name="presentation_batch_f_new_smart_playlist">Новый умный плейлист</string>
     <string name="presentation_batch_f_next">Далее</string>
+    <string name="presentation_batch_f_palette_label_expressive">Expressive</string>
     <string name="presentation_batch_f_palette_label_fruit_salad">Fruit Salad</string>
     <string name="presentation_batch_f_palette_label_tonal_spot">Tonal Spot</string>
     <string name="presentation_batch_f_palette_label_vibrant">Vibrant</string>

@@ -11,11 +11,13 @@
     <string name="auth_jellyfin_info_card">Se conecta a servidores Jellyfin. HTTP y HTTPS para red local.</string>
     <string name="auth_jellyfin_password_hint">Tu contraseña de Jellyfin.</string>
     <string name="auth_jellyfin_subtitle">Conéctate a tu servidor multimedia Jellyfin</string>
+    <string name="auth_jellyfin_title">Jellyfin</string>
     <string name="auth_jellyfin_username_hint">Tu nombre de usuario de Jellyfin.</string>
     <string name="auth_navidrome_footer">Compatible con Navidrome, Gonic, Airsonic y otros servidores Subsonic</string>
     <string name="auth_navidrome_info_card">Compatible con Navidrome, Airsonic, Gonic, Ampache y otros servidores compatibles con la API Subsonic.</string>
     <string name="auth_navidrome_password_hint">También vale contraseña de app si tu servidor lo permite.</string>
     <string name="auth_navidrome_subtitle">Conéctate a tu servidor musical alojado por ti</string>
+    <string name="auth_navidrome_title">Subsonic / Navidrome</string>
     <string name="auth_navidrome_username_hint">Nombre de tu cuenta Subsonic o Navidrome.</string>
     <string name="auth_password">Contraseña</string>
     <string name="auth_password_placeholder">Introduce la contraseña</string>
@@ -23,6 +25,10 @@
     <string name="auth_server_url">URL del servidor</string>
     <string name="auth_show_password">Mostrar contraseña</string>
     <string name="auth_username">Usuario</string>
+    <string name="auth_username_placeholder_admin">admin</string>
     <string name="auth_web_retry">Reintentar</string>
+    <string name="cd_jellyfin_logo">Jellyfin</string>
+    <string name="cd_navidrome_logo">Navidrome</string>
+    <string name="cd_subsonic_logo">Subsonic</string>
     <string name="toast_welcome_user">¡Bienvenido, %1$s!</string>
 </resources>

@@ -92,9 +92,9 @@
     <string name="multi_selection_playlists_count_upper">%1$d PLAYLISTS</string>
     <string name="multi_selection_selected">ausgewählt</string>
     <string name="multi_selection_songs_count_upper">%1$d SONGS</string>
-    <string name="no_internet_dialog_message">Keine Verbindung – Netzwerkeinstellungen prüfen und nochmal versuchen.</string>
+    <string name="no_internet_dialog_message">Dieser Inhalt erfordert eine Internetverbindung. Bitte überprüfe deine Netzwerkeinstellungen und versuche es erneut.</string>
     <string name="no_internet_dialog_title">Keine Internetverbindung</string>
-    <string name="offline_screen_message">Internetverbindung prüfen und nochmal versuchen.</string>
+    <string name="offline_screen_message">Bitte überprüfe deine Internetverbindung und versuche es erneut, um auf diesen Inhalt zuzugreifen.</string>
     <string name="offline_screen_title">Du bist offline</string>
     <string name="placeholder_replaygain_album_example">-8.20</string>
     <string name="placeholder_replaygain_track_example">-6.50</string>

@@ -83,6 +83,7 @@
     <string name="presentation_batch_f_new_playlist">Playlist baru</string>
     <string name="presentation_batch_f_new_smart_playlist">Playlist pintar baru</string>
     <string name="presentation_batch_f_next">Berikutnya</string>
+    <string name="presentation_batch_f_palette_label_expressive">Expressive</string>
     <string name="presentation_batch_f_palette_label_fruit_salad">Fruit Salad</string>
     <string name="presentation_batch_f_palette_label_tonal_spot">Tonal Spot</string>
     <string name="presentation_batch_f_palette_label_vibrant">Vibrant</string>

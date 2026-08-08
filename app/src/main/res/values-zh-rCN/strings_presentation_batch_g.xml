@@ -68,7 +68,7 @@
     <string name="presentation_batch_g_album_sel_count">%1$d 张专辑</string>
     <string name="presentation_batch_g_album_sel_limit">限制：每次选择最多 %1$d 张专辑。</string>
     <string name="presentation_batch_g_album_sel_queue_hint">加入队列及播放将遵循您的选择顺序。</string>
-    <string name="presentation_batch_g_album_sel_selected">已选中</string>
+    <string name="presentation_batch_g_album_sel_selected">已选择</string>
     <string name="presentation_batch_g_app_tagline">音乐播放器</string>
     <string name="presentation_batch_g_artist_cd_configure">配置</string>
     <string name="presentation_batch_g_artist_ex_1_in">\"Artist1/Artist2\"</string>

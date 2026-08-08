@@ -8,6 +8,7 @@
     <string name="presentation_batch_e_cd_queue_actions">Tindakan antrean</string>
     <string name="presentation_batch_e_cd_remove_from_playlist">Hapus dari playlist</string>
     <string name="presentation_batch_e_cd_reset_presets_default">Reset ke default</string>
+    <string name="presentation_batch_e_cd_sleep_timer">Sleep timer</string>
     <string name="presentation_batch_e_cd_toggle_repeat">Alihkan ulangi</string>
     <string name="presentation_batch_e_cd_toggle_shuffle">Alihkan acak</string>
     <string name="presentation_batch_e_cd_visible">Terlihat</string>

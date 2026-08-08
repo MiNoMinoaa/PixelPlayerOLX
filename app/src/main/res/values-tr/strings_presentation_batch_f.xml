@@ -13,6 +13,7 @@
     <string name="presentation_batch_f_album_art_quality_low_line">Düşük (256px) - Daha iyi performans</string>
     <string name="presentation_batch_f_album_art_quality_medium_line">Orta (512px) - Dengeli</string>
     <string name="presentation_batch_f_album_art_quality_original_line">Orijinal - Maksimum kalite</string>
+    <string name="presentation_batch_f_apply">Uygula</string>
     <string name="presentation_batch_f_auto_generated_collage">Otomatik oluşturulan kolaj</string>
     <string name="presentation_batch_f_background_color">Arka Plan Rengi</string>
     <string name="presentation_batch_f_cd_add_photo">Fotoğraf Ekle</string>
@@ -79,6 +80,7 @@
     <string name="presentation_batch_f_new_playlist">Yeni çalma listesi</string>
     <string name="presentation_batch_f_new_smart_playlist">Yeni akıllı çalma listesi</string>
     <string name="presentation_batch_f_next">İleri</string>
+    <string name="presentation_batch_f_palette_label_expressive">İfadeci</string>
     <string name="presentation_batch_f_palette_label_fruit_salad">Meyve Salatası</string>
     <string name="presentation_batch_f_palette_label_tonal_spot">Tonal Spot</string>
     <string name="presentation_batch_f_palette_label_vibrant">Canlı</string>

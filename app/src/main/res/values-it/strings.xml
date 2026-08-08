@@ -81,6 +81,7 @@
     <string name="next_track">Traccia successiva</string>
     <string name="no_lyrics_to_save">Nessun testo disponibile da salvare</string>
     <string name="no_valid_songs">Nessun brano valido trovato da riprodurre</string>
+    <string name="ok">OK</string>
     <string name="open_full_player">Apri lettore completo</string>
     <string name="play_playback">Riproduci</string>
     <string name="player_albums_queued_format">%1$d album aggiunti alla coda (%2$d brani)</string>
@@ -156,7 +157,7 @@
     <string name="sleep_timer_ui_title">Timer di spegnimento</string>
     <string name="sync_complete">Sincronizzazione completata</string>
     <string name="sync_files_progress">%1$d di %2$d file</string>
-    <string name="sync_in_progress">Sincronizzazione libreria…</string>
+    <string name="sync_in_progress">Sincronizzazione libreria in corso…</string>
     <string name="sync_pending">In attesa…</string>
     <string name="sync_processing">Elaborazione file in corso…</string>
     <string name="sync_scanning">Scansione file musicali in corso…</string>

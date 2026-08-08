@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="action_add_to_queue">В очередь</string>
+    <string name="action_add_to_queue">Добавить в очередь</string>
     <string name="action_create">Создать</string>
     <string name="action_delete_all">Удалить всё</string>
     <string name="action_done">Готово</string>
@@ -14,7 +14,7 @@
     <string name="cd_add_all_to_queue">Добавить все в очередь</string>
     <string name="cd_add_to_favorites">Добавить в избранное</string>
     <string name="cd_add_to_playlist">Добавить в плейлист</string>
-    <string name="cd_add_to_queue">В очередь</string>
+    <string name="cd_add_to_queue">Добавить в очередь</string>
     <string name="cd_album_icon">Альбом</string>
     <string name="cd_artist_icon">Исполнитель</string>
     <string name="cd_audio_format_icon">Формат аудио</string>
@@ -93,10 +93,10 @@
     <string name="multi_selection_playlists_count_upper">%1$d ПЛЕЙЛИСТОВ</string>
     <string name="multi_selection_selected">выбрано</string>
     <string name="multi_selection_songs_count_upper">%1$d ТРЕКОВ</string>
-    <string name="no_internet_dialog_message">Для этого контента нужно подключение к интернету. Проверьте сеть и попробуйте снова.</string>
-    <string name="no_internet_dialog_title">Нет интернета</string>
-    <string name="offline_screen_message">Пожалуйста, проверьте подключение к интернету.</string>
-    <string name="offline_screen_title">Вы офлайн</string>
+    <string name="no_internet_dialog_message">Для этого контента требуется подключение к интернету. Проверьте настройки сети и попробуйте снова.</string>
+    <string name="no_internet_dialog_title">Нет подключения к интернету</string>
+    <string name="offline_screen_message">Проверьте подключение к интернету и попробуйте снова получить доступ к этому контенту.</string>
+    <string name="offline_screen_title">Вы не в сети</string>
     <string name="placeholder_replaygain_album_example">-8.20</string>
     <string name="placeholder_replaygain_track_example">-6.50</string>
     <string name="playlist_created_songs_added_toast">Плейлист создан, треки добавлены</string>

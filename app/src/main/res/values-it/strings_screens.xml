@@ -60,9 +60,17 @@
     <string name="dash_quick_actions_jellyfin_subtitle">Gestisci la tua connessione server Jellyfin.</string>
     <string name="dash_quick_actions_subsonic_subtitle">Gestisci Navidrome, Airsonic e altri server compatibili Subsonic.</string>
     <string name="dash_song_count">%1$d brani</string>
+    <string name="dash_status_fetching_albums">Recupero elenco album…</string>
+    <string name="dash_status_fetching_playlists">Recupero playlist…</string>
+    <string name="dash_status_fetching_songs_from_format">Recupero brani da %1$s…</string>
+    <string name="dash_status_library_sync_complete">Sincronizzazione libreria completata</string>
+    <string name="dash_status_no_songs_found">Nessun brano trovato nella libreria</string>
+    <string name="dash_status_saving_songs_format">Salvataggio di %1$d brani nel database…</string>
     <string name="dash_status_sync_complete">Sincronizzazione completata</string>
     <string name="dash_status_syncing">Sincronizzazione</string>
     <string name="dash_status_syncing_library">Sincronizzazione libreria…</string>
+    <string name="dash_status_syncing_playlist_format">Sincronizzazione playlist: %1$s</string>
+    <string name="dash_status_updating_local">Aggiornamento libreria locale…</string>
     <string name="dash_title_playlists">Playlist</string>
     <string name="delimiter_add_title">Aggiungi nuovo delimitatore</string>
     <string name="delimiter_defaults_title">Delimitatori predefiniti</string>
@@ -91,6 +99,7 @@
     <string name="restore_selected">Ripristina selezionati</string>
     <string name="restoring">Ripristino in corso</string>
     <string name="screen_about">Informazioni</string>
+    <string name="screen_subsonic_dashboard_title">Subsonic</string>
     <string name="search_no_results_for_query">Nessun risultato per \"%1$s\"</string>
     <string name="search_no_results_found">Nessun risultato trovato.</string>
     <string name="search_nothing_found">Nessun risultato trovato</string>

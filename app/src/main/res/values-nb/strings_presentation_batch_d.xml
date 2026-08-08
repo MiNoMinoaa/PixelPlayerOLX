@@ -58,8 +58,8 @@
     <string name="presentation_batch_d_merge_playlists_title">Slå sammen spillelister</string>
     <string name="presentation_batch_d_open_settings_cd">Innstillinger</string>
     <string name="presentation_batch_d_playlist_view">Spillelistevisning</string>
-    <string name="presentation_batch_d_reorder_tabs_cd">Endre rekkefølge på faner</string>
-    <string name="presentation_batch_d_reorder_tabs_label">Endre rekkefølge på faner</string>
+    <string name="presentation_batch_d_reorder_tabs_cd">Endre fanerekkefølge</string>
+    <string name="presentation_batch_d_reorder_tabs_label">Endre fanerekkefølge</string>
     <string name="presentation_batch_d_reset_to_default">Nullstill til standard</string>
     <string name="presentation_batch_d_sd_card_unavailable">SD-kortet er ikke tilgjengelig akkurat nå.</string>
     <string name="presentation_batch_d_sort_by">Sorter etter</string>

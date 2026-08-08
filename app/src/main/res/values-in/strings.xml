@@ -81,6 +81,7 @@
     <string name="next_track">Trek berikutnya</string>
     <string name="no_lyrics_to_save">Tidak ada lirik yang tersedia untuk disimpan</string>
     <string name="no_valid_songs">Tidak ditemukan lagu yang valid untuk diputar</string>
+    <string name="ok">OK</string>
     <string name="open_full_player">Buka pemutar penuh</string>
     <string name="play_playback">Putar</string>
     <string name="player_albums_queued_format">%1$d album dimasukkan ke antrean (%2$d lagu)</string>
@@ -153,7 +154,7 @@
     <string name="sleep_timer_ui_play_count_one_time">1 kali</string>
     <string name="sleep_timer_ui_set_custom_duration">Atur durasi kustom</string>
     <string name="sleep_timer_ui_slider_label_timer">Timer</string>
-    <string name="sleep_timer_ui_title">Sleep Timer</string>
+    <string name="sleep_timer_ui_title">Sleep timer</string>
     <string name="sync_complete">Sinkronisasi selesai</string>
     <string name="sync_files_progress">%1$d dari %2$d file</string>
     <string name="sync_in_progress">Menyinkronkan pustaka…</string>

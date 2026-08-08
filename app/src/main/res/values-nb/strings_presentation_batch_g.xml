@@ -88,7 +88,7 @@
     <string name="presentation_batch_g_artist_info_title">Om tolkning av flere artister</string>
     <string name="presentation_batch_g_artist_item_char_delimiters">Tegndelimitere</string>
     <string name="presentation_batch_g_artist_item_char_delimiters_current">Gjeldende: %1$s</string>
-    <string name="presentation_batch_g_artist_item_word_delimiters">Ord-separatorer</string>
+    <string name="presentation_batch_g_artist_item_word_delimiters">Orddelimitere</string>
     <string name="presentation_batch_g_artist_rescan">Skann på nytt</string>
     <string name="presentation_batch_g_artist_rescan_banner_body">Artistinnstillinger har endret seg. Skann biblioteket på nytt for å bruke endringene.</string>
     <string name="presentation_batch_g_artist_rescan_banner_title">Reskanning kreves</string>

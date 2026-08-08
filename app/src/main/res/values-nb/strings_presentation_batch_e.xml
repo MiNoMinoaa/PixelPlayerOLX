@@ -8,6 +8,7 @@
     <string name="presentation_batch_e_cd_queue_actions">Kø-handlinger</string>
     <string name="presentation_batch_e_cd_remove_from_playlist">Fjern fra spilleliste</string>
     <string name="presentation_batch_e_cd_reset_presets_default">Nullstill til standard</string>
+    <string name="presentation_batch_e_cd_sleep_timer">Sleep timer</string>
     <string name="presentation_batch_e_cd_toggle_repeat">Gjenta sanger</string>
     <string name="presentation_batch_e_cd_toggle_shuffle">Bland sanger</string>
     <string name="presentation_batch_e_cd_visible">Synlig</string>

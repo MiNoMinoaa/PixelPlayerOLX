@@ -157,11 +157,11 @@
     <string name="sleep_timer_ui_title">Таймер сна</string>
     <string name="sync_complete">Синхронизация завершена</string>
     <string name="sync_files_progress">%1$d из %2$d файлов</string>
-    <string name="sync_in_progress">Синхронизация фонотеки…</string>
+    <string name="sync_in_progress">Синхронизация библиотеки…</string>
     <string name="sync_pending">Ожидание…</string>
     <string name="sync_processing">Обработка файлов…</string>
     <string name="sync_scanning">Сканирование музыкальных файлов…</string>
-    <string name="syncing_library">Синхронизация фонотеки…</string>
+    <string name="syncing_library">Синхронизация библиотеки…</string>
     <string name="tile_last_playlist">Последний плейлист</string>
     <string name="tile_last_playlist_unavailable">Нет доступного плейлиста</string>
     <string name="tile_shuffle_all">Перемешать всё</string>

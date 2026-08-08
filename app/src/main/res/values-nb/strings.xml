@@ -81,6 +81,7 @@
     <string name="next_track">Neste spor</string>
     <string name="no_lyrics_to_save">Ingen sangtekster tilgjengelig å lagre</string>
     <string name="no_valid_songs">Ingen gyldige sanger funnet å spille av</string>
+    <string name="ok">OK</string>
     <string name="open_full_player">Åpne full spiller</string>
     <string name="play_playback">Spill av</string>
     <string name="player_albums_queued_format">%1$d album i kø (%2$d sanger)</string>
@@ -153,6 +154,7 @@
     <string name="sleep_timer_ui_play_count_one_time">1 gang</string>
     <string name="sleep_timer_ui_set_custom_duration">Angi egendefinert varighet</string>
     <string name="sleep_timer_ui_slider_label_timer">Tidtaker</string>
+    <string name="sleep_timer_ui_title">Sleep timer</string>
     <string name="sync_complete">Synkronisering fullført</string>
     <string name="sync_files_progress">%1$d av %2$d filer</string>
     <string name="sync_in_progress">Synkroniserer bibliotek…</string>

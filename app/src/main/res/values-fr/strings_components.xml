@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="action_add_to_queue">Ajouter à la file</string>
+    <string name="action_add_to_queue">Ajouter à la file d\'attente</string>
     <string name="action_create">Créer</string>
     <string name="action_delete_all">Tout supprimer</string>
     <string name="action_done">Terminé</string>
@@ -81,7 +81,7 @@
     <string name="lyrics_more_adjust_sync">Ajuster la synchronisation</string>
     <string name="lyrics_more_alignment">Alignement</string>
     <string name="lyrics_more_appearance">Apparence</string>
-    <string name="lyrics_more_controls">Contrôles</string>
+    <string name="lyrics_more_controls">Commandes</string>
     <string name="lyrics_more_dialog_reset_message">Voulez-vous vraiment réinitialiser les paroles de cette chanson ?</string>
     <string name="lyrics_more_dialog_reset_title">Réinitialiser les paroles ?</string>
     <string name="lyrics_more_disable_immersive_once">Désactiver l\'immersion (une fois)</string>
@@ -90,7 +90,7 @@
     <string name="lyrics_more_show_romanization">Afficher la romanisation</string>
     <string name="lyrics_more_show_translations">Afficher les traductions</string>
     <string name="multi_selection_playlists_count_upper">%1$d PLAYLISTS</string>
-    <string name="multi_selection_selected">sélectionnée(s)</string>
+    <string name="multi_selection_selected">sélectionnées</string>
     <string name="multi_selection_songs_count_upper">%1$d CHANSONS</string>
     <string name="no_internet_dialog_message">Ce contenu nécessite une connexion Internet. Veuillez vérifier vos paramètres réseau et réessayer.</string>
     <string name="no_internet_dialog_title">Pas de connexion Internet</string>

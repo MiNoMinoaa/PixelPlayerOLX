@@ -81,6 +81,7 @@
     <string name="next_track">Nächster Titel</string>
     <string name="no_lyrics_to_save">Keine Lyrics zum Speichern</string>
     <string name="no_valid_songs">Keine abspielbaren Songs gefunden</string>
+    <string name="ok">OK</string>
     <string name="open_full_player">Player öffnen</string>
     <string name="play_playback">Abspielen</string>
     <string name="player_albums_queued_format">%1$d Alben in der Queue (%2$d Songs)</string>

@@ -68,6 +68,7 @@
     <string name="presentation_batch_g_album_sel_count">%1$d ÁLBUMES</string>
     <string name="presentation_batch_g_album_sel_limit">Límite: %1$d álbumes por selección.</string>
     <string name="presentation_batch_g_album_sel_queue_hint">La cola y reproducción respetan el orden de selección.</string>
+    <string name="presentation_batch_g_album_sel_selected">seleccionados</string>
     <string name="presentation_batch_g_app_tagline">Reproductor de música</string>
     <string name="presentation_batch_g_artist_cd_configure">Configurar</string>
     <string name="presentation_batch_g_artist_ex_1_in">\"Artista1/Artista2\"</string>
@@ -86,12 +87,15 @@
     <string name="presentation_batch_g_artist_group_by_album_artist">Agrupar por artista del álbum</string>
     <string name="presentation_batch_g_artist_info_title">Acerca del análisis de varios artistas</string>
     <string name="presentation_batch_g_artist_item_char_delimiters">Delimitadores de caracteres</string>
+    <string name="presentation_batch_g_artist_item_char_delimiters_current">Actual: %1$s</string>
+    <string name="presentation_batch_g_artist_item_word_delimiters">Delimitadores de palabras</string>
     <string name="presentation_batch_g_artist_rescan">Reescanear</string>
     <string name="presentation_batch_g_artist_rescan_banner_body">Los ajustes del artista han cambiado. Reescanea tu biblioteca para aplicarlos.</string>
     <string name="presentation_batch_g_artist_rescan_banner_title">Se requiere reescaneo</string>
     <string name="presentation_batch_g_artist_rescan_scanning">Escaneando…</string>
     <string name="presentation_batch_g_artist_section_library_org">Organización de la biblioteca</string>
     <string name="presentation_batch_g_artist_section_multi_parsing">Análisis de varios artistas</string>
+    <string name="presentation_batch_g_artist_word_current_prefix">Actual: %1$s</string>
     <string name="presentation_batch_g_artist_word_none">Ninguno</string>
     <string name="presentation_batch_g_backup_app_version">Versión de la app</string>
     <string name="presentation_batch_g_backup_cd_select_all">Seleccionar todo</string>

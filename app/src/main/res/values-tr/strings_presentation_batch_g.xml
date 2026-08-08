@@ -68,6 +68,7 @@
     <string name="presentation_batch_g_album_sel_count">%1$d ALBÜM</string>
     <string name="presentation_batch_g_album_sel_limit">Sınır: seçim başına %1$d albüm.</string>
     <string name="presentation_batch_g_album_sel_queue_hint">Kuyruğa ekle ve oynat, seçim sıranıza göre davranır.</string>
+    <string name="presentation_batch_g_album_sel_selected">seçildi</string>
     <string name="presentation_batch_g_app_tagline">Müzik Çalar</string>
     <string name="presentation_batch_g_artist_cd_configure">Yapılandır</string>
     <string name="presentation_batch_g_artist_ex_1_in">\"Sanatçı1/Sanatçı2\"</string>
@@ -86,6 +87,7 @@
     <string name="presentation_batch_g_artist_group_by_album_artist">Albüm Sanatçısına Göre Grupla</string>
     <string name="presentation_batch_g_artist_info_title">Çoklu Sanatçı Ayrıştırma Hakkında</string>
     <string name="presentation_batch_g_artist_item_char_delimiters">Karakter Sınırlayıcıları</string>
+    <string name="presentation_batch_g_artist_item_char_delimiters_current">Mevcut: %1$s</string>
     <string name="presentation_batch_g_artist_item_word_delimiters">Kelime Sınırlayıcıları</string>
     <string name="presentation_batch_g_artist_rescan">Yeniden tara</string>
     <string name="presentation_batch_g_artist_rescan_banner_body">Sanatçı ayarları değişti. Uygulamak için kitaplığınızı yeniden tarayın.</string>
@@ -93,6 +95,7 @@
     <string name="presentation_batch_g_artist_rescan_scanning">Taranıyor…</string>
     <string name="presentation_batch_g_artist_section_library_org">Kitaplık Organizasyonu</string>
     <string name="presentation_batch_g_artist_section_multi_parsing">Çoklu Sanatçı Ayrıştırma</string>
+    <string name="presentation_batch_g_artist_word_current_prefix">Mevcut: %1$s</string>
     <string name="presentation_batch_g_artist_word_none">Yok</string>
     <string name="presentation_batch_g_backup_app_version">Uygulama Sürümü</string>
     <string name="presentation_batch_g_backup_cd_select_all">Tümünü seç</string>

@@ -45,7 +45,7 @@
     <string name="crash_report_subtitle">L\'application s\'est arrêtée lors de votre dernière session. Aidez-nous à corriger cela en partageant le rapport d\'erreur.</string>
     <string name="crash_report_title">Oups ! Quelque chose s\'est mal passé</string>
     <string name="customize_corner_radius">Personnaliser le rayon des angles</string>
-    <string name="dash_action_disconnect">Déconnecter</string>
+    <string name="dash_action_disconnect">Se déconnecter</string>
     <string name="dash_action_sync">Synchro</string>
     <string name="dash_action_sync_library">Synchroniser la bibliothèque</string>
     <string name="dash_libraries_change">Modifier</string>
@@ -59,10 +59,18 @@
     <string name="dash_quick_actions_jellyfin_subtitle">Gérer votre connexion au serveur Jellyfin.</string>
     <string name="dash_quick_actions_subsonic_subtitle">Gérer Navidrome, Airsonic et autres serveurs Subsonic.</string>
     <string name="dash_song_count">%1$d chansons</string>
+    <string name="dash_status_fetching_albums">Récupération de la liste des albums…</string>
+    <string name="dash_status_fetching_playlists">Récupération des listes de lecture…</string>
+    <string name="dash_status_fetching_songs_from_format">Récupération des chansons de %1$s…</string>
+    <string name="dash_status_library_sync_complete">Synchronisation de la bibliothèque terminée</string>
+    <string name="dash_status_no_songs_found">Aucune chanson trouvée dans la bibliothèque</string>
+    <string name="dash_status_saving_songs_format">Enregistrement de %1$d chansons dans la base de données…</string>
     <string name="dash_status_sync_complete">Synchronisation terminée</string>
     <string name="dash_status_syncing">Synchronisation</string>
     <string name="dash_status_syncing_library">Synchronisation de la bibliothèque…</string>
-    <string name="dash_title_playlists">Playlists</string>
+    <string name="dash_status_syncing_playlist_format">Synchronisation de la liste de lecture : %1$s</string>
+    <string name="dash_status_updating_local">Mise à jour de la bibliothèque locale…</string>
+    <string name="dash_title_playlists">Listes de lecture</string>
     <string name="delimiter_add_title">Ajouter un nouveau délimiteur</string>
     <string name="delimiter_defaults_title">Délimiteurs par défaut</string>
     <string name="delimiter_hint">ex. : / ou ;</string>
@@ -90,6 +98,7 @@
     <string name="restore_selected">Restaurer la sélection</string>
     <string name="restoring">Restauration</string>
     <string name="screen_about">À propos</string>
+    <string name="screen_subsonic_dashboard_title">Subsonic</string>
     <string name="search_no_results_for_query">Aucun résultat pour « %1$s »</string>
     <string name="search_no_results_found">Aucun résultat trouvé.</string>
     <string name="search_nothing_found">Rien trouvé</string>

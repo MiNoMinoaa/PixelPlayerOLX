@@ -45,7 +45,7 @@
     <string name="crash_report_subtitle">Aplikasi berhenti mendadak selama sesi terakhir Anda. Bantu kami memperbaikinya dengan membagikan laporan crash.</string>
     <string name="crash_report_title">Ups! Terjadi kesalahan</string>
     <string name="customize_corner_radius">Sesuaikan Radius Sudut</string>
-    <string name="dash_action_disconnect">Putuskan koneksi</string>
+    <string name="dash_action_disconnect">Putuskan sambungan</string>
     <string name="dash_action_sync">Sinkronisasi</string>
     <string name="dash_action_sync_library">Sinkronkan pustaka</string>
     <string name="dash_libraries_change">Ubah</string>
@@ -98,6 +98,7 @@
     <string name="restore_selected">Pulihkan yang terpilih</string>
     <string name="restoring">Memulihkan</string>
     <string name="screen_about">Tentang</string>
+    <string name="screen_subsonic_dashboard_title">Subsonic</string>
     <string name="search_no_results_for_query">Tidak ada hasil untuk \"%1$s\"</string>
     <string name="search_no_results_found">Tidak ditemukan hasil.</string>
     <string name="search_nothing_found">Tidak ditemukan apa pun</string>
