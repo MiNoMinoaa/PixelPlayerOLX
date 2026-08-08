@@ -4,6 +4,11 @@
     <string name="settings_accounts_row_title">Accounts</string>
     <string name="settings_accounts_row_subtitle">Manage Navidrome and Jellyfin services</string>
 
+    <string name="settings_search_hint">Search settings</string>
+    <string name="settings_search_no_results">No results for \"%1$s\"</string>
+    <string name="settings_search_section_top_matches">Top matches</string>
+    <string name="settings_search_section_related">Related settings</string>
+
     <string name="settings_category_library_title">Music Management</string>
     <string name="settings_category_library_subtitle">Manage folders, refresh library, parsing options</string>
     <string name="settings_category_appearance_title">Appearance</string>

@@ -219,7 +219,8 @@ fun AppNavigation(
                 }
             }
             composable(
-                Screen.Accounts.route,
+                route = Screen.Accounts.route,
+                arguments = listOf(navArgument("highlightKey") { type = NavType.StringType; nullable = true; defaultValue = null }),
                 enterTransition = { enterTransition() },
                 exitTransition = { exitTransition() },
                 popEnterTransition = { popEnterTransition() },
@@ -239,7 +240,10 @@ fun AppNavigation(
             }
             composable(
                 route = Screen.SettingsCategory.route,
-                arguments = listOf(navArgument("categoryId") { type = NavType.StringType }),
+                arguments = listOf(
+                    navArgument("categoryId") { type = NavType.StringType },
+                    navArgument("highlightKey") { type = NavType.StringType; nullable = true; defaultValue = null }
+                ),
                 enterTransition = { enterTransition() },
                 exitTransition = { exitTransition() },
                 popEnterTransition = { popEnterTransition() },
@@ -247,9 +251,11 @@ fun AppNavigation(
             ) { backStackEntry ->
                 ScreenWrapper(navController = navController, playerViewModel = playerViewModel) {
                     val categoryId = backStackEntry.arguments?.getString("categoryId")
+                    val highlightKey = backStackEntry.arguments?.getString("highlightKey")
                     if (categoryId != null) {
                         SettingsCategoryScreen(
                             categoryId = categoryId,
+                            highlightKey = highlightKey,
                             navController = navController,
                             playerViewModel = playerViewModel,
                             onBackClick = { navController.popBackStack() }
@@ -258,7 +264,8 @@ fun AppNavigation(
                 }
             }
             composable(
-                Screen.PaletteStyle.route,
+                route = Screen.PaletteStyle.route,
+                arguments = listOf(navArgument("highlightKey") { type = NavType.StringType; nullable = true; defaultValue = null }),
                 enterTransition = { enterTransition() },
                 exitTransition = { exitTransition() },
                 popEnterTransition = { popEnterTransition() },
@@ -272,7 +279,8 @@ fun AppNavigation(
                 }
             }
             composable(
-                Screen.Experimental.route,
+                route = Screen.Experimental.route,
+                arguments = listOf(navArgument("highlightKey") { type = NavType.StringType; nullable = true; defaultValue = null }),
                 enterTransition = { enterTransition() },
                 exitTransition = { exitTransition() },
                 popEnterTransition = { popEnterTransition() },
@@ -328,7 +336,8 @@ fun AppNavigation(
                 }
             }
             composable(
-                Screen.Duplicates.route,
+                route = Screen.Duplicates.route,
+                arguments = listOf(navArgument("highlightKey") { type = NavType.StringType; nullable = true; defaultValue = null }),
                 enterTransition = { enterTransition() },
                 exitTransition = { exitTransition() },
                 popEnterTransition = { popEnterTransition() },
@@ -436,7 +445,8 @@ fun AppNavigation(
                 }
             }
             composable(
-                "nav_bar_corner_radius",
+                route = Screen.NavBarCrRad.route,
+                arguments = listOf(navArgument("highlightKey") { type = NavType.StringType; nullable = true; defaultValue = null }),
                 enterTransition = { enterTransition() },
                 exitTransition = { exitTransition() },
                 popEnterTransition = { popEnterTransition() },
@@ -491,7 +501,8 @@ fun AppNavigation(
                 }
             }
             composable(
-                Screen.ArtistSettings.route,
+                route = Screen.ArtistSettings.route,
+                arguments = listOf(navArgument("highlightKey") { type = NavType.StringType; nullable = true; defaultValue = null }),
                 enterTransition = { enterTransition() },
                 exitTransition = { exitTransition() },
                 popEnterTransition = { popEnterTransition() },
@@ -524,7 +535,8 @@ fun AppNavigation(
                 }
             }
             composable(
-                Screen.Equalizer.route,
+                route = Screen.Equalizer.route,
+                arguments = listOf(navArgument("highlightKey") { type = NavType.StringType; nullable = true; defaultValue = null }),
                 enterTransition = { enterTransition() },
                 exitTransition = { exitTransition() },
                 popEnterTransition = { popEnterTransition() },
@@ -538,7 +550,8 @@ fun AppNavigation(
                 }
             }
             composable(
-                Screen.DeviceCapabilities.route,
+                route = Screen.DeviceCapabilities.route,
+                arguments = listOf(navArgument("highlightKey") { type = NavType.StringType; nullable = true; defaultValue = null }),
                 enterTransition = { enterTransition() },
                 exitTransition = { exitTransition() },
                 popEnterTransition = { popEnterTransition() },
