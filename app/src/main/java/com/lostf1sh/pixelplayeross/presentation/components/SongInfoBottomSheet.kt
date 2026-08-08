@@ -288,6 +288,26 @@ fun SongInfoBottomSheet(
     val pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { 2 })
     val scope = androidx.compose.runtime.rememberCoroutineScope()
 
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val safeInsets = WindowInsets.safeDrawing.asPaddingValues()
+    // Keep the pager from growing past the screen on small devices: the sheet header and
+    // grab handle take ~180dp; never shrink below 280dp so content stays usable.
+    val maxPagerHeight = (
+        configuration.screenHeightDp.dp -
+            safeInsets.calculateTopPadding() -
+            safeInsets.calculateBottomPadding() -
+            180.dp
+        ).coerceAtLeast(280.dp)
+
+    // Defer the height animation past the first two frames so the sheet doesn't visibly
+    // animate its content height while it is still opening.
+    var heightAnimationEnabled by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        androidx.compose.runtime.withFrameNanos { }
+        androidx.compose.runtime.withFrameNanos { }
+        heightAnimationEnabled = true
+    }
+
     ModalBottomSheet(
         onDismissRequest = {
             if (!showEditSheet) {
@@ -361,11 +381,17 @@ fun SongInfoBottomSheet(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    val sizeAnimationSpec = if (heightAnimationEnabled) {
+                        tween<androidx.compose.ui.unit.IntSize>(durationMillis = 280)
+                    } else {
+                        androidx.compose.animation.core.snap()
+                    }
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(max = maxPagerHeight)
                             .animateContentSize(
-                                animationSpec = tween(durationMillis = 280),
+                                animationSpec = sizeAnimationSpec,
                                 alignment = Alignment.TopCenter
                             )
                     ) {
