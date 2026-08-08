@@ -67,6 +67,7 @@ data class SettingsUiState(
     val resumeOnHeadsetReconnect: Boolean = false,
     val showQueueHistory: Boolean = true,
     val isCrossfadeEnabled: Boolean = false,
+    val smartCrossfadeEnabled: Boolean = false,
     val hiFiModeEnabled: Boolean = false,
     val hiFiModeDeviceSupported: Boolean = true,
     val crossfadeDuration: Int = 2000,
@@ -354,6 +355,12 @@ class SettingsViewModel @Inject constructor(
         }
         
         viewModelScope.launch {
+            userPreferencesRepository.smartCrossfadeEnabledFlow.collect { enabled ->
+                _uiState.update { it.copy(smartCrossfadeEnabled = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
             userPreferencesRepository.fullPlayerLoadingTweaksFlow.collect { tweaks ->
                 _uiState.update { it.copy(fullPlayerLoadingTweaks = tweaks) }
             }
@@ -606,6 +613,12 @@ class SettingsViewModel @Inject constructor(
     fun setCrossfadeDuration(duration: Int) {
         viewModelScope.launch {
             userPreferencesRepository.setCrossfadeDuration(duration)
+        }
+    }
+
+    fun setSmartCrossfadeEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setSmartCrossfadeEnabled(enabled)
         }
     }
 

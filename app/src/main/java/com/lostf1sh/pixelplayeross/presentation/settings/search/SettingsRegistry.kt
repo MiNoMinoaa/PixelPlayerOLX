@@ -354,6 +354,18 @@ object SettingsRegistry {
                 onToggle = { viewModel, checked -> viewModel.setCrossfadeEnabled(checked) }
             ),
             SettingSpec(
+                id = "playback_smart_crossfade",
+                itemKey = "item_playback_smart_crossfade",
+                titleRes = R.string.setcat_smart_crossfade_title,
+                subtitleRes = R.string.setcat_smart_crossfade_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.SettingsCategory.createRoute("playback"),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf("smart", "crossfade", "bpm", "tempo", "beat", "dj", "blend"),
+                getValue = { it.smartCrossfadeEnabled },
+                onToggle = { viewModel, checked -> viewModel.setSmartCrossfadeEnabled(checked) }
+            ),
+            SettingSpec(
                 id = "playback_speed",
                 itemKey = "item_playback_speed",
                 titleRes = R.string.setcat_playback_speed,

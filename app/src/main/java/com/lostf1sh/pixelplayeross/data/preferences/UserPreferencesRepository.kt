@@ -130,6 +130,7 @@ constructor(
         val USE_SMOOTH_CORNERS = booleanPreferencesKey("use_smooth_corners")
         val KEEP_PLAYING_IN_BACKGROUND = booleanPreferencesKey("keep_playing_in_background")
         val IS_CROSSFADE_ENABLED = booleanPreferencesKey("is_crossfade_enabled")
+        val SMART_CROSSFADE_ENABLED = booleanPreferencesKey("smart_crossfade_enabled")
         val HI_FI_MODE_ENABLED = booleanPreferencesKey("hi_fi_mode_enabled")
         val CROSSFADE_DURATION = intPreferencesKey("crossfade_duration")
         val PLAYBACK_SPEED = androidx.datastore.preferences.core.floatPreferencesKey("playback_speed")
@@ -241,6 +242,17 @@ constructor(
     suspend fun setCrossfadeEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.IS_CROSSFADE_ENABLED] = enabled
+        }
+    }
+
+    val smartCrossfadeEnabledFlow: Flow<Boolean> =
+            dataStore.data.map { preferences ->
+                preferences[PreferencesKeys.SMART_CROSSFADE_ENABLED] ?: false
+            }
+
+    suspend fun setSmartCrossfadeEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.SMART_CROSSFADE_ENABLED] = enabled
         }
     }
 

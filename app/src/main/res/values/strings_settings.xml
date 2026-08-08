@@ -136,6 +136,8 @@
     <string name="setcat_crossfade_label">Crossfade</string>
     <string name="setcat_crossfade_desc">Enable smooth transition between songs.</string>
     <string name="setcat_crossfade_duration">Crossfade Duration</string>
+    <string name="setcat_smart_crossfade_title">Smart crossfade</string>
+    <string name="setcat_smart_crossfade_subtitle">Match the crossfade length to the songs\' tempo when their BPM tags are compatible.</string>
     <string name="setcat_hifi_mode_title">Hi-Fi Mode</string>
     <string name="setcat_hifi_mode_subtitle_supported">Float 32-bit audio output. Disable if playback stutters on your device.</string>
     <string name="setcat_hifi_mode_subtitle_unsupported">Not supported on this device (PCM_FLOAT AudioTrack unavailable).</string>

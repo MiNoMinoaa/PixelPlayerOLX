@@ -802,6 +802,14 @@ fun SettingsCategoryScreen(
                                         onValueChange = { settingsViewModel.setCrossfadeDuration(it.toInt()) },
                                         valueText = { value -> "${(value / 1000).toInt()}s" }
                                     )
+                                    SwitchSettingItem(
+                                        title = stringResource(R.string.setcat_smart_crossfade_title),
+                                        subtitle = stringResource(R.string.setcat_smart_crossfade_subtitle),
+                                        checked = uiState.smartCrossfadeEnabled,
+                                        onCheckedChange = { settingsViewModel.setSmartCrossfadeEnabled(it) },
+                                        leadingIcon = { Icon(painterResource(R.drawable.rounded_align_justify_space_even_24), null, tint = MaterialTheme.colorScheme.secondary) },
+                                        modifier = Modifier.settingHighlight("item_playback_smart_crossfade", highlightKey)
+                                    )
                                 }
                                 SliderSettingsItem(
                                     label = stringResource(R.string.setcat_playback_speed),
