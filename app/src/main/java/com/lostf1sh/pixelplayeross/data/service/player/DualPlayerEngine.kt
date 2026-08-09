@@ -12,6 +12,7 @@ import android.util.LruCache
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes as Media3AudioAttributes
 import androidx.media3.common.C
+import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
@@ -46,8 +47,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -216,6 +219,41 @@ class DualPlayerEngine @Inject constructor(
 
     private val _activeDecoderInfo = MutableStateFlow<ActiveDecoderInfo?>(null)
     val activeDecoderInfo: StateFlow<ActiveDecoderInfo?> = _activeDecoderInfo.asStateFlow()
+
+    /**
+     * Whether ExoPlayer audio offload is currently enabled for this session. Exposed
+     * read-only for the diagnostic performance report.
+     */
+    val isAudioOffloadEnabled: Boolean
+        get() = audioOffloadEnabled
+
+    /** Lightweight, allocation-cheap snapshot of the live audio format, for diagnostics. */
+    data class AudioFormatSnapshot(
+        val sampleMimeType: String?,
+        val sampleRate: Int,
+        val channelCount: Int,
+        val pcmEncoding: Int,
+        val bitrate: Int
+    )
+
+    /** Returns the current master-player audio format, or null when nothing is decoding. */
+    fun currentAudioFormatSnapshot(): AudioFormatSnapshot? {
+        if (!::playerA.isInitialized) return null
+        val format = playerA.audioFormat ?: return null
+        fun Int.orZero() = if (this == Format.NO_VALUE) 0 else this
+        val bitrate = when {
+            format.averageBitrate != Format.NO_VALUE -> format.averageBitrate
+            format.peakBitrate != Format.NO_VALUE -> format.peakBitrate
+            else -> 0
+        }
+        return AudioFormatSnapshot(
+            sampleMimeType = format.sampleMimeType,
+            sampleRate = format.sampleRate.orZero(),
+            channelCount = format.channelCount.orZero(),
+            pcmEncoding = format.pcmEncoding.orZero(),
+            bitrate = bitrate
+        )
+    }
 
     private var sharedAudioSessionId: Int = C.AUDIO_SESSION_ID_UNSET
 
@@ -873,7 +911,27 @@ class DualPlayerEngine @Inject constructor(
                     if (resolved != null) {
                         return dataSpec.buildUpon().setUri(resolved).build()
                     }
-                    Timber.tag("DualPlayerEngine").d("resolveDataSpec: Cache MISS for %s — using original URI", scheme)
+                    // Cache miss: resolve inline. resolveDataSpec runs on ExoPlayer's
+                    // loading thread, where blocking I/O is allowed. This makes cloud
+                    // playback independent of whether the dispatch path pre-resolved
+                    // the URI — seeks into unresolved queue items, add-to-queue,
+                    // controller-driven playback and restored queues would otherwise
+                    // hand a raw cloud scheme to DefaultDataSource and surface a
+                    // "Source error" toast.
+                    Timber.tag("DualPlayerEngine").d("resolveDataSpec: cache miss for %s — resolving inline", scheme)
+                    val inlineResolved = try {
+                        runBlocking { resolveCloudUri(uri) }
+                    } catch (e: Exception) {
+                        // Keep loader failures on the IOException path: ExoPlayer treats
+                        // unexpected RuntimeExceptions from a DataSource as fatal.
+                        throw IOException("Failed to resolve $scheme stream", e)
+                    }
+                    if (inlineResolved != uri) {
+                        return dataSpec.buildUpon().setUri(inlineResolved).build()
+                    }
+                    // No proxy can serve a raw cloud scheme; fail with a clear cause
+                    // instead of letting DefaultDataSource report an opaque scheme error.
+                    throw IOException("Could not resolve $scheme stream (offline or provider unavailable)")
                 }
                 return dataSpec
             }

@@ -98,6 +98,33 @@ data class DeviceCapabilitySongRow(
     val sourceType: Int
 )
 
+/**
+ * Single-pass audio aggregates for the diagnostic performance report.
+ * Computed in one SQL pass so it stays cheap even on large libraries —
+ * we never materialize every row. File-size figures are *estimated* from
+ * bitrate × duration because raw byte sizes are not stored in the DB; this
+ * avoids per-file filesystem stat calls just to build a report.
+ */
+data class LibraryAudioStatsRow(
+    val totalCount: Int,
+    val localCount: Int,
+    val cloudCount: Int,
+    val hiResCount: Int,
+    val ultraHiResCount: Int,
+    val likelyExpensiveCount: Int,
+    val maxBitrate: Int?,
+    val minSampleRate: Int?,
+    val maxSampleRate: Int?,
+    val estMinBytes: Long?,
+    val estAvgBytes: Double?,
+    val estMaxBytes: Long?
+)
+
+data class MimeTypeCountRow(
+    val mimeType: String?,
+    val count: Int
+)
+
 @Dao
 interface MusicDao {
 
@@ -328,6 +355,15 @@ interface MusicDao {
     @Query("SELECT DISTINCT parent_directory_path FROM songs")
     suspend fun getDistinctParentDirectories(): List<String>
 
+    /**
+     * Reactive variant of [getDistinctParentDirectories]. Re-emits whenever the songs
+     * table changes (e.g. after a sync adds songs in new folders), so cached directory
+     * filters stay consistent with the actual library instead of freezing at an early,
+     * possibly-empty snapshot taken before the first sync completes.
+     */
+    @Query("SELECT DISTINCT parent_directory_path FROM songs")
+    fun getDistinctParentDirectoriesFlow(): Flow<List<String>>
+
     @Query("SELECT " + SONG_LIST_PROJECTION + """
         FROM songs
         WHERE (:applyDirectoryFilter = 0 OR id < 0 OR parent_directory_path IN (:allowedParentDirs))
@@ -463,6 +499,40 @@ interface MusicDao {
         FROM songs
     """)
     suspend fun getDeviceCapabilitySongRows(): List<DeviceCapabilitySongRow>
+
+    /**
+     * Single-pass audio aggregates for the diagnostic performance report.
+     * Hi-res thresholds: > 48 kHz = hi-res, >= 176.4 kHz = ultra-hi-res.
+     * Estimated bytes = bitrate(bps) * duration(ms) / 8000.
+     */
+    @Query("""
+        SELECT
+            COUNT(*) AS totalCount,
+            COALESCE(SUM(CASE WHEN source_type = 0 THEN 1 ELSE 0 END), 0) AS localCount,
+            COALESCE(SUM(CASE WHEN source_type != 0 THEN 1 ELSE 0 END), 0) AS cloudCount,
+            COALESCE(SUM(CASE WHEN sample_rate > 48000 THEN 1 ELSE 0 END), 0) AS hiResCount,
+            COALESCE(SUM(CASE WHEN sample_rate >= 176400 THEN 1 ELSE 0 END), 0) AS ultraHiResCount,
+            COALESCE(SUM(CASE
+                WHEN sample_rate > 48000
+                    OR mime_type LIKE '%flac%'
+                    OR mime_type LIKE '%alac%'
+                    OR mime_type LIKE '%wav%'
+                    OR mime_type LIKE '%aiff%'
+                    OR mime_type LIKE '%ape%'
+                THEN 1 ELSE 0 END), 0) AS likelyExpensiveCount,
+            MAX(bitrate) AS maxBitrate,
+            MIN(NULLIF(sample_rate, 0)) AS minSampleRate,
+            MAX(sample_rate) AS maxSampleRate,
+            MIN(CASE WHEN bitrate > 0 AND duration > 0 THEN bitrate * duration / 8000 END) AS estMinBytes,
+            AVG(CASE WHEN bitrate > 0 AND duration > 0 THEN bitrate * duration / 8000 END) AS estAvgBytes,
+            MAX(CASE WHEN bitrate > 0 AND duration > 0 THEN bitrate * duration / 8000 END) AS estMaxBytes
+        FROM songs
+    """)
+    suspend fun getLibraryAudioStats(): LibraryAudioStatsRow
+
+    /** Per-MIME song counts for the diagnostic performance report. */
+    @Query("SELECT mime_type AS mimeType, COUNT(*) AS count FROM songs GROUP BY mime_type ORDER BY count DESC")
+    suspend fun getMimeTypeCounts(): List<MimeTypeCountRow>
 
     /**
      * Returns random songs for efficient shuffle without loading all songs into memory.
@@ -1465,6 +1535,35 @@ interface MusicDao {
     """)
     fun getSongsByGenre(
         genreName: String,
+        allowedParentDirs: List<String>,
+        applyDirectoryFilter: Boolean
+    ): Flow<List<SongEntity>>
+
+    // Multi-genre aware query: matches songs where the genre column equals the name (case-
+    // insensitively, via LIKE), or contains it as part of a comma-separated list.
+    // SQLite LIKE is case-insensitive for ASCII letters by default, which is sufficient
+    // for genre names. All six arms use LIKE so that "rock" matches "Rock", "Rock,Pop",
+    // "Rock, Pop", "Pop,Rock", "Pop, Rock", and "Pop,Rock,Jazz".
+    @Query("""
+        SELECT * FROM songs
+        WHERE (:applyDirectoryFilter = 0 OR id < 0 OR parent_directory_path IN (:allowedParentDirs))
+        AND (
+            genre LIKE :genreName
+            OR genre LIKE :genrePrefix
+            OR genre LIKE :genreSuffixWithSpace
+            OR genre LIKE :genreSuffix
+            OR genre LIKE :genreMiddleWithSpace
+            OR genre LIKE :genreMiddle
+        )
+        ORDER BY title ASC
+    """)
+    fun getSongsByGenreContaining(
+        genreName: String,
+        genrePrefix: String,
+        genreSuffixWithSpace: String,
+        genreSuffix: String,
+        genreMiddleWithSpace: String,
+        genreMiddle: String,
         allowedParentDirs: List<String>,
         applyDirectoryFilter: Boolean
     ): Flow<List<SongEntity>>

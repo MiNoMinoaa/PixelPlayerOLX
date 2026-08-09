@@ -42,6 +42,7 @@ import com.google.common.util.concurrent.SettableFuture
 import com.lostf1sh.pixelplayeross.PixelPlayerApplication
 import com.lostf1sh.pixelplayeross.MainActivity
 import com.lostf1sh.pixelplayeross.R
+import com.lostf1sh.pixelplayeross.data.diagnostics.AdvancedPerformanceDiagnostics
 import com.lostf1sh.pixelplayeross.data.model.PlayerInfo
 import com.lostf1sh.pixelplayeross.data.model.PlaybackQueueItemSnapshot
 import com.lostf1sh.pixelplayeross.data.model.PlaybackQueueSnapshot
@@ -179,16 +180,19 @@ class MusicService : MediaLibraryService() {
     @AppScope
     lateinit var appScope: CoroutineScope
 
-    private var replayGainEnabled = false
     private var userPlaybackSpeed = 1f
-    private var replayGainUseAlbumGain = false
-    private var replayGainJob: Job? = null
-    private var replayGainRequestToken = 0L
-    private var userSelectedVolume = 1f
-    private var expectedReplayGainVolume: Float? = null
-    private var pendingReplayGainVolume: Float? = null
-    private var lastAppliedReplayGainVolume: Float? = null
-    private var lastReplayGainMediaId: String? = null
+
+    // ReplayGain volume-normalization state + logic, extracted to a standalone
+    // component. Lazily built so the Hilt-injected engine/replayGainManager and the
+    // service scope are ready before first use (first playback event).
+    private val replayGainProcessor by lazy {
+        ReplayGainProcessor(
+            engine = engine,
+            replayGainManager = replayGainManager,
+            scope = serviceScope,
+            currentSessionMediaItem = { mediaSession?.player?.currentMediaItem },
+        )
+    }
 
     private var favoriteSongIds = emptySet<String>()
     private var mediaSession: MediaLibrarySession? = null
@@ -264,7 +268,7 @@ class MusicService : MediaLibraryService() {
 
     private val playerSwapListener: (Player) -> Unit = { newPlayer ->
         publishMediaSessionPlayer(newPlayer, "Swapped MediaSession player to new instance.")
-        prepareReplayGainForTransitionPlayer(newPlayer)
+        replayGainProcessor.prepareForTransition(newPlayer)
         applyPlaybackSpeed(newPlayer)
     }
 
@@ -273,36 +277,48 @@ class MusicService : MediaLibraryService() {
             displayPlayer,
             "Published incoming crossfade player to MediaSession."
         )
-        prepareReplayGainForTransitionPlayer(displayPlayer)
+        replayGainProcessor.prepareForTransition(displayPlayer)
         applyPlaybackSpeed(displayPlayer)
     }
 
     private val transitionFinishedListener: () -> Unit = {
-        onTransitionFinished()
+        replayGainProcessor.onTransitionFinished()
+    }
+
+    private fun Player.unwrapMappingPlayer(): Player {
+        return (this as? com.lostf1sh.pixelplayeross.data.service.player.MappingPlayer)?.innerPlayer ?: this
+    }
+
+    private fun Player.unwrapFadingPlayer(): Player {
+        return (this as? com.lostf1sh.pixelplayeross.data.service.player.FadingPlayer)?.innerPlayer ?: this
+    }
+
+    private fun wrapFadingPlayer(player: Player): Player {
+        val fadingPlayer = com.lostf1sh.pixelplayeross.data.service.player.FadingPlayer(
+            innerPlayer = player,
+            scope = appScope
+        )
+        return com.lostf1sh.pixelplayeross.data.service.player.MappingPlayer(
+            innerPlayer = fadingPlayer,
+            context = this
+        )
     }
 
     private fun publishMediaSessionPlayer(player: Player, logMessage: String) {
         val session = mediaSession ?: return
         val oldPlayer = session.player
-        if (oldPlayer !== player) {
+        val unwrappedOld = oldPlayer.unwrapMappingPlayer().unwrapFadingPlayer()
+        if (unwrappedOld !== player) {
             oldPlayer.removeListener(playerListener)
-            session.player = player
-            player.addListener(playerListener)
+            val wrappedPlayer = wrapFadingPlayer(player)
+            session.player = wrappedPlayer
+            wrappedPlayer.addListener(playerListener)
         }
 
         Timber.tag("MusicService").d(logMessage)
         syncLocalListeningStatsFromPlayer(player)
         requestWidgetFullUpdate(force = true)
         refreshMediaSessionUi(session)
-    }
-
-    private fun prepareReplayGainForTransitionPlayer(player: Player) {
-        val incomingItem = player.currentMediaItem
-        val cachedVolume = getCachedReplayGainVolume(incomingItem)
-        if (cachedVolume != null) {
-            engine.incomingTrackReplayGainVolume = cachedVolume
-        }
-        applyReplayGain(incomingItem)
     }
 
     private fun syncLocalListeningStatsFromPlayer(
@@ -375,7 +391,7 @@ class MusicService : MediaLibraryService() {
         listeningStatsTracker.initialize(appScope)
         
         engine.initialize()
-        userSelectedVolume = engine.masterPlayer.volume.coerceIn(0f, 1f)
+        replayGainProcessor.captureUserVolume(engine.masterPlayer.volume)
         syncLocalListeningStatsFromPlayer(engine.masterPlayer)
 
         engine.masterPlayer.addListener(playerListener)
@@ -455,14 +471,14 @@ class MusicService : MediaLibraryService() {
 
         serviceScope.launch {
             userPreferencesRepository.replayGainEnabledFlow.collect { enabled ->
-                replayGainEnabled = enabled
-                applyReplayGain(mediaSession?.player?.currentMediaItem)
+                replayGainProcessor.setEnabled(enabled)
+                replayGainProcessor.apply(mediaSession?.player?.currentMediaItem)
             }
         }
         serviceScope.launch {
             userPreferencesRepository.replayGainUseAlbumGainFlow.collect { useAlbum ->
-                replayGainUseAlbumGain = useAlbum
-                applyReplayGain(mediaSession?.player?.currentMediaItem)
+                replayGainProcessor.setUseAlbumGain(useAlbum)
+                replayGainProcessor.apply(mediaSession?.player?.currentMediaItem)
             }
         }
 
@@ -745,7 +761,7 @@ class MusicService : MediaLibraryService() {
             }
         }
 
-        mediaSession = MediaLibrarySession.Builder(this, engine.masterPlayer, callback)
+        mediaSession = MediaLibrarySession.Builder(this, wrapFadingPlayer(engine.masterPlayer), callback)
             .setSessionActivity(getOpenAppPendingIntent())
             .setBitmapLoader(CoilBitmapLoader(this, serviceScope))
             .build()
@@ -994,7 +1010,7 @@ class MusicService : MediaLibraryService() {
         followUpMediaSessionUiRefreshJob?.cancel()
         debouncedWidgetUpdateJob?.cancel()
         unregisterHeadsetReconnectMonitor()
-        replayGainJob?.cancel()
+        replayGainProcessor.cancel()
 
         engine.removePlayerSwapListener(playerSwapListener)
         engine.removeTransitionDisplayPlayerListener(transitionDisplayPlayerListener)
@@ -1077,14 +1093,7 @@ class MusicService : MediaLibraryService() {
 
     private val playerListener = object : Player.Listener {
         override fun onVolumeChanged(volume: Float) {
-            if (engine.isTransitionRunning()) return
-            val expectedVolume = expectedReplayGainVolume
-            if (expectedVolume != null && abs(expectedVolume - volume) < 0.001f) {
-                expectedReplayGainVolume = null
-                return
-            }
-            expectedReplayGainVolume = null
-            userSelectedVolume = volume.coerceIn(0f, 1f)
+            replayGainProcessor.onPlayerVolumeChanged(volume)
         }
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -1102,8 +1111,8 @@ class MusicService : MediaLibraryService() {
                 stopNavidromePlaybackReporting()
             }
 
-            if (isPlaying && !engine.isTransitionRunning()) {
-                lastAppliedReplayGainVolume?.let { setPlayerVolume(player, it) }
+            if (isPlaying) {
+                replayGainProcessor.reapplyLastAppliedVolume(player)
             }
             requestWidgetFullUpdate(force = true)
             mediaSession?.let { refreshMediaSessionUi(it) }
@@ -1162,7 +1171,7 @@ class MusicService : MediaLibraryService() {
             val player = engine.masterPlayer
             val nextIndex = player.nextMediaItemIndex
             if (nextIndex != androidx.media3.common.C.INDEX_UNSET) {
-                runCatching { prefetchReplayGain(player.getMediaItemAt(nextIndex)) }
+                runCatching { replayGainProcessor.prefetch(player.getMediaItemAt(nextIndex)) }
             }
         }
 
@@ -1196,11 +1205,9 @@ class MusicService : MediaLibraryService() {
                 val oldMediaId = oldPosition.mediaItem?.mediaId
                 val newMediaId = newPosition.mediaItem?.mediaId
                 if (oldMediaId != null && oldMediaId == newMediaId) {
-                    lastAppliedReplayGainVolume?.let {
-                        if (!engine.isTransitionRunning()) setPlayerVolume(engine.masterPlayer, it)
-                    }
+                    replayGainProcessor.reapplyLastAppliedVolume(engine.masterPlayer)
                 } else {
-                    applyReplayGain(currentItem)
+                    replayGainProcessor.apply(currentItem)
                 }
             }
         }
@@ -1218,11 +1225,11 @@ class MusicService : MediaLibraryService() {
             }
 
             playbackTimerController.handleMediaItemTransition(mediaItem, reason)
-            applyReplayGain(mediaSession?.player?.currentMediaItem)
+            replayGainProcessor.apply(mediaSession?.player?.currentMediaItem)
             val player = engine.masterPlayer
             val nextIndex = player.nextMediaItemIndex
             if (nextIndex != androidx.media3.common.C.INDEX_UNSET) {
-                runCatching { prefetchReplayGain(player.getMediaItemAt(nextIndex)) }
+                runCatching { replayGainProcessor.prefetch(player.getMediaItemAt(nextIndex)) }
             }
             requestWidgetFullUpdate(force = false)
             mediaSession?.let { refreshMediaSessionUi(it) }
@@ -1233,14 +1240,7 @@ class MusicService : MediaLibraryService() {
             requestWidgetFullUpdate(force = true)
             mediaSession?.let { refreshMediaSessionUiWithFollowUp(it) }
             val activePlayer = mediaSession?.player ?: engine.masterPlayer
-            val currentMediaId = activePlayer.currentMediaItem?.mediaId
-            if (currentMediaId != null && currentMediaId != lastReplayGainMediaId) {
-                applyReplayGain(activePlayer.currentMediaItem)
-            } else if (currentMediaId != null) {
-                lastAppliedReplayGainVolume?.let {
-                    if (!engine.isTransitionRunning()) setPlayerVolume(engine.masterPlayer, it)
-                }
-            }
+            replayGainProcessor.onMediaMetadataChanged(activePlayer.currentMediaItem)
         }
 
         override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
@@ -1260,6 +1260,15 @@ class MusicService : MediaLibraryService() {
         override fun onPlayerError(error: PlaybackException) {
             val player = mediaSession?.player ?: engine.masterPlayer
             Timber.tag(TAG).e(error, "Player error on item %s", player.currentMediaItem?.mediaId)
+            AdvancedPerformanceDiagnostics.recordEventIfEnabled(
+                type = AdvancedPerformanceDiagnostics.EventTypes.PLAYBACK,
+                name = "player_error"
+            ) {
+                mapOf(
+                    "code" to error.errorCodeName,
+                    "message" to (error.message ?: error.javaClass.simpleName)
+                )
+            }
             if (player.hasNextMediaItem() && consecutivePlaybackErrors < maxConsecutivePlaybackErrors) {
                 consecutivePlaybackErrors++
                 player.seekToNextMediaItem()
@@ -1274,139 +1283,6 @@ class MusicService : MediaLibraryService() {
     private fun applyPlaybackSpeed(player: Player) {
         if (abs(player.playbackParameters.speed - userPlaybackSpeed) > 0.001f) {
             player.setPlaybackSpeed(userPlaybackSpeed)
-        }
-    }
-
-    /**
-     * Applies ReplayGain volume normalization to the current track.
-     * Reads RG tags from the file and adjusts player.volume accordingly.
-     */
-    private fun applyReplayGain(mediaItem: MediaItem?) {
-        replayGainJob?.cancel()
-        replayGainRequestToken += 1
-        val requestToken = replayGainRequestToken
-
-        if (mediaItem == null) {
-            return
-        }
-
-        if (!replayGainEnabled) {
-            pendingReplayGainVolume = null
-            if (!engine.isTransitionRunning()) {
-                setPlayerVolume(engine.masterPlayer, userSelectedVolume)
-            }
-            return
-        }
-
-        val mediaId = mediaItem.mediaId
-        val filePath = mediaItem.mediaMetadata.extras
-            ?.getString(MediaItemBuilder.EXTERNAL_EXTRA_FILE_PATH)
-
-        if (filePath.isNullOrBlank()) {
-            Timber.tag(TAG).d("ReplayGain: No file path for track, keeping user-selected volume")
-            if (!engine.isTransitionRunning()) {
-                setPlayerVolume(engine.masterPlayer, userSelectedVolume)
-            }
-            return
-        }
-
-        val useAlbumGain = replayGainUseAlbumGain
-
-        if (!engine.isTransitionRunning()) {
-            lastAppliedReplayGainVolume?.let { setPlayerVolume(engine.masterPlayer, it) }
-        }
-
-        replayGainJob = serviceScope.launch {
-            val rgValues = withContext(Dispatchers.IO) {
-                replayGainManager.readReplayGain(filePath)
-            }
-
-            if (requestToken != replayGainRequestToken) {
-                return@launch
-            }
-
-            val currentMediaId = mediaSession?.player?.currentMediaItem?.mediaId
-            if (currentMediaId != mediaId) {
-                Timber.tag(TAG).d("ReplayGain: Ignoring stale result for mediaId=%s", mediaId)
-                return@launch
-            }
-
-            val volume = replayGainManager.getVolumeMultiplier(
-                rgValues,
-                useAlbumGain = useAlbumGain
-            )
-
-            if (engine.isTransitionRunning()) {
-                pendingReplayGainVolume = volume
-                engine.incomingTrackReplayGainVolume = volume
-                Timber.tag(TAG).d("ReplayGain: Stored pending volume=%.2f for %s (transition running)",
-                    volume, mediaItem.mediaMetadata.title
-                )
-            } else {
-                pendingReplayGainVolume = null
-                engine.incomingTrackReplayGainVolume = null
-                lastAppliedReplayGainVolume = volume
-                lastReplayGainMediaId = mediaId
-                setPlayerVolume(engine.masterPlayer, volume)
-                Timber.tag(TAG).d("ReplayGain: Applied volume=%.2f for %s",
-                    volume, mediaItem.mediaMetadata.title
-                )
-            }
-        }
-    }
-
-    /**
-     * Returns the cached ReplayGain volume for a media item if already computed, or null.
-     * Does NOT trigger an IO read — only reads from the in-memory cache.
-     */
-    private fun getCachedReplayGainVolume(mediaItem: MediaItem?): Float? {
-        if (!replayGainEnabled || mediaItem == null) return null
-        val filePath = mediaItem.mediaMetadata.extras
-            ?.getString(MediaItemBuilder.EXTERNAL_EXTRA_FILE_PATH) ?: return null
-        if (filePath.isBlank()) return null
-        val cached = replayGainManager.getCachedReplayGain(filePath) ?: return null
-        return replayGainManager.getVolumeMultiplier(cached, useAlbumGain = replayGainUseAlbumGain)
-    }
-
-    /**
-     * Pre-fetches ReplayGain tags for a media item into the cache without applying the volume.
-     * Called on queue changes and track transitions so the cache is warm by the time
-     * applyReplayGain() runs, avoiding the 1-2s JNI read delay on playback start.
-     */
-    private fun prefetchReplayGain(mediaItem: MediaItem?) {
-        if (!replayGainEnabled || mediaItem == null) return
-        val filePath = mediaItem.mediaMetadata.extras
-            ?.getString(MediaItemBuilder.EXTERNAL_EXTRA_FILE_PATH) ?: return
-        if (filePath.isBlank()) return
-        serviceScope.launch(Dispatchers.IO) {
-            replayGainManager.readReplayGain(filePath)
-        }
-    }
-
-    private fun setPlayerVolume(player: Player, volume: Float) {
-        val clampedVolume = volume.coerceIn(0f, 1f)
-        expectedReplayGainVolume = clampedVolume
-        player.volume = clampedVolume
-    }
-
-    private fun onTransitionFinished() {
-        val player = engine.masterPlayer
-        val pending = pendingReplayGainVolume
-        pendingReplayGainVolume = null
-
-        if (!replayGainEnabled) {
-            setPlayerVolume(player, userSelectedVolume)
-            Timber.tag(TAG).d("ReplayGain: Transition finished, RG disabled — restored userSelectedVolume=%.2f", userSelectedVolume)
-            return
-        }
-
-        if (pending != null) {
-            lastAppliedReplayGainVolume = pending
-            setPlayerVolume(player, pending)
-            Timber.tag(TAG).d("ReplayGain: Transition finished, applied pending volume=%.2f", pending)
-        } else {
-            applyReplayGain(mediaSession?.player?.currentMediaItem)
-            Timber.tag(TAG).d("ReplayGain: Transition finished, no pending volume — triggering full recomputation")
         }
     }
 
@@ -1523,8 +1399,18 @@ class MusicService : MediaLibraryService() {
         for (index in 0 until mediaItemCount) {
             val mediaItem = player.getMediaItemAt(index)
             val metadata = mediaItem.mediaMetadata
-            val uri = mediaItem.localConfiguration?.uri?.toString()
-                ?: metadata.extras?.getString(MediaItemBuilder.EXTERNAL_EXTRA_CONTENT_URI)
+            val playerUri = mediaItem.localConfiguration?.uri?.toString()
+            val originalContentUri = metadata.extras?.getString(MediaItemBuilder.EXTERNAL_EXTRA_CONTENT_URI)
+            // A cloud item that resolved through a local stream proxy carries a loopback
+            // URL (http://127.0.0.1:{port}/{secret}/...) whose port and secret die with
+            // this process. Persist the original cloud URI from the extras instead so a
+            // restored queue re-resolves against the live proxy instead of failing with
+            // a source error.
+            val uri = when {
+                playerUri == null -> originalContentUri
+                isEphemeralLoopbackUri(playerUri) && !originalContentUri.isNullOrBlank() -> originalContentUri
+                else -> playerUri
+            }
 
             if (mediaItem.mediaId.isBlank() || uri.isNullOrBlank()) {
                 continue
@@ -1578,6 +1464,13 @@ class MusicService : MediaLibraryService() {
             repeatMode = safeRepeatMode,
             shuffleEnabled = isManualShuffleEnabled,
         )
+    }
+
+    private fun isEphemeralLoopbackUri(uriString: String): Boolean {
+        val uri = runCatching { Uri.parse(uriString) }.getOrNull() ?: return false
+        val scheme = uri.scheme?.lowercase()
+        if (scheme != "http" && scheme != "https") return false
+        return uri.host == "127.0.0.1" || uri.host == "localhost"
     }
 
     private suspend fun restorePlaybackQueueSnapshotIfNeeded() {
