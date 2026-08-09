@@ -1581,7 +1581,7 @@ class MusicService : MediaLibraryService() {
         val restoredArtworkUri = MediaItemBuilder.externalControllerArtworkUri(
             context = this,
             rawArtworkUri = snapshotItem.artworkUri
-        ) ?: MediaItemBuilder.artworkUri(snapshotItem.artworkUri)
+        )
         restoredArtworkUri?.let { metadataBuilder.setArtworkUri(it) }
 
         val extras = Bundle().apply {
@@ -2387,7 +2387,11 @@ class MusicService : MediaLibraryService() {
         val providerAuthority = "$packageName.provider"
         val artworkAuthority = "$packageName.artwork"
         mediaItems.forEach { mediaItem ->
-            val artworkUri = resolveArtworkUri(mediaItem.mediaMetadata) ?: return@forEach
+            val storedArtworkUri = resolveStoredArtworkUriString(mediaItem.mediaMetadata)
+            val artworkUri = MediaItemBuilder.externalControllerArtworkUri(
+                context = this,
+                rawArtworkUri = storedArtworkUri
+            ) ?: resolveArtworkUri(mediaItem.mediaMetadata) ?: return@forEach
             val authority = artworkUri.authority
             if (artworkUri.scheme?.lowercase() != "content" ||
                 (authority != providerAuthority && authority != artworkAuthority)

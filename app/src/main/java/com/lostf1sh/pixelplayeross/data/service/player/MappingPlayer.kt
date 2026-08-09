@@ -8,8 +8,7 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.common.util.UnstableApi
-import com.lostf1sh.pixelplayeross.data.provider.SharedArtworkContentProvider
-import com.lostf1sh.pixelplayeross.utils.LocalArtworkUri
+import com.lostf1sh.pixelplayeross.utils.MediaItemBuilder
 
 /**
  * Rewrites app-internal artwork URIs on outgoing media items to shareable content URIs, so
@@ -24,22 +23,19 @@ class MappingPlayer(
 
     private fun mapMediaItem(mediaItem: MediaItem?): MediaItem? {
         if (mediaItem == null) return null
-        val artworkUri = mediaItem.mediaMetadata.artworkUri
-        if (artworkUri != null && LocalArtworkUri.isLocalArtworkUri(artworkUri)) {
-            val songId = LocalArtworkUri.parseSongId(artworkUri.toString()) ?: return mediaItem
-            val contentUri = SharedArtworkContentProvider.buildSongUri(
-                context = context,
-                songId = songId,
-                cacheBustToken = LocalArtworkUri.extractCacheBustToken(artworkUri.toString())
-            )
-            val mappedMetadata = mediaItem.mediaMetadata.buildUpon()
-                .setArtworkUri(contentUri)
-                .build()
-            return mediaItem.buildUpon()
-                .setMediaMetadata(mappedMetadata)
-                .build()
-        }
-        return mediaItem
+        val artworkUri = mediaItem.mediaMetadata.artworkUri ?: return mediaItem
+        val exposedArtworkUri = MediaItemBuilder.externalControllerArtworkUri(
+            context = context,
+            rawArtworkUri = artworkUri.toString()
+        ) ?: return mediaItem
+        if (exposedArtworkUri == artworkUri) return mediaItem
+
+        val mappedMetadata = mediaItem.mediaMetadata.buildUpon()
+            .setArtworkUri(exposedArtworkUri)
+            .build()
+        return mediaItem.buildUpon()
+            .setMediaMetadata(mappedMetadata)
+            .build()
     }
 
     override fun getCurrentMediaItem(): MediaItem? {
@@ -52,19 +48,16 @@ class MappingPlayer(
 
     override fun getMediaMetadata(): MediaMetadata {
         val metadata = super.getMediaMetadata()
-        val artworkUri = metadata.artworkUri
-        if (artworkUri != null && LocalArtworkUri.isLocalArtworkUri(artworkUri)) {
-            val songId = LocalArtworkUri.parseSongId(artworkUri.toString()) ?: return metadata
-            val contentUri = SharedArtworkContentProvider.buildSongUri(
-                context = context,
-                songId = songId,
-                cacheBustToken = LocalArtworkUri.extractCacheBustToken(artworkUri.toString())
-            )
-            return metadata.buildUpon()
-                .setArtworkUri(contentUri)
-                .build()
-        }
-        return metadata
+        val artworkUri = metadata.artworkUri ?: return metadata
+        val exposedArtworkUri = MediaItemBuilder.externalControllerArtworkUri(
+            context = context,
+            rawArtworkUri = artworkUri.toString()
+        ) ?: return metadata
+        if (exposedArtworkUri == artworkUri) return metadata
+
+        return metadata.buildUpon()
+            .setArtworkUri(exposedArtworkUri)
+            .build()
     }
 
     override fun getCurrentTimeline(): Timeline {
