@@ -16,7 +16,6 @@
     <string name="presentation_batch_d_cloud_only">仅云端</string>
     <string name="presentation_batch_d_max_albums_selection">最多可选择 %1$d 个专辑</string>
     <string name="presentation_batch_d_folder_name_fallback">文件夹</string>
-    <string name="presentation_batch_d_expand_tab_menu_cd">展开菜单</string>
     <string name="presentation_batch_d_library_tabs_sheet_title">音乐库标签</string>
     <string name="presentation_batch_d_library_tabs_sheet_subtitle">快速跳转至任意标签，或是调整标签顺序。</string>
     <string name="presentation_batch_d_reorder_tabs_label">调整标签顺序</string>

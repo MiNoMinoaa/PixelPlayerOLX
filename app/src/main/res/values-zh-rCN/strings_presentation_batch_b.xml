@@ -63,7 +63,6 @@
     <string name="presentation_batch_b_genre_shuffle_label">%1$s 随机播放</string>
 
     <plurals name="presentation_batch_b_songs_dot_duration">
-        <item quantity="one">%1$d 首歌曲 · %2$s</item>
         <item quantity="other">%1$d 首歌曲 · %2$s</item>
     </plurals>
 </resources>

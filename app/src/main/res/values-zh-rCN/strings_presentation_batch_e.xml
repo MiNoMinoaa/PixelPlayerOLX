@@ -28,11 +28,9 @@
     <string name="presentation_batch_e_more_options_for_song">%1$s 的更多选项</string>
 
     <plurals name="presentation_batch_e_queue_tracks_lined_up">
-        <item quantity="one">已排好 1 首曲目。</item>
         <item quantity="other">已排好 %d 首曲目。</item>
     </plurals>
     <plurals name="presentation_batch_e_n_songs_selected">
-        <item quantity="one">已选中 %d 首歌曲</item>
         <item quantity="other">已选中 %d 首歌曲</item>
     </plurals>
 
@@ -43,6 +41,18 @@
     <string name="presentation_batch_e_create_playlist_subtitle">选择创建方式。</string>
     <string name="presentation_batch_e_creation_mode_manual">手动创建</string>
     <string name="presentation_batch_e_creation_mode_manual_subtitle">自定义封面、图标、样式，并手动挑选歌曲。</string>
+    <string name="presentation_batch_e_creation_mode_describe">描述一下</string>
+    <string name="presentation_batch_e_creation_mode_describe_subtitle">输入你想听的内容，应用会完全离线地为你挑选歌曲。</string>
+    <string name="presentation_batch_e_describe_playlist_title">描述你的歌单</string>
+    <string name="presentation_batch_e_describe_playlist_subtitle">仅与本设备上的曲库进行匹配，任何内容都不会离开设备。</string>
+    <string name="presentation_batch_e_describe_playlist_hint">例如：适合力量训练时听的歌曲</string>
+    <string name="presentation_batch_e_describe_generate">生成</string>
+    <string name="presentation_batch_e_describe_regenerate">重新生成</string>
+    <string name="presentation_batch_e_describe_no_matches">曲库中没有符合该描述的歌曲。</string>
+    <string name="presentation_batch_e_describe_save">保存歌单</string>
+    <plurals name="presentation_batch_e_describe_result_count">
+        <item quantity="other">%d 首歌曲符合条件</item>
+    </plurals>
 
     <string name="presentation_batch_e_reset_presets_title">重置预设</string>
     <string name="presentation_batch_e_reset_presets_message">将会恢复预设的原始顺序与显示状态，是否继续？</string>

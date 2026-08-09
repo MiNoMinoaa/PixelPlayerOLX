@@ -4,6 +4,11 @@
     <string name="settings_accounts_row_title">账号</string>
     <string name="settings_accounts_row_subtitle">管理 Navidrome 与 Jellyfin 服务</string>
 
+    <string name="settings_search_hint">搜索设置</string>
+    <string name="settings_search_no_results">未找到与“%1$s”匹配的结果</string>
+    <string name="settings_search_section_top_matches">最佳匹配</string>
+    <string name="settings_search_section_related">相关设置</string>
+
     <string name="settings_category_library_title">音乐库管理</string>
     <string name="settings_category_library_subtitle">管理文件夹、刷新曲库、解析相关选项</string>
     <string name="settings_category_appearance_title">外观</string>
@@ -62,6 +67,9 @@
     <string name="setcat_reset_imported_lyrics_subtitle">清除数据库内全部导入的歌词</string>
 
     <string name="setcat_global_theme">全局主题</string>
+    <string name="setcat_app_language_label">应用语言</string>
+    <string name="setcat_app_language_desc">选择应用界面使用的语言</string>
+    <string name="setcat_language_system">系统默认</string>
     <string name="setcat_app_theme_label">应用主题</string>
     <string name="setcat_app_theme_desc">在浅色、深色、跟随系统之间切换</string>
     <string name="setcat_theme_light">浅色主题</string>
@@ -131,6 +139,8 @@
     <string name="setcat_crossfade_label">歌曲淡入淡出</string>
     <string name="setcat_crossfade_desc">开启歌曲之间平滑过渡</string>
     <string name="setcat_crossfade_duration">淡入淡出时长</string>
+    <string name="setcat_smart_crossfade_title">智能交叉淡化</string>
+    <string name="setcat_smart_crossfade_subtitle">当歌曲的 BPM 标签兼容时，根据歌曲节奏调整交叉淡化时长</string>
     <string name="setcat_hifi_mode_title">Hi‑Fi高保真模式</string>
     <string name="setcat_hifi_mode_subtitle_supported">32位浮点音频输出。设备播放卡顿请关闭。</string>
     <string name="setcat_hifi_mode_subtitle_unsupported">当前设备不支持（缺少PCM_FLOAT音频通道）</string>
@@ -189,6 +199,16 @@
     <string name="backup_dialog_restoring">正在恢复备份</string>
     <string name="backup_step_format">步骤 %1$d / %2$d</string>
     <string name="backup_entries_will_replace">共%1$d条数据 · 将覆盖当前内容</string>
+    <string name="backup_encrypt_title">加密备份</string>
+    <string name="backup_encrypt_subtitle">使用密码保护备份文件（AES-256），恢复时需要输入该密码</string>
+    <string name="backup_password_hint">备份密码</string>
+    <string name="backup_password_confirm_hint">确认密码</string>
+    <string name="backup_password_mismatch">两次输入的密码不一致</string>
+    <string name="backup_password_too_short">请至少输入 4 个字符</string>
+    <string name="backup_encrypted_prompt_title">加密备份</string>
+    <string name="backup_encrypted_prompt_body">此备份受密码保护，请输入密码以继续</string>
+    <string name="backup_wrong_password">密码错误，请重试</string>
+    <string name="backup_unlock">解锁</string>
 
     <string name="dialog_palette_regenerated">已为 %1$s 重新生成配色</string>
     <string name="dialog_palette_regenerate_failed">%1$s 配色重建失败</string>

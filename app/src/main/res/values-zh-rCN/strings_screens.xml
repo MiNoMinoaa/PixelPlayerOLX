@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="audio_bookmarks_back_to_top">返回顶部</string>
+    <string name="audio_bookmarks_clear_filter">清除筛选</string>
+    <string name="audio_bookmarks_name_label">书签名称</string>
+    <string name="audio_bookmarks_title">书签</string>
+    <string name="audio_bookmarks_cd_open">音频书签</string>
+    <string name="audio_bookmarks_cd_add">保存书签</string>
     <string name="nav_error_genre_id_missing">错误：缺少流派ID</string>
     <string name="easter_egg_thank_you">感谢使用 PixelPlayerOSS！</string>
 

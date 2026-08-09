@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="library_tab_songs">歌曲</string>
+    <string name="library_tab_albums">专辑</string>
+    <string name="library_tab_artists">艺术家</string>
+    <string name="library_tab_playlists">歌单</string>
+    <string name="library_tab_folders">文件夹</string>
+    <string name="library_tab_liked">我喜欢</string>
     <string name="library_error_loading_songs">加载歌曲出错</string>
     <string name="library_error_loading_albums">加载专辑出错</string>
     <string name="library_error_loading_artists">加载艺术家出错</string>
