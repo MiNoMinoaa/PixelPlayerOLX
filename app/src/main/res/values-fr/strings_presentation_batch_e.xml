@@ -16,10 +16,21 @@
     <string name="presentation_batch_e_clear_queue_dialog_title">Vider la file d\'attente</string>
     <string name="presentation_batch_e_create_playlist_subtitle">Choisissez le mode de création.</string>
     <string name="presentation_batch_e_create_playlist_title">Créer une liste de lecture</string>
+    <string name="presentation_batch_e_creation_mode_describe">Décrivez-la</string>
+    <string name="presentation_batch_e_creation_mode_describe_subtitle">Écrivez ce que vous voulez écouter et laissez l\'application choisir les chansons, entièrement hors ligne.</string>
     <string name="presentation_batch_e_creation_mode_manual">Manuel</string>
     <string name="presentation_batch_e_creation_mode_manual_subtitle">Concevez l\'illustration, l\'icône, la forme et choisissez les chansons vous-même.</string>
     <string name="presentation_batch_e_describe_generate">Générer</string>
+    <string name="presentation_batch_e_describe_no_matches">Aucune chanson de votre bibliothèque ne correspond à cette description.</string>
+    <string name="presentation_batch_e_describe_playlist_hint">ex. des chansons pour soulever de la fonte</string>
+    <string name="presentation_batch_e_describe_playlist_subtitle">La recherche se fait dans votre bibliothèque sur cet appareil — rien n\'en sort.</string>
+    <string name="presentation_batch_e_describe_playlist_title">Décrivez votre liste de lecture</string>
     <string name="presentation_batch_e_describe_regenerate">Régénérer</string>
+    <plurals name="presentation_batch_e_describe_result_count">
+        <item quantity="one">%d chanson correspond</item>
+        <item quantity="other">%d chansons correspondent</item>
+    </plurals>
+    <string name="presentation_batch_e_describe_save">Enregistrer la liste de lecture</string>
     <string name="presentation_batch_e_deselect_all">Tout désélectionner</string>
     <string name="presentation_batch_e_enter_playlist_name">Entrez un nom de liste de lecture</string>
     <string name="presentation_batch_e_manage_presets_title">Gérer les préréglages</string>
@@ -30,6 +41,7 @@
     </plurals>
     <string name="presentation_batch_e_new_playlist_hint">Appuyez sur le bouton « Nouvelle playlist » pour commencer.</string>
     <string name="presentation_batch_e_next_up">À suivre</string>
+    <string name="presentation_batch_e_no_playlist_created">Aucune liste de lecture n\'a été créée.</string>
     <string name="presentation_batch_e_no_songs_match_query">Aucune chanson ne correspond à « %1$s »</string>
     <string name="presentation_batch_e_playlist_name_label">Nom de la liste de lecture</string>
     <string name="presentation_batch_e_presets_drag_hint">Faites glisser pour réordonner • Appuyez sur l\'œil pour afficher ou masquer</string>

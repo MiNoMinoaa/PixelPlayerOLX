@@ -14,6 +14,7 @@
     <string name="presentation_batch_b_clear">Bersihkan</string>
     <string name="presentation_batch_b_corner_dp_format">%1$d dp</string>
     <string name="presentation_batch_b_corner_radius_label">Radius Sudut</string>
+    <string name="presentation_batch_b_daily_mix_title">Daily Mix</string>
     <string name="presentation_batch_b_date_today">Hari ini</string>
     <string name="presentation_batch_b_date_yesterday">Kemarin</string>
     <string name="presentation_batch_b_delete_playlist">Hapus playlist</string>
@@ -33,6 +34,7 @@
     <string name="presentation_batch_b_play_latest">Putar terbaru</string>
     <string name="presentation_batch_b_playlist_empty_add_hint">Ketuk \'Tambah Lagu\' untuk memulai.</string>
     <string name="presentation_batch_b_playlist_empty_folder_body">Folder ini tidak berisi lagu.</string>
+    <string name="presentation_batch_b_playlist_empty_smart_body">Belum ada lagu yang cocok dengan aturan pintar ini.</string>
     <string name="presentation_batch_b_playlist_empty_title">Playlist ini kosong.</string>
     <string name="presentation_batch_b_playlist_options_title">Opsi playlist</string>
     <string name="presentation_batch_b_queue_recently_played">Baru-baru Ini Diputar</string>

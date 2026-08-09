@@ -34,6 +34,7 @@
     <string name="presentation_batch_b_play_latest">تشغيل الأحدث</string>
     <string name="presentation_batch_b_playlist_empty_add_hint">انقر على "إضافة أغانٍ" للبدء.</string>
     <string name="presentation_batch_b_playlist_empty_folder_body">هذا المجلد لا يحتوي على أغانٍ.</string>
+    <string name="presentation_batch_b_playlist_empty_smart_body">لا توجد أغانٍ تطابق هذه القاعدة الذكية بعد.</string>
     <string name="presentation_batch_b_playlist_empty_title">قائمة التشغيل هذه فارغة.</string>
     <string name="presentation_batch_b_playlist_options_title">خيارات قائمة التشغيل</string>
     <string name="presentation_batch_b_queue_recently_played">المشغلة حديثاً</string>

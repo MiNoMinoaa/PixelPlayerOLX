@@ -14,6 +14,7 @@
     <string name="presentation_batch_b_clear">Effacer</string>
     <string name="presentation_batch_b_corner_dp_format">%1$d dp</string>
     <string name="presentation_batch_b_corner_radius_label">Rayon des coins</string>
+    <string name="presentation_batch_b_daily_mix_title">Daily Mix</string>
     <string name="presentation_batch_b_date_today">Aujourd\'hui</string>
     <string name="presentation_batch_b_date_yesterday">Hier</string>
     <string name="presentation_batch_b_delete_playlist">Supprimer la liste de lecture</string>
@@ -33,6 +34,7 @@
     <string name="presentation_batch_b_play_latest">Lire le dernier</string>
     <string name="presentation_batch_b_playlist_empty_add_hint">Appuyez sur « Ajouter des chansons » pour commencer.</string>
     <string name="presentation_batch_b_playlist_empty_folder_body">Ce dossier ne contient pas de chansons.</string>
+    <string name="presentation_batch_b_playlist_empty_smart_body">Aucune chanson ne correspond encore à cette règle intelligente.</string>
     <string name="presentation_batch_b_playlist_empty_title">Cette liste de lecture est vide.</string>
     <string name="presentation_batch_b_playlist_options_title">Options de la liste de lecture</string>
     <string name="presentation_batch_b_queue_recently_played">Écouté récemment</string>

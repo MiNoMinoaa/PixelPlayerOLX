@@ -81,10 +81,12 @@
     <string name="presentation_batch_g_artist_ex_4_out">A, B</string>
     <string name="presentation_batch_g_artist_ex_5_in">\"AC\\DC\"</string>
     <string name="presentation_batch_g_artist_ex_5_out">AC/DC (escaped)</string>
+    <string name="presentation_batch_g_artist_example_arrow"> → </string>
     <string name="presentation_batch_g_artist_examples_title">Esempi</string>
     <string name="presentation_batch_g_artist_extract_from_title">Estrai artisti dal titolo</string>
     <string name="presentation_batch_g_artist_extract_from_title_sub">Rileva feat., ft., with nei titoli dei brani</string>
     <string name="presentation_batch_g_artist_group_by_album_artist">Raggruppa per album artist</string>
+    <string name="presentation_batch_g_artist_group_by_album_artist_sub">Raggruppa la scheda Artisti e gli album per album artist, così gli artisti ospiti e delle compilation non intasano la lista</string>
     <string name="presentation_batch_g_artist_info_title">Informazioni parsing multi-artista</string>
     <string name="presentation_batch_g_artist_item_char_delimiters">Delimitatori carattere</string>
     <string name="presentation_batch_g_artist_item_char_delimiters_current">Attuali: %1$s</string>
@@ -172,6 +174,7 @@
     <string name="presentation_batch_g_beta_sheet_title_example_3">Funzionalità: Aggiungi l\'opzione di ordinamento playlist \"Aggiunti di recente\"</string>
     <string name="presentation_batch_g_beta_sheet_title_examples_title">Buoni titoli di segnalazione</string>
     <string name="presentation_batch_g_beta_sheet_welcome_body">Stai utilizzando una build beta che potrebbe contenere bug, crash o funzionalità sperimentali. Aiutaci a migliorare segnalando i problemi.</string>
+    <string name="presentation_batch_g_beta_sheet_welcome_body_stable">Stai utilizzando la build stabile. Consulta il changelog per scoprire le novità e segnala qualsiasi comportamento anomalo.</string>
     <string name="presentation_batch_g_brick_cd_close">Chiudi</string>
     <string name="presentation_batch_g_brick_drag_paddle">Trascina per muovere il paddle</string>
     <string name="presentation_batch_g_brick_game_over">GAME OVER</string>
@@ -192,10 +195,17 @@
     <string name="presentation_batch_g_cd_selected">Selezionato</string>
     <string name="presentation_batch_g_cd_switch_on">Interruttore attivo</string>
     <string name="presentation_batch_g_changelog_sec_improvements">Miglioramenti</string>
+    <string name="presentation_batch_g_changelog_sec_initial_release">Prima versione</string>
+    <string name="presentation_batch_g_changelog_sec_release_readiness">Pronti per il rilascio</string>
+    <string name="presentation_batch_g_changelog_sec_removed_for_foss">Rimosso nella versione FOSS</string>
+    <string name="presentation_batch_g_changelog_sec_security_privacy">Sicurezza e privacy</string>
+    <string name="presentation_batch_g_changelog_sec_under_the_hood">Sotto il cofano</string>
+    <string name="presentation_batch_g_changelog_sec_whats_new">Novità</string>
     <string name="presentation_batch_g_changelog_title">Changelog</string>
     <string name="presentation_batch_g_changelog_view_github">Vedi su GitHub</string>
     <string name="presentation_batch_g_daily_mix_based_on_history">Basato sulla cronologia</string>
     <string name="presentation_batch_g_daily_mix_heading">DAILY MIX</string>
+    <string name="presentation_batch_g_daily_mix_queue_name">Daily Mix</string>
     <string name="presentation_batch_g_daily_mix_see_all">Vedi tutto il Daily Mix</string>
     <string name="presentation_batch_g_device_info_title">Informazioni dispositivo</string>
     <string name="presentation_batch_g_device_key_android_version">Versione Android</string>
@@ -257,6 +267,7 @@
     <string name="presentation_batch_g_selection_deselect">Deseleziona</string>
     <string name="presentation_batch_g_selection_n_songs">brani selezionati</string>
     <string name="presentation_batch_g_selection_one_song">brano selezionato</string>
+    <string name="presentation_batch_g_selection_overflow_count">+%1$d</string>
     <string name="presentation_batch_g_selection_play">Riproduci</string>
     <string name="presentation_batch_g_sort_ascending">Crescente</string>
     <string name="presentation_batch_g_sort_descending">Decrescente</string>
@@ -359,6 +370,8 @@
     <string name="presentation_batch_g_streaming_subtitle">Riproduci in streaming la musica dai tuoi account cloud</string>
     <string name="presentation_batch_g_streaming_title">Streaming cloud</string>
     <string name="presentation_batch_g_sync_percent">%1$d%%</string>
+    <string name="presentation_batch_g_topbar_build_debug">Debug</string>
+    <string name="presentation_batch_g_topbar_build_stable">Stabile</string>
     <string name="presentation_batch_g_topbar_cd_changelog">Changelog</string>
     <string name="presentation_batch_g_yes">Sì</string>
 </resources>

@@ -14,6 +14,7 @@
     <string name="presentation_batch_b_clear">Tøm</string>
     <string name="presentation_batch_b_corner_dp_format">%1$d dp</string>
     <string name="presentation_batch_b_corner_radius_label">Hjørneradius</string>
+    <string name="presentation_batch_b_daily_mix_title">Daily Mix</string>
     <string name="presentation_batch_b_date_today">I dag</string>
     <string name="presentation_batch_b_date_yesterday">I går</string>
     <string name="presentation_batch_b_delete_playlist">Slett spilleliste</string>
@@ -33,6 +34,7 @@
     <string name="presentation_batch_b_play_latest">Spill siste</string>
     <string name="presentation_batch_b_playlist_empty_add_hint">Trykk på \'Legg til sanger\' for å starte.</string>
     <string name="presentation_batch_b_playlist_empty_folder_body">Denne mappen inneholder ingen sanger.</string>
+    <string name="presentation_batch_b_playlist_empty_smart_body">Ingen sanger samsvarer med denne smartregelen ennå.</string>
     <string name="presentation_batch_b_playlist_empty_title">Denne spillelisten er tom.</string>
     <string name="presentation_batch_b_playlist_options_title">Alternativer for spilleliste</string>
     <string name="presentation_batch_b_queue_recently_played">Nylig spilt</string>

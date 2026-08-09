@@ -81,10 +81,12 @@
     <string name="presentation_batch_g_artist_ex_4_out">A, B</string>
     <string name="presentation_batch_g_artist_ex_5_in">"AC\\DC"</string>
     <string name="presentation_batch_g_artist_ex_5_out">AC/DC (экранировано)</string>
+    <string name="presentation_batch_g_artist_example_arrow"> → </string>
     <string name="presentation_batch_g_artist_examples_title">Примеры</string>
     <string name="presentation_batch_g_artist_extract_from_title">Извлекать исполнителей из названия</string>
     <string name="presentation_batch_g_artist_extract_from_title_sub">Определять feat., ft., with в названиях песен</string>
     <string name="presentation_batch_g_artist_group_by_album_artist">Группировать по исполнителю альбома</string>
+    <string name="presentation_batch_g_artist_group_by_album_artist_sub">Группировать вкладку «Исполнители» и альбомы по исполнителю альбома, чтобы приглашённые исполнители и сборники не засоряли список</string>
     <string name="presentation_batch_g_artist_info_title">О поддержке нескольких исполнителей</string>
     <string name="presentation_batch_g_artist_item_char_delimiters">Символьные разделители</string>
     <string name="presentation_batch_g_artist_item_char_delimiters_current">Текущие: %1$s</string>
@@ -172,6 +174,7 @@
     <string name="presentation_batch_g_beta_sheet_title_example_3">Функция: добавить сортировку плейлиста «Недавно добавленные»</string>
     <string name="presentation_batch_g_beta_sheet_title_examples_title">Примеры хороших заголовков</string>
     <string name="presentation_batch_g_beta_sheet_welcome_body">Вы используете бета-версию, которая может содержать ошибки, сбои или экспериментальные функции. Помогите нам улучшить приложение, сообщая о проблемах.</string>
+    <string name="presentation_batch_g_beta_sheet_welcome_body_stable">Вы используете стабильную сборку. Загляните в список изменений, чтобы узнать о новом, и сообщайте о любых неполадках.</string>
     <string name="presentation_batch_g_brick_cd_close">Закрыть</string>
     <string name="presentation_batch_g_brick_drag_paddle">Перетаскивайте платформу</string>
     <string name="presentation_batch_g_brick_game_over">ИГРА ОКОНЧЕНА</string>
@@ -192,10 +195,17 @@
     <string name="presentation_batch_g_cd_selected">Выбрано</string>
     <string name="presentation_batch_g_cd_switch_on">Переключатель включён</string>
     <string name="presentation_batch_g_changelog_sec_improvements">Улучшения</string>
+    <string name="presentation_batch_g_changelog_sec_initial_release">Первый выпуск</string>
+    <string name="presentation_batch_g_changelog_sec_release_readiness">Готовность к выпуску</string>
+    <string name="presentation_batch_g_changelog_sec_removed_for_foss">Удалено в FOSS-версии</string>
+    <string name="presentation_batch_g_changelog_sec_security_privacy">Безопасность и конфиденциальность</string>
+    <string name="presentation_batch_g_changelog_sec_under_the_hood">Под капотом</string>
+    <string name="presentation_batch_g_changelog_sec_whats_new">Что нового</string>
     <string name="presentation_batch_g_changelog_title">Список изменений</string>
     <string name="presentation_batch_g_changelog_view_github">На GitHub</string>
     <string name="presentation_batch_g_daily_mix_based_on_history">На основе истории</string>
     <string name="presentation_batch_g_daily_mix_heading">DAILY MIX</string>
+    <string name="presentation_batch_g_daily_mix_queue_name">Daily Mix</string>
     <string name="presentation_batch_g_daily_mix_see_all">Посмотреть весь Daily Mix</string>
     <string name="presentation_batch_g_device_info_title">Информация об устройстве</string>
     <string name="presentation_batch_g_device_key_android_version">Версия Android</string>
@@ -257,6 +267,7 @@
     <string name="presentation_batch_g_selection_deselect">Снять выбор</string>
     <string name="presentation_batch_g_selection_n_songs">песен выбрано</string>
     <string name="presentation_batch_g_selection_one_song">песня выбрана</string>
+    <string name="presentation_batch_g_selection_overflow_count">+%1$d</string>
     <string name="presentation_batch_g_selection_play">Воспроизвести</string>
     <string name="presentation_batch_g_sort_ascending">По возрастанию</string>
     <string name="presentation_batch_g_sort_descending">По убыванию</string>
@@ -359,6 +370,8 @@
     <string name="presentation_batch_g_streaming_subtitle">Слушайте музыку из своих облачных аккаунтов</string>
     <string name="presentation_batch_g_streaming_title">Облачный стриминг</string>
     <string name="presentation_batch_g_sync_percent">%1$d%%</string>
+    <string name="presentation_batch_g_topbar_build_debug">Отладочная</string>
+    <string name="presentation_batch_g_topbar_build_stable">Стабильная</string>
     <string name="presentation_batch_g_topbar_cd_changelog">Список изменений</string>
     <string name="presentation_batch_g_yes">Да</string>
 </resources>

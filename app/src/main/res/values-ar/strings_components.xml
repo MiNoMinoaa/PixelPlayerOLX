@@ -12,9 +12,12 @@
     <string name="action_save">حفظ</string>
     <string name="action_undo">تراجع</string>
     <string name="cd_add_all_to_queue">إضافة الكل إلى قائمة الانتظار</string>
+    <string name="cd_add_selected_albums_to_queue">إضافة الألبومات المحددة إلى قائمة الانتظار</string>
     <string name="cd_add_to_favorites">إضافة إلى المفضلة</string>
     <string name="cd_add_to_playlist">إضافة إلى قائمة التشغيل</string>
     <string name="cd_add_to_queue">إضافة إلى قائمة الانتظار</string>
+    <string name="cd_album_art_of">غلاف ألبوم %1$s</string>
+    <string name="cd_album_art_placeholder">عنصر نائب لـ %1$s</string>
     <string name="cd_album_icon">الألبوم</string>
     <string name="cd_artist_icon">الفنان</string>
     <string name="cd_audio_format_icon">صيغة الصوت</string>
@@ -42,6 +45,8 @@
     <string name="cd_play">تشغيل</string>
     <string name="cd_play_all">تشغيل الكل</string>
     <string name="cd_play_next_in_queue">التشغيل تالياً في قائمة الانتظار</string>
+    <string name="cd_play_selected_albums">تشغيل الألبومات المحددة</string>
+    <string name="cd_play_selected_albums_next">تشغيل الألبومات المحددة تالياً</string>
     <string name="cd_play_song_action">تشغيل الأغنية</string>
     <string name="cd_provider_icon">المزود</string>
     <string name="cd_remove_from_favorites">إزالة من المفضلة</string>
@@ -53,6 +58,7 @@
     <string name="cd_share_all">مشاركة الكل</string>
     <string name="cd_share_all_as_zip">مشاركة الكل كملف ZIP</string>
     <string name="cd_share_song_file">مشاركة ملف الأغنية</string>
+    <string name="cd_show_controls">إظهار عناصر التحكم</string>
     <string name="cd_show_metadata_info">إظهار المعلومات</string>
     <string name="cd_song_title_icon">العنوان</string>
     <string name="cd_track_number_icon">رقم المسار</string>
@@ -78,6 +84,8 @@
     <string name="equalizer_save_custom_preset_body">أدخل اسماً لإعداد موازن الصوت المخصص الجديد.</string>
     <string name="equalizer_save_custom_preset_title">حفظ موازن مخصص</string>
     <string name="error_name_empty">لا يمكن أن يكون الاسم فارغاً</string>
+    <string name="folder_state_excluded">مستبعد</string>
+    <string name="folder_state_included">مضمَّن</string>
     <string name="home_option_dj_mashup">مزج DJ (Mashup)</string>
     <string name="lyrics_more_adjust_sync">ضبط المزامنة</string>
     <string name="lyrics_more_alignment">المحاذاة</string>
@@ -99,9 +107,12 @@
     <string name="offline_screen_title">أنت غير متصل بالإنترنت</string>
     <string name="placeholder_replaygain_album_example">-8.20</string>
     <string name="placeholder_replaygain_track_example">-6.50</string>
+    <string name="playlist_created_songs_added_toast">تم إنشاء قائمة التشغيل وإضافة الأغاني</string>
     <string name="playlist_dismissed_message">تم تجاهل قائمة التشغيل</string>
     <string name="playlist_picker_add_songs_title">إضافة %1$d أغانٍ إلى…</string>
     <string name="playlist_picker_select_playlists">اختر قوائم التشغيل</string>
+    <string name="playlist_saved_toast">تم الحفظ</string>
+    <string name="playlist_songs_added_toast">تمت إضافة الأغاني إلى قوائم التشغيل</string>
     <string name="reorder_tabs_reordering">جاري إعادة ترتيب علامات التبويب…</string>
     <string name="reorder_tabs_reset_dialog_body">هل تريد إعادة تعيين ترتيب علامات التبويب إلى الوضع الافتراضي؟</string>
     <string name="reorder_tabs_reset_dialog_title">إعادة تعيين الترتيب</string>

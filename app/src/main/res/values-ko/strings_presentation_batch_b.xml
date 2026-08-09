@@ -14,6 +14,7 @@
     <string name="presentation_batch_b_clear">지우기</string>
     <string name="presentation_batch_b_corner_dp_format">%1$d dp</string>
     <string name="presentation_batch_b_corner_radius_label">모서리 반경</string>
+    <string name="presentation_batch_b_daily_mix_title">데일리 믹스</string>
     <string name="presentation_batch_b_date_today">오늘</string>
     <string name="presentation_batch_b_date_yesterday">어제</string>
     <string name="presentation_batch_b_delete_playlist">플레이리스트 삭제</string>
@@ -33,6 +34,7 @@
     <string name="presentation_batch_b_play_latest">최신 곡 재생</string>
     <string name="presentation_batch_b_playlist_empty_add_hint">시작하려면 \'곡 추가\'를 누르세요.</string>
     <string name="presentation_batch_b_playlist_empty_folder_body">이 폴더에는 곡이 포함되어 있지 않습니다.</string>
+    <string name="presentation_batch_b_playlist_empty_smart_body">아직 이 스마트 규칙과 일치하는 곡이 없습니다.</string>
     <string name="presentation_batch_b_playlist_empty_title">이 플레이리스트는 비어 있습니다.</string>
     <string name="presentation_batch_b_playlist_options_title">플레이리스트 옵션</string>
     <string name="presentation_batch_b_queue_recently_played">최근 재생함</string>

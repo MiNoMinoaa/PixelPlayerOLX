@@ -16,10 +16,21 @@
     <string name="presentation_batch_e_clear_queue_dialog_title">Tøm kø</string>
     <string name="presentation_batch_e_create_playlist_subtitle">Velg opprettelsesmetode.</string>
     <string name="presentation_batch_e_create_playlist_title">Opprett spilleliste</string>
+    <string name="presentation_batch_e_creation_mode_describe">Beskriv den</string>
+    <string name="presentation_batch_e_creation_mode_describe_subtitle">Skriv hva du vil høre, så velger appen sangene – helt offline.</string>
     <string name="presentation_batch_e_creation_mode_manual">Manuelt</string>
     <string name="presentation_batch_e_creation_mode_manual_subtitle">Design grafikk, ikon og form, og velg sanger selv.</string>
     <string name="presentation_batch_e_describe_generate">Generer</string>
+    <string name="presentation_batch_e_describe_no_matches">Ingen sanger i biblioteket ditt samsvarer med den beskrivelsen.</string>
+    <string name="presentation_batch_e_describe_playlist_hint">f.eks. sanger å trene styrke til</string>
+    <string name="presentation_batch_e_describe_playlist_subtitle">Matches mot biblioteket på denne enheten – ingenting forlater den.</string>
+    <string name="presentation_batch_e_describe_playlist_title">Beskriv spillelisten din</string>
     <string name="presentation_batch_e_describe_regenerate">Regenerer</string>
+    <plurals name="presentation_batch_e_describe_result_count">
+        <item quantity="one">%d sang samsvarer</item>
+        <item quantity="other">%d sanger samsvarer</item>
+    </plurals>
+    <string name="presentation_batch_e_describe_save">Lagre spilleliste</string>
     <string name="presentation_batch_e_deselect_all">Velg bort alle</string>
     <string name="presentation_batch_e_enter_playlist_name">Skriv inn et navn</string>
     <string name="presentation_batch_e_manage_presets_title">Administrer forhåndsinnstillinger</string>

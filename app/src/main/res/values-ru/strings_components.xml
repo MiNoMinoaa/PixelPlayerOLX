@@ -12,9 +12,12 @@
     <string name="action_save">Сохранить</string>
     <string name="action_undo">Отменить</string>
     <string name="cd_add_all_to_queue">Добавить все в очередь</string>
+    <string name="cd_add_selected_albums_to_queue">Добавить выбранные альбомы в очередь</string>
     <string name="cd_add_to_favorites">Добавить в избранное</string>
     <string name="cd_add_to_playlist">Добавить в плейлист</string>
     <string name="cd_add_to_queue">Добавить в очередь</string>
+    <string name="cd_album_art_of">Обложка альбома «%1$s»</string>
+    <string name="cd_album_art_placeholder">Заполнитель: %1$s</string>
     <string name="cd_album_icon">Альбом</string>
     <string name="cd_artist_icon">Исполнитель</string>
     <string name="cd_audio_format_icon">Формат аудио</string>
@@ -42,6 +45,8 @@
     <string name="cd_play">Воспроизвести</string>
     <string name="cd_play_all">Воспроизвести всё</string>
     <string name="cd_play_next_in_queue">Воспроизвести следующим</string>
+    <string name="cd_play_selected_albums">Воспроизвести выбранные альбомы</string>
+    <string name="cd_play_selected_albums_next">Воспроизвести выбранные альбомы следующими</string>
     <string name="cd_play_song_action">Воспроизвести трек</string>
     <string name="cd_provider_icon">Источник</string>
     <string name="cd_remove_from_favorites">Удалить из избранного</string>
@@ -53,6 +58,7 @@
     <string name="cd_share_all">Поделиться всем</string>
     <string name="cd_share_all_as_zip">Поделиться всем как ZIP</string>
     <string name="cd_share_song_file">Поделиться аудиофайлом</string>
+    <string name="cd_show_controls">Показать элементы управления</string>
     <string name="cd_show_metadata_info">Показать информацию</string>
     <string name="cd_song_title_icon">Название</string>
     <string name="cd_track_number_icon">Номер трека</string>
@@ -78,6 +84,8 @@
     <string name="equalizer_save_custom_preset_body">Введите имя для пользовательского пресета эквалайзера.</string>
     <string name="equalizer_save_custom_preset_title">Сохранить пользовательский пресет</string>
     <string name="error_name_empty">Имя не может быть пустым</string>
+    <string name="folder_state_excluded">Исключена</string>
+    <string name="folder_state_included">Включена</string>
     <string name="home_option_dj_mashup">DJ Mashup</string>
     <string name="lyrics_more_adjust_sync">Настроить синхронизацию</string>
     <string name="lyrics_more_alignment">Выравнивание</string>
@@ -103,6 +111,7 @@
     <string name="playlist_dismissed_message">Плейлист скрыт</string>
     <string name="playlist_picker_add_songs_title">Добавить %1$d треков в…</string>
     <string name="playlist_picker_select_playlists">Выберите плейлисты</string>
+    <string name="playlist_saved_toast">Сохранено</string>
     <string name="playlist_songs_added_toast">Треки добавлены в плейлисты</string>
     <string name="reorder_tabs_reordering">Изменение порядка вкладок…</string>
     <string name="reorder_tabs_reset_dialog_body">Сбросить порядок вкладок к значениям по умолчанию?</string>

@@ -24,6 +24,7 @@
     <string name="lib_empty_liked_all_title">Noch keine Lieblingssongs</string>
     <string name="lib_empty_liked_offline_subtitle">Ändere den Quellenfilter oder markiere Songs von deinem Gerät als Favoriten.</string>
     <string name="lib_empty_liked_offline_title">Keine lokalen Lieblingssongs</string>
+    <string name="lib_empty_liked_online_subtitle">Like Titel aus Navidrome oder Jellyfin, damit sie hier auftauchen.</string>
     <string name="lib_empty_liked_online_title">Keine Cloud-Lieblingssongs</string>
     <string name="lib_empty_playlists_subtitle">Erstelle deine erste Playlist, um deine Bibliothek zu organisieren.</string>
     <string name="lib_empty_playlists_title">Noch keine Playlists</string>
@@ -31,6 +32,7 @@
     <string name="lib_empty_songs_all_title">Noch keine Songs</string>
     <string name="lib_empty_songs_offline_subtitle">Versuche es mit einem anderen Quellenfilter oder scanne die Gerätebibliothek erneut.</string>
     <string name="lib_empty_songs_offline_title">Keine lokalen Songs gefunden</string>
+    <string name="lib_empty_songs_online_subtitle">Synchronisiere Songs aus Navidrome oder Jellyfin oder wechsle zur lokalen Quelle.</string>
     <string name="lib_empty_songs_online_title">Keine Cloud-Songs gefunden</string>
     <string name="library_action_new">Neu</string>
     <string name="library_error_loading_albums">Fehler beim Laden der Alben</string>
@@ -39,6 +41,8 @@
     <string name="library_no_songs_in_library_message">Keine Songs in der Bibliothek gefunden.</string>
     <string name="library_no_songs_rescan_hint">Musik auf dem Gerät? Rescan unter Einstellungen starten.</string>
     <string name="library_retry">Erneut versuchen</string>
+    <string name="library_storage_filter_all_songs">Alle Songs</string>
+    <string name="library_storage_filter_offline">Lokal</string>
     <string name="library_storage_filter_online">Cloud</string>
     <string name="library_tab_albums">Alben</string>
     <string name="library_tab_artists">Künstler</string>

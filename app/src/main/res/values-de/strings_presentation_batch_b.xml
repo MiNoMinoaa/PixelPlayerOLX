@@ -14,6 +14,7 @@
     <string name="presentation_batch_b_clear">Löschen</string>
     <string name="presentation_batch_b_corner_dp_format">%1$d dp</string>
     <string name="presentation_batch_b_corner_radius_label">Eckenradius</string>
+    <string name="presentation_batch_b_daily_mix_title">Daily Mix</string>
     <string name="presentation_batch_b_date_today">Heute</string>
     <string name="presentation_batch_b_date_yesterday">Gestern</string>
     <string name="presentation_batch_b_delete_playlist">Playlist loeschen</string>
@@ -33,6 +34,7 @@
     <string name="presentation_batch_b_play_latest">Neueste abspielen</string>
     <string name="presentation_batch_b_playlist_empty_add_hint">\"Songs hinzufügen\" antippen, um zu beginnen.</string>
     <string name="presentation_batch_b_playlist_empty_folder_body">Dieser Ordner enthält keine Songs.</string>
+    <string name="presentation_batch_b_playlist_empty_smart_body">Noch passen keine Songs zu dieser Smart-Regel.</string>
     <string name="presentation_batch_b_playlist_empty_title">Diese Playlist ist leer.</string>
     <string name="presentation_batch_b_playlist_options_title">Playlist-Optionen</string>
     <string name="presentation_batch_b_queue_recently_played">Zuletzt gespielt</string>

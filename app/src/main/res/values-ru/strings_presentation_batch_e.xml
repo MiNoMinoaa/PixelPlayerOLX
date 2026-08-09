@@ -16,10 +16,23 @@
     <string name="presentation_batch_e_clear_queue_dialog_title">Очистить очередь</string>
     <string name="presentation_batch_e_create_playlist_subtitle">Выберите способ создания.</string>
     <string name="presentation_batch_e_create_playlist_title">Создать плейлист</string>
+    <string name="presentation_batch_e_creation_mode_describe">Описать</string>
+    <string name="presentation_batch_e_creation_mode_describe_subtitle">Напишите, что хотите послушать, и приложение само подберёт треки — полностью офлайн.</string>
     <string name="presentation_batch_e_creation_mode_manual">Вручную</string>
     <string name="presentation_batch_e_creation_mode_manual_subtitle">Создайте обложку, значок, форму и выберите песни самостоятельно.</string>
     <string name="presentation_batch_e_describe_generate">Создать</string>
+    <string name="presentation_batch_e_describe_no_matches">В вашей медиатеке нет треков, подходящих под это описание.</string>
+    <string name="presentation_batch_e_describe_playlist_hint">например, треки для тренировки с весами</string>
+    <string name="presentation_batch_e_describe_playlist_subtitle">Подбор идёт по медиатеке на этом устройстве — данные никуда не отправляются.</string>
+    <string name="presentation_batch_e_describe_playlist_title">Опишите свой плейлист</string>
     <string name="presentation_batch_e_describe_regenerate">Пересоздать</string>
+    <plurals name="presentation_batch_e_describe_result_count">
+        <item quantity="one">Найден %d трек</item>
+        <item quantity="few">Найдено %d трека</item>
+        <item quantity="many">Найдено %d треков</item>
+        <item quantity="other">Найдено %d трека</item>
+    </plurals>
+    <string name="presentation_batch_e_describe_save">Сохранить плейлист</string>
     <string name="presentation_batch_e_deselect_all">Снять выделение</string>
     <string name="presentation_batch_e_enter_playlist_name">Введите название плейлиста</string>
     <string name="presentation_batch_e_manage_presets_title">Управление пресетами</string>

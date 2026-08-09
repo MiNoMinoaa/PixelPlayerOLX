@@ -24,6 +24,7 @@
     <string name="lib_empty_liked_all_title">Пока нет избранных треков</string>
     <string name="lib_empty_liked_offline_subtitle">Смените фильтр источника или добавьте в избранное треки с устройства.</string>
     <string name="lib_empty_liked_offline_title">Нет избранных локальных треков</string>
+    <string name="lib_empty_liked_online_subtitle">Добавляйте треки Navidrome или Jellyfin в избранное, чтобы они появились здесь.</string>
     <string name="lib_empty_liked_online_title">Нет избранных облачных треков</string>
     <string name="lib_empty_playlists_subtitle">Создайте свой первый плейлист для организации библиотеки.</string>
     <string name="lib_empty_playlists_title">Пока нет плейлистов</string>
@@ -31,6 +32,7 @@
     <string name="lib_empty_songs_all_title">Пока нет треков</string>
     <string name="lib_empty_songs_offline_subtitle">Попробуйте другой фильтр источников или повторно просканируйте библиотеку устройства.</string>
     <string name="lib_empty_songs_offline_title">Локальные треки не найдены</string>
+    <string name="lib_empty_songs_online_subtitle">Синхронизируйте треки Navidrome или Jellyfin либо переключитесь на локальный источник.</string>
     <string name="lib_empty_songs_online_title">Облачные треки не найдены</string>
     <string name="library_action_new">Создать</string>
     <string name="library_error_loading_albums">Ошибка загрузки альбомов</string>
@@ -39,6 +41,8 @@
     <string name="library_no_songs_in_library_message">В вашей библиотеке не найдено треков.</string>
     <string name="library_no_songs_rescan_hint">Попробуйте повторно просканировать библиотеку в настройках, если музыка есть на устройстве.</string>
     <string name="library_retry">Повторить</string>
+    <string name="library_storage_filter_all_songs">Все треки</string>
+    <string name="library_storage_filter_offline">Локальные</string>
     <string name="library_storage_filter_online">Облако</string>
     <string name="library_tab_albums">Альбомы</string>
     <string name="library_tab_artists">Исполнители</string>

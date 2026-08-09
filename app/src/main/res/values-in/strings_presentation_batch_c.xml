@@ -24,6 +24,7 @@
     <string name="lib_empty_liked_all_title">Belum ada lagu yang disukai</string>
     <string name="lib_empty_liked_offline_subtitle">Ubah filter sumber atau sukai lagu dari perangkat Anda.</string>
     <string name="lib_empty_liked_offline_title">Tidak ada lagu lokal yang disukai</string>
+    <string name="lib_empty_liked_online_subtitle">Sukai trek Navidrome atau Jellyfin agar muncul di tampilan ini.</string>
     <string name="lib_empty_liked_online_title">Tidak ada lagu cloud yang disukai</string>
     <string name="lib_empty_playlists_subtitle">Buat playlist pertama Anda untuk mengatur pustaka Anda.</string>
     <string name="lib_empty_playlists_title">Belum ada playlist</string>
@@ -31,6 +32,7 @@
     <string name="lib_empty_songs_all_title">Belum ada lagu</string>
     <string name="lib_empty_songs_offline_subtitle">Coba filter sumber lain atau pindai ulang pustaka perangkat Anda.</string>
     <string name="lib_empty_songs_offline_title">Tidak ada lagu lokal ditemukan</string>
+    <string name="lib_empty_songs_online_subtitle">Sinkronkan lagu Navidrome atau Jellyfin, atau beralih ke sumber lokal.</string>
     <string name="lib_empty_songs_online_title">Tidak ada lagu cloud ditemukan</string>
     <string name="library_action_new">Baru</string>
     <string name="library_error_loading_albums">Gagal memuat album</string>
@@ -39,6 +41,8 @@
     <string name="library_no_songs_in_library_message">Tidak ada lagu ditemukan di pustaka Anda.</string>
     <string name="library_no_songs_rescan_hint">Coba pindai ulang pustaka Anda di pengaturan jika Anda memiliki musik di perangkat Anda.</string>
     <string name="library_retry">Coba lagi</string>
+    <string name="library_storage_filter_all_songs">Semua Lagu</string>
+    <string name="library_storage_filter_offline">Lokal</string>
     <string name="library_storage_filter_online">Cloud</string>
     <string name="library_tab_albums">Album</string>
     <string name="library_tab_artists">Artis</string>

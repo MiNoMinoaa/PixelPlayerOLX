@@ -24,6 +24,7 @@
     <string name="lib_empty_liked_all_title">Ingen likede sanger ennå</string>
     <string name="lib_empty_liked_offline_subtitle">Bytt kildefilter eller like sanger fra enheten din.</string>
     <string name="lib_empty_liked_offline_title">Ingen likede lokale sanger</string>
+    <string name="lib_empty_liked_online_subtitle">Lik Navidrome- eller Jellyfin-spor for å se dem i denne visningen.</string>
     <string name="lib_empty_liked_online_title">Ingen likede skysanger</string>
     <string name="lib_empty_playlists_subtitle">Opprett din første spilleliste for å organisere biblioteket ditt.</string>
     <string name="lib_empty_playlists_title">Ingen spillelister ennå</string>
@@ -31,6 +32,7 @@
     <string name="lib_empty_songs_all_title">Ingen sanger ennå</string>
     <string name="lib_empty_songs_offline_subtitle">Prøv et annet kildefilter eller skann enhetsbiblioteket på nytt.</string>
     <string name="lib_empty_songs_offline_title">Ingen lokale sanger funnet</string>
+    <string name="lib_empty_songs_online_subtitle">Synkroniser Navidrome- eller Jellyfin-sanger, eller bytt til lokal kilde.</string>
     <string name="lib_empty_songs_online_title">Ingen skysanger funnet</string>
     <string name="library_action_new">Ny</string>
     <string name="library_error_loading_albums">Feil ved lasting av album</string>
@@ -39,6 +41,8 @@
     <string name="library_no_songs_in_library_message">Ingen sanger funnet i biblioteket ditt.</string>
     <string name="library_no_songs_rescan_hint">Prøv å skanne biblioteket på nytt i innstillingene hvis du har musikk på enheten.</string>
     <string name="library_retry">Prøv igjen</string>
+    <string name="library_storage_filter_all_songs">Alle sanger</string>
+    <string name="library_storage_filter_offline">Lokal</string>
     <string name="library_storage_filter_online">Sky</string>
     <string name="library_tab_albums">Albumer</string>
     <string name="library_tab_artists">Artister</string>

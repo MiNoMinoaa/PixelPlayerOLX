@@ -12,9 +12,12 @@
     <string name="action_save">저장</string>
     <string name="action_undo">실행 취소</string>
     <string name="cd_add_all_to_queue">모두 대기열에 추가</string>
+    <string name="cd_add_selected_albums_to_queue">선택한 앨범 대기열에 추가</string>
     <string name="cd_add_to_favorites">즐겨찾기에 추가</string>
     <string name="cd_add_to_playlist">플레이리스트에 추가</string>
     <string name="cd_add_to_queue">대기열에 추가</string>
+    <string name="cd_album_art_of">%1$s의 앨범 아트</string>
+    <string name="cd_album_art_placeholder">%1$s 플레이스홀더</string>
     <string name="cd_album_icon">앨범</string>
     <string name="cd_artist_icon">아티스트</string>
     <string name="cd_audio_format_icon">오디오 포맷</string>
@@ -42,6 +45,8 @@
     <string name="cd_play">재생</string>
     <string name="cd_play_all">모두 재생</string>
     <string name="cd_play_next_in_queue">대기열의 다음에 재생</string>
+    <string name="cd_play_selected_albums">선택한 앨범 재생</string>
+    <string name="cd_play_selected_albums_next">선택한 앨범 다음에 재생</string>
     <string name="cd_play_song_action">곡 재생</string>
     <string name="cd_provider_icon">제공업체</string>
     <string name="cd_remove_from_favorites">즐겨찾기에서 제거</string>
@@ -53,6 +58,7 @@
     <string name="cd_share_all">모두 공유</string>
     <string name="cd_share_all_as_zip">모두 ZIP으로 공유</string>
     <string name="cd_share_song_file">곡 파일 공유</string>
+    <string name="cd_show_controls">컨트롤 표시</string>
     <string name="cd_show_metadata_info">정보 표시</string>
     <string name="cd_song_title_icon">제목</string>
     <string name="cd_track_number_icon">트랙 번호</string>
@@ -78,6 +84,8 @@
     <string name="equalizer_save_custom_preset_body">사용자 지정 이퀄라이저 프리셋의 이름을 입력하세요.</string>
     <string name="equalizer_save_custom_preset_title">사용자 지정 프리셋 저장</string>
     <string name="error_name_empty">이름은 비워둘 수 없습니다</string>
+    <string name="folder_state_excluded">제외됨</string>
+    <string name="folder_state_included">포함됨</string>
     <string name="home_option_dj_mashup">DJ 매시업</string>
     <string name="lyrics_more_adjust_sync">동기화 조정</string>
     <string name="lyrics_more_alignment">정렬</string>
@@ -103,6 +111,7 @@
     <string name="playlist_dismissed_message">플레이리스트 닫힘</string>
     <string name="playlist_picker_add_songs_title">플레이리스트에 %1$d곡 추가…</string>
     <string name="playlist_picker_select_playlists">플레이리스트 선택</string>
+    <string name="playlist_saved_toast">저장됨</string>
     <string name="playlist_songs_added_toast">플레이리스트에 곡이 추가되었습니다</string>
     <string name="reorder_tabs_reordering">탭 순서 변경 중…</string>
     <string name="reorder_tabs_reset_dialog_body">탭 순서를 기본값으로 재설정하시겠습니까?</string>

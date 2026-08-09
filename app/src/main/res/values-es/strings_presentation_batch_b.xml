@@ -34,6 +34,7 @@
     <string name="presentation_batch_b_play_latest">Reproducir lo último</string>
     <string name="presentation_batch_b_playlist_empty_add_hint">Toca en \'Añadir canciones\' para comenzar.</string>
     <string name="presentation_batch_b_playlist_empty_folder_body">Esta carpeta no contiene canciones.</string>
+    <string name="presentation_batch_b_playlist_empty_smart_body">Todavía no hay canciones que coincidan con esta regla inteligente.</string>
     <string name="presentation_batch_b_playlist_empty_title">Esta lista de reproducción está vacía.</string>
     <string name="presentation_batch_b_playlist_options_title">Opciones de la lista</string>
     <string name="presentation_batch_b_queue_recently_played">Reproducidas recientemente</string>

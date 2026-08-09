@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="device_capabilities_advanced_diagnostics_description">معطلة افتراضياً. تسجل مخططاً زمنياً قصيراً لحالات التقطيع لاستكشاف مشكلات النسخة التجريبية.</string>
+    <string name="device_capabilities_advanced_diagnostics_expires">نشطة حتى %1$s</string>
+    <string name="device_capabilities_advanced_diagnostics_mark_lag">تحديد التقطيع الآن</string>
+    <string name="device_capabilities_advanced_diagnostics_marked">تم تحديد لحظة التقطيع</string>
+    <string name="device_capabilities_advanced_diagnostics_title">تشخيصات الأداء المتقدمة</string>
     <string name="device_capabilities_buffer_frames">%1$d إطار لكل مخزن مؤقت</string>
     <string name="device_capabilities_finding_clear_body">تتطابق مساراتك المفهرسة مع برامج فك الترميز التي يبلغ عنها نظام أندرويد في هذا الجهاز.</string>
     <string name="device_capabilities_finding_clear_title">لا توجد حالات عدم توافق رئيسية</string>
@@ -169,6 +174,7 @@
     <string name="presentation_batch_g_beta_sheet_title_example_3">ميزة: إضافة خيار فرز قائمة التشغيل حسب "المضافة حديثاً"</string>
     <string name="presentation_batch_g_beta_sheet_title_examples_title">عناوين جيدة للمشكلات</string>
     <string name="presentation_batch_g_beta_sheet_welcome_body">أنت تستخدم بناءً تجريبياً قد يحتوي على أخطاء، أو حالات توقف مفاجئ، أو ميزات تجريبية. ساعدنا في التحسين من خلال الإبلاغ عن المشكلات.</string>
+    <string name="presentation_batch_g_beta_sheet_welcome_body_stable">أنت تستخدم بناء الإصدار المستقر. راجع سجل التغييرات لمعرفة الجديد، وأبلغ عن أي سلوك غير متوقع.</string>
     <string name="presentation_batch_g_brick_cd_close">إغلاق</string>
     <string name="presentation_batch_g_brick_drag_paddle">اسحب لتحريك المضرب</string>
     <string name="presentation_batch_g_brick_game_over">انتهت اللعبة</string>
@@ -189,6 +195,12 @@
     <string name="presentation_batch_g_cd_selected">محدد</string>
     <string name="presentation_batch_g_cd_switch_on">المفتاح مفعل</string>
     <string name="presentation_batch_g_changelog_sec_improvements">التحسينات</string>
+    <string name="presentation_batch_g_changelog_sec_initial_release">الإصدار الأول</string>
+    <string name="presentation_batch_g_changelog_sec_release_readiness">الجاهزية للإصدار</string>
+    <string name="presentation_batch_g_changelog_sec_removed_for_foss">ما تمت إزالته في نسخة FOSS</string>
+    <string name="presentation_batch_g_changelog_sec_security_privacy">الأمان والخصوصية</string>
+    <string name="presentation_batch_g_changelog_sec_under_the_hood">خلف الكواليس</string>
+    <string name="presentation_batch_g_changelog_sec_whats_new">ما الجديد</string>
     <string name="presentation_batch_g_changelog_title">سجل التغييرات</string>
     <string name="presentation_batch_g_changelog_view_github">عرض على GitHub</string>
     <string name="presentation_batch_g_daily_mix_based_on_history">بناءً على تاريخ الاستماع</string>
@@ -358,6 +370,8 @@
     <string name="presentation_batch_g_streaming_subtitle">بث الموسيقى مباشرة من حساباتك السحابية</string>
     <string name="presentation_batch_g_streaming_title">البث السحابي</string>
     <string name="presentation_batch_g_sync_percent">%1$d%%</string>
+    <string name="presentation_batch_g_topbar_build_debug">تصحيح</string>
+    <string name="presentation_batch_g_topbar_build_stable">مستقر</string>
     <string name="presentation_batch_g_topbar_cd_changelog">سجل التغييرات</string>
     <string name="presentation_batch_g_yes">نعم</string>
 </resources>

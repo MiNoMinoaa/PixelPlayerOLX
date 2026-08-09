@@ -81,10 +81,12 @@
     <string name="presentation_batch_g_artist_ex_4_out">A, B</string>
     <string name="presentation_batch_g_artist_ex_5_in">\"AC\\DC\"</string>
     <string name="presentation_batch_g_artist_ex_5_out">AC/DC (diabaikan)</string>
+    <string name="presentation_batch_g_artist_example_arrow"> → </string>
     <string name="presentation_batch_g_artist_examples_title">Contoh</string>
     <string name="presentation_batch_g_artist_extract_from_title">Ekstrak Artis dari Judul</string>
     <string name="presentation_batch_g_artist_extract_from_title_sub">Deteksi feat., ft., with dalam judul lagu</string>
     <string name="presentation_batch_g_artist_group_by_album_artist">Kelompokkan berdasarkan Artis Album</string>
+    <string name="presentation_batch_g_artist_group_by_album_artist_sub">Kelompokkan tab Artis dan album berdasarkan artis album, agar artis tamu dan artis kompilasi tidak memenuhi daftar</string>
     <string name="presentation_batch_g_artist_info_title">Tentang Penguraian Multi-Artis</string>
     <string name="presentation_batch_g_artist_item_char_delimiters">Pemisah Karakter</string>
     <string name="presentation_batch_g_artist_item_char_delimiters_current">Saat ini: %1$s</string>
@@ -172,6 +174,7 @@
     <string name="presentation_batch_g_beta_sheet_title_example_3">Fitur: Tambahkan opsi urut playlist "Baru Ditambahkan"</string>
     <string name="presentation_batch_g_beta_sheet_title_examples_title">Contoh judul issue yang baik</string>
     <string name="presentation_batch_g_beta_sheet_welcome_body">Anda menggunakan versi beta yang mungkin berisi bug, crash, atau fitur eksperimental. Bantu kami meningkatkannya dengan melaporkan masalah.</string>
+    <string name="presentation_batch_g_beta_sheet_welcome_body_stable">Anda menggunakan versi rilis stabil. Lihat log perubahan untuk mengetahui apa yang baru, dan laporkan apa pun yang tidak berjalan semestinya.</string>
     <string name="presentation_batch_g_brick_cd_close">Tutup</string>
     <string name="presentation_batch_g_brick_drag_paddle">Seret untuk menggerakkan pemukul</string>
     <string name="presentation_batch_g_brick_game_over">PERMAINAN BERAKHIR</string>
@@ -192,10 +195,17 @@
     <string name="presentation_batch_g_cd_selected">Terpilih</string>
     <string name="presentation_batch_g_cd_switch_on">Sakelar aktif</string>
     <string name="presentation_batch_g_changelog_sec_improvements">Peningkatan</string>
+    <string name="presentation_batch_g_changelog_sec_initial_release">Rilis awal</string>
+    <string name="presentation_batch_g_changelog_sec_release_readiness">Kesiapan rilis</string>
+    <string name="presentation_batch_g_changelog_sec_removed_for_foss">Dihapus untuk FOSS</string>
+    <string name="presentation_batch_g_changelog_sec_security_privacy">Keamanan dan privasi</string>
+    <string name="presentation_batch_g_changelog_sec_under_the_hood">Di balik layar</string>
+    <string name="presentation_batch_g_changelog_sec_whats_new">Apa yang baru</string>
     <string name="presentation_batch_g_changelog_title">Log Perubahan</string>
     <string name="presentation_batch_g_changelog_view_github">Lihat di GitHub</string>
     <string name="presentation_batch_g_daily_mix_based_on_history">Berdasarkan Riwayat</string>
     <string name="presentation_batch_g_daily_mix_heading">DAILY MIX</string>
+    <string name="presentation_batch_g_daily_mix_queue_name">Daily Mix</string>
     <string name="presentation_batch_g_daily_mix_see_all">Lihat semua Daily Mix</string>
     <string name="presentation_batch_g_device_info_title">Info Perangkat</string>
     <string name="presentation_batch_g_device_key_android_version">Versi Android</string>
@@ -257,6 +267,7 @@
     <string name="presentation_batch_g_selection_deselect">Batal pilih</string>
     <string name="presentation_batch_g_selection_n_songs">lagu terpilih</string>
     <string name="presentation_batch_g_selection_one_song">lagu terpilih</string>
+    <string name="presentation_batch_g_selection_overflow_count">+%1$d</string>
     <string name="presentation_batch_g_selection_play">Putar</string>
     <string name="presentation_batch_g_sort_ascending">Menaik</string>
     <string name="presentation_batch_g_sort_descending">Menurun</string>
@@ -359,6 +370,8 @@
     <string name="presentation_batch_g_streaming_subtitle">Alirkan musik dari akun cloud Anda</string>
     <string name="presentation_batch_g_streaming_title">Cloud Streaming</string>
     <string name="presentation_batch_g_sync_percent">%1$d%%</string>
+    <string name="presentation_batch_g_topbar_build_debug">Debug</string>
+    <string name="presentation_batch_g_topbar_build_stable">Stabil</string>
     <string name="presentation_batch_g_topbar_cd_changelog">Log Perubahan</string>
     <string name="presentation_batch_g_yes">Ya</string>
 </resources>

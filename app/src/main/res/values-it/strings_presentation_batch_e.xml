@@ -16,10 +16,21 @@
     <string name="presentation_batch_e_clear_queue_dialog_title">Svuota coda</string>
     <string name="presentation_batch_e_create_playlist_subtitle">Scegli il flusso di creazione.</string>
     <string name="presentation_batch_e_create_playlist_title">Crea playlist</string>
+    <string name="presentation_batch_e_creation_mode_describe">Descrivila</string>
+    <string name="presentation_batch_e_creation_mode_describe_subtitle">Scrivi cosa vuoi ascoltare e lascia che sia l\'app a scegliere i brani, completamente offline.</string>
     <string name="presentation_batch_e_creation_mode_manual">Manuale</string>
     <string name="presentation_batch_e_creation_mode_manual_subtitle">Progetta copertina, icona, forma e seleziona i brani da solo.</string>
     <string name="presentation_batch_e_describe_generate">Genera</string>
+    <string name="presentation_batch_e_describe_no_matches">Nessun brano della tua libreria corrisponde a questa descrizione.</string>
+    <string name="presentation_batch_e_describe_playlist_hint">es. brani per allenarsi con i pesi</string>
+    <string name="presentation_batch_e_describe_playlist_subtitle">Il confronto avviene con la libreria su questo dispositivo: nulla esce da qui.</string>
+    <string name="presentation_batch_e_describe_playlist_title">Descrivi la tua playlist</string>
     <string name="presentation_batch_e_describe_regenerate">Rigenera</string>
+    <plurals name="presentation_batch_e_describe_result_count">
+        <item quantity="one">%d brano trovato</item>
+        <item quantity="other">%d brani trovati</item>
+    </plurals>
+    <string name="presentation_batch_e_describe_save">Salva playlist</string>
     <string name="presentation_batch_e_deselect_all">Deseleziona tutti</string>
     <string name="presentation_batch_e_enter_playlist_name">Inserisci un nome per la playlist</string>
     <string name="presentation_batch_e_manage_presets_title">Gestisci preset</string>

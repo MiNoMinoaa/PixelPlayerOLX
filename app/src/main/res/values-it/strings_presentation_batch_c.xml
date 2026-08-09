@@ -24,6 +24,7 @@
     <string name="lib_empty_liked_all_title">Ancora nessun brano preferito</string>
     <string name="lib_empty_liked_offline_subtitle">Cambia il filtro sorgente o metti mi piace ai brani dal tuo dispositivo.</string>
     <string name="lib_empty_liked_offline_title">Nessun brano locale preferito</string>
+    <string name="lib_empty_liked_online_subtitle">Metti mi piace alle tracce Navidrome o Jellyfin per vederle in questa vista.</string>
     <string name="lib_empty_liked_online_title">Nessun brano cloud preferito</string>
     <string name="lib_empty_playlists_subtitle">Crea la tua prima playlist per organizzare la tua libreria.</string>
     <string name="lib_empty_playlists_title">Ancora nessuna playlist</string>
@@ -31,6 +32,7 @@
     <string name="lib_empty_songs_all_title">Ancora nessun brano</string>
     <string name="lib_empty_songs_offline_subtitle">Prova un altro filtro sorgente o scansiona nuovamente la libreria del dispositivo.</string>
     <string name="lib_empty_songs_offline_title">Nessun brano locale trovato</string>
+    <string name="lib_empty_songs_online_subtitle">Sincronizza i brani Navidrome o Jellyfin, oppure passa alla sorgente locale.</string>
     <string name="lib_empty_songs_online_title">Nessun brano cloud trovato</string>
     <string name="library_action_new">Nuovo</string>
     <string name="library_error_loading_albums">Errore caricamento album</string>
@@ -39,6 +41,8 @@
     <string name="library_no_songs_in_library_message">Nessun brano trovato nella tua libreria.</string>
     <string name="library_no_songs_rescan_hint">Prova a ripetere la scansione della libreria nelle impostazioni se hai musica sul dispositivo.</string>
     <string name="library_retry">Riprova</string>
+    <string name="library_storage_filter_all_songs">Tutti i brani</string>
+    <string name="library_storage_filter_offline">Locale</string>
     <string name="library_storage_filter_online">Cloud</string>
     <string name="library_tab_albums">Album</string>
     <string name="library_tab_artists">Artisti</string>

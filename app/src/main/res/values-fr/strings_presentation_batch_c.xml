@@ -24,6 +24,7 @@
     <string name="lib_empty_liked_all_title">Aucun titre favori pour le moment</string>
     <string name="lib_empty_liked_offline_subtitle">Basculez le filtre de source ou aimez des titres sur votre appareil.</string>
     <string name="lib_empty_liked_offline_title">Aucun titre favori local</string>
+    <string name="lib_empty_liked_online_subtitle">Aimez des titres Navidrome ou Jellyfin pour les voir dans cette vue.</string>
     <string name="lib_empty_liked_online_title">Aucun titre favori cloud</string>
     <string name="lib_empty_playlists_subtitle">Créez votre première playlist pour organiser votre bibliothèque.</string>
     <string name="lib_empty_playlists_title">Aucune playlist pour le moment</string>
@@ -31,6 +32,7 @@
     <string name="lib_empty_songs_all_title">Aucun titre pour le moment</string>
     <string name="lib_empty_songs_offline_subtitle">Essayez un autre filtre de source ou réanalysez la bibliothèque de votre appareil.</string>
     <string name="lib_empty_songs_offline_title">Aucun titre local trouvé</string>
+    <string name="lib_empty_songs_online_subtitle">Synchronisez des titres Navidrome ou Jellyfin, ou basculez sur la source locale.</string>
     <string name="lib_empty_songs_online_title">Aucun titre cloud trouvé</string>
     <string name="library_action_new">Nouveau</string>
     <string name="library_error_loading_albums">Erreur lors du chargement des albums</string>
@@ -39,6 +41,8 @@
     <string name="library_no_songs_in_library_message">Aucun titre trouvé dans votre bibliothèque.</string>
     <string name="library_no_songs_rescan_hint">Essayez de réanalyser votre bibliothèque dans les paramètres si vous avez de la musique sur votre appareil.</string>
     <string name="library_retry">Réessayer</string>
+    <string name="library_storage_filter_all_songs">Toutes les chansons</string>
+    <string name="library_storage_filter_offline">Local</string>
     <string name="library_storage_filter_online">Cloud</string>
     <string name="library_tab_albums">Albums</string>
     <string name="library_tab_artists">Artistes</string>

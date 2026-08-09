@@ -16,10 +16,21 @@
     <string name="presentation_batch_e_clear_queue_dialog_title">Bersihkan antrean</string>
     <string name="presentation_batch_e_create_playlist_subtitle">Pilih alur pembuatan.</string>
     <string name="presentation_batch_e_create_playlist_title">Buat playlist</string>
+    <string name="presentation_batch_e_creation_mode_describe">Deskripsikan</string>
+    <string name="presentation_batch_e_creation_mode_describe_subtitle">Ketik apa yang ingin Anda dengar dan biarkan aplikasi memilih lagunya, sepenuhnya offline.</string>
     <string name="presentation_batch_e_creation_mode_manual">Manual</string>
     <string name="presentation_batch_e_creation_mode_manual_subtitle">Desain sampul, ikon, bentuk, dan pilih lagu sendiri.</string>
     <string name="presentation_batch_e_describe_generate">Hasilkan</string>
+    <string name="presentation_batch_e_describe_no_matches">Tidak ada lagu di pustaka Anda yang cocok dengan deskripsi itu.</string>
+    <string name="presentation_batch_e_describe_playlist_hint">mis. lagu untuk angkat beban</string>
+    <string name="presentation_batch_e_describe_playlist_subtitle">Dicocokkan dengan pustaka di perangkat ini — tidak ada data yang keluar.</string>
+    <string name="presentation_batch_e_describe_playlist_title">Deskripsikan playlist Anda</string>
     <string name="presentation_batch_e_describe_regenerate">Regenerasi</string>
+    <plurals name="presentation_batch_e_describe_result_count">
+        <item quantity="one">%d lagu cocok</item>
+        <item quantity="other">%d lagu cocok</item>
+    </plurals>
+    <string name="presentation_batch_e_describe_save">Simpan playlist</string>
     <string name="presentation_batch_e_deselect_all">Batalkan pilihan semua</string>
     <string name="presentation_batch_e_enter_playlist_name">Masukkan nama playlist</string>
     <string name="presentation_batch_e_manage_presets_title">Kelola preset</string>

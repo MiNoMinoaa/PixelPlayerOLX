@@ -81,10 +81,12 @@
     <string name="presentation_batch_g_artist_ex_4_out">A, B</string>
     <string name="presentation_batch_g_artist_ex_5_in">\"AC\\DC\"</string>
     <string name="presentation_batch_g_artist_ex_5_out">AC/DC (escaped)</string>
+    <string name="presentation_batch_g_artist_example_arrow"> → </string>
     <string name="presentation_batch_g_artist_examples_title">Eksempler</string>
     <string name="presentation_batch_g_artist_extract_from_title">Hent artister fra tittel</string>
     <string name="presentation_batch_g_artist_extract_from_title_sub">Gjenkjenn feat., ft., with i sangtitler</string>
     <string name="presentation_batch_g_artist_group_by_album_artist">Grupper etter albumartist</string>
+    <string name="presentation_batch_g_artist_group_by_album_artist_sub">Grupper Artister-fanen og albumene etter albumartist, slik at gjesteartister og samleartister ikke fyller opp listen</string>
     <string name="presentation_batch_g_artist_info_title">Om tolkning av flere artister</string>
     <string name="presentation_batch_g_artist_item_char_delimiters">Tegndelimitere</string>
     <string name="presentation_batch_g_artist_item_char_delimiters_current">Gjeldende: %1$s</string>
@@ -172,6 +174,7 @@
     <string name="presentation_batch_g_beta_sheet_title_example_3">Funksjon: Legg til \"Nylig lagt til\"-sortering for spillelister</string>
     <string name="presentation_batch_g_beta_sheet_title_examples_title">Gode issue-titler</string>
     <string name="presentation_batch_g_beta_sheet_welcome_body">Du bruker en betaversjon som kan inneholde feil, krasj eller eksperimentelle funksjoner. Hjelp oss å forbedre ved å rapportere problemer.</string>
+    <string name="presentation_batch_g_beta_sheet_welcome_body_stable">Du bruker den stabile utgivelsen. Se endringsloggen for hva som er nytt, og rapporter alt som ikke oppfører seg som det skal.</string>
     <string name="presentation_batch_g_brick_cd_close">Lukk</string>
     <string name="presentation_batch_g_brick_drag_paddle">Dra for å bevege paddelen</string>
     <string name="presentation_batch_g_brick_game_over">GAME OVER</string>
@@ -192,10 +195,17 @@
     <string name="presentation_batch_g_cd_selected">Valgt</string>
     <string name="presentation_batch_g_cd_switch_on">Bryter er på</string>
     <string name="presentation_batch_g_changelog_sec_improvements">Forbedringer</string>
+    <string name="presentation_batch_g_changelog_sec_initial_release">Første utgivelse</string>
+    <string name="presentation_batch_g_changelog_sec_release_readiness">Klar for utgivelse</string>
+    <string name="presentation_batch_g_changelog_sec_removed_for_foss">Fjernet for FOSS</string>
+    <string name="presentation_batch_g_changelog_sec_security_privacy">Sikkerhet og personvern</string>
+    <string name="presentation_batch_g_changelog_sec_under_the_hood">Under panseret</string>
+    <string name="presentation_batch_g_changelog_sec_whats_new">Nytt i denne versjonen</string>
     <string name="presentation_batch_g_changelog_title">Endringslogg</string>
     <string name="presentation_batch_g_changelog_view_github">Vis på GitHub</string>
     <string name="presentation_batch_g_daily_mix_based_on_history">Basert på historikk</string>
     <string name="presentation_batch_g_daily_mix_heading">DAILY MIX</string>
+    <string name="presentation_batch_g_daily_mix_queue_name">Daily Mix</string>
     <string name="presentation_batch_g_daily_mix_see_all">Se hele Daily Mix</string>
     <string name="presentation_batch_g_device_info_title">Enhetsinformasjon</string>
     <string name="presentation_batch_g_device_key_android_version">Android-versjon</string>
@@ -257,6 +267,7 @@
     <string name="presentation_batch_g_selection_deselect">Fjern valg</string>
     <string name="presentation_batch_g_selection_n_songs">sanger valgt</string>
     <string name="presentation_batch_g_selection_one_song">sang valgt</string>
+    <string name="presentation_batch_g_selection_overflow_count">+%1$d</string>
     <string name="presentation_batch_g_selection_play">Spill av</string>
     <string name="presentation_batch_g_sort_ascending">Stigende</string>
     <string name="presentation_batch_g_sort_descending">Synkende</string>
@@ -359,6 +370,8 @@
     <string name="presentation_batch_g_streaming_subtitle">Strøm musikk fra dine skykontoer</string>
     <string name="presentation_batch_g_streaming_title">Skystrømming</string>
     <string name="presentation_batch_g_sync_percent">%1$d%%</string>
+    <string name="presentation_batch_g_topbar_build_debug">Debug</string>
+    <string name="presentation_batch_g_topbar_build_stable">Stabil</string>
     <string name="presentation_batch_g_topbar_cd_changelog">Endringslogg</string>
     <string name="presentation_batch_g_yes">Ja</string>
 </resources>

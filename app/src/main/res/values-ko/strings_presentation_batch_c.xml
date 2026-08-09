@@ -24,6 +24,7 @@
     <string name="lib_empty_liked_all_title">좋아요 표시한 곡이 없습니다</string>
     <string name="lib_empty_liked_offline_subtitle">소스 필터를 전환하거나 기기의 곡에 좋아요를 표시하세요.</string>
     <string name="lib_empty_liked_offline_title">좋아요 표시한 로컬 곡 없음</string>
+    <string name="lib_empty_liked_online_subtitle">이 화면에서 보려면 Navidrome 또는 Jellyfin 트랙에 좋아요를 표시하세요.</string>
     <string name="lib_empty_liked_online_title">좋아요 표시한 클라우드 곡 없음</string>
     <string name="lib_empty_playlists_subtitle">첫 번째 플레이리스트를 만들어 라이브러리를 정리해 보세요.</string>
     <string name="lib_empty_playlists_title">플레이리스트가 아직 없습니다</string>
@@ -31,6 +32,7 @@
     <string name="lib_empty_songs_all_title">아직 곡이 없습니다</string>
     <string name="lib_empty_songs_offline_subtitle">다른 소스 필터를 시도하거나 기기 라이브러리를 다시 스캔하세요.</string>
     <string name="lib_empty_songs_offline_title">로컬 곡을 찾을 수 없음</string>
+    <string name="lib_empty_songs_online_subtitle">Navidrome 또는 Jellyfin 곡을 동기화하거나 로컬 소스로 전환하세요.</string>
     <string name="lib_empty_songs_online_title">클라우드 곡을 찾을 수 없음</string>
     <string name="library_action_new">새로 만들기</string>
     <string name="library_error_loading_albums">앨범을 불러오는 중 오류 발생</string>
@@ -39,6 +41,8 @@
     <string name="library_no_songs_in_library_message">라이브러리에 곡이 없습니다.</string>
     <string name="library_no_songs_rescan_hint">기기에 음악이 있는 경우 설정에서 라이브러리를 다시 스캔해 보세요.</string>
     <string name="library_retry">재시도</string>
+    <string name="library_storage_filter_all_songs">전체 곡</string>
+    <string name="library_storage_filter_offline">로컬</string>
     <string name="library_storage_filter_online">클라우드</string>
     <string name="library_tab_albums">앨범</string>
     <string name="library_tab_artists">아티스트</string>

@@ -64,4 +64,12 @@
         <item quantity="many">جاري مشاركة %d قائمة تشغيل</item>
         <item quantity="other">جاري مشاركة %d قائمة تشغيل</item>
     </plurals>
+    <plurals name="sleep_timer_play_count_times">
+        <item quantity="zero">بدون تكرار</item>
+        <item quantity="one">مرة واحدة</item>
+        <item quantity="two">مرتان</item>
+        <item quantity="few">%d مرات</item>
+        <item quantity="many">%d مرة</item>
+        <item quantity="other">%d مرة</item>
+    </plurals>
 </resources>

@@ -12,9 +12,12 @@
     <string name="action_save">Guardar</string>
     <string name="action_undo">Deshacer</string>
     <string name="cd_add_all_to_queue">Añadir todo a la cola</string>
+    <string name="cd_add_selected_albums_to_queue">Añadir los álbumes seleccionados a la cola</string>
     <string name="cd_add_to_favorites">Añadir a favoritos</string>
     <string name="cd_add_to_playlist">Añadir a la lista de reproducción</string>
     <string name="cd_add_to_queue">Añadir a la cola</string>
+    <string name="cd_album_art_of">Portada de %1$s</string>
+    <string name="cd_album_art_placeholder">Marcador de posición de %1$s</string>
     <string name="cd_album_icon">Álbum</string>
     <string name="cd_artist_icon">Artista</string>
     <string name="cd_audio_format_icon">Formato de audio</string>
@@ -42,6 +45,8 @@
     <string name="cd_play">Reproducir</string>
     <string name="cd_play_all">Reproducir todo</string>
     <string name="cd_play_next_in_queue">Reproducir a continuación en la cola</string>
+    <string name="cd_play_selected_albums">Reproducir los álbumes seleccionados</string>
+    <string name="cd_play_selected_albums_next">Reproducir a continuación los álbumes seleccionados</string>
     <string name="cd_play_song_action">Reproducir canción</string>
     <string name="cd_provider_icon">Proveedor</string>
     <string name="cd_remove_from_favorites">Quitar de favoritos</string>
@@ -53,6 +58,7 @@
     <string name="cd_share_all">Compartir todo</string>
     <string name="cd_share_all_as_zip">Compartir todo como ZIP</string>
     <string name="cd_share_song_file">Compartir archivo de canción</string>
+    <string name="cd_show_controls">Mostrar controles</string>
     <string name="cd_show_metadata_info">Mostrar información</string>
     <string name="cd_song_title_icon">Título</string>
     <string name="cd_track_number_icon">Número de pista</string>
@@ -78,6 +84,8 @@
     <string name="equalizer_save_custom_preset_body">Escribe un nombre para tu preset del ecualizador.</string>
     <string name="equalizer_save_custom_preset_title">Guardar preset personalizado</string>
     <string name="error_name_empty">El nombre no puede estar vacío</string>
+    <string name="folder_state_excluded">Excluida</string>
+    <string name="folder_state_included">Incluida</string>
     <string name="home_option_dj_mashup">Mashup DJ</string>
     <string name="lyrics_more_adjust_sync">Ajustar sincronización</string>
     <string name="lyrics_more_alignment">Alineación</string>
@@ -103,6 +111,7 @@
     <string name="playlist_dismissed_message">Lista descartada</string>
     <string name="playlist_picker_add_songs_title">Añadir %1$d canciones a…</string>
     <string name="playlist_picker_select_playlists">Seleccionar listas</string>
+    <string name="playlist_saved_toast">Guardada</string>
     <string name="playlist_songs_added_toast">Canciones añadidas a las listas</string>
     <string name="reorder_tabs_reordering">Reordenando pestañas…</string>
     <string name="reorder_tabs_reset_dialog_body">¿Restablecer el orden de las pestañas al predeterminado?</string>

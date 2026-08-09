@@ -12,9 +12,12 @@
     <string name="action_save">Speichern</string>
     <string name="action_undo">Rückgängig</string>
     <string name="cd_add_all_to_queue">Alle zur Queue</string>
+    <string name="cd_add_selected_albums_to_queue">Ausgewählte Alben zur Queue hinzufügen</string>
     <string name="cd_add_to_favorites">Zu Favoriten hinzufügen</string>
     <string name="cd_add_to_playlist">Zu Playlist hinzufügen</string>
     <string name="cd_add_to_queue">Zur Queue hinzufügen</string>
+    <string name="cd_album_art_of">Cover von %1$s</string>
+    <string name="cd_album_art_placeholder">Platzhalter für %1$s</string>
     <string name="cd_album_icon">Album</string>
     <string name="cd_artist_icon">Künstler</string>
     <string name="cd_audio_format_icon">Audioformat</string>
@@ -23,6 +26,7 @@
     <string name="cd_cover_art_preview">Vorschau des neuen Covers</string>
     <string name="cd_current_song_cover_art">Aktuelles Song-Cover</string>
     <string name="cd_delete_all_songs">Alle löschen</string>
+    <string name="cd_details_tab">Details</string>
     <string name="cd_disc_number_icon">Disc-Nummer</string>
     <string name="cd_drag_handle">Ziehpunkt</string>
     <string name="cd_duration_icon">Dauer</string>
@@ -41,6 +45,8 @@
     <string name="cd_play">Abspielen</string>
     <string name="cd_play_all">Alle abspielen</string>
     <string name="cd_play_next_in_queue">Als nächstes abspielen</string>
+    <string name="cd_play_selected_albums">Ausgewählte Alben abspielen</string>
+    <string name="cd_play_selected_albums_next">Ausgewählte Alben als nächstes abspielen</string>
     <string name="cd_play_song_action">Song abspielen</string>
     <string name="cd_provider_icon">Anbieter</string>
     <string name="cd_remove_from_favorites">Aus Favoriten entfernen</string>
@@ -52,6 +58,7 @@
     <string name="cd_share_all">Alle teilen</string>
     <string name="cd_share_all_as_zip">Alle als ZIP teilen</string>
     <string name="cd_share_song_file">Song-Datei teilen</string>
+    <string name="cd_show_controls">Steuerung anzeigen</string>
     <string name="cd_show_metadata_info">Info anzeigen</string>
     <string name="cd_song_title_icon">Titel</string>
     <string name="cd_track_number_icon">Titelnummer</string>
@@ -77,6 +84,8 @@
     <string name="equalizer_save_custom_preset_body">Namen für dein Equalizer-Preset eingeben</string>
     <string name="equalizer_save_custom_preset_title">Eigenes Preset speichern</string>
     <string name="error_name_empty">Name darf nicht leer sein</string>
+    <string name="folder_state_excluded">Ausgeschlossen</string>
+    <string name="folder_state_included">Eingeschlossen</string>
     <string name="home_option_dj_mashup">DJ Mashup</string>
     <string name="lyrics_more_adjust_sync">Sync anpassen</string>
     <string name="lyrics_more_alignment">Ausrichtung</string>
@@ -102,6 +111,7 @@
     <string name="playlist_dismissed_message">Playlist geschlossen</string>
     <string name="playlist_picker_add_songs_title">%1$d Songs hinzufügen zu…</string>
     <string name="playlist_picker_select_playlists">Playlists auswählen</string>
+    <string name="playlist_saved_toast">Gespeichert</string>
     <string name="playlist_songs_added_toast">Songs zu Playlists hinzugefügt</string>
     <string name="reorder_tabs_reordering">Tabs werden neu sortiert…</string>
     <string name="reorder_tabs_reset_dialog_body">Tab-Reihenfolge auf Standard zurücksetzen?</string>
@@ -127,6 +137,7 @@
     <string name="song_info_ringtone_permission_missing">Systemeinstellungen ändern wurde nicht aktiviert.</string>
     <string name="song_info_set_as_short">Als</string>
     <string name="song_info_share_chooser_title">Song-Datei teilen via</string>
+    <string name="song_info_tab_details">Details</string>
     <string name="song_info_tab_info_badge">INFO</string>
     <string name="song_info_tab_options">Optionen</string>
     <string name="song_info_tab_options_badge">OPTIONEN</string>

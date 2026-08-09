@@ -14,6 +14,7 @@
     <string name="presentation_batch_b_clear">Очистить</string>
     <string name="presentation_batch_b_corner_dp_format">%1$d dp</string>
     <string name="presentation_batch_b_corner_radius_label">Радиус скругления</string>
+    <string name="presentation_batch_b_daily_mix_title">Daily Mix</string>
     <string name="presentation_batch_b_date_today">Сегодня</string>
     <string name="presentation_batch_b_date_yesterday">Вчера</string>
     <string name="presentation_batch_b_delete_playlist">Удалить плейлист</string>
@@ -33,6 +34,7 @@
     <string name="presentation_batch_b_play_latest">Воспроизвести последнее</string>
     <string name="presentation_batch_b_playlist_empty_add_hint">Нажмите «Добавить треки», чтобы начать.</string>
     <string name="presentation_batch_b_playlist_empty_folder_body">В этой папке нет треков.</string>
+    <string name="presentation_batch_b_playlist_empty_smart_body">Пока ни один трек не подходит под это умное правило.</string>
     <string name="presentation_batch_b_playlist_empty_title">Этот плейлист пуст.</string>
     <string name="presentation_batch_b_playlist_options_title">Параметры плейлиста</string>
     <string name="presentation_batch_b_queue_recently_played">Недавно прослушанные</string>

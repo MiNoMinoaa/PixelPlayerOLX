@@ -24,6 +24,7 @@
     <string name="lib_empty_liked_all_title">Aún no hay canciones favoritas</string>
     <string name="lib_empty_liked_offline_subtitle">Cambia el filtro de origen o marca canciones favoritas en tu dispositivo.</string>
     <string name="lib_empty_liked_offline_title">No hay canciones favoritas locales</string>
+    <string name="lib_empty_liked_online_subtitle">Marca como favoritas pistas de Navidrome o Jellyfin para verlas en esta vista.</string>
     <string name="lib_empty_liked_online_title">No hay canciones favoritas en la nube</string>
     <string name="lib_empty_playlists_subtitle">Crea tu primera lista para organizar tu biblioteca.</string>
     <string name="lib_empty_playlists_title">Aún no hay listas</string>
@@ -31,6 +32,7 @@
     <string name="lib_empty_songs_all_title">Aún no hay canciones</string>
     <string name="lib_empty_songs_offline_subtitle">Prueba con otro filtro de origen o vuelve a escanear tu biblioteca local.</string>
     <string name="lib_empty_songs_offline_title">No se encontraron canciones locales</string>
+    <string name="lib_empty_songs_online_subtitle">Sincroniza canciones de Navidrome o Jellyfin, o cambia a la fuente local.</string>
     <string name="lib_empty_songs_online_title">No se encontraron canciones en la nube</string>
     <string name="library_action_new">Nuevo</string>
     <string name="library_error_loading_albums">Error al cargar álbumes</string>
@@ -39,6 +41,8 @@
     <string name="library_no_songs_in_library_message">No se encontraron canciones en tu biblioteca.</string>
     <string name="library_no_songs_rescan_hint">Prueba a volver a escanear en los ajustes si tienes música en tu dispositivo.</string>
     <string name="library_retry">Reintentar</string>
+    <string name="library_storage_filter_all_songs">Todas las canciones</string>
+    <string name="library_storage_filter_offline">Local</string>
     <string name="library_storage_filter_online">Nube</string>
     <string name="library_tab_albums">Álbumes</string>
     <string name="library_tab_artists">Artistas</string>
