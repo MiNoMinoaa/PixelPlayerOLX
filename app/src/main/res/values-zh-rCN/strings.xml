@@ -1,8 +1,8 @@
 <resources>
 <string name="app_name">PixelPlayerOSS</string>
 <string name="app_name_change_title">应用名称已变更</string>
-<string name="app_name_change_message">本应用现已更名为 PixelPlayerOSS。尽情播放音乐！</string>
-<string name="do_not_show_again">不再显示</string>
+<string name="app_name_change_message">本应用现已更名为 PixelPlayerOSS！开启你的音乐之旅吧！</string>
+<string name="do_not_show_again">不再提示</string>
 <string name="dismiss">关闭</string>
 <string name="all_files_access_title">需要特殊权限</string>
 <string name="all_files_access_description">为了编辑歌曲元数据（mp3文件），PixelPlayerOSS需要全部文件访问权限，以此直接修改歌曲标签。请在下一界面授予权限，启用元数据编辑功能。</string>
@@ -134,11 +134,11 @@
 
 <string name="backup_invalid_format">备份文件无效：%1$s</string>
 <string name="backup_progress_preparing_restore">正在准备恢复</string>
-<string name="backup_progress_starting_task">开始恢复任务。</string>
+<string name="backup_progress_starting_task">开始恢复任务</string>
 <string name="backup_progress_preparing_backup">正在准备备份</string>
-<string name="backup_progress_starting_backup_task">开始备份任务。</string>
+<string name="backup_progress_starting_backup_task">开始备份任务</string>
 <string name="restore_completed_success">备份恢复成功</string>
-<string name="restore_completed_partial_issues">恢复完成，但存在部分未解决问题。</string>
+<string name="restore_completed_partial_issues">恢复完成，但存在部分未解决问题</string>
 <string name="restore_could_not_complete">无法完成恢复：%1$s</string>
 <string name="restore_failed_format">恢复失败：%1$s</string>
 <string name="data_exported_successfully">数据导出成功</string>
@@ -183,7 +183,7 @@
 <string name="player_batch_genre_updated_all">成功更新 %1$d 首歌曲！</string>
 <string name="player_batch_genre_updated_partial">更新%1$d首，%2$d首更新失败</string>
 <string name="playlist_restored_toast">播放列表已恢复</string>
-<string name="delete_songs_permanent_message">这些歌曲将从设备永久删除，无法恢复。</string>
+<string name="delete_songs_permanent_message">这些歌曲将从设备永久删除，无法恢复！</string>
 <string name="delete_action">删除</string>
 
 <string name="sleep_timer_n_minutes_format">%1$d 分钟</string>
@@ -236,6 +236,6 @@
 <string name="duplicates_group_count">共%1$d份副本</string>
 <string name="duplicates_group_title_format">%1$s — %2$s</string>
 <string name="setcat_find_duplicates_title">查找重复曲目</string>
-<string name="setcat_find_duplicates_subtitle">扫描曲库中多次出现的歌曲。</string>
+<string name="setcat_find_duplicates_subtitle">扫描曲库中多次出现的歌曲</string>
 
 </resources>
