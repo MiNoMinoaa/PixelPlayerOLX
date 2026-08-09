@@ -1578,11 +1578,11 @@ class MusicService : MediaLibraryService() {
         snapshotItem.title?.takeIf { it.isNotBlank() }?.let { metadataBuilder.setTitle(it) }
         snapshotItem.artist?.takeIf { it.isNotBlank() }?.let { metadataBuilder.setArtist(it) }
         snapshotItem.albumTitle?.takeIf { it.isNotBlank() }?.let { metadataBuilder.setAlbumTitle(it) }
-        val exposedArtworkUri = MediaItemBuilder.externalControllerArtworkUri(
+        val restoredArtworkUri = MediaItemBuilder.externalControllerArtworkUri(
             context = this,
             rawArtworkUri = snapshotItem.artworkUri
-        )
-        exposedArtworkUri?.let { metadataBuilder.setArtworkUri(it) }
+        ) ?: MediaItemBuilder.artworkUri(snapshotItem.artworkUri)
+        restoredArtworkUri?.let { metadataBuilder.setArtworkUri(it) }
 
         val extras = Bundle().apply {
             putBoolean(
@@ -1593,7 +1593,7 @@ class MusicService : MediaLibraryService() {
             snapshotItem.albumTitle?.takeIf { it.isNotBlank() }?.let {
                 putString(MediaItemBuilder.EXTERNAL_EXTRA_ALBUM, it)
             }
-            (exposedArtworkUri?.toString() ?: snapshotItem.artworkUri)
+            (restoredArtworkUri?.toString() ?: snapshotItem.artworkUri)
                 ?.takeIf { it.isNotBlank() }
                 ?.let {
                     putString(MediaItemBuilder.EXTERNAL_EXTRA_ALBUM_ART, it)
