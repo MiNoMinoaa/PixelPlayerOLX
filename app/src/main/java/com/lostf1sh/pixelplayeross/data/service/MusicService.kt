@@ -684,7 +684,10 @@ class MusicService : MediaLibraryService() {
             ): ListenableFuture<LibraryResult<MediaItem>> {
                 return serviceScope.future {
                     try {
-                        val item = resolveMediaItemsByIds(listOf(MediaItem.Builder().setMediaId(mediaId).build()))
+                        val item = resolveMediaItemsByIds(
+                            requestedItems = listOf(MediaItem.Builder().setMediaId(mediaId).build()),
+                            exposeInternalArtwork = browser.packageName == packageName
+                        )
                             .mediaItems
                             .firstOrNull()
                         if (item != null) {
@@ -726,7 +729,10 @@ class MusicService : MediaLibraryService() {
                 mediaItems: MutableList<MediaItem>
             ): ListenableFuture<MutableList<MediaItem>> {
                 return serviceScope.future {
-                    resolveMediaItemsByIds(mediaItems).also { resolvedItems ->
+                    resolveMediaItemsByIds(
+                        requestedItems = mediaItems,
+                        exposeInternalArtwork = controller.packageName == packageName
+                    ).also { resolvedItems ->
                         grantArtworkUriPermissions(
                             controller.packageName,
                             resolvedItems.trustedArtworkGrantItems
@@ -743,7 +749,10 @@ class MusicService : MediaLibraryService() {
                 startPositionMs: Long
             ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
                 return serviceScope.future {
-                    val resolvedItems = resolveMediaItemsByIds(mediaItems)
+                    val resolvedItems = resolveMediaItemsByIds(
+                        requestedItems = mediaItems,
+                        exposeInternalArtwork = controller.packageName == packageName
+                    )
                     grantArtworkUriPermissions(
                         controller.packageName,
                         resolvedItems.trustedArtworkGrantItems
@@ -1569,8 +1578,11 @@ class MusicService : MediaLibraryService() {
         snapshotItem.title?.takeIf { it.isNotBlank() }?.let { metadataBuilder.setTitle(it) }
         snapshotItem.artist?.takeIf { it.isNotBlank() }?.let { metadataBuilder.setArtist(it) }
         snapshotItem.albumTitle?.takeIf { it.isNotBlank() }?.let { metadataBuilder.setAlbumTitle(it) }
-        MediaItemBuilder.externalControllerArtworkUri(this, snapshotItem.artworkUri)
-            ?.let { metadataBuilder.setArtworkUri(it) }
+        val restoredArtworkUri = MediaItemBuilder.externalControllerArtworkUri(
+            context = this,
+            rawArtworkUri = snapshotItem.artworkUri
+        )
+        restoredArtworkUri?.let { metadataBuilder.setArtworkUri(it) }
 
         val extras = Bundle().apply {
             putBoolean(
@@ -1581,9 +1593,11 @@ class MusicService : MediaLibraryService() {
             snapshotItem.albumTitle?.takeIf { it.isNotBlank() }?.let {
                 putString(MediaItemBuilder.EXTERNAL_EXTRA_ALBUM, it)
             }
-            snapshotItem.artworkUri?.takeIf { it.isNotBlank() }?.let {
-                putString(MediaItemBuilder.EXTERNAL_EXTRA_ALBUM_ART, it)
-            }
+            (restoredArtworkUri?.toString() ?: snapshotItem.artworkUri)
+                ?.takeIf { it.isNotBlank() }
+                ?.let {
+                    putString(MediaItemBuilder.EXTERNAL_EXTRA_ALBUM_ART, it)
+                }
             snapshotItem.durationMs?.takeIf { it > 0L }?.let {
                 putLong(MediaItemBuilder.EXTERNAL_EXTRA_DURATION, it)
             }
@@ -2323,7 +2337,8 @@ class MusicService : MediaLibraryService() {
     }
 
     private suspend fun resolveMediaItemsByIds(
-        requestedItems: List<MediaItem>
+        requestedItems: List<MediaItem>,
+        exposeInternalArtwork: Boolean = false,
     ): TrustedMediaItemsResolution {
         val songIds = requestedItems.map { it.mediaId }
         val songs = musicRepository.getSongsByIds(songIds).first()
@@ -2331,7 +2346,11 @@ class MusicService : MediaLibraryService() {
 
         return resolveMediaItemsWithTrustedArtworkGrants(requestedItems) { mediaId ->
             songMap[mediaId]?.let { song ->
-                MediaItemBuilder.buildForExternalController(this, song)
+                if (exposeInternalArtwork) {
+                    MediaItemBuilder.build(song)
+                } else {
+                    MediaItemBuilder.buildForExternalController(this, song)
+                }
             }
         }
     }
@@ -2368,7 +2387,11 @@ class MusicService : MediaLibraryService() {
         val providerAuthority = "$packageName.provider"
         val artworkAuthority = "$packageName.artwork"
         mediaItems.forEach { mediaItem ->
-            val artworkUri = resolveArtworkUri(mediaItem.mediaMetadata) ?: return@forEach
+            val storedArtworkUri = resolveStoredArtworkUriString(mediaItem.mediaMetadata)
+            val artworkUri = MediaItemBuilder.externalControllerArtworkUri(
+                context = this,
+                rawArtworkUri = storedArtworkUri
+            ) ?: resolveArtworkUri(mediaItem.mediaMetadata) ?: return@forEach
             val authority = artworkUri.authority
             if (artworkUri.scheme?.lowercase() != "content" ||
                 (authority != providerAuthority && authority != artworkAuthority)
