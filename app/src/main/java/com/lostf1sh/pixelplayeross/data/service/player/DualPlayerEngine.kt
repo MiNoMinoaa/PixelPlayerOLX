@@ -36,6 +36,7 @@ import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.extractor.mp3.Mp3Extractor
 import androidx.media3.extractor.flac.FlacExtractor
 import com.lostf1sh.pixelplayeross.data.model.TransitionSettings
+import com.lostf1sh.pixelplayeross.data.offline.CloudOfflineRepository
 import com.lostf1sh.pixelplayeross.utils.envelope
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -170,7 +171,8 @@ internal fun shouldDisableAudioOffloadOnEarlyBuffering(
 class DualPlayerEngine @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val navidromeStreamProxy: NavidromeStreamProxy,
-    private val jellyfinStreamProxy: com.lostf1sh.pixelplayeross.data.jellyfin.JellyfinStreamProxy
+    private val jellyfinStreamProxy: com.lostf1sh.pixelplayeross.data.jellyfin.JellyfinStreamProxy,
+    private val cloudOfflineRepository: CloudOfflineRepository
 ) {
     private companion object {
         private const val AUDIO_OFFLOAD_STALL_FALLBACK_MS = 4_000L
@@ -904,6 +906,15 @@ class DualPlayerEngine @Inject constructor(
                 val scheme = uri.scheme
                 if (scheme in CLOUD_PROXY_SCHEMES) {
                     val originalUri = uri.toString()
+                    val offlineUri = try {
+                        runBlocking { cloudOfflineRepository.resolveLocalUri(originalUri) }
+                    } catch (e: Exception) {
+                        Timber.tag("DualPlayerEngine").w(e, "Offline copy lookup failed")
+                        null
+                    }
+                    if (offlineUri != null) {
+                        return dataSpec.buildUpon().setUri(offlineUri).build()
+                    }
                     val resolved = resolvedUriCache.get(originalUri)
                         ?: resolveReadyCloudProxyUri(uri)?.also { proxyUri ->
                             resolvedUriCache.put(originalUri, proxyUri)

@@ -49,9 +49,10 @@ Cloud playback is limited to self-hosted sources: Navidrome/Subsonic and Jellyfi
 | --- | --- |
 | Playback | Media3 playback engine, FFmpeg support, gapless playback, crossfade, custom transitions, queue controls, shuffle, repeat, sleep timer, external file playback |
 | Library | Local scanning for MP3, FLAC, AAC, OGG, WAV, M4A, albums, artists, genres, folders, favorites, playlists, stats, metadata editing |
-| Self-hosted | Navidrome/Subsonic login, sync, streaming, artwork, Jellyfin login, sync, streaming, artwork |
+| Self-hosted | Navidrome/Subsonic and Jellyfin login, sync, streaming, artwork, and app-private offline downloads |
 | Lyrics | Embedded lyrics, local `.lrc` files, lyrics import/editing, optional LRCLIB lookup |
 | Artwork | Local artwork, album-art palette extraction, optional Deezer artist image lookup |
+| Metadata | On-demand MusicBrainz matching for recording, release, and artist identifiers |
 | UI | Jetpack Compose, Material 3, dynamic color, light/dark themes, Glance widgets, animated player surfaces |
 | Backup | Preferences, playlists, favorites, lyrics, stats, and app state backup/restore |
 
@@ -61,12 +62,13 @@ PixelPlayerOSS separates offline playback from network lookups.
 
 | Service | Purpose | Default |
 | --- | --- | --- |
-| Navidrome/Subsonic | Self-hosted library sync and streaming | User login required |
-| Jellyfin | Self-hosted library sync and streaming | User login required |
+| Navidrome/Subsonic | Self-hosted library sync, streaming, and offline downloads | User login required |
+| Jellyfin | Self-hosted library sync, streaming, and offline downloads | User login required |
+| MusicBrainz | On-demand metadata matching and identifier enrichment | Only when requested |
 | LRCLIB | Search online lyrics when local or embedded lyrics are missing | Off |
 | Deezer | Fetch missing artist artwork and cache it locally | Off |
 
-LRCLIB and Deezer can be enabled during first-run setup or later from `Settings > Music Management > Optional online services`.
+LRCLIB and Deezer can be enabled during first-run setup or later from `Settings > Music Management > Optional online services`. MusicBrainz searches run only when you choose the lookup action for a track.
 
 ## Requirements
 
