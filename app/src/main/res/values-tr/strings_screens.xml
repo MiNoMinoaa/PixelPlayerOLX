@@ -27,6 +27,9 @@
     <string name="album_detail_meta_line">%1$s · %2$s</string>
     <string name="audio_bookmarks_cd_add">Yer imi kaydet</string>
     <string name="audio_bookmarks_cd_open">Ses yer imleri</string>
+    <string name="audio_bookmarks_back_to_top">Başa dön</string>
+    <string name="audio_bookmarks_clear_filter">Filtreyi temizle</string>
+    <string name="audio_bookmarks_name_label">Yer imi adı</string>
     <string name="audio_bookmarks_title">Yer İmleri</string>
     <string name="browse_by_genre">Türe göre göz at</string>
     <string name="cd_about_open_link">%1$s bağlantısını aç</string>

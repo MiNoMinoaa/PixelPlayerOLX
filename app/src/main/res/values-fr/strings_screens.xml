@@ -27,6 +27,9 @@
     <string name="album_detail_meta_line">%1$s · %2$s</string>
     <string name="audio_bookmarks_cd_add">Enregistrer le marque-page</string>
     <string name="audio_bookmarks_cd_open">Marque-pages audio</string>
+    <string name="audio_bookmarks_back_to_top">Retour en haut</string>
+    <string name="audio_bookmarks_clear_filter">Effacer le filtre</string>
+    <string name="audio_bookmarks_name_label">Nom du marque-page</string>
     <string name="audio_bookmarks_title">Marque-pages</string>
     <string name="browse_by_genre">Parcourir par genre</string>
     <string name="cd_about_open_link">Ouvrir %1$s</string>

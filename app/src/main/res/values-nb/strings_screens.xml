@@ -27,6 +27,9 @@
     <string name="album_detail_meta_line">%1$s · %2$s</string>
     <string name="audio_bookmarks_cd_add">Lagre bokmerke</string>
     <string name="audio_bookmarks_cd_open">Lydbokmerker</string>
+    <string name="audio_bookmarks_back_to_top">Til toppen</string>
+    <string name="audio_bookmarks_clear_filter">Fjern filter</string>
+    <string name="audio_bookmarks_name_label">Bokmerkenavn</string>
     <string name="audio_bookmarks_title">Bokmerker</string>
     <string name="browse_by_genre">Finn via sjanger</string>
     <string name="cd_about_open_link">Åpne %1$s</string>

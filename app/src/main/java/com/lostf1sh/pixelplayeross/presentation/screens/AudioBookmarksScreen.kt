@@ -134,6 +134,7 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
+import androidx.compose.ui.res.stringResource
 import com.lostf1sh.pixelplayeross.R
 import com.lostf1sh.pixelplayeross.data.database.AudioBookmarkEntity
 import com.lostf1sh.pixelplayeross.data.model.Song
@@ -1218,7 +1219,7 @@ private fun BookmarkActionFabMenu(
                 }
             },
             icon = { Icon(Icons.Rounded.Close, contentDescription = null) },
-            text = { Text("Clear filter") },
+            text = { Text(stringResource(R.string.audio_bookmarks_clear_filter)) },
             containerColor = if (hasQuery) {
                 MaterialTheme.colorScheme.tertiaryContainer
             } else {
@@ -1237,7 +1238,7 @@ private fun BookmarkActionFabMenu(
                 }
             },
             icon = { Icon(Icons.Rounded.KeyboardArrowUp, contentDescription = null) },
-            text = { Text("Back to top") },
+            text = { Text(stringResource(R.string.audio_bookmarks_back_to_top)) },
             containerColor = if (canScrollToTop) {
                 MaterialTheme.colorScheme.secondaryContainer
             } else {
@@ -1749,7 +1750,7 @@ private fun BookmarkMomentPrimaryActions(
                 .weight(renameWeight)
                 .fillMaxHeight(),
             icon = Icons.Rounded.Edit,
-            label = "Rename",
+            label = stringResource(R.string.action_rename),
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             interactionSource = renameInteractionSource,
@@ -1932,7 +1933,7 @@ private fun RenameBookmarkDialog(
                     onValueChange = { title = it },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    label = { Text("Bookmark name") },
+                    label = { Text(stringResource(R.string.audio_bookmarks_name_label)) },
                     isError = title.isNotEmpty() && trimmedTitle.isEmpty(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -1946,12 +1947,12 @@ private fun RenameBookmarkDialog(
                 onClick = { onRename(trimmedTitle) },
                 enabled = canRename
             ) {
-                Text("Rename")
+                Text(stringResource(R.string.action_rename))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(stringResource(R.string.cancel), maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
     )

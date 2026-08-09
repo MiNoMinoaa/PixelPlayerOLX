@@ -27,6 +27,9 @@
     <string name="album_detail_meta_line">%1$s · %2$s</string>
     <string name="audio_bookmarks_cd_add">Salva segnalibro</string>
     <string name="audio_bookmarks_cd_open">Segnalibri audio</string>
+    <string name="audio_bookmarks_back_to_top">Torna su</string>
+    <string name="audio_bookmarks_clear_filter">Cancella filtro</string>
+    <string name="audio_bookmarks_name_label">Nome del segnalibro</string>
     <string name="audio_bookmarks_title">Segnalibri</string>
     <string name="browse_by_genre">Esplora per genere</string>
     <string name="cd_about_open_link">Apri %1$s</string>

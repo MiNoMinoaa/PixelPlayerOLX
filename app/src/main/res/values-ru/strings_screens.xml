@@ -27,6 +27,9 @@
     <string name="album_detail_meta_line">%1$s · %2$s</string>
     <string name="audio_bookmarks_cd_add">Сохранить закладку</string>
     <string name="audio_bookmarks_cd_open">Аудиозакладки</string>
+    <string name="audio_bookmarks_back_to_top">Наверх</string>
+    <string name="audio_bookmarks_clear_filter">Сбросить фильтр</string>
+    <string name="audio_bookmarks_name_label">Название закладки</string>
     <string name="audio_bookmarks_title">Закладки</string>
     <string name="browse_by_genre">Обзор по жанрам</string>
     <string name="cd_about_open_link">Открыть %1$s</string>

@@ -27,6 +27,9 @@
     <string name="album_detail_meta_line">%1$s · %2$s</string>
     <string name="audio_bookmarks_cd_add">Simpan bookmark</string>
     <string name="audio_bookmarks_cd_open">Bookmark audio</string>
+    <string name="audio_bookmarks_back_to_top">Kembali ke atas</string>
+    <string name="audio_bookmarks_clear_filter">Hapus filter</string>
+    <string name="audio_bookmarks_name_label">Nama bookmark</string>
     <string name="audio_bookmarks_title">Bookmark</string>
     <string name="browse_by_genre">Telusuri berdasarkan genre</string>
     <string name="cd_about_open_link">Buka %1$s</string>

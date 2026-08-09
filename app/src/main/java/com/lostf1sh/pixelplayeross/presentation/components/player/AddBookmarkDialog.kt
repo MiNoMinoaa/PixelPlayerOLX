@@ -1,6 +1,8 @@
 package com.lostf1sh.pixelplayeross.presentation.components.player
 
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.res.stringResource
+import com.lostf1sh.pixelplayeross.R
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -227,14 +229,14 @@ fun AddBookmarkDialog(
                 enabled = resolvedTitle.isNotBlank(),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Text("Save")
+                Text(stringResource(R.string.action_save))
             }
         },
         dismissButton = {
             TextButton(
                 onClick = onDismiss
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         },
         shape = RoundedCornerShape(32.dp),

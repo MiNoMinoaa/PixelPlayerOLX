@@ -27,6 +27,9 @@
     <string name="album_detail_meta_line">%1$s · %2$s</string>
     <string name="audio_bookmarks_cd_add">حفظ إشارة مرجعية</string>
     <string name="audio_bookmarks_cd_open">الإشارات المرجعية الصوتية</string>
+    <string name="audio_bookmarks_back_to_top">العودة إلى الأعلى</string>
+    <string name="audio_bookmarks_clear_filter">مسح عامل التصفية</string>
+    <string name="audio_bookmarks_name_label">اسم الإشارة المرجعية</string>
     <string name="audio_bookmarks_title">الإشارات المرجعية</string>
     <string name="browse_by_genre">تصفح حسب النوع</string>
     <string name="cd_about_open_link">فتح %1$s</string>
