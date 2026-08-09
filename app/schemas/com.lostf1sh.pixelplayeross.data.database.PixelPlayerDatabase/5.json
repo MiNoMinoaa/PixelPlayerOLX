@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 5,
-    "identityHash": "b30028089a2bd343ead7d70fc0a6b68d",
+    "identityHash": "e75c68eb935e7c393b69137829c5dcd4",
     "entities": [
       {
         "tableName": "album_art_themes",
@@ -2173,11 +2173,17 @@
       },
       {
         "tableName": "offline_tracks",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`download_id` TEXT NOT NULL, `song_id` TEXT NOT NULL, `source_uri` TEXT NOT NULL, `provider` TEXT NOT NULL, `title` TEXT NOT NULL, `mime_type` TEXT, `local_path` TEXT, `state` TEXT NOT NULL, `bytes_downloaded` INTEGER NOT NULL, `total_bytes` INTEGER, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, `error_message` TEXT, PRIMARY KEY(`download_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`download_id` TEXT NOT NULL, `attempt_id` TEXT NOT NULL, `song_id` TEXT NOT NULL, `source_uri` TEXT NOT NULL, `provider` TEXT NOT NULL, `title` TEXT NOT NULL, `mime_type` TEXT, `local_path` TEXT, `state` TEXT NOT NULL, `bytes_downloaded` INTEGER NOT NULL, `total_bytes` INTEGER, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, `error_message` TEXT, PRIMARY KEY(`download_id`))",
         "fields": [
           {
             "fieldPath": "downloadId",
             "columnName": "download_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attemptId",
+            "columnName": "attempt_id",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -2289,7 +2295,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b30028089a2bd343ead7d70fc0a6b68d')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e75c68eb935e7c393b69137829c5dcd4')"
     ]
   }
 }

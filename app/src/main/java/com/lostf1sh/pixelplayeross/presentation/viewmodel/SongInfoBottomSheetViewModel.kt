@@ -121,7 +121,8 @@ class SongInfoBottomSheetViewModel @Inject constructor(
                     onSuccess = { MusicBrainzUiState.Results(it) },
                     onFailure = {
                         MusicBrainzUiState.Error(
-                            it.localizedMessage ?: "MusicBrainz search failed"
+                            it.localizedMessage
+                                ?: appContext.getString(R.string.musicbrainz_search_failed_fallback)
                         )
                     }
                 )
@@ -137,7 +138,8 @@ class SongInfoBottomSheetViewModel @Inject constructor(
                 onSuccess = { MusicBrainzUiState.Applied },
                 onFailure = {
                     MusicBrainzUiState.Error(
-                        it.localizedMessage ?: "MusicBrainz metadata could not be saved"
+                        it.localizedMessage
+                            ?: appContext.getString(R.string.musicbrainz_save_failed_fallback)
                     )
                 }
             )

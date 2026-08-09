@@ -7,6 +7,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.await
 import androidx.work.workDataOf
 import com.lostf1sh.pixelplayeross.data.database.OfflineTrackDao
 import com.lostf1sh.pixelplayeross.data.database.OfflineTrackEntity
@@ -15,11 +16,14 @@ import com.lostf1sh.pixelplayeross.data.worker.CloudTrackDownloadWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.security.MessageDigest
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 enum class OfflineDownloadStatus(val storageValue: String) {
@@ -54,6 +58,8 @@ class CloudOfflineRepository @Inject constructor(
     private val dao: OfflineTrackDao,
     private val workManager: WorkManager
 ) {
+    private val mutationMutex = Mutex()
+
     fun observe(song: Song): Flow<OfflineDownload?> = observe(song.contentUriString)
 
     fun observe(sourceUri: String): Flow<OfflineDownload?> =
@@ -63,53 +69,62 @@ class CloudOfflineRepository @Inject constructor(
         dao.observeCompleted().map { rows -> rows.map(OfflineTrackEntity::toModel) }
 
     suspend fun enqueue(song: Song) = withContext(Dispatchers.IO) {
-        val provider = providerFor(song.contentUriString) ?: return@withContext
-        val downloadId = downloadId(song.contentUriString)
-        val existing = dao.getBySourceUri(song.contentUriString)
-        if (existing?.state == OfflineDownloadStatus.COMPLETE.storageValue &&
-            existing.localPath?.let(::File)?.isFile == true
-        ) {
-            return@withContext
-        }
+        mutationMutex.withLock {
+            val provider = providerFor(song.contentUriString) ?: return@withLock
+            val downloadId = downloadId(song.contentUriString)
+            val existing = dao.getBySourceUri(song.contentUriString)
+            if (existing?.state == OfflineDownloadStatus.COMPLETE.storageValue &&
+                existing.localPath?.let(::File)?.isFile == true
+            ) {
+                return@withLock
+            }
+            existing?.let {
+                it.localPath?.let(::File)?.delete()
+                deleteAttemptFiles(context, it.downloadId, it.attemptId)
+            }
 
-        val now = System.currentTimeMillis()
-        dao.upsert(
-            OfflineTrackEntity(
-                downloadId = downloadId,
-                songId = song.id,
-                sourceUri = song.contentUriString,
-                provider = provider,
-                title = song.title,
-                mimeType = song.mimeType,
-                localPath = null,
-                state = OfflineDownloadStatus.QUEUED.storageValue,
-                createdAt = existing?.createdAt ?: now,
-                updatedAt = now
-            )
-        )
+            val attemptId = UUID.randomUUID().toString()
+            val request = OneTimeWorkRequestBuilder<CloudTrackDownloadWorker>()
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .setRequiresStorageNotLow(true)
+                        .build()
+                )
+                .setInputData(
+                    workDataOf(
+                        CloudTrackDownloadWorker.KEY_DOWNLOAD_ID to downloadId,
+                        CloudTrackDownloadWorker.KEY_ATTEMPT_ID to attemptId,
+                        CloudTrackDownloadWorker.KEY_SOURCE_URI to song.contentUriString
+                    )
+                )
+                .addTag(CloudTrackDownloadWorker.TAG)
+                .addTag(workName(downloadId))
+                .build()
 
-        val request = OneTimeWorkRequestBuilder<CloudTrackDownloadWorker>()
-            .setConstraints(
-                Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .setRequiresStorageNotLow(true)
-                    .build()
-            )
-            .setInputData(
-                workDataOf(
-                    CloudTrackDownloadWorker.KEY_DOWNLOAD_ID to downloadId,
-                    CloudTrackDownloadWorker.KEY_SOURCE_URI to song.contentUriString
+            val now = System.currentTimeMillis()
+            dao.upsert(
+                OfflineTrackEntity(
+                    downloadId = downloadId,
+                    attemptId = attemptId,
+                    songId = song.id,
+                    sourceUri = song.contentUriString,
+                    provider = provider,
+                    title = song.title,
+                    mimeType = song.mimeType,
+                    localPath = null,
+                    state = OfflineDownloadStatus.QUEUED.storageValue,
+                    createdAt = existing?.createdAt ?: now,
+                    updatedAt = now
                 )
             )
-            .addTag(CloudTrackDownloadWorker.TAG)
-            .addTag(workName(downloadId))
-            .build()
 
-        workManager.enqueueUniqueWork(
-            workName(downloadId),
-            ExistingWorkPolicy.REPLACE,
-            request
-        )
+            workManager.enqueueUniqueWork(
+                workName(downloadId),
+                ExistingWorkPolicy.REPLACE,
+                request
+            ).await()
+        }
     }
 
     suspend fun enqueueAll(songs: Collection<Song>) {
@@ -122,11 +137,20 @@ class CloudOfflineRepository @Inject constructor(
     suspend fun remove(song: Song) = remove(song.contentUriString)
 
     suspend fun remove(sourceUri: String) = withContext(Dispatchers.IO) {
-        val entity = dao.getBySourceUri(sourceUri) ?: return@withContext
-        workManager.cancelUniqueWork(workName(entity.downloadId))
-        entity.localPath?.let(::File)?.takeIf { it.exists() }?.delete()
-        downloadDirectory(context).resolve("${entity.downloadId}.part").takeIf { it.exists() }?.delete()
-        dao.deleteBySourceUri(sourceUri)
+        mutationMutex.withLock {
+            val entity = dao.getBySourceUri(sourceUri) ?: return@withLock
+            // Remove ownership first. Any in-flight worker update after this point is a no-op.
+            if (dao.deleteBySourceUriForAttempt(sourceUri, entity.attemptId) == 0) {
+                return@withLock
+            }
+
+            try {
+                workManager.cancelUniqueWork(workName(entity.downloadId)).await()
+            } finally {
+                entity.localPath?.let(::File)?.takeIf { it.exists() }?.delete()
+                deleteAttemptFiles(context, entity.downloadId, entity.attemptId)
+            }
+        }
     }
 
     /** Called on ExoPlayer's loading thread; Room I/O is dispatched by the caller. */
@@ -157,6 +181,17 @@ class CloudOfflineRepository @Inject constructor(
                 .joinToString("") { "%02x".format(it) }
 
         fun workName(downloadId: String): String = "cloud_track_download_$downloadId"
+
+        internal fun attemptFileStem(downloadId: String, attemptId: String): String =
+            "$downloadId.$attemptId"
+
+        internal fun deleteAttemptFiles(context: Context, downloadId: String, attemptId: String) {
+            val prefix = "${attemptFileStem(downloadId, attemptId)}."
+            downloadDirectory(context).listFiles()
+                ?.asSequence()
+                ?.filter { it.name.startsWith(prefix) }
+                ?.forEach(File::delete)
+        }
 
         fun downloadDirectory(context: Context): File =
             File(context.filesDir, "cloud_downloads").apply { mkdirs() }

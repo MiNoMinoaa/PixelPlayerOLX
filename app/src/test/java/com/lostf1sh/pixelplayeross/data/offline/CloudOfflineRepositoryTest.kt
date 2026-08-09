@@ -32,5 +32,17 @@ class CloudOfflineRepositoryTest {
         assertThat(CloudOfflineRepository.isCloudSong(song("content://media/audio/1"))).isFalse()
     }
 
+    @Test
+    fun `separate attempts cannot share temporary or final file names`() {
+        val downloadId = CloudOfflineRepository.downloadId("navidrome://track_1")
+
+        val first = CloudOfflineRepository.attemptFileStem(downloadId, "attempt-a")
+        val second = CloudOfflineRepository.attemptFileStem(downloadId, "attempt-b")
+
+        assertThat(first).isNotEqualTo(second)
+        assertThat("$first.part").isNotEqualTo("$second.part")
+        assertThat("$first.flac").isNotEqualTo("$second.flac")
+    }
+
     private fun song(uri: String) = Song.emptySong().copy(contentUriString = uri)
 }

@@ -35,21 +35,31 @@ interface OfflineTrackDao {
             local_path = :localPath,
             error_message = :errorMessage,
             updated_at = :updatedAt
-        WHERE download_id = :downloadId
+        WHERE download_id = :downloadId AND attempt_id = :attemptId
         """
     )
     suspend fun updateState(
         downloadId: String,
+        attemptId: String,
         state: String,
         bytesDownloaded: Long,
         totalBytes: Long?,
         localPath: String?,
         errorMessage: String?,
         updatedAt: Long
+    ): Int
+
+    @Query(
+        "SELECT EXISTS(SELECT 1 FROM offline_tracks " +
+            "WHERE download_id = :downloadId AND attempt_id = :attemptId)"
     )
+    suspend fun isCurrentAttempt(downloadId: String, attemptId: String): Boolean
 
     @Query("DELETE FROM offline_tracks WHERE source_uri = :sourceUri")
     suspend fun deleteBySourceUri(sourceUri: String)
+
+    @Query("DELETE FROM offline_tracks WHERE source_uri = :sourceUri AND attempt_id = :attemptId")
+    suspend fun deleteBySourceUriForAttempt(sourceUri: String, attemptId: String): Int
 
     @Query("DELETE FROM offline_tracks WHERE download_id = :downloadId")
     suspend fun deleteByDownloadId(downloadId: String)

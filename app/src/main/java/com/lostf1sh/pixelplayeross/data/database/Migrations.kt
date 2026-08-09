@@ -122,6 +122,7 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
             """
                 CREATE TABLE IF NOT EXISTS `offline_tracks` (
                     `download_id` TEXT NOT NULL,
+                    `attempt_id` TEXT NOT NULL,
                     `song_id` TEXT NOT NULL,
                     `source_uri` TEXT NOT NULL,
                     `provider` TEXT NOT NULL,

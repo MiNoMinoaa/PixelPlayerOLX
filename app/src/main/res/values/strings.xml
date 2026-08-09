@@ -249,6 +249,8 @@
     <string name="musicbrainz_lookup">Find on MusicBrainz</string>
     <string name="musicbrainz_searching">Searching for recording matches…</string>
     <string name="musicbrainz_lookup_failed">MusicBrainz lookup failed</string>
+    <string name="musicbrainz_search_failed_fallback">MusicBrainz search failed</string>
+    <string name="musicbrainz_save_failed_fallback">MusicBrainz metadata could not be saved</string>
     <string name="musicbrainz_choose_match">Choose a MusicBrainz match</string>
     <string name="musicbrainz_no_results">No suitable recordings were found.</string>
     <string name="musicbrainz_match_score">Match confidence: %1$d%%</string>
