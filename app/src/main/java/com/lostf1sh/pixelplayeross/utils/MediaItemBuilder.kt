@@ -69,6 +69,8 @@ object MediaItemBuilder {
     )
     private val SUPPORTED_INTERNAL_ARTWORK_SCHEMES = setOf(
         LocalArtworkUri.SCHEME,
+        "navidrome_cover",
+        "jellyfin_cover",
         "content",
         "file",
         "android.resource",
@@ -227,6 +229,10 @@ object MediaItemBuilder {
      */
     fun artworkUri(rawArtworkUri: String?): Uri? {
         return normalizeArtworkUri(rawArtworkUri, SUPPORTED_INTERNAL_ARTWORK_SCHEMES)
+    }
+
+    internal fun isSupportedInternalArtworkScheme(scheme: String): Boolean {
+        return scheme.lowercase() in SUPPORTED_INTERNAL_ARTWORK_SCHEMES
     }
 
     fun externalControllerArtworkUri(context: Context, rawArtworkUri: String?): Uri? {

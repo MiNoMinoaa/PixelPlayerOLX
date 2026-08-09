@@ -6,6 +6,16 @@ import org.junit.Test
 class MediaItemBuilderTest {
 
     @Test
+    fun artworkScheme_supportsNavidromeArtworkForInternalPlayback() {
+        assertThat(MediaItemBuilder.isSupportedInternalArtworkScheme("navidrome_cover")).isTrue()
+    }
+
+    @Test
+    fun artworkScheme_supportsJellyfinArtworkForInternalPlayback() {
+        assertThat(MediaItemBuilder.isSupportedInternalArtworkScheme("jellyfin_cover")).isTrue()
+    }
+
+    @Test
     fun shouldPreferDirectLocalFileUri_prefersDirectFileUriForLocalM4aMediaStoreItems() {
         val shouldPreferFile = MediaItemBuilder.shouldPreferDirectLocalFileUri(
             contentUriString = "content://media/external/audio/media/42",
