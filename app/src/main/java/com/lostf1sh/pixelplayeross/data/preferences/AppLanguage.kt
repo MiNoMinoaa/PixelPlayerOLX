@@ -16,7 +16,8 @@ enum class AppLanguage(val tag: String, @StringRes val labelRes: Int) {
     KOREAN("ko", R.string.setcat_language_korean),
     NORWEGIAN_BOKMAL("nb", R.string.setcat_language_norwegian_bokmal),
     RUSSIAN("ru", R.string.setcat_language_russian),
-    TURKISH("tr", R.string.setcat_language_turkish);
+    TURKISH("tr", R.string.setcat_language_turkish),
+    ZH_RCN("zh-CN", R.string.language_zh_rCN);
 
     companion object {
         val supportedLanguageTags: Set<String> = entries.map { it.tag }.toSet()
