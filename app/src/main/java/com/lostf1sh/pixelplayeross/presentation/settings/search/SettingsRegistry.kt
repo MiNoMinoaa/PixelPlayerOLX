@@ -145,6 +145,16 @@ object SettingsRegistry {
                 keywordsStatic = listOf("accounts", "navidrome", "jellyfin", "subsonic", "streaming", "server", "login")
             ),
             SettingSpec(
+                id = "cloud_downloads",
+                itemKey = "item_cloud_downloads",
+                titleRes = R.string.cloud_downloads_title,
+                subtitleRes = R.string.cloud_downloads_settings_subtitle,
+                category = SettingsCategory.LIBRARY,
+                subscreenRoute = Screen.CloudDownloads.route,
+                type = SettingType.NAVIGABLE_CARD,
+                keywordsStatic = listOf("downloads", "offline", "cloud", "storage", "navidrome", "jellyfin")
+            ),
+            SettingSpec(
                 id = "accounts_listenbrainz",
                 itemKey = "item_accounts_listenbrainz",
                 titleRes = R.string.accounts_listenbrainz_title,

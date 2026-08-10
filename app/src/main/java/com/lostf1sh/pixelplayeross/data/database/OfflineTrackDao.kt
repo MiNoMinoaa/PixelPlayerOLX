@@ -23,6 +23,9 @@ interface OfflineTrackDao {
     @Query("SELECT * FROM offline_tracks WHERE state = 'complete' ORDER BY updated_at DESC")
     fun observeCompleted(): Flow<List<OfflineTrackEntity>>
 
+    @Query("SELECT * FROM offline_tracks ORDER BY updated_at DESC")
+    fun observeAll(): Flow<List<OfflineTrackEntity>>
+
     @Query("SELECT * FROM offline_tracks WHERE state = 'complete'")
     suspend fun getCompleted(): List<OfflineTrackEntity>
 
