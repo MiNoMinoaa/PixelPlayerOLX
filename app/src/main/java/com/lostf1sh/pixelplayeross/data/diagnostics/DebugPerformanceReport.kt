@@ -9,7 +9,7 @@ import java.util.Locale
  * Structured, shareable diagnostic snapshot for performance investigations.
  * Designed so a user can export one report and let us classify whether lag
  * comes from scanning, metadata, artwork, playback prepare, transitions,
- * offload, widgets, MediaSession, Android Auto, or UI work.
+ * offload, widgets, MediaSession, or UI work.
  *
  * The model is deliberately a pure data structure (no Android imports) so it can
  * be unit tested on the JVM. [DebugPerformanceReportCollector] populates it.
@@ -109,12 +109,10 @@ data class DebugPerformanceReport(
         section("CONTROLLERS")
         kv("Widget active", controllers.widgetActive.toString())
         kv("Wear active", controllers.wearActive.toString())
-        kv("Android Auto active", controllers.androidAutoActive.toString())
         if (controllers.connectedControllers.isNotEmpty()) {
             appendLine("  Connected controllers:")
             controllers.connectedControllers.forEach {
                 val tags = buildList {
-                    if (it.isAndroidAuto) add("auto")
                     if (it.isWear) add("wear")
                 }.joinToString(",").ifEmpty { "external" }
                 appendLine("    ${it.packageName} ($tags)")
@@ -169,7 +167,7 @@ data class DebugPerformanceReport(
     }
 
     companion object {
-        const val SCHEMA_VERSION = 2
+        const val SCHEMA_VERSION = 3
         private const val UNKNOWN = "unknown"
         private const val NOT_OBSERVED = "not observed"
         private const val NOT_PLAYING = "not playing"
@@ -302,14 +300,12 @@ data class PlaybackSection(
 data class ControllerSection(
     val widgetActive: Boolean,
     val wearActive: Boolean,
-    val androidAutoActive: Boolean,
     val connectedControllers: List<ConnectedController>
 )
 
 @Serializable
 data class ConnectedController(
     val packageName: String,
-    val isAndroidAuto: Boolean,
     val isWear: Boolean
 )
 

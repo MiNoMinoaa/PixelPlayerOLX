@@ -36,6 +36,7 @@ import com.lostf1sh.pixelplayeross.data.preferences.UserPreferencesRepository
 import com.lostf1sh.pixelplayeross.presentation.screens.AlbumDetailScreen
 import com.lostf1sh.pixelplayeross.presentation.screens.AudioBookmarkFolderScreen
 import com.lostf1sh.pixelplayeross.presentation.screens.AudioBookmarksScreen
+import com.lostf1sh.pixelplayeross.presentation.screens.CloudDownloadsScreen
 import com.lostf1sh.pixelplayeross.presentation.screens.AccountsScreen
 import com.lostf1sh.pixelplayeross.presentation.screens.ArtistDetailScreen
 import com.lostf1sh.pixelplayeross.presentation.screens.ArtistSettingsScreen
@@ -590,6 +591,17 @@ fun AppNavigation(
                     com.lostf1sh.pixelplayeross.presentation.jellyfin.dashboard.JellyfinDashboardScreen(
                         onBack = { navController.popBackStack() }
                     )
+                }
+            }
+            composable(
+                Screen.CloudDownloads.route,
+                enterTransition = { enterTransition() },
+                exitTransition = { exitTransition() },
+                popEnterTransition = { popEnterTransition() },
+                popExitTransition = { popExitTransition() },
+            ) {
+                ScreenWrapper(navController = navController, playerViewModel = playerViewModel) {
+                    CloudDownloadsScreen(onBack = { navController.popBackStack() })
                 }
             }
             composable(

@@ -27,7 +27,9 @@ import com.lostf1sh.pixelplayeross.data.database.AudioBookmarkDao
 import com.lostf1sh.pixelplayeross.data.database.MIGRATION_1_2
 import com.lostf1sh.pixelplayeross.data.database.MIGRATION_2_3
 import com.lostf1sh.pixelplayeross.data.database.MIGRATION_3_4
+import com.lostf1sh.pixelplayeross.data.database.MIGRATION_4_5
 import com.lostf1sh.pixelplayeross.data.database.MusicDao
+import com.lostf1sh.pixelplayeross.data.database.OfflineTrackDao
 import com.lostf1sh.pixelplayeross.data.database.PixelPlayerDatabase
 import com.lostf1sh.pixelplayeross.data.database.SearchHistoryDao
 import com.lostf1sh.pixelplayeross.data.database.TransitionDao
@@ -130,7 +132,7 @@ object AppModule {
             "pixelplayer_database"
         )
             .addCallback(PixelPlayerDatabase.createRuntimeArtifactsCallback())
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
             .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
 
         if (BuildConfig.DEBUG) {
@@ -210,6 +212,12 @@ object AppModule {
     @Provides
     fun provideAudioBookmarkDao(database: PixelPlayerDatabase): AudioBookmarkDao {
         return database.audioBookmarkDao()
+    }
+
+    @Singleton
+    @Provides
+    fun provideOfflineTrackDao(database: PixelPlayerDatabase): OfflineTrackDao {
+        return database.offlineTrackDao()
     }
 
     @Provides

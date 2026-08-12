@@ -1713,6 +1713,44 @@ interface MusicDao {
     @Query("UPDATE songs SET album_art_uri_string = :albumArtUri WHERE id = :songId")
     suspend fun updateSongAlbumArt(songId: Long, albumArtUri: String?)
 
+    /**
+     * Stores canonical MusicBrainz identifiers and fills only metadata that is currently absent.
+     * Existing user/library names are deliberately preserved; choosing a match must not silently
+     * regroup albums or artists in the local library.
+     */
+    @Query(
+        """
+        UPDATE songs
+        SET title = CASE
+                WHEN TRIM(title) = '' OR LOWER(title) = 'unknown title' THEN :title
+                ELSE title
+            END,
+            artist_name = CASE
+                WHEN TRIM(artist_name) = '' OR LOWER(artist_name) = 'unknown artist' THEN :artist
+                ELSE artist_name
+            END,
+            album_name = CASE
+                WHEN TRIM(album_name) = '' OR LOWER(album_name) = 'unknown album' THEN :album
+                ELSE album_name
+            END,
+            year = CASE WHEN year <= 0 THEN :year ELSE year END,
+            mb_recording_id = :recordingId,
+            mb_release_id = :releaseId,
+            mb_artist_id = :artistId
+        WHERE id = :songId
+        """
+    )
+    suspend fun applyMusicBrainzMatch(
+        songId: Long,
+        title: String,
+        artist: String,
+        album: String,
+        year: Int,
+        recordingId: String,
+        releaseId: String?,
+        artistId: String?
+    )
+
     @Query("UPDATE songs SET lyrics = :lyrics WHERE id = :songId")
     suspend fun updateLyrics(songId: Long, lyrics: String)
 

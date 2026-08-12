@@ -45,6 +45,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
@@ -286,7 +287,7 @@ fun SettingsScreen(
                         it != SettingsCategory.DEVICE_CAPABILITIES
                     }
 
-                    val totalItems = mainCategories.size + 3
+                    val totalItems = mainCategories.size + 4
                     fun shapeFor(index: Int) =
                         when {
                             totalItems == 1 -> RoundedCornerShape(24.dp)
@@ -317,6 +318,19 @@ fun SettingsScreen(
                         }
                         itemIndex++
                     }
+
+                    ExpressiveNavigationItem(
+                        title = stringResource(R.string.cloud_downloads_title),
+                        subtitle = stringResource(R.string.cloud_downloads_settings_subtitle),
+                        icon = Icons.Rounded.CloudDownload,
+                        colors = getDownloadsColors(isDark),
+                        onClick = { navController.navigateSafely(Screen.CloudDownloads.route) },
+                        shape = shapeFor(itemIndex)
+                    )
+                    if (itemIndex < totalItems - 1) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                    }
+                    itemIndex++
 
                     ExpressiveCategoryItem(
                         category = SettingsCategory.DEVICE_CAPABILITIES,
@@ -601,6 +615,12 @@ private fun getAccountsColors(isDark: Boolean): Pair<Color, Color> {
     } else {
         Color(0xFFD6EAF5) to Color(0xFF103548)
     }
+}
+
+private fun getDownloadsColors(isDark: Boolean): Pair<Color, Color> = if (isDark) {
+    Color(0xFF174A5A) to Color(0xFFB6EAFB)
+} else {
+    Color(0xFFC2E7FF) to Color(0xFF004A77)
 }
 
 @Composable

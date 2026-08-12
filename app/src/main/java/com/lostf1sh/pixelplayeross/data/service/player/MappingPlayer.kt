@@ -12,7 +12,7 @@ import com.lostf1sh.pixelplayeross.utils.MediaItemBuilder
 
 /**
  * Rewrites app-internal artwork URIs on outgoing media items to shareable content URIs, so
- * external session consumers (system media surfaces, Android Auto, etc.) can actually load
+ * external session consumers (system media surfaces, notification listeners, etc.) can load
  * the artwork instead of receiving an unreadable custom scheme.
  */
 @OptIn(UnstableApi::class)

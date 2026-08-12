@@ -29,9 +29,8 @@ import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.CommandButton
-import androidx.media3.session.LibraryResult
-import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
+import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionCommands
 import androidx.media3.session.SessionError
@@ -150,7 +149,7 @@ suspend fun loadArtworkBytesViaCoil(context: Context, uri: Uri): ByteArray? {
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @AndroidEntryPoint
-class MusicService : MediaLibraryService() {
+class MusicService : MediaSessionService() {
 
     @Inject
     lateinit var engine: DualPlayerEngine
@@ -195,7 +194,7 @@ class MusicService : MediaLibraryService() {
     }
 
     private var favoriteSongIds = emptySet<String>()
-    private var mediaSession: MediaLibrarySession? = null
+    private var mediaSession: MediaSession? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var keepPlayingInBackground = true
     private var isManualShuffleEnabled = false
@@ -235,7 +234,6 @@ class MusicService : MediaLibraryService() {
         private val pendingMediaButtonForegroundStarts = AtomicInteger(0)
 
         private const val APP_PACKAGE_PREFIX = "com.lostf1sh.pixelplayeross"
-        private const val LOCAL_LIBRARY_ROOT_ID = "pixelplayer_root"
         private const val DEFAULT_STREAM_BUFFER_SIZE = 8 * 1024
         private const val WIDGET_ART_FAILURE_RETRY_MS = 30_000L
         private const val WIDGET_QUEUE_PREVIEW_LIMIT = 4
@@ -497,7 +495,7 @@ class MusicService : MediaLibraryService() {
             }
         }
 
-        val callback = object : MediaLibrarySession.Callback {
+        val callback = object : MediaSession.Callback {
             override fun onConnect(
                 session: MediaSession,
                 controller: MediaSession.ControllerInfo
@@ -647,82 +645,6 @@ class MusicService : MediaLibraryService() {
                 return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
             }
 
-            override fun onGetLibraryRoot(
-                session: MediaLibrarySession,
-                browser: MediaSession.ControllerInfo,
-                params: MediaLibraryService.LibraryParams?
-            ): ListenableFuture<LibraryResult<MediaItem>> {
-                val rootItem = MediaItem.Builder()
-                    .setMediaId(LOCAL_LIBRARY_ROOT_ID)
-                    .setMediaMetadata(
-                        androidx.media3.common.MediaMetadata.Builder()
-                            .setTitle("PixelPlayerOSS")
-                            .setIsBrowsable(true)
-                            .setIsPlayable(false)
-                            .setMediaType(androidx.media3.common.MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
-                            .build()
-                    )
-                    .build()
-                return Futures.immediateFuture(LibraryResult.ofItem(rootItem, params))
-            }
-
-            override fun onGetChildren(
-                session: MediaLibrarySession,
-                browser: MediaSession.ControllerInfo,
-                parentId: String,
-                page: Int,
-                pageSize: Int,
-                params: MediaLibraryService.LibraryParams?
-            ): ListenableFuture<LibraryResult<com.google.common.collect.ImmutableList<MediaItem>>> {
-                return Futures.immediateFuture(LibraryResult.ofItemList(emptyList(), params))
-            }
-
-            override fun onGetItem(
-                session: MediaLibrarySession,
-                browser: MediaSession.ControllerInfo,
-                mediaId: String
-            ): ListenableFuture<LibraryResult<MediaItem>> {
-                return serviceScope.future {
-                    try {
-                        val item = resolveMediaItemsByIds(
-                            requestedItems = listOf(MediaItem.Builder().setMediaId(mediaId).build()),
-                            exposeInternalArtwork = browser.packageName == packageName
-                        )
-                            .mediaItems
-                            .firstOrNull()
-                        if (item != null) {
-                            grantArtworkUriPermissions(browser.packageName, listOf(item))
-                            LibraryResult.ofItem(item, null)
-                        } else {
-                            LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
-                        }
-                    } catch (e: Exception) {
-                        Timber.tag(TAG).e(e, "onGetItem failed for mediaId=$mediaId")
-                        LibraryResult.ofError(SessionError.ERROR_UNKNOWN)
-                    }
-                }
-            }
-
-            override fun onSearch(
-                session: MediaLibrarySession,
-                browser: MediaSession.ControllerInfo,
-                query: String,
-                params: MediaLibraryService.LibraryParams?
-            ): ListenableFuture<LibraryResult<Void>> {
-                return Futures.immediateFuture(LibraryResult.ofVoid())
-            }
-
-            override fun onGetSearchResult(
-                session: MediaLibrarySession,
-                browser: MediaSession.ControllerInfo,
-                query: String,
-                page: Int,
-                pageSize: Int,
-                params: MediaLibraryService.LibraryParams?
-            ): ListenableFuture<LibraryResult<com.google.common.collect.ImmutableList<MediaItem>>> {
-                return Futures.immediateFuture(LibraryResult.ofItemList(emptyList(), params))
-            }
-
             override fun onAddMediaItems(
                 mediaSession: MediaSession,
                 controller: MediaSession.ControllerInfo,
@@ -770,7 +692,8 @@ class MusicService : MediaLibraryService() {
             }
         }
 
-        mediaSession = MediaLibrarySession.Builder(this, wrapFadingPlayer(engine.masterPlayer), callback)
+        mediaSession = MediaSession.Builder(this, wrapFadingPlayer(engine.masterPlayer))
+            .setCallback(callback)
             .setSessionActivity(getOpenAppPendingIntent())
             .setBitmapLoader(CoilBitmapLoader(this, serviceScope))
             .build()
@@ -985,7 +908,7 @@ class MusicService : MediaLibraryService() {
         return startCommandResult
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = mediaSession
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         val session = mediaSession
@@ -2358,7 +2281,7 @@ class MusicService : MediaLibraryService() {
     /**
      * Custom session commands mutate app state, so they are limited to our own controllers
      * (in-app UI, media notification) and controllers the system marks as trusted
-     * (System UI, notification listeners such as Android Auto / Wear companions).
+     * (System UI and trusted notification listeners).
      */
     private fun isPrivilegedController(controller: MediaSession.ControllerInfo): Boolean {
         return controller.packageName == packageName || controller.isTrusted
@@ -2366,7 +2289,7 @@ class MusicService : MediaLibraryService() {
 
     /**
      * The artwork provider is not exported, so controllers connected before the current item
-     * changed (System UI, Android Auto, Wear) need a fresh grant for each new current item.
+     * changed need a fresh grant for each new current item.
      */
     private fun grantArtworkUriPermissionsToConnectedControllers(mediaItem: MediaItem) {
         val session = mediaSession ?: return
