@@ -145,7 +145,7 @@ F-Droid listing metadata lives in `fastlane/metadata/android/en-US`; build/relea
 
 ### Alpha builds
 
-Every merge into `main` automatically publishes a pre-release tagged like `v0.2.0-alpha.N` on the [releases page](https://github.com/lostf1sh/PixelPlayerOSS/releases). These are cutting-edge builds for testing new changes before they reach a stable release — expect rough edges.
+Every merge into `main` automatically publishes a pre-release tagged like `v0.3.0-alpha.N` on the [releases page](https://github.com/lostf1sh/PixelPlayerOSS/releases). These are cutting-edge builds for testing new changes before they reach a stable release — expect rough edges.
 
 To install one, download the APK for your device from the release assets and sideload it: `arm64-v8a` fits most modern devices, `armeabi-v7a` is for older 32-bit ones.
 
