@@ -53,10 +53,6 @@ Builds:
       - pixelplayer.disableReleaseSigning=true
 
 AutoUpdateMode: Version
-# Alpha prereleases are tagged v<version>-alpha.N and carry the same
-# APP_VERSION_CODE as the stable tag, because the alpha versionCode is only
-# computed in CI and never written to gradle.properties. Without this pattern
-# the updater can pick an alpha tag as the source for a stable build.
 UpdateCheckMode: Tags ^v[0-9.]+$
 UpdateCheckData: gradle.properties|CODE=(\d+)|.|NAME=(.+)
 CurrentVersion: 0.3.0
