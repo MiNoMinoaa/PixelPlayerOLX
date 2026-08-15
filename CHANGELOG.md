@@ -2,7 +2,7 @@
 
 All notable changes to PixelPlayerOSS will be documented in this file.
 
-## [0.3.0] - Unreleased
+## [0.3.0] - 2026-08-15
 
 ### Added
 - Optional ListenBrainz scrobbling, disabled by default. Connect a ListenBrainz account with a user token from the Accounts screen; listens that reach the ListenBrainz threshold (4 minutes or half the track, whichever is lower) queue offline and submit with retry, with per-source toggles for local files, Subsonic, and Jellyfin playback. Now-playing status is reported while scrobbling is enabled, and disconnecting deletes any queued listens. An optional custom server URL scrobbles to self-hosted ListenBrainz-compatible servers such as Maloja instead of listenbrainz.org.
