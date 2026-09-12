@@ -990,6 +990,9 @@ class DualPlayerEngine @Inject constructor(
     }
 
     private fun buildPlayer(): ExoPlayer {
+        // Decoder selection happens on the playback thread. Keep it tied to this player's sink
+        // even while a mode change is rebuilding the players.
+        val outputMode = audioOutputMode
         val mediaCodecSelector = MediaCodecSelector { mimeType, requiresSecureDecoder, requiresTunnelingDecoder ->
             val decoderInfos = MediaCodecSelector.DEFAULT.getDecoderInfos(
                 mimeType,
@@ -997,7 +1000,7 @@ class DualPlayerEngine @Inject constructor(
                 requiresTunnelingDecoder
             )
 
-            AudioDecoderPolicy.selectPlatformDecoders(mimeType, decoderInfos)
+            AudioDecoderPolicy.selectPlatformDecoders(mimeType, decoderInfos, outputMode)
         }
         val renderersFactory = object : DefaultRenderersFactory(context) {
             override fun buildAudioSink(
@@ -1005,7 +1008,7 @@ class DualPlayerEngine @Inject constructor(
                 enableFloatOutput: Boolean,
                 enableAudioOutputPlaybackParams: Boolean
             ): AudioSink {
-                if (audioOutputMode.usesUnmodifiedMedia3AudioSink) {
+                if (outputMode.usesUnmodifiedMedia3AudioSink) {
                     // Android's audio policy may
                     // grant a DIRECT thread for a compatible device/format, or safely fall back
                     // to the mixed path. This deliberately does not promise exclusive output.
@@ -1018,7 +1021,7 @@ class DualPlayerEngine @Inject constructor(
                     ) { "Media3 did not create its default AudioSink" }
                 }
                 return DefaultAudioSink.Builder(context)
-                    .setEnableFloatOutput(audioOutputMode.usesFloatOutput)
+                    .setEnableFloatOutput(outputMode.usesFloatOutput)
                     .setEnableAudioOutputPlaybackParameters(enableAudioOutputPlaybackParams)
                     .setAudioProcessorChain(
                         DefaultAudioSink.DefaultAudioProcessorChain(
@@ -1056,7 +1059,7 @@ class DualPlayerEngine @Inject constructor(
                 out: ArrayList<Renderer>
             ) {
             }
-        }.setEnableAudioFloatOutput(audioOutputMode.usesFloatOutput)
+        }.setEnableAudioFloatOutput(outputMode.usesFloatOutput)
          .setMediaCodecSelector(mediaCodecSelector)
          .setEnableDecoderFallback(true)
          .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
@@ -1126,7 +1129,7 @@ class DualPlayerEngine @Inject constructor(
             .setMediaSourceFactory(DefaultMediaSourceFactory(resolvingFactory, extractorsFactory))
             .setLoadControl(loadControl)
             .build().apply {
-            if (!audioOutputMode.usesUnmodifiedMedia3AudioSink) {
+            if (!outputMode.usesUnmodifiedMedia3AudioSink) {
                 sharedAudioSessionIdOrNull()?.let { setAudioSessionId(it) }
             }
             setAudioAttributes(audioAttributes, false)
