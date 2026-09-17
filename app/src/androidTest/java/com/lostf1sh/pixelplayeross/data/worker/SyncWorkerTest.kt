@@ -15,6 +15,7 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
+import androidx.work.workDataOf
 import com.google.common.truth.Truth.assertThat
 import com.lostf1sh.pixelplayeross.data.database.MusicDao
 import com.lostf1sh.pixelplayeross.data.database.PixelPlayerDatabase
@@ -50,7 +51,10 @@ class SyncWorkerTest {
     private lateinit var mockContentResolver: android.content.ContentResolver
 
 
-    class TestSyncWorkerFactory(private val dao: MusicDao) : WorkerFactory() {
+    class TestSyncWorkerFactory(
+        private val dao: MusicDao,
+        private val preferences: UserPreferencesRepository = createTestPreferencesRepository()
+    ) : WorkerFactory() {
         override fun createWorker(
             appContext: Context,
             workerClassName: String,
@@ -61,7 +65,7 @@ class SyncWorkerTest {
                     appContext = appContext,
                     workerParams = workerParameters,
                     musicDao = dao,
-                    userPreferencesRepository = createTestPreferencesRepository(),
+                    userPreferencesRepository = preferences,
                     lyricsRepository = mockk(relaxed = true),
                     cloudSyncCoordinator = mockk(relaxed = true)
                 )
@@ -186,6 +190,85 @@ class SyncWorkerTest {
         assertThat(musicDao.getSongCount().first()).isEqualTo(0)
         assertThat(musicDao.getAlbumCount().first()).isEqualTo(0)
         assertThat(musicDao.getArtistCount().first()).isEqualTo(0)
+    }
+
+    @Test
+    fun incrementalSync_recoversAlbumTracksIndexedWithOldTimestamps() = runBlocking {
+        val preferences = createTestPreferencesRepository()
+        var lastSyncTimestamp = 0L
+        coEvery { preferences.getLastSyncTimestamp() } answers { lastSyncTimestamp }
+        coEvery { preferences.setLastSyncTimestamp(any()) } answers {
+            lastSyncTimestamp = firstArg()
+        }
+
+        var visibleTrackCount = 3
+        val songSelections = mutableListOf<String>()
+        every { mockContentResolver.query(any(), any(), any(), any(), any()) } answers {
+            val projection = secondArg<Array<String>>()
+            val cursor = MatrixCursor(projection)
+            if (firstArg<Uri>() == MediaStore.Audio.Media.EXTERNAL_CONTENT_URI) {
+                val selection = thirdArg<String>()
+                val selectionArgs = arg<Array<String>>(3)
+                val usesTimestamp = selection.contains("${MediaStore.Audio.Media.DATE_MODIFIED} > ?")
+                if (MediaStore.Audio.Media.TITLE in projection) {
+                    songSelections += selection
+                }
+                // The scanner exposes the remaining tracks after a previous sync, with
+                // timestamps older than its watermark (for example, after restoring files).
+                if (!usesTimestamp || 100L > selectionArgs.last().toLong()) {
+                    for (track in 1..visibleTrackCount) {
+                        val values = mapOf(
+                            MediaStore.Audio.Media._ID to track.toLong(),
+                            MediaStore.Audio.Media.TITLE to "Track $track",
+                            MediaStore.Audio.Media.ARTIST to "milet",
+                            MediaStore.Audio.Media.ARTIST_ID to 1L,
+                            MediaStore.Audio.Media.ALBUM to "Made of Glass",
+                            MediaStore.Audio.Media.ALBUM_ID to 201L,
+                            MediaStore.Audio.Media.ALBUM_ARTIST to "milet",
+                            MediaStore.Audio.Media.DURATION to 180_000L,
+                            MediaStore.Audio.Media.DATA to "/storage/emulated/0/Music/milet - Made of Glass/$track.flac",
+                            MediaStore.Audio.Media.MIME_TYPE to "audio/flac",
+                            MediaStore.Audio.Media.TRACK to track,
+                            MediaStore.Audio.Media.YEAR to 2026,
+                            MediaStore.Audio.Media.DATE_ADDED to 100L,
+                            MediaStore.Audio.Media.DATE_MODIFIED to 100L
+                        )
+                        cursor.addRow(projection.map { values[it] })
+                    }
+                }
+            }
+            cursor
+        }
+
+        val testContext = object : ContextWrapper(context) {
+            override fun getContentResolver() = mockContentResolver
+        }
+        suspend fun sync(): ListenableWorker.Result =
+            TestListenableWorkerBuilder<SyncWorker>(testContext)
+                .setWorkerFactory(TestSyncWorkerFactory(musicDao, preferences))
+                .setInputData(workDataOf(SyncWorker.INPUT_RUN_MAINTENANCE to false))
+                .build()
+                .doWork()
+
+        assertSuccessfulSongCount(sync(), expectedCount = 3)
+        assertThat(lastSyncTimestamp).isGreaterThan(100_000L)
+        val editedSong = musicDao.getSongByIdOnce(1L)!!.copy(
+            title = "My title",
+            titleUserEdited = true
+        )
+        musicDao.updateSongs(listOf(editedSong))
+
+        visibleTrackCount = 16
+        assertSuccessfulSongCount(sync(), expectedCount = 16)
+        assertThat(musicDao.getSongsByAlbumId(201L).first().map { it.id })
+            .containsExactlyElementsIn((1L..16L).toList())
+        assertThat(musicDao.getAlbumById(201L).first()?.songCount).isEqualTo(16)
+        assertThat(musicDao.getSongByIdOnce(1L)?.title).isEqualTo("My title")
+        assertThat(songSelections.last()).doesNotContain("${MediaStore.Audio.Media.DATE_MODIFIED} > ?")
+
+        // Once the IDs match, ordinary incremental scans keep their timestamp filter.
+        assertSuccessfulSongCount(sync(), expectedCount = 16)
+        assertThat(songSelections.last()).contains("${MediaStore.Audio.Media.DATE_MODIFIED} > ?")
     }
 
     private fun assertSuccessfulSongCount(

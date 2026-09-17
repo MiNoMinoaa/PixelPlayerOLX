@@ -194,9 +194,11 @@ constructor(
                                 "(current=$directoryRulesVersion, applied=$lastAppliedDirectoryRulesVersion)"
                         )
 
+                    var hasUnindexedSongs = false
                     if (syncMode != SyncMode.REBUILD) {
                         val localSongIds = musicDao.getAllMediaStoreSongIds().toHashSet()
                         val mediaStoreIds = fetchMediaStoreIds(directoryResolver)
+                        hasUnindexedSongs = mediaStoreIds.any { it !in localSongIds }
 
                         val deletedIds = localSongIds - mediaStoreIds
 
@@ -226,10 +228,17 @@ constructor(
                         isFreshInstall = isFreshInstall
                     )
 
-                    val fetchTimestamp = if (!syncPlan.forceProcessAll) {
+                    // Newly visible files can retain timestamps older than the last sync.
+                    // Reconcile missing IDs without forcing unchanged songs through metadata
+                    // processing, so a partial album import can recover on the next scan.
+                    val fetchTimestamp = if (!syncPlan.forceProcessAll && !hasUnindexedSongs) {
                         incrementalFetchTimestampSeconds(lastSyncTimestamp)
                     } else {
                         0L
+                    }
+
+                    if (hasUnindexedSongs && !syncPlan.forceProcessAll) {
+                        Timber.tag(TAG).i("Recovering unindexed MediaStore songs without a timestamp cutoff.")
                     }
 
                     Timber.tag(TAG)
