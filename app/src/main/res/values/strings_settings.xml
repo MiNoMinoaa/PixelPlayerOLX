@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="setcat_m3u_sync_section" tools:ignore="MissingTranslation">Playlist synchronization</string>
     <string name="setcat_m3u_sync_title" tools:ignore="MissingTranslation">Automatic M3U sync</string>
@@ -65,6 +65,14 @@
     <string name="setcat_external_lyrics_subtitle">Allow searches and manual fetches from lrclib.net when lyrics are missing locally.</string>
     <string name="setcat_external_artist_images_title">Artist artwork from Deezer</string>
     <string name="setcat_external_artist_images_subtitle">Allow missing artist images to be fetched from Deezer and cached locally.</string>
+    <string name="setcat_notification_lyrics_title">Notification lyrics</string>
+    <string name="setcat_notification_lyrics_subtitle">Show the current synced lyric line on the system media notification when synced lyrics are available.</string>
+    <string name="setcat_mini_player_lyrics_title">Mini player lyrics</string>
+    <string name="setcat_mini_player_lyrics_subtitle">Show the current synced lyric line after the artist name on the mini player.</string>
+    <string name="setcat_in_player_lyrics_title">In-player lyrics</string>
+    <string name="setcat_in_player_lyrics_subtitle">Show synced lyrics below the album cover on the player screen.</string>
+    <string name="setcat_in_player_lyrics_size_label">Lyrics font size</string>
+    <string name="setcat_in_player_lyrics_size_desc">Adjust the font size of in-player lyrics.</string>
     <string name="setcat_lyrics_management">Lyrics Management</string>
     <string name="setcat_lyrics_source_priority_label">Lyrics Source Priority</string>
     <string name="setcat_lyrics_source_priority_desc">Choose which source to try first when fetching lyrics.</string>
@@ -90,6 +98,7 @@
     <string name="setcat_language_russian" translatable="false">Русский</string>
     <string name="setcat_language_turkish" translatable="false">Türkçe</string>
     <string name="language_zh_rCN" translatable="false">简体中文</string>
+    <string name="language_zh_rHK" translatable="false">繁體中文</string>
     <string name="setcat_app_theme_label">App Theme</string>
     <string name="setcat_app_theme_desc">Switch between light, dark, or follow system appearance.</string>
     <string name="setcat_global_now_playing_theme_title" tools:ignore="MissingTranslation">Use now playing colors across the app</string>
@@ -124,6 +133,8 @@
     <string name="setcat_navbar_style_full_width">Full Width</string>
     <string name="setcat_compact_mode_title">Compact mode</string>
     <string name="setcat_compact_mode_subtitle">Show only icons and reduce the navbar height.</string>
+    <string name="setcat_show_search_tab_title">Show Search tab</string>
+    <string name="setcat_show_search_tab_subtitle">Search shows content you have played locally or from cache.</string>
     <string name="setcat_navbar_corner_title">NavBar Corner Radius</string>
     <string name="setcat_navbar_corner_subtitle">Adjust the corner radius of the navigation bar.</string>
     <string name="setcat_lyrics_screen">Lyrics Screen</string>
@@ -139,6 +150,7 @@
     <string name="setcat_default_tab_label">Default Tab</string>
     <string name="setcat_default_tab_desc">Choose the Default launch tab.</string>
     <string name="tab_home">Home</string>
+    <string name="tab_online">Online</string>
     <string name="setcat_library_navigation_label">Library Navigation</string>
     <string name="setcat_library_navigation_desc">Choose how to move between Library tabs.</string>
     <string name="setcat_library_nav_tab_row">Tab row (default)</string>
@@ -211,7 +223,7 @@
     <string name="setcat_trigger_crash_title">Trigger Test Crash</string>
     <string name="setcat_trigger_crash_subtitle">Simulate a crash to test the crash reporting system.</string>
     <string name="setcat_application">Application</string>
-    <string name="setcat_about_pixelplayer_title">About PixelPlayerOSS</string>
+    <string name="setcat_about_pixelplayer_title">About PixelPlayerOLX</string>
     <string name="setcat_about_pixelplayer_subtitle">App version, credits, and more.</string>
 
     <string name="backup_summary_none">No sections selected.</string>
@@ -266,7 +278,7 @@
     <string name="dialog_regenerate_stats_title">Regenerate Stats?</string>
     <string name="dialog_regenerate_stats_body">This will clear the statistics cache and force a recalculation from the database history.</string>
     <string name="toast_stats_regeneration_started">Stats regeneration started</string>
-    <string name="backup_file_name_format">PixelPlayerOSS_Backup_%1$d.pxpl</string>
+    <string name="backup_file_name_format">PixelPlayerOLX_Backup_%1$d.pxpl</string>
 
     <string name="setcat_regenerate_daily_mix_action">Regenerate Daily Mix</string>
     <string name="setcat_regenerate_stats_action">Regenerate Stats</string>

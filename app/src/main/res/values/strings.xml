@@ -1,11 +1,11 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <string name="app_name">PixelPlayerOSS</string>
+﻿<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">PixelPlayerOLX</string>
     <string name="app_name_change_title">App Name Change</string>
-    <string name="app_name_change_message">This app is now PixelPlayerOSS. Keep playing!</string>
+    <string name="app_name_change_message">This app is now PixelPlayerOLX. Keep playing!</string>
     <string name="do_not_show_again">Do not show again</string>
     <string name="dismiss">Dismiss</string>
     <string name="all_files_access_title">Special Permission Required</string>
-    <string name="all_files_access_description">To edit song metadata (.mp3 files), PixelPlayerOSS needs special access to all files. This allows us to modify track tags directly. Please grant this permission on the next screen to enable metadata editing.</string>
+    <string name="all_files_access_description">To edit song metadata (.mp3 files), PixelPlayerOLX needs special access to all files. This allows us to modify track tags directly. Please grant this permission on the next screen to enable metadata editing.</string>
     <string name="grant_permission_button">Grant Permission</string>
     <string name="error">Error</string>
     <string name="ok">OK</string>
@@ -127,7 +127,7 @@
     <string name="playlist_share_failed">Share failed: %1$s</string>
     <string name="playlist_none_to_export">No playlists to export</string>
     <string name="playlist_export_failed">Export failed: %1$s</string>
-    <string name="playlist_export_folder_display">Music/PixelPlayerOSS Exports</string>
+    <string name="playlist_export_folder_display">Music/PixelPlayerOLX Exports</string>
     <string name="error_unknown">Unknown error</string>
 
 
@@ -223,6 +223,14 @@
     <string name="batch_edit_multiple_covers">(Multiple different covers)</string>
 
     <string name="player_error_skipping">Couldn\'t play this track — skipping</string>
+    <string name="player_error_lx_load_failed">Failed to load song... please sign in or load a music source script, then retry</string>
+    <string name="player_error_lx_load_failed_logged_in">Failed to load song... please load a music source script, then retry</string>
+    <string name="player_error_lx_playback_failed">The song is temporarily unavailable. Please try again later.</string>
+    <string name="player_error_lx_no_copyright">This song has no copyright and cannot be played</string>
+    <string name="player_error_lx_vip_need_vip">This song requires VIP or a music source script to play</string>
+    <string name="player_error_script_dead_retry">Source link expired, trying official preview…</string>
+    <string name="player_error_lx_trial_playing">Playing VIP song trial (128k)</string>
+    <string name="player_error_network_unavailable">Network unavailable, please check your connection and retry</string>
     <string name="sync_failed_toast">Library sync failed. Pull down to refresh and try again.</string>
 
     <string name="a11y_toggle_on">On</string>
@@ -247,14 +255,27 @@
     <string name="cloud_album_download">Download album</string>
     <string name="cloud_playlist_download" tools:ignore="MissingTranslation">Download playlist</string>
     <string name="cloud_album_remove_downloads">Remove downloads</string>
-    <string name="cloud_downloads_title">Downloads</string>
-    <string name="cloud_downloads_settings_subtitle">Manage offline cloud tracks and storage</string>
-    <string name="cloud_downloads_storage_used">Offline storage used</string>
+    <string name="cloud_downloads_title">Downloads &amp; Cache</string>
+    <string name="cloud_downloads_settings_subtitle">Manage offline cloud tracks and playback cache</string>
+    <string name="playback_cache_title">Playback cache</string>
+    <string name="playback_cache_usage_label">Current cache usage</string>
+    <string name="playback_cache_clear">Clear cache</string>
+    <string name="playback_cache_cleared_toast">Playback cache cleared</string>
+    <string name="playback_cache_limit_label">Max cache size</string>
+    <string name="playback_cache_disabled">Cache disabled</string>
+    <string name="playback_cache_limit_value_mb">%1$s MB</string>
+    <string name="playback_cache_limit_value_gb">%1$s GB</string>
+    <string name="playback_cache_description">Songs are cached while streaming, so replays start instantly and already-cached songs keep playing offline. Cached data is matched to your preferred quality.</string>
+    <string name="cloud_downloads_storage_used">Download storage used</string>
     <string name="cloud_downloads_storage_summary">%1$d completed · %2$d total</string>
-    <string name="cloud_downloads_active_section">Queued and downloading</string>
+    <string name="cloud_downloads_downloading_section">Downloading</string>
+    <string name="cloud_downloads_queued_section">Waiting</string>
     <string name="cloud_downloads_failed_section">Failed</string>
     <string name="cloud_downloads_completed_section">Completed</string>
     <string name="cloud_downloads_section_count">%1$s · %2$d</string>
+    <string name="download_max_threads_title">Download threads</string>
+    <string name="download_max_threads_summary">Number of simultaneous downloads (1-5)</string>
+    <string name="download_max_threads_value">%1$d threads</string>
     <string name="cloud_downloads_unknown_track">Unknown track</string>
     <string name="cloud_downloads_downloaded_size">Downloaded · %1$s</string>
     <string name="cloud_downloads_failed_fallback">Download failed</string>
@@ -272,5 +293,284 @@
     <string name="musicbrainz_no_results">No suitable recordings were found.</string>
     <string name="musicbrainz_match_score">Match confidence: %1$d%%</string>
     <string name="musicbrainz_applied">MusicBrainz identifiers saved. Missing year and placeholder names were enriched.</string>
+
+    <!-- LX Music / Netease Cookie -->
+    <string name="lxmusic_netease_cookie_title">Netease Cookie</string>
+    <string name="lxmusic_netease_cookie_hint">Paste your music.163.com Cookie (must contain MUSIC_U)</string>
+    <string name="lxmusic_netease_cookie_set">Cookie set</string>
+    <string name="lxmusic_netease_cookie_status_normal">Set · non-member</string>
+    <string name="lxmusic_netease_cookie_status_vip">Set · Vinyl VIP</string>
+    <string name="lxmusic_netease_cookie_status_svip">Set · Vinyl SVIP</string>
+    <string name="lxmusic_netease_cookie_status_invalid">Cookie expired</string>
+    <string name="lxmusic_netease_cookie_not_set">Not set</string>
+    <string name="lxmusic_netease_cookie_clear">Clear</string>
+    <string name="lxmusic_quality_title">Preferred Quality</string>
+    <string name="lxmusic_quality_128k">Smooth 128k</string>
+    <string name="lxmusic_quality_128k_desc">Saves data</string>
+    <string name="lxmusic_quality_320k">High 320k</string>
+    <string name="lxmusic_quality_320k_desc">Default, balanced</string>
+    <string name="lxmusic_quality_flac">Lossless FLAC</string>
+    <string name="lxmusic_quality_flac_desc">CD quality</string>
+    <string name="lxmusic_quality_flac24bit">Hi-Res 24bit</string>
+    <string name="lxmusic_quality_flac24bit_desc">Best quality, large files</string>
+    <string name="lxmusic_quality_atmos">Atmos Spatial Audio</string>
+    <string name="lxmusic_quality_atmos_desc">Immersive spatial sound</string>
+    <string name="lxmusic_quality_master">Master Quality</string>
+    <string name="lxmusic_quality_master_desc">Studio master tape</string>
+    <string name="lxmusic_need_script_or_cookie">Load a source script or set Netease Cookie first</string>
+
+    <!-- LX Music: ViewModel Toast / error messages -->
+    <string name="lx_msg_netease_login_expired">Netease login expired, please sign in again</string>
+    <string name="lx_error_load_failed">Load failed: %1$s</string>
+    <string name="lx_error_board_unsupported">Boards not yet supported on this source</string>
+    <string name="lx_error_playlist_unsupported">Playlists not yet supported on this source</string>
+    <string name="lx_error_board_load_failed">Board load failed or no songs</string>
+    <string name="lx_error_playlist_load_failed">Playlist load failed or no data</string>
+    <string name="lx_error_playlist_songs_load_failed">Playlist load failed or no songs</string>
+    <string name="lx_error_no_playlist_found">No playlists found</string>
+    <string name="lx_error_invalid_uid">Cannot parse Netease UID or profile link</string>
+    <string name="lx_error_user_playlists_not_found">No public playlists found (wrong UID or set to private)</string>
+    <string name="lx_msg_no_login_info">No login info detected, please complete login in the web page</string>
+    <string name="lx_default_nickname">Netease user</string>
+    <string name="lx_msg_login_invalid">Login info invalid, please sign in again in the web page</string>
+    <string name="lx_msg_network_retrying">Network error, retrying automatically…</string>
+    <string name="lx_msg_invalid_mobile">Please enter a valid mobile number</string>
+    <string name="lx_msg_sms_send_failed">Failed to send verification code, please try again later</string>
+    <string name="lx_msg_invalid_code">Please enter the verification code</string>
+    <string name="lx_field_mobile">Mobile number</string>
+    <string name="lx_field_code">Verification code</string>
+    <string name="lx_action_get_code">Get code</string>
+    <string name="lx_action_login">Log in</string>
+    <string name="lx_msg_sms_tip">If the number is not registered, a new account will be created automatically</string>
+    <string name="lx_title_daily_recommend">Daily Recommendations</string>
+    <string name="lx_title_heartbeat_mode">Heartbeat Mode</string>
+    <string name="lx_title_liked_roaming">Roaming Based on Liked Songs</string>
+    <string name="lx_title_personal_fm">Personal FM</string>
+    <string name="lx_title_recommend_playlists">Recommended Playlists</string>
+    <string name="lx_title_sub_artists">Followed Artists</string>
+    <string name="lx_title_sub_albums">Saved Albums</string>
+    <string name="lx_default_artist_name">Artist</string>
+    <string name="lx_error_album_no_songs">No songs in this album</string>
+    <string name="lx_error_artist_no_hot_songs">No hot songs for this artist</string>
+    <string name="lx_msg_operation_failed">Operation failed, please try again later</string>
+    <string name="lx_msg_add_to_playlist_success">Added to playlist</string>
+    <string name="lx_msg_add_to_playlist_already_exists">Song already in playlist</string>
+    <string name="lx_msg_add_to_playlist_partial_exists">Added to playlist; some playlists already contain this song</string>
+    <string name="lx_msg_add_to_playlist_failed">Failed to add to playlist, please try again later</string>
+    <string name="lx_msg_no_own_playlist">No self-created playlists yet. Create one on the platform first.</string>
+    <string name="lx_action_remove_from_playlist">Remove from playlist</string>
+    <string name="lx_title_remove_from_playlist_confirm">Remove from playlist</string>
+    <string name="lx_msg_remove_from_playlist_confirm">Remove \"%1$s\" from \"%2$s\"?</string>
+    <string name="lx_msg_batch_remove_from_playlist_confirm">Remove the selected %2$d songs from \"%1$s\"?</string>
+    <string name="lx_msg_remove_from_playlist_success">Removed from playlist</string>
+    <string name="lx_msg_remove_from_playlist_failed">Failed to remove from playlist, please try again later</string>
+    <string name="lx_msg_batch_add_mixed_source">Please select songs from the same platform before adding to a playlist</string>
+    <string name="lx_batch_dialog_title">Batch download (%1$d songs)</string>
+    <string name="lx_search_no_results">No results found. Try a different keyword.</string>
+    <string name="lx_msg_user_not_logged_in">Current user is not logged in</string>
+    <string name="lx_msg_subscribe_success">Added to library</string>
+    <string name="lx_msg_unsubscribe_success">Removed from library</string>
+    <string name="lx_msg_subscribe_failed">Failed to add, please try again later</string>
+    <string name="lx_msg_unsubscribe_failed">Failed to remove, please try again later</string>
+    <string name="lx_error_no_content">No content</string>
+    <string name="lx_msg_login_expired">Login expired, please sign in again</string>
+    <string name="lx_error_load_failed_retry">Load failed, please check network and retry</string>
+    <string name="lx_error_artist_no_albums">No albums for this artist</string>
+    <string name="lx_msg_playlist_loading">Playlist loading…</string>
+    <string name="lx_default_playlist_name">Playlist %1$s</string>
+    <string name="lx_error_playlist_not_found">Playlist not found or empty</string>
+    <string name="lx_error_search_failed">Search failed: %1$s</string>
+    <string name="lx_error_import_failed">Import failed: %1$s</string>
+
+    <!-- LX Music: Screen UI strings -->
+    <string name="lx_msg_source_disabled">Source disabled, please enable it in script management</string>
+    <string name="lx_queue_name_playlist">Playlist</string>
+    <string name="lx_msg_playlist_no_songs">Playlist has no songs</string>
+    <string name="lx_desc_script_management">Source script management</string>
+    <string name="lx_desc_settings">Settings</string>
+    <string name="lx_tab_mine">Mine</string>
+    <string name="lx_tab_board">Boards</string>
+    <string name="lx_tab_playlist">Playlists</string>
+    <string name="lx_tab_search">Search</string>
+    <string name="lx_title_source_scripts">Source Scripts</string>
+    <string name="lx_msg_script_intro">Once imported, scripts can be activated. Long-press to delete. Multiple sources can be enabled; the preferred script takes priority. If it can\'t provide the chosen quality, other enabled backup scripts try to fill a higher quality, then compete with the official pipeline by quality.\nFor your account safety, only use SMS verification code to log in.\nIf a script requires it, your platform cookie may be injected into the source script after login. Please use only trusted scripts.</string>
+    <string name="lx_title_current_source">Current source</string>
+    <string name="lx_msg_loading">Loading…</string>
+    <string name="lx_msg_declared_sources">Declared sources: %1$s</string>
+    <string name="lx_btn_url_import">Import from URL</string>
+    <string name="lx_btn_file_import">Import from file</string>
+    <string name="lx_msg_not_logged_in">Not logged in, tap to sign in to Netease on the web</string>
+    <string name="lx_msg_not_logged_in_platform">Not logged in, tap to sign in on the web</string>
+    <string name="lx_msg_login_expired_status">Login expired, tap to sign in again</string>
+    <string name="lx_status_logged_in_svip">Signed in · SVIP</string>
+    <string name="lx_status_logged_in_vip">Signed in · Vinyl VIP</string>
+    <string name="lx_status_logged_in">Signed in</string>
+    <string name="lx_status_nickname_svip">%1$s · SVIP</string>
+    <string name="lx_status_nickname_vip">%1$s · Vinyl VIP</string>
+    <string name="lx_status_nickname_logged_in">%1$s · Signed in</string>
+    <string name="lx_title_netease_music">Netease Music</string>
+    <string name="lx_title_import_from_url">Import source from URL</string>
+    <string name="lx_desc_cancel">Cancel</string>
+    <string name="lx_desc_import">Import</string>
+    <string name="lx_title_delete_script">Delete source script</string>
+    <string name="lx_msg_delete_script_confirm">Are you sure you want to delete \"%1$s\"? This action cannot be undone.</string>
+    <string name="lx_desc_delete">Delete</string>
+    <string name="lx_msg_preferred_suffix"> (preferred)</string>
+    <string name="lx_msg_download_needs_script">This feature requires a music source script. Please add and activate one first.</string>
+    <string name="lx_title_download_quality">Download Quality</string>
+    <string name="lx_download_quality_unsupported">Unavailable for current scripts</string>
+    <string name="lx_download_size_unknown">Estimated size unknown</string>
+    <string name="lx_download_estimated_size">Est. size: %1$s</string>
+    <string name="lx_download_estimated_size_approx">~%1$s (estimated)</string>
+    <string name="lx_desc_download">Download</string>
+    <string name="lx_msg_download_downgraded">%1$s is not truly available from current source. Downloaded as %2$s instead.</string>
+    <string name="lx_source_netease">Netease Music</string>
+    <string name="lx_source_kuwo">Kuwo Music</string>
+    <string name="lx_source_qq">QQ Music</string>
+    <string name="lx_source_wechat">WeChat</string>
+    <string name="lx_source_kugou">Kugou Music</string>
+    <string name="lx_desc_clear">Clear</string>
+    <string name="lx_desc_search">Search</string>
+    <string name="lx_text_track_count_format">%1$d tracks</string>
+    <string name="lx_text_play_count_hundred_million_plus"> · %1$d hundred million+ plays</string>
+    <string name="lx_text_play_count_ten_thousand_plus"> · %1$d ten thousand+ plays</string>
+    <string name="lx_desc_back_to_top">Back to top</string>
+    <string name="lx_desc_locate_current">Locate current song</string>
+    <string name="lx_text_total_songs_count">Total %1$d songs</string>
+    <string name="lx_text_total_playlists_count">Total %1$d playlists</string>
+    <string name="lx_desc_shuffle">Shuffle play</string>
+    <string name="lx_desc_play_all">Play all</string>
+    <string name="lx_text_playlist_list">Playlist list</string>
+    <string name="lx_placeholder_search_playlist">Search playlists / paste link or playlist ID</string>
+    <string name="lx_desc_fetch_user_playlists">Fetch user playlists by Netease UID</string>
+    <string name="lx_text_back_to_categories">Back to categories</string>
+    <string name="lx_text_netease_user_with_name">Netease user · %1$s</string>
+    <string name="lx_title_netease_user_playlists">Netease user playlists</string>
+    <string name="lx_msg_netease_user_playlists_desc">Enter the other user\'s Netease UID or profile link to view their public \"Liked Music\" and saved playlists; private content cannot be fetched.</string>
+    <string name="lx_placeholder_uid_or_link">UID / profile link</string>
+    <string name="lx_desc_view_playlists">View playlists</string>
+    <string name="lx_placeholder_search_songs">Search song name / artist</string>
+    <string name="lx_text_song_type">Songs</string>
+    <string name="lx_text_artist_type">Artists</string>
+    <string name="lx_text_album_type">Albums</string>
+    <string name="lx_text_search_results">Search results</string>
+
+    <!-- LX Music: Mine page strings -->
+    <string name="lx_btn_load_more_default">Load more</string>
+    <string name="lx_btn_refresh_batch">Refresh</string>
+    <string name="lx_desc_back">Back</string>
+    <string name="lx_text_back">Back</string>
+    <string name="lx_tab_hot_songs">Hot songs</string>
+    <string name="lx_tab_all_albums">All albums</string>
+    <string name="lx_text_netease_svip">Netease Music SVIP</string>
+    <string name="lx_text_netease_vip">Netease Music Vinyl VIP</string>
+    <string name="lx_desc_logout">Sign out</string>
+    <string name="lx_btn_unfollow">Unfollow</string>
+    <string name="lx_btn_follow">Follow</string>
+    <string name="lx_tab_recommend">Recommend</string>
+    <string name="lx_tab_favorite">Saved</string>
+    <string name="lx_subtitle_daily_recommend">Updated daily based on your taste</string>
+    <string name="lx_subtitle_heartbeat_mode">Start roaming from songs you like</string>
+    <string name="lx_subtitle_recommend_playlists_today">%1$d playlists recommended for you today</string>
+    <string name="lx_subtitle_recommend_playlists_default">Today\'s playlists from your taste</string>
+    <string name="lx_subtitle_liked_roaming">Recommend similar songs based on your favorites</string>
+    <string name="lx_subtitle_personal_fm">Your private radio, refresh anytime</string>
+    <string name="lx_subtitle_liked_music_default">My liked music</string>
+    <string name="lx_subtitle_sub_artists_default">Artists I follow</string>
+    <string name="lx_subtitle_sub_artists_count">%1$d artists</string>
+    <string name="lx_subtitle_sub_albums_default">Albums I saved</string>
+    <string name="lx_subtitle_sub_albums_count">%1$d albums</string>
+    <string name="lx_text_album_count_format">%1$d albums</string>
+    <string name="lx_msg_no_recommend_playlists">No recommended playlists</string>
+    <string name="lx_msg_no_albums">No albums</string>
+    <string name="lx_msg_no_followed_artists">No followed artists yet</string>
+
+    <!-- LX Music: Folder page actions strings -->
+    <string name="lx_desc_collected_locked">Collected (cannot be uncollected)</string>
+    <string name="lx_desc_uncollect">Uncollect</string>
+    <string name="lx_desc_collect">Add to library</string>
+    <string name="lx_desc_share">Share</string>
+    <string name="lx_text_playlist_label">playlist</string>
+    <string name="lx_text_album_label">album</string>
+    <string name="lx_title_uncollect_confirm">Uncollect</string>
+    <string name="lx_msg_uncollect_confirm">Are you sure you want to uncollect this %1$s?</string>
+    <string name="lx_msg_share_link_copied">Share link copied to clipboard</string>
+
+    <!-- LX Music: Netease login strings -->
+    <string name="lx_title_netease_login">Netease Music login</string>
+    <string name="lx_title_qq_login">QQ Music login</string>
+    <string name="lx_title_kugou_login">Kugou Music login</string>
+    <string name="lx_title_kuwo_login">Kuwo Music login</string>
+    <string name="lx_msg_login_success">Login successful</string>
+    <string name="lx_msg_verifying_login">Verifying login…</string>
+    <string name="lx_qr_tab_qq">QQ</string>
+    <string name="lx_qr_scan_hint_qq">Open QQ on your phone and scan the QR code</string>
+    <string name="lx_qr_scan_hint_wechat">Open WeChat on your phone and scan the QR code</string>
+    <string name="lx_qr_status_wait">Waiting for scan</string>
+    <string name="lx_qr_status_scanned">Scanned, please confirm on your phone</string>
+    <string name="lx_qr_status_expired">QR code expired</string>
+    <string name="lx_qr_refresh">Refresh QR code</string>
+    <string name="lx_msg_login_failed">Login failed, please try again</string>
+
+    <!-- Batch Download -->
+    <string name="lx_msg_batch_download_started">Started downloading %1$d songs</string>
+    <string name="lx_msg_batch_download_failed">Failed to start downloads</string>
+    <string name="lx_msg_batch_download_partial">Started %1$d downloads, %2$d failed</string>
+    <string name="lx_msg_online_removed_local_restored">Removed from online, restored as local song</string>
+    <string name="lx_msg_album_not_found">Album not found</string>
+    <string name="lx_msg_artist_not_found">Artist not found</string>
+
+    <!-- 平台别名 -->
+    <string name="lx_source_alias_netease">小芸音樂</string>
+    <string name="lx_source_alias_kuwo">小窩音樂</string>
+    <string name="lx_source_alias_qq">小鵝音樂</string>
+    <string name="lx_source_alias_kugou">小汪音樂</string>
+
+    <!-- 平台名称显示设置 -->
+    <string name="lx_platform_name_style_title">Platform Name Display</string>
+    <string name="lx_platform_name_style_original">Original</string>
+    <string name="lx_platform_name_style_alias">Alias</string>
+
+    <!-- 平台顺序 -->
+    <string name="lx_platform_order_title">Platform Order</string>
+    <string name="lx_platform_order_subtitle">Reorder search page platform tabs</string>
+
+    <string name="lx_brand_title">Lx Music</string>
+    <string-array name="lx_mood_0_6">
+        <item>Late Night</item>
+        <item>Sleep Aid</item>
+        <item>Quiet</item>
+        <item>Night</item>
+    </string-array>
+    <string-array name="lx_mood_6_9">
+        <item>Morning</item>
+        <item>Dawn</item>
+        <item>Sunrise</item>
+        <item>Easy Listening</item>
+    </string-array>
+    <string-array name="lx_mood_9_11">
+        <item>Forenoon</item>
+        <item>Easy Listening</item>
+        <item>Study</item>
+        <item>Work</item>
+    </string-array>
+    <string-array name="lx_mood_11_15">
+        <item>Good Noon</item>
+        <item>Afternoon</item>
+        <item>Nap Time</item>
+        <item>Easy</item>
+    </string-array>
+    <string-array name="lx_mood_15_20">
+        <item>Afternoon</item>
+        <item>Relax</item>
+        <item>Easy Listening</item>
+        <item>Tea Time</item>
+    </string-array>
+    <string-array name="lx_mood_20_24">
+        <item>Night</item>
+        <item>Good Night</item>
+        <item>Before Bed</item>
+        <item>Sleep Aid</item>
+    </string-array>
 
 </resources>

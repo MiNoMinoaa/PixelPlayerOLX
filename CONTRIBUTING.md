@@ -1,6 +1,6 @@
-# Contributing to PixelPlayerOSS
+# Contributing to PixelPlayerOLX
 
-Thanks for your interest in improving PixelPlayerOSS! This guide covers the
+Thanks for your interest in improving PixelPlayerOLX! This guide covers the
 conventions that aren't obvious from the code alone. For a deeper architectural
 overview, see [CLAUDE.md](CLAUDE.md) (written for AI assistants but accurate for
 humans too).
@@ -8,8 +8,8 @@ humans too).
 ## Getting started
 
 ```sh
-git clone https://github.com/PixelPlayerHQ/PixelPlayerOSS.git
-cd PixelPlayerOSS
+git clone https://github.com/MiNoMinoaa/PixelPlayerOLX.git
+cd PixelPlayerOLX
 
 # Universal debug APK for local installation
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :app:assembleDebug -Ppixelplayer.enableAbiSplits=false
@@ -32,7 +32,7 @@ Run a single test class/method:
 
 ```sh
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :app:testDebugUnitTest \
-  --tests "com.lostf1sh.pixelplayeross.SomeTestClass.someMethod"
+  --tests "com.minoppol.music.SomeTestClass.someMethod"
 ```
 
 > Unit tests use **JUnit Jupiter** (`useJUnitPlatform()`), not JUnit 4 — use

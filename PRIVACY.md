@@ -1,6 +1,6 @@
 # Privacy Policy
 
-PixelPlayerOSS is local-first and does not include analytics, advertising SDKs, Firebase, Crashlytics, or Google Play Services runtime dependencies.
+PixelPlayerOLX is local-first and does not include analytics, advertising SDKs, Firebase, Crashlytics, or Google Play Services runtime dependencies.
 
 ## Data Stored On Device
 
@@ -15,12 +15,13 @@ Network features are optional and user-controlled:
 - LRCLIB lyric lookup is used only when online lyrics are enabled.
 - Deezer artist artwork lookup is used only when online artist images are enabled.
 - ListenBrainz scrobbling is optional and disabled by default. It activates only after the user connects a ListenBrainz account with their own user token. While connected, the app submits listening activity (track title, artist, album, duration, listen timestamps, and MusicBrainz identifiers when available) to the configured ListenBrainz server for the playback sources the user has enabled — listenbrainz.org by default, or a user-supplied custom URL for self-hosted ListenBrainz-compatible servers such as Maloja; per-source toggles cover local files, Navidrome/Subsonic, and Jellyfin playback. Disconnecting stops submissions and deletes any queued listens. Last.fm is not supported.
+- Optional LX Music sources run only when the user imports and enables a source script or signs in to a supported platform (NetEase Cloud Music, QQ Music, Kugou, Kuwo). Search and playback requests are sent to the third-party platform's public APIs through the selected source. Platform cookies are stored locally and may be injected into user-provided source scripts; only use scripts you trust.
 
 Server credentials and preferences are stored locally. The app does not sell or share user data.
 
 ## Files And Media
 
-PixelPlayerOSS requests media/file permissions to scan and play local music, read artwork, edit metadata, and export/import user backups. Optional Navidrome/Subsonic and Jellyfin downloads are stored in the app's private files area for offline playback and are excluded from Android cloud backup and device transfer.
+PixelPlayerOLX requests media/file permissions to scan and play local music, read artwork, edit metadata, and export/import user backups. Optional Navidrome/Subsonic and Jellyfin downloads are stored in the app's private files area for offline playback and are excluded from Android cloud backup and device transfer.
 
 ## Crash Reports
 

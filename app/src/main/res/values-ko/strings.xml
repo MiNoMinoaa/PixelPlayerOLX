@@ -213,4 +213,42 @@
     <string name="widget_bar_4x1_desc">컴팩트 플레이어 바</string>
     <string name="widget_control_4x2_desc">셔플 및 반복 기능이 포함된 전체 컨트롤</string>
     <string name="widget_grid_2x2_desc">미니멀한 사각형 플레이어</string>
+    <string name="lx_brand_title">Lx 음악</string>
+    <string-array name="lx_mood_0_6">
+        <item>심야</item>
+        <item>수면 유도</item>
+        <item>조용한</item>
+        <item>밤</item>
+    </string-array>
+    <string-array name="lx_mood_6_9">
+        <item>좋은 아침</item>
+        <item>새벽</item>
+        <item>아침</item>
+        <item>잔잔한 음악</item>
+    </string-array>
+    <string-array name="lx_mood_9_11">
+        <item>오전</item>
+        <item>잔잔한 음악</item>
+        <item>공부</item>
+        <item>일</item>
+    </string-array>
+    <string-array name="lx_mood_11_15">
+        <item>점심 인사</item>
+        <item>오후</item>
+        <item>낮잠</item>
+        <item>편안한</item>
+    </string-array>
+    <string-array name="lx_mood_15_20">
+        <item>오후</item>
+        <item>휴식</item>
+        <item>잔잔한 음악</item>
+        <item>티타임</item>
+    </string-array>
+    <string-array name="lx_mood_20_24">
+        <item>밤</item>
+        <item>잘 자요</item>
+        <item>자기 전</item>
+        <item>수면 유도</item>
+    </string-array>
+
 </resources>

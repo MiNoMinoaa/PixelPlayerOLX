@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="presentation_batch_b_accounts_linked_services">已關聯服務</string>
+    <string name="presentation_batch_b_accounts_status_connected">已連接</string>
+    <string name="presentation_batch_b_accounts_open_service">打開服務</string>
+    <string name="presentation_batch_b_accounts_logging_out">正在登出…</string>
+    <string name="presentation_batch_b_accounts_no_linked_title">暫無關聯帳號</string>
+    <string name="presentation_batch_b_accounts_no_linked_body">連接一個服務提供商，即可在此頁面進行管理。</string>
+    <string name="presentation_batch_b_accounts_connect_service">連接 %1$s</string>
+
+    <string name="presentation_batch_b_sort_songs">排序歌曲</string>
+    <string name="presentation_batch_b_more_options">更多選項</string>
+    <string name="presentation_batch_b_play_it">立即播放</string>
+    <string name="presentation_batch_b_add_songs">添加歌曲</string>
+    <string name="presentation_batch_b_add">添加</string>
+    <string name="presentation_batch_b_remove_songs">移除歌曲</string>
+    <string name="presentation_batch_b_reorder_songs">調整歌曲順序</string>
+    <string name="presentation_batch_b_reorder">重排順序</string>
+    <string name="presentation_batch_b_reorder_song">調整該歌曲位置</string>
+    <string name="presentation_batch_b_playlist_empty_title">此歌單為空</string>
+    <string name="presentation_batch_b_playlist_empty_folder_body">該文件夾內沒有歌曲</string>
+    <string name="presentation_batch_b_playlist_empty_add_hint">點擊「添加歌曲」開始編輯。</string>
+    <string name="presentation_batch_b_playlist_empty_smart_body">暫未有歌曲滿足該智能規則</string>
+    <string name="presentation_batch_b_playlist_options_title">歌單設置</string>
+    <string name="presentation_batch_b_edit_playlist">編輯歌單</string>
+    <string name="presentation_batch_b_delete_playlist">刪除歌單</string>
+    <string name="presentation_batch_b_set_default_transition">設置默認過渡效果</string>
+    <string name="presentation_batch_b_export_playlist">導出歌單</string>
+    <string name="playlist_export_format_title">選擇導出格式</string>
+    <string name="playlist_export_as_m3u">導出為 M3U 歌單</string>
+    <string name="playlist_export_as_m3u_desc">標準 .m3u 格式，包含全部歌曲，兼容大多數播放器</string>
+    <string name="playlist_export_as_lx">導出為 LX 歌單</string>
+    <string name="playlist_export_as_lx_desc">落雪 .lxmc 格式，僅包含lx獲取到音源歌曲，可導入lx音樂</string>
+    <string name="playlist_export_lx_no_lx_songs">該歌單沒有 LX 音源歌曲，無法導出為 LX 歌單</string>
+    <string name="presentation_batch_b_delete_playlist_confirm_title">確定刪除歌單？</string>
+    <string name="presentation_batch_b_delete_playlist_confirm_body">你確定要刪除這個歌單嗎？</string>
+    <string name="presentation_batch_b_rename_playlist_dialog_title">重命名歌單</string>
+    <string name="presentation_batch_b_new_name">新名稱</string>
+
+    <string name="presentation_batch_b_daily_mix_title">每日推薦</string>
+
+    <string name="presentation_batch_b_quick_fill_select_songs">選擇歌曲</string>
+    <string name="presentation_batch_b_quick_fill_choose_genre">選擇流派</string>
+    <string name="presentation_batch_b_search_songs_label">搜索歌曲</string>
+    <string name="presentation_batch_b_select_all">全選</string>
+    <string name="presentation_batch_b_clear">清空</string>
+    <string name="presentation_batch_b_genre_label_format">流派：%1$s</string>
+    <string name="presentation_batch_b_select_a_genre">選擇一個流派</string>
+    <string name="presentation_batch_b_quick_fill">快速填充</string>
+    <string name="presentation_batch_b_add_custom_genre">添加自定義</string>
+    <string name="presentation_batch_b_new_genre">新建流派</string>
+    <string name="presentation_batch_b_add_custom_genre_title">添加自定義流派</string>
+    <string name="presentation_batch_b_genre_name_label">流派名稱</string>
+    <string name="presentation_batch_b_select_icon">選擇圖標</string>
+
+    <string name="presentation_batch_b_recently_played_title">最近播放</string>
+    <string name="presentation_batch_b_play_latest">播放最新</string>
+    <string name="presentation_batch_b_recent_empty_title">%1$s 內暫無播放記錄</string>
+    <string name="presentation_batch_b_recent_empty_subtitle">更改時間範圍或多播放一些歌曲來填充此時間線。</string>
+    <string name="presentation_batch_b_queue_recently_played">最近播放</string>
+    <string name="presentation_batch_b_date_today">今天</string>
+    <string name="presentation_batch_b_date_yesterday">昨天</string>
+
+    <string name="presentation_batch_b_navbar_adjust_title">調整圓角大小</string>
+    <string name="presentation_batch_b_navbar_adjust_subtitle">讓導航欄圓角匹配設備物理圓角，實現無縫視覺效果。</string>
+    <string name="presentation_batch_b_corner_radius_label">圓角半徑</string>
+    <string name="presentation_batch_b_corner_dp_format">%1$d dp</string>
+
+    <string name="presentation_batch_b_genre_shuffle_label">%1$s 隨機播放</string>
+
+    <plurals name="presentation_batch_b_songs_dot_duration">
+        <item quantity="other">%1$d 首歌曲 · %2$s</item>
+    </plurals>
+</resources>

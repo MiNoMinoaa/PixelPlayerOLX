@@ -213,4 +213,42 @@
     <string name="widget_bar_4x1_desc">Barra di riproduzione compatta</string>
     <string name="widget_control_4x2_desc">Controlli completi con modalità casuale e ripetizione</string>
     <string name="widget_grid_2x2_desc">Lettore quadrato minimalista</string>
+    <string name="lx_brand_title">Lx Musica</string>
+    <string-array name="lx_mood_0_6">
+        <item>Notte fonda</item>
+        <item>Per dormire</item>
+        <item>Calmo</item>
+        <item>Notte</item>
+    </string-array>
+    <string-array name="lx_mood_6_9">
+        <item>Buongiorno</item>
+        <item>Alba</item>
+        <item>Mattina</item>
+        <item>Musica leggera</item>
+    </string-array>
+    <string-array name="lx_mood_9_11">
+        <item>Mattina</item>
+        <item>Musica leggera</item>
+        <item>Studio</item>
+        <item>Lavoro</item>
+    </string-array>
+    <string-array name="lx_mood_11_15">
+        <item>Buon pomeriggio</item>
+        <item>Pomeriggio</item>
+        <item>Riposino</item>
+        <item>Rilassato</item>
+    </string-array>
+    <string-array name="lx_mood_15_20">
+        <item>Pomeriggio</item>
+        <item>Relax</item>
+        <item>Musica leggera</item>
+        <item>Ora del tè</item>
+    </string-array>
+    <string-array name="lx_mood_20_24">
+        <item>Notte</item>
+        <item>Buonanotte</item>
+        <item>Prima di dormire</item>
+        <item>Per dormire</item>
+    </string-array>
+
 </resources>

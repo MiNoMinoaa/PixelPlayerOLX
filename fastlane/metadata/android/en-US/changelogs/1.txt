@@ -1,6 +1,7 @@
-PixelPlayerOSS 0.1.0:
+PixelPlayerOLX 0.1.0:
 
-* First public FOSS release of PixelPlayerOSS.
-* Local playback, playlists, favorites, lyrics, listening stats, dynamic Material 3 theming, widgets, and backup/restore.
-* Self-hosted Navidrome/Subsonic and Jellyfin library support, plus optional LRCLIB lyrics and Deezer artist artwork lookup.
-* No Firebase, no Google Play Services, no proprietary integrations.
+* Forked from PixelPlayerOSS and rebranded as PixelPlayerOLX.
+* Discover page for optional online features.
+* LX Music sources: custom source and script import, search, download, quality selection, login, and playback caching.
+* LX Music playlist import/export (落雪 .lxmc format).
+* Mini player and player page lyrics, song sharing, and Traditional Chinese language.

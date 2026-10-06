@@ -222,9 +222,18 @@
     <string name="cloud_album_download">Albümü indir</string>
     <string name="cloud_playlist_download">Çalma listesini indir</string>
     <string name="cloud_album_remove_downloads">İndirilenleri sil</string>
-    <string name="cloud_downloads_title">İndirmeler</string>
-    <string name="cloud_downloads_settings_subtitle">Çevrimdışı bulut parçalarını ve depolamayı yönet</string>
-    <string name="cloud_downloads_storage_used">Kullanılan çevrimdışı depolama</string>
+    <string name="cloud_downloads_title">İndirmeler &amp; Önbellek</string>
+    <string name="cloud_downloads_settings_subtitle">Çevrimdışı bulut parçalarını ve oynatma önbelleğini yönet</string>
+    <string name="playback_cache_title">Oynatma önbelleği</string>
+    <string name="playback_cache_usage_label">Mevcut önbellek kullanımı</string>
+    <string name="playback_cache_clear">Önbelleği temizle</string>
+    <string name="playback_cache_cleared_toast">Oynatma önbelleği temizlendi</string>
+    <string name="playback_cache_limit_label">Maksimum önbellek boyutu</string>
+    <string name="playback_cache_disabled">Önbellek devre dışı</string>
+    <string name="playback_cache_limit_value_mb">%1$s MB</string>
+    <string name="playback_cache_limit_value_gb">%1$s GB</string>
+    <string name="playback_cache_description">Akış sırasında şarkılar önbelleğe alınır; tekrar oynatma anında başlar ve önbelleğe alınan şarkılar çevrimdışı da çalar. Önbellek, tercih ettiğiniz kaliteyle eşleşir.</string>
+    <string name="cloud_downloads_storage_used">İndirme depolama kullanımı</string>
     <string name="cloud_downloads_storage_summary">%1$d tamamlandı · toplam %2$d</string>
     <string name="cloud_downloads_active_section">Kuyruktaki ve inenler</string>
     <string name="cloud_downloads_failed_section">Hatalı</string>
@@ -238,4 +247,42 @@
     <string name="cloud_download_selected">Seçili bulut parçalarını indir</string>
     <string name="cloud_download_selected_count">%1$d bulut parçasını indir</string>
     <string name="cloud_download_selected_started">%1$d bulut parçası çevrimdışı dinleme için hazırlanıyor</string>
+    <string name="lx_brand_title">Lx Müzik</string>
+    <string-array name="lx_mood_0_6">
+        <item>Gece geç saat</item>
+        <item>Uyku yardımı</item>
+        <item>Sessiz</item>
+        <item>Gece</item>
+    </string-array>
+    <string-array name="lx_mood_6_9">
+        <item>Günaydın</item>
+        <item>Şafak</item>
+        <item>Sabah</item>
+        <item>Hafif müzik</item>
+    </string-array>
+    <string-array name="lx_mood_9_11">
+        <item>Sabah</item>
+        <item>Hafif müzik</item>
+        <item>Çalışma</item>
+        <item>İş</item>
+    </string-array>
+    <string-array name="lx_mood_11_15">
+        <item>İyi günler</item>
+        <item>Öğleden sonra</item>
+        <item>Şekerleme</item>
+        <item>Rahat</item>
+    </string-array>
+    <string-array name="lx_mood_15_20">
+        <item>Öğleden sonra</item>
+        <item>Gevşeme</item>
+        <item>Hafif müzik</item>
+        <item>Çay saati</item>
+    </string-array>
+    <string-array name="lx_mood_20_24">
+        <item>Gece</item>
+        <item>İyi geceler</item>
+        <item>Yatmadan önce</item>
+        <item>Uyku yardımı</item>
+    </string-array>
+
 </resources>

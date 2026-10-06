@@ -1,5 +1,13 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="setcat_m3u_sync_section">播放列表同步</string>
+    <string name="setcat_m3u_sync_title">自动 M3U 文件同步</string>
+    <string name="setcat_m3u_sync_disabled_subtitle">选择一个外部文件夹，与你的本地播放列表实现双向同步</string>
+    <string name="setcat_m3u_sync_enabled_subtitle">正在与 %1$s 同步</string>
+    <string name="setcat_m3u_sync_selected_folder">所选文件夹</string>
+    <string name="setcat_m3u_sync_now_title">立即同步播放列表</string>
+    <string name="setcat_m3u_sync_now_subtitle">导入并导出更改，不覆盖冲突项</string>
+    <string name="setcat_m3u_sync_result">%1$d 项已更改 · %2$d 项冲突 · %3$d 项未解决</string>
     <string name="settings_top_bar_title">设置</string>
     <string name="settings_accounts_row_title">账号</string>
     <string name="settings_accounts_row_subtitle">管理 Navidrome 与 Jellyfin 服务</string>
@@ -57,6 +65,14 @@
     <string name="setcat_external_lyrics_subtitle">本地无歌词时允许从 lrclib.net 搜索、手动获取歌词</string>
     <string name="setcat_external_artist_images_title">来自 Deezer 的歌手封面</string>
     <string name="setcat_external_artist_images_subtitle">歌手图片缺失时从 Deezer 获取并缓存到本地</string>
+    <string name="setcat_notification_lyrics_title">通知栏歌词</string>
+    <string name="setcat_notification_lyrics_subtitle">有已同步歌词时，在系统媒体通知上显示当前歌词行</string>
+    <string name="setcat_mini_player_lyrics_title">迷你播放器歌词</string>
+    <string name="setcat_mini_player_lyrics_subtitle">在迷你播放器歌手名后显示当前同步歌词</string>
+    <string name="setcat_in_player_lyrics_title">播放页歌词</string>
+    <string name="setcat_in_player_lyrics_subtitle">在播放器封面下方显示同步歌词</string>
+    <string name="setcat_in_player_lyrics_size_label">歌词字体大小</string>
+    <string name="setcat_in_player_lyrics_size_desc">调整播放页歌词的字体大小</string>
     <string name="setcat_lyrics_management">歌词管理</string>
     <string name="setcat_lyrics_source_priority_label">歌词来源优先级</string>
     <string name="setcat_lyrics_source_priority_desc">获取歌词时选择优先尝试的来源</string>
@@ -72,6 +88,8 @@
     <string name="setcat_language_system">系统默认</string>
     <string name="setcat_app_theme_label">应用主题</string>
     <string name="setcat_app_theme_desc">在浅色、深色、跟随系统之间切换</string>
+    <string name="setcat_global_now_playing_theme_title">使用正在播放的歌曲颜色作为应用主题色</string>
+    <string name="setcat_global_now_playing_theme_subtitle">从当前歌曲封面提取颜色为应用整体着色，仍遵循浅色/深色模式设置</string>
     <string name="setcat_theme_light">浅色主题</string>
     <string name="setcat_theme_dark">深色主题</string>
     <string name="setcat_theme_follow_system">跟随系统</string>
@@ -102,6 +120,8 @@
     <string name="setcat_navbar_style_full_width">通栏铺满</string>
     <string name="setcat_compact_mode_title">紧凑模式</string>
     <string name="setcat_compact_mode_subtitle">仅显示图标，缩小导航栏高度</string>
+    <string name="setcat_show_search_tab_title">显示搜索页</string>
+    <string name="setcat_show_search_tab_subtitle">此页搜索的内容是您在本地/缓存播放过的内容</string>
     <string name="setcat_navbar_corner_title">导航栏圆角大小</string>
     <string name="setcat_navbar_corner_subtitle">调节导航栏圆角半径</string>
     <string name="setcat_lyrics_screen">歌词页面</string>
@@ -116,7 +136,8 @@
     <string name="setcat_app_navigation_section">应用导航</string>
     <string name="setcat_default_tab_label">默认启动页面</string>
     <string name="setcat_default_tab_desc">设置打开应用默认显示的标签页</string>
-    <string name="tab_home">首页</string>
+    <string name="tab_home">主页</string>
+    <string name="tab_online">发现</string>
     <string name="setcat_library_navigation_label">曲库导航方式</string>
     <string name="setcat_library_navigation_desc">切换曲库标签页的交互形式</string>
     <string name="setcat_library_nav_tab_row">标签栏（默认）</string>
@@ -125,6 +146,8 @@
     <string name="setcat_background_playback">后台播放</string>
     <string name="setcat_keep_playing_label">划掉后台后继续播放</string>
     <string name="setcat_keep_playing_desc">关闭此项，从最近任务划除应用就会停止播放</string>
+    <string name="setcat_keep_screen_awake_title">播放时保持屏幕常亮</string>
+    <string name="setcat_keep_screen_awake_subtitle">音乐播放且应用可见时，防止屏幕息屏</string>
     <string name="setcat_replaygain_section">音量标准化(ReplayGain)</string>
     <string name="setcat_replaygain_enable_title">启用 ReplayGain</string>
     <string name="setcat_replaygain_enable_subtitle">读取音频文件元数据，统一各歌曲播放音量</string>
@@ -187,7 +210,7 @@
     <string name="setcat_trigger_crash_title">触发测试崩溃</string>
     <string name="setcat_trigger_crash_subtitle">模拟程序崩溃，用于测试崩溃上报系统</string>
     <string name="setcat_application">应用信息</string>
-    <string name="setcat_about_pixelplayer_title">关于 PixelPlayerOSS</string>
+    <string name="setcat_about_pixelplayer_title">关于 PixelPlayerOLX</string>
     <string name="setcat_about_pixelplayer_subtitle">版本、致谢等更多信息</string>
 
     <string name="backup_summary_none">未选择任何备份模块</string>
@@ -242,7 +265,7 @@
     <string name="dialog_regenerate_stats_title">重建播放统计？</string>
     <string name="dialog_regenerate_stats_body">清空统计缓存，基于数据库历史重新计算播放数据。</string>
     <string name="toast_stats_regeneration_started">开始重建播放统计</string>
-    <string name="backup_file_name_format">PixelPlayerOSS_Backup_%1$d.pxpl</string>
+    <string name="backup_file_name_format">PixelPlayerOLX_Backup_%1$d.pxpl</string>
 
     <string name="setcat_regenerate_daily_mix_action">重新生成每日混合歌单</string>
     <string name="setcat_regenerate_stats_action">重建播放统计</string>

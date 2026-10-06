@@ -59,7 +59,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <intent-filter>
-                <action android:name="com.lostf1sh.pixelplayeross.action.OPEN_PLAYER" />
+                <action android:name="com.minoppol.music.action.OPEN_PLAYER" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data
@@ -191,7 +191,7 @@
 
         <receiver android:name=".ui.glancewidget.WidgetUpdateReceiver" android:exported="false">
             <intent-filter>
-                <action android:name="com.lostf1sh.pixelplayeross.ACTION_WIDGET_UPDATE_PLAYBACK_STATE" />
+                <action android:name="com.minoppol.music.ACTION_WIDGET_UPDATE_PLAYBACK_STATE" />
             </intent-filter>
         </receiver>
 

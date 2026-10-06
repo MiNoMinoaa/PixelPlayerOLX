@@ -1,0 +1,513 @@
+<resources>
+<string name="app_name">PixelPlayerOLX</string>
+<string name="app_name_change_title">應用名稱已變更</string>
+<string name="app_name_change_message">本應用現已更名為 PixelPlayerOLX！開啟你的音樂之旅吧！</string>
+<string name="do_not_show_again">不再提示</string>
+<string name="dismiss">關閉</string>
+<string name="all_files_access_title">需要特殊權限</string>
+<string name="all_files_access_description">為了編輯歌曲元數據（mp3文件），PixelPlayerOLX需要全部文件訪問權限，以此直接修改歌曲標籤。請在下一界面授予權限，啟用元數據編輯功能。</string>
+<string name="grant_permission_button">授予權限</string>
+<string name="error">錯誤</string>
+<string name="ok">確定</string>
+<string name="cancel">取消</string>
+<string name="accounts_listenbrainz_title">ListenBrainz</string>
+<string name="accounts_listenbrainz_token_dialog_title">連接 ListenBrainz</string>
+<string name="accounts_listenbrainz_token_dialog_body">粘貼你的用戶令牌，即可向 ListenBrainz 提交播放記錄。你可以在 listenbrainz.org 的設置頁面找到令牌。</string>
+<string name="accounts_listenbrainz_token_hint">用戶令牌</string>
+<string name="accounts_listenbrainz_connect">連接</string>
+<string name="accounts_listenbrainz_connect_failed">連接失敗，請檢查令牌與伺服器地址後重試。</string>
+<string name="accounts_listenbrainz_server_hint">伺服器地址（選填）</string>
+<string name="accounts_listenbrainz_server_supporting">留空則使用 listenbrainz.org。可對接兼容該API的自建服務，例如 Maloja。</string>
+<string name="accounts_listenbrainz_invalid_url">請輸入有效的伺服器地址，例如 https://maloja.example.com/apis/listenbrainz</string>
+<string name="accounts_listenbrainz_custom_server">正在向 %1$s 提交播放記錄</string>
+<string name="accounts_listenbrainz_get_token">打開 listenbrainz.org</string>
+<string name="accounts_listenbrainz_needs_reauth">令牌已失效，請重新連接以恢復播放記錄提交，排隊記錄將會保留。</string>
+<string name="accounts_listenbrainz_reconnect">重新連接</string>
+<string name="accounts_listenbrainz_scrobble_local">提交本地文件播放記錄</string>
+<string name="accounts_listenbrainz_scrobble_navidrome">提交Subsonic流媒體播放記錄</string>
+<string name="accounts_listenbrainz_scrobble_jellyfin">提交Jellyfin流媒體播放記錄</string>
+<string name="accounts_listenbrainz_toggle_hint">如果你的服務端已經向ListenBrainz上報記錄，請在此關閉，避免重複上報。</string>
+<string name="accounts_listenbrainz_stat_listens">總播放記錄</string>
+<string name="accounts_listenbrainz_stat_queued">排隊中</string>
+<string name="accounts_listenbrainz_now_playing_label">正在上報播放狀態</string>
+<string name="accounts_listenbrainz_now_playing_format">%1$s — %2$s</string>
+<string name="accounts_listenbrainz_now_playing_idle">當前無正在播放曲目</string>
+<string name="accounts_available_services">可用服務</string>
+<string name="import_file">導入</string>
+<string name="search">搜索</string>
+
+<string name="lyrics">歌詞</string>
+<string name="loading_lyrics">正在加載歌詞…</string>
+<string name="lyrics_provided_by">歌詞來源</string>
+<string name="lrclib_uri">https://lrclib.net/</string>
+<string name="lyrics_not_found">未找到歌詞</string>
+<string name="search_lyrics_online_prompt">是否在線搜索歌詞？</string>
+<string name="lyrics_custom_search_hint">未能自動匹配歌詞，你可以修改歌曲標題或歌手，手動搜索。</string>
+<string name="failed_to_search_for_lyrics">歌詞搜索失敗</string>
+<string name="failed_to_fetch_lyrics_from_remote">獲取遠程歌詞失敗</string>
+<string name="lyrics_fetch_timeout">連接超時，請檢查網絡。</string>
+<string name="lyrics_network_error">網絡錯誤，請檢查網絡。</string>
+<string name="lyrics_server_error">伺服器錯誤（代碼 %d），請稍後重試。</string>
+<string name="lyrics_remote_disabled">設置中已關閉在線歌詞功能。</string>
+<string name="found_n_matches_format">找到 %d 條匹配結果</string>
+<string name="searched_for_x_format">搜索關鍵詞：\"%s\"</string>
+<string name="searching_lyrics">正在搜索歌詞…</string>
+<string name="lyrics_already_available">歌詞已存在，跳過在線獲取。</string>
+<string name="lyrics_embedded_already_available">已讀取內嵌歌詞，跳過在線獲取。</string>
+<string name="local_lrc_already_available">已發現本地lrc歌詞，跳過在線獲取。</string>
+<string name="fetch_lyrics_show_options_title">顯示歌詞選項</string>
+<string name="fetch_lyrics_show_options_subtitle">每次手動選擇歌詞，而不是直接應用第一條結果</string>
+<string name="save_lyrics_dialog_title">保存歌詞</string>
+<string name="save_lyrics_dialog_message">請選擇保存格式：</string>
+<string name="save_synced_lyrics">同步歌詞（帶時間戳）</string>
+<string name="save_plain_lyrics">純文本歌詞</string>
+<string name="lyrics_saved_successfully">歌詞保存成功</string>
+<string name="lyrics_save_failed">歌詞保存失敗</string>
+<string name="no_lyrics_to_save">沒有可保存的歌詞</string>
+<string name="reset_imported_lyrics">重置導入的歌詞</string>
+
+<string name="sync_scanning">正在掃描音樂文件…</string>
+<string name="sync_processing">正在處理文件…</string>
+<string name="sync_files_progress">已處理 %1$d / %2$d 個文件</string>
+<string name="sync_in_progress">正在同步曲庫…</string>
+<string name="sync_complete">同步完成</string>
+<string name="sync_pending">等待中…</string>
+<string name="syncing_library">正在同步曲庫…</string>
+<string name="sync_preparing_library">正在準備曲庫…</string>
+<string name="sync_scanned_count">已掃描 %1$d / %2$d 首歌曲</string>
+<string name="library_background_sync_lyrics">正在掃描歌詞…</string>
+<string name="library_background_sync_cache">正在清理專輯封面緩存…</string>
+<string name="library_background_sync_cloud">正在同步雲端來源…</string>
+<string name="unknown_song_title">未知曲目</string>
+<string name="unknown_artist">未知歌手</string>
+<string name="unknown_album">未知專輯</string>
+<string name="artist_picker_title">選擇歌手</string>
+<string name="artist_picker_count_single">1位歌手</string>
+<string name="artist_picker_count_multiple">%1$d位歌手</string>
+<string name="artist_picker_primary_label">主歌手</string>
+<string name="artist_picker_shortcut_label">歌手頁面</string>
+<string name="external_queue_label">快速播放</string>
+<string name="external_playback_error">無法打開該音頻文件。</string>
+<string name="open_full_player">打開完整播放器</string>
+<string name="close_notification_player">關閉播放器</string>
+<string name="previous_track">上一曲</string>
+<string name="next_track">下一曲</string>
+<string name="play_playback">播放</string>
+<string name="playlist_not_found">未找到播放列表。</string>
+<string name="disc_number_header">第 %d 碟</string>
+
+
+
+<string name="shortcut_shuffle_short">隨機播放</string>
+<string name="shortcut_shuffle_long">隨機播放全部歌曲</string>
+<string name="shortcut_playlist_short">播放列表</string>
+
+<string name="tile_shuffle_all">隨機播放全部</string>
+<string name="tile_last_playlist">上一個播放列表</string>
+<string name="tile_last_playlist_unavailable">無可用播放列表</string>
+
+<string name="invalid_album_id">無效的專輯ID</string>
+<string name="album_id_not_found">未找到該專輯ID</string>
+<string name="error_loading_album">加載專輯數據出錯：%s</string>
+<string name="album_not_found">未找到專輯</string>
+<string name="invalid_artist_id">無效的歌手ID</string>
+<string name="artist_id_not_found">未找到該歌手ID</string>
+<string name="error_loading_artist">加載歌手數據出錯：%s</string>
+<string name="could_not_find_artist">找不到該歌手</string>
+<string name="no_valid_songs">沒有可播放的歌曲</string>
+
+<string name="glance_widget_description">自適應尺寸的桌面小組件</string>
+<string name="widget_bar_4x1_desc">簡潔播放控制條</string>
+<string name="widget_control_4x2_desc">完整控制，支持隨機與循環</string>
+<string name="widget_grid_2x2_desc">簡約方形播放器小組件</string>
+<string name="service_processing_action">正在處理播放指令…</string>
+
+<string name="playlist_none_to_share">沒有可分享的播放列表</string>
+<string name="playlist_share_chooser_title">分享播放列表</string>
+<string name="playlist_share_failed">分享失敗：%1$s</string>
+<string name="playlist_none_to_export">沒有可導出的播放列表</string>
+<string name="playlist_export_failed">導出失敗：%1$s</string>
+<string name="playlist_export_folder_display">Music/PixelPlayerOLX Exports</string>
+<string name="error_unknown">未知錯誤</string>
+
+
+
+<string name="backup_invalid_format">備份文件無效：%1$s</string>
+<string name="backup_progress_preparing_restore">正在準備恢復</string>
+<string name="backup_progress_starting_task">開始恢復任務</string>
+<string name="backup_progress_preparing_backup">正在準備備份</string>
+<string name="backup_progress_starting_backup_task">開始備份任務</string>
+<string name="restore_completed_success">備份恢復成功</string>
+<string name="restore_completed_partial_issues">恢復完成，但存在部分未解決問題</string>
+<string name="restore_could_not_complete">無法完成恢復：%1$s</string>
+<string name="restore_failed_format">恢復失敗：%1$s</string>
+<string name="data_exported_successfully">數據導出成功</string>
+<string name="export_failed_format">導出失敗：%1$s</string>
+<string name="data_restored_successfully">數據恢復成功</string>
+<string name="restore_partial_unresolved_format">恢復完成，部分項目處理失敗：%1$s</string>
+<string name="dev_test_crash_message">開發者選項觸發測試崩潰，用於崩潰上報功能測試，屬於預期行為。</string>
+
+<string name="player_song_not_found_in_list">當前列表中找不到該歌曲</string>
+<string name="player_could_not_locate_song">無法定位歌曲</string>
+<string name="player_no_songs_in_library_toast">曲庫內暫無歌曲</string>
+<string name="player_playback_stopped_eot">播放停止：%1$s 播放完畢。</string>
+<string name="player_default_track_title">曲目</string>
+<string name="player_no_songs_to_shuffle">沒有歌曲可供隨機播放。</string>
+<string name="player_queue_name_selected_albums">選中專輯</string>
+<string name="player_no_playable_songs_in_albums">選中專輯中沒有可播放歌曲</string>
+<string name="player_only_first_n_albums_queued">僅加入前 %1$d 個專輯</string>
+<string name="player_albums_queued_format">已加入 %1$d 個專輯（共%2$d首歌曲）</string>
+<string name="player_could_not_queue_albums">無法將選中專輯加入隊列</string>
+<string name="player_only_first_n_albums_next">僅將前 %1$d 個專輯設置為下一個播放</string>
+<string name="player_albums_will_play_next_format">接下來播放 %1$d 個專輯</string>
+<string name="player_could_not_add_albums_next">無法將選中專輯設為下一個播放</string>
+<string name="player_only_first_n_albums_added_queue">僅將前 %1$d 個專輯加入播放隊列</string>
+<string name="player_albums_added_to_queue_format">%1$d 個專輯已加入隊列</string>
+<string name="player_could_not_add_albums_queue">無法將選中專輯加入隊列</string>
+<string name="player_all_songs_already_in_favorites">所有歌曲已在收藏列表</string>
+<string name="player_no_songs_were_in_favorites">收藏列表為空</string>
+<string name="player_creating_zip">正在生成壓縮包…</string>
+<string name="player_share_zip_failed_format">分享失敗：%1$s</string>
+<string name="player_cannot_delete_currently_playing">無法刪除正在播放的歌曲</string>
+<string name="player_batch_delete_files_deleted_skipped_format">刪除%1$d個文件（%2$d個正在播放，已跳過）</string>
+<string name="player_batch_delete_partial_format">成功刪除 %1$d / %2$d 個文件</string>
+<string name="player_delete_files_failed">刪除文件失敗</string>
+<string name="player_file_deleted">文件已刪除</string>
+<string name="player_delete_file_not_found">無法刪除，文件不存在</string>
+<string name="player_deletion_cancelled">已取消刪除</string>
+<string name="player_permission_denied_edit_files">權限被拒絕，無法修改文件</string>
+<string name="player_permission_denied_save_lyrics">權限被拒絕，無法保存歌詞</string>
+<string name="player_permission_denied_edit_this_file">權限被拒絕，無法修改此文件</string>
+<string name="metadata_updated_successfully">元數據更新成功</string>
+<string name="player_updating_n_songs">正在更新 %1$d 首歌曲…</string>
+<string name="player_batch_genre_updated_all">成功更新 %1$d 首歌曲！</string>
+<string name="player_batch_genre_updated_partial">更新%1$d首，%2$d首更新失敗</string>
+<string name="playlist_restored_toast">播放列表已恢復</string>
+<string name="delete_songs_permanent_message">這些歌曲將從設備永久刪除，無法恢復！</string>
+<string name="delete_action">刪除</string>
+
+<string name="sleep_timer_n_minutes_format">%1$d 分鐘</string>
+<string name="sleep_timer_display_eot">歌曲播放結束</string>
+<string name="sleep_timer_set_for_minutes_toast">定時：%1$d 分鐘</string>
+<string name="sleep_timer_cancelled_toast">定時已取消。</string>
+<string name="sleep_timer_eot_no_song_toast">無法開啟「播放結束停止」：當前無播放曲目。</string>
+<string name="sleep_timer_eot_song_changed_toast">「播放結束停止」已關閉：曲目由%1$s切換至%2$s。</string>
+<string name="sleep_timer_eot_stop_at_end_toast">將在當前歌曲播放完畢後停止。</string>
+<string name="sleep_timer_label_previous_track">上一曲</string>
+<string name="sleep_timer_label_current_track">當前曲目</string>
+<string name="sleep_timer_ui_title">睡眠定時</string>
+<string name="sleep_timer_ui_slider_label_timer">定時時長</string>
+<string name="sleep_timer_ui_end_of_current_track">當前歌曲播放完畢</string>
+<string name="sleep_timer_ui_custom_time">自定義時長</string>
+<string name="sleep_timer_ui_cancel_timer">取消定時</string>
+<string name="sleep_timer_ui_set_custom_duration">設置自定義時長</string>
+<string name="sleep_timer_ui_play_count_label">播放次數：%1$s</string>
+<string name="sleep_timer_ui_play_count_one_time">1次</string>
+<string name="cd_switch_on">開啟</string>
+<string name="ui_format_percent_d">%1$d%%</string>
+<string name="backup_manifest_schema_v">版本 %1$d</string>
+<string name="backup_manifest_device_line">%1$s %2$s</string>
+
+<string name="batch_edit_toolbar_title">編輯 %d 首歌曲</string>
+<string name="batch_edit_info_message">僅更新修改過的欄位，留空則保留原有內容。</string>
+<string name="batch_edit_mixed_values">（存在多種取值）</string>
+<string name="batch_edit_optional">（選填，留空則不修改）</string>
+<string name="batch_edit_success">成功更新 %d 首歌曲</string>
+<string name="batch_edit_partial_success">更新%1$d/%2$d首，部分文件編輯失敗。</string>
+<string name="batch_edit_failed">更新歌曲失敗</string>
+
+<string name="batch_edit_cover_art_heading">批量專輯封面</string>
+<string name="batch_edit_cover_art_hint">將會替換選中的 %d 首歌曲的封面</string>
+<string name="batch_edit_set_cover_art">全部設置為該封面</string>
+<string name="batch_edit_remove_all_art">移除全部封面</string>
+<string name="batch_edit_multiple_covers">（多張不同封面）</string>
+
+<string name="player_error_skipping">無法播放該曲目，自動跳過</string>
+<string name="player_error_lx_load_failed">歌曲加載失敗了...請登錄或加載音源腳本後重試</string>
+<string name="player_error_lx_load_failed_logged_in">歌曲加載失敗了...請加載音源腳本後重試</string>
+<string name="player_error_network_unavailable">目前網路不可用，請檢查網路後重試</string>
+<string name="sync_failed_toast">曲庫同步失敗，下拉刷新重試。</string>
+
+<string name="a11y_toggle_on">開啟</string>
+<string name="a11y_toggle_off">關閉</string>
+
+<string name="setcat_playback_speed">播放速度</string>
+
+<string name="duplicates_title">重複曲目</string>
+<string name="duplicates_none">未發現重複曲目。</string>
+<string name="duplicates_summary">%1$d 組 · %2$d 首曲目</string>
+<string name="duplicates_group_count">共%1$d份副本</string>
+<string name="duplicates_group_title_format">%1$s — %2$s</string>
+<string name="setcat_find_duplicates_title">查找重複曲目</string>
+<string name="setcat_find_duplicates_subtitle">掃描曲庫中多次出現的歌曲</string>
+
+<string name="cloud_download_action">下載</string>
+<string name="cloud_download_queued">已排隊</string>
+<string name="cloud_downloading">下載中…</string>
+<string name="cloud_download_progress">%1$d%%</string>
+<string name="cloud_remove_download">移取下載</string>
+<string name="cloud_download_retry">重試</string>
+<string name="cloud_album_download">下載專輯</string>
+<string name="cloud_playlist_download">下載歌單</string>
+<string name="cloud_album_remove_downloads">移取下載</string>
+<string name="cloud_downloads_title">下載/播放快取</string>
+    <string name="cloud_downloads_settings_subtitle">管理下載進度與播放快取佔用</string>
+    <string name="playback_cache_title">播放快取</string>
+    <string name="playback_cache_usage_label">目前快取用量</string>
+    <string name="playback_cache_clear">清除快取</string>
+    <string name="playback_cache_cleared_toast">播放快取已清除</string>
+    <string name="playback_cache_limit_label">最大用量</string>
+    <string name="playback_cache_disabled">快取功能已關閉</string>
+    <string name="playback_cache_limit_value_mb">%1$s MB</string>
+    <string name="playback_cache_limit_value_gb">%1$s GB</string>
+    <string name="playback_cache_description">播放時自動快取歌曲，重播秒開省流量，斷網也能播放已快取的歌曲；快取按你設定的音質精確匹配。</string>
+<string name="cloud_downloads_storage_used">下載已用儲存空間</string>
+<string name="cloud_downloads_storage_summary">%1$d 個已完成 · 共 %2$d 個</string>
+<string name="cloud_downloads_downloading_section">下載中</string>
+<string name="cloud_downloads_queued_section">等待中</string>
+<string name="cloud_downloads_failed_section">失敗</string>
+<string name="cloud_downloads_completed_section">已完成</string>
+<string name="cloud_downloads_section_count">%1$s · %2$d</string>
+<string name="download_max_threads_title">下載線程數</string>
+<string name="download_max_threads_summary">同時下載的任務數量（1-5）</string>
+<string name="download_max_threads_value">%1$d 線程</string>
+<string name="cloud_downloads_unknown_track">未知曲目</string>
+<string name="cloud_downloads_downloaded_size">已下載 · %1$s</string>
+<string name="cloud_downloads_failed_fallback">下載失敗</string>
+<string name="cloud_downloads_empty_title">沒有下載內容</string>
+<string name="cloud_downloads_empty_subtitle">您下載的內容將顯示在此處</string>
+<string name="cloud_download_selected">下載選取的雲曲</string>
+<string name="cloud_download_selected_count">下載 %1$d 首雲曲</string>
+<string name="cloud_download_selected_started">正在準備 %1$d 首雲曲以供離線播放</string>
+
+<string name="lx_msg_netease_login_expired">網易雲登入已失效，請重新登入</string>
+<string name="lx_error_load_failed">載入失敗: %1$s</string>
+<string name="lx_error_board_unsupported">該平台排行榜暫未支援，敬請期待</string>
+<string name="lx_error_playlist_unsupported">該平台歌單暫未支援，敬請期待</string>
+<string name="lx_error_board_load_failed">榜單載入失敗或暫無歌曲</string>
+<string name="lx_error_playlist_load_failed">歌單載入失敗或暫無資料</string>
+<string name="lx_error_playlist_songs_load_failed">歌單載入失敗或暫無歌曲</string>
+<string name="lx_error_no_playlist_found">未找到相關歌單</string>
+<string name="lx_error_invalid_uid">無法識別網易雲 UID 或主頁連結</string>
+<string name="lx_error_user_playlists_not_found">未找到該用戶的公開歌單（UID 有誤或對方已設為私密）</string>
+<string name="lx_msg_no_login_info">未偵測到登入資訊，請在網頁中完成登入</string>
+<string name="lx_default_nickname">網易雲用戶</string>
+<string name="lx_msg_login_invalid">登入資訊無效，請在網頁中重新登入</string>
+<string name="lx_msg_network_retrying">網路異常，正在自動重試…</string>
+<string name="lx_msg_invalid_mobile">請輸入正確的手機號碼</string>
+<string name="lx_msg_sms_send_failed">驗證碼發送失敗，請稍後重試</string>
+<string name="lx_msg_invalid_code">請輸入驗證碼</string>
+<string name="lx_field_mobile">手機號</string>
+<string name="lx_field_code">驗證碼</string>
+<string name="lx_action_get_code">獲取驗證碼</string>
+<string name="lx_action_login">登入</string>
+<string name="lx_msg_sms_tip">未註冊酷狗的手機號將自動註冊</string>
+<string name="lx_title_daily_recommend">每日推薦</string>
+<string name="lx_title_heartbeat_mode">心動模式</string>
+<string name="lx_title_liked_roaming">根據你喜愛的歌曲推薦</string>
+<string name="lx_title_personal_fm">私人FM</string>
+<string name="lx_title_recommend_playlists">推薦歌單</string>
+<string name="lx_title_sub_artists">收藏的歌手</string>
+<string name="lx_title_sub_albums">收藏的專輯</string>
+<string name="lx_default_artist_name">歌手</string>
+<string name="lx_error_album_no_songs">該專輯暫無歌曲</string>
+<string name="lx_error_artist_no_hot_songs">該歌手暫無熱門歌曲</string>
+<string name="lx_msg_operation_failed">操作失敗，請稍後重試</string>
+<string name="lx_msg_add_to_playlist_success">已加入歌單</string>
+    <string name="lx_msg_add_to_playlist_already_exists">歌曲已在歌單中</string>
+    <string name="lx_msg_add_to_playlist_partial_exists">已加入歌單，部分歌單內歌曲重複</string>
+    <string name="lx_msg_add_to_playlist_failed">加入歌單失敗，請稍後重試</string>
+<string name="lx_msg_no_own_playlist">暫無自建歌單，可先在對應平台創建</string>
+<string name="lx_action_remove_from_playlist">從歌單刪除</string>
+<string name="lx_title_remove_from_playlist_confirm">從歌單刪除</string>
+<string name="lx_msg_remove_from_playlist_confirm">確定要從「%2$s」中刪除《%1$s》嗎？</string>
+<string name="lx_msg_batch_remove_from_playlist_confirm">確定要從「%1$s」中刪除選中的 %2$d 首歌曲嗎？</string>
+<string name="lx_msg_remove_from_playlist_success">已從歌單刪除</string>
+<string name="lx_msg_remove_from_playlist_failed">刪除失敗，請稍後重試</string>
+<string name="lx_msg_batch_add_mixed_source">請選擇同一平台的歌曲後再加入歌單</string>
+<string name="lx_batch_dialog_title">批量下載（%1$d 首）</string>
+<string name="lx_search_no_results">未找到相關結果，換個關鍵詞試試</string>
+<string name="lx_msg_user_not_logged_in">當前用戶未登入</string>
+<string name="lx_msg_subscribe_success">收藏成功</string>
+<string name="lx_msg_unsubscribe_success">已取消收藏</string>
+<string name="lx_msg_subscribe_failed">收藏失敗，請稍後重試</string>
+<string name="lx_msg_unsubscribe_failed">取消收藏失敗，請稍後重試</string>
+<string name="lx_error_no_content">暫無內容</string>
+<string name="lx_msg_login_expired">登入已失效，請重新登入</string>
+<string name="lx_error_load_failed_retry">載入失敗，請檢查網路後重試</string>
+<string name="lx_error_artist_no_albums">該歌手暫無專輯</string>
+<string name="lx_msg_playlist_loading">歌單載入中…</string>
+<string name="lx_default_playlist_name">歌單 %1$s</string>
+<string name="lx_error_playlist_not_found">未找到該歌單或歌單為空</string>
+<string name="lx_error_search_failed">搜尋失敗: %1$s</string>
+<string name="lx_error_import_failed">導入失敗: %1$s</string>
+<string name="lx_msg_source_disabled">音源已停用，請在腳本管理中開啟</string>
+<string name="lx_queue_name_playlist">播放列表</string>
+<string name="lx_msg_playlist_no_songs">歌單暫無歌曲</string>
+<string name="lx_desc_script_management">音源腳本管理</string>
+<string name="lx_desc_settings">設定</string>
+<string name="lx_tab_mine">我的</string>
+<string name="lx_tab_board">排行榜</string>
+<string name="lx_tab_playlist">歌單</string>
+<string name="lx_tab_search">搜尋</string>
+<string name="lx_title_source_scripts">音源腳本</string>
+<string name="lx_msg_script_intro">導入後可啟用,長按腳本可刪除,音源可啟用多個,首選腳本優先；首選給不到所選音質時，其餘啟用的備用腳本會嘗試補位更高音質，再與官方鏈路按音質擇優\n為了您的帳號安全，登入時請只使用手機驗證碼登入\n如果腳本需要，您在平台登入後cookie可能被注入音源腳本，請只使用可信腳本。</string>
+<string name="lx_title_current_source">當前音源</string>
+<string name="lx_msg_loading">載入中…</string>
+<string name="lx_msg_declared_sources">已聲明音源：%1$s</string>
+<string name="lx_btn_url_import">URL 導入</string>
+<string name="lx_btn_file_import">文件導入</string>
+<string name="lx_msg_not_logged_in">未登入，點擊網頁登入網易雲</string>
+<string name="lx_msg_not_logged_in_platform">未登入，點擊網頁登入</string>
+<string name="lx_msg_login_expired_status">登入已失效，點擊重新登入</string>
+<string name="lx_status_logged_in_svip">已登入 · SVIP</string>
+<string name="lx_status_logged_in_vip">已登入 · 黑膠VIP</string>
+<string name="lx_status_logged_in">已登入</string>
+<string name="lx_status_nickname_svip">%1$s · SVIP</string>
+<string name="lx_status_nickname_vip">%1$s · 黑膠VIP</string>
+<string name="lx_status_nickname_logged_in">%1$s · 已登入</string>
+<string name="lx_title_netease_music">網易雲音樂</string>
+<string name="lx_title_import_from_url">從 URL 導入音源</string>
+<string name="lx_desc_cancel">取消</string>
+<string name="lx_desc_import">導入</string>
+<string name="lx_title_delete_script">刪除音源腳本</string>
+<string name="lx_msg_delete_script_confirm">確定要刪除「%1$s」嗎？此操作不可撤銷。</string>
+<string name="lx_desc_delete">刪除</string>
+<string name="lx_msg_preferred_suffix">（首選）</string>
+<string name="lx_msg_download_needs_script">此功能需要新增音源腳本支援，請先新增並啟用音源腳本</string>
+<string name="lx_title_download_quality">下載音質</string>
+<string name="lx_download_quality_unsupported">目前音源不支援此音質</string>
+<string name="lx_download_size_unknown">檔案大小未知</string>
+<string name="lx_download_estimated_size">預計大小 %1$s</string>
+<string name="lx_download_estimated_size_approx">約 %1$s（估值）</string>
+<string name="lx_desc_download">下載</string>
+<string name="lx_msg_download_downgraded">目前音源無法真正提供%1$s，已自動降為%2$s下載</string>
+<string name="lx_source_netease">網易雲音樂</string>
+<string name="lx_source_kuwo">酷我音樂</string>
+<string name="lx_source_qq">QQ音樂</string>
+<string name="lx_source_wechat">微信</string>
+<string name="lx_source_kugou">酷狗音樂</string>
+<string name="lx_desc_clear">清空</string>
+<string name="lx_desc_search">搜尋</string>
+<string name="lx_text_track_count_format">%1$d 首</string>
+<string name="lx_text_play_count_hundred_million_plus"> · 播放%1$d億+</string>
+<string name="lx_text_play_count_ten_thousand_plus"> · 播放%1$d萬+</string>
+<string name="lx_desc_back_to_top">返回頂部</string>
+<string name="lx_desc_locate_current">定位當前播放</string>
+<string name="lx_text_total_songs_count">共 %1$d 首</string>
+<string name="lx_text_total_playlists_count">共 %1$d 個歌單</string>
+<string name="lx_desc_shuffle">隨機播放</string>
+<string name="lx_desc_play_all">播放全部</string>
+<string name="lx_text_playlist_list">歌單列表</string>
+<string name="lx_placeholder_search_playlist">搜尋歌單 / 粘貼連結或歌單ID</string>
+<string name="lx_desc_fetch_user_playlists">按網易雲 UID 拉取用戶歌單</string>
+<string name="lx_text_back_to_categories">返回歌單分類</string>
+<string name="lx_text_netease_user_with_name">網易雲用戶 · %1$s</string>
+<string name="lx_title_netease_user_playlists">網易雲用戶歌單</string>
+<string name="lx_msg_netease_user_playlists_desc">輸入對方網易雲 UID 或主頁連結，可查看其公開的「我喜歡的音樂」與收藏歌單；設為私密的內容無法獲取。</string>
+<string name="lx_placeholder_uid_or_link">UID / 主頁連結</string>
+<string name="lx_desc_view_playlists">查看歌單</string>
+<string name="lx_placeholder_search_songs">搜尋歌名 / 歌手</string>
+<string name="lx_text_song_type">歌曲</string>
+<string name="lx_text_artist_type">歌手</string>
+<string name="lx_text_album_type">專輯</string>
+<string name="lx_text_search_results">搜尋結果</string>
+<string name="lx_btn_load_more_default">載入更多</string>
+<string name="lx_btn_refresh_batch">換一批</string>
+<string name="lx_desc_back">返回</string>
+<string name="lx_text_back">返回</string>
+<string name="lx_tab_hot_songs">熱門歌曲</string>
+<string name="lx_tab_all_albums">所有專輯</string>
+<string name="lx_text_netease_svip">網易雲音樂 SVIP</string>
+<string name="lx_text_netease_vip">網易雲音樂 黑膠VIP</string>
+<string name="lx_desc_logout">登出</string>
+<string name="lx_btn_unfollow">取消關注</string>
+<string name="lx_btn_follow">關注</string>
+<string name="lx_tab_recommend">推薦</string>
+<string name="lx_tab_favorite">收藏</string>
+<string name="lx_subtitle_daily_recommend">根據你的口味每日更新</string>
+<string name="lx_subtitle_heartbeat_mode">從你喜歡的歌曲開始漫遊</string>
+<string name="lx_subtitle_recommend_playlists_today">今日為你推薦 %1$d 張歌單</string>
+<string name="lx_subtitle_recommend_playlists_default">今天從你的喜好推薦歌單</string>
+<string name="lx_subtitle_liked_roaming">根據你喜愛的歌曲推薦相似好歌</string>
+<string name="lx_subtitle_personal_fm">專屬私人電台，隨時換一批</string>
+<string name="lx_subtitle_liked_music_default">我喜歡的音樂</string>
+<string name="lx_subtitle_sub_artists_default">我關注的歌手</string>
+<string name="lx_subtitle_sub_artists_count">%1$d 位歌手</string>
+<string name="lx_subtitle_sub_albums_default">我收藏的專輯</string>
+<string name="lx_subtitle_sub_albums_count">%1$d 張專輯</string>
+<string name="lx_text_album_count_format">%1$d 張專輯</string>
+<string name="lx_msg_no_recommend_playlists">暫無推薦歌單</string>
+<string name="lx_msg_no_albums">暫無專輯</string>
+<string name="lx_msg_no_followed_artists">還沒有收藏的歌手</string>
+<string name="lx_desc_collected_locked">已收藏（不可取消）</string>
+<string name="lx_desc_uncollect">取消收藏</string>
+<string name="lx_desc_collect">收藏歌單</string>
+<string name="lx_desc_share">分享</string>
+<string name="lx_text_playlist_label">歌單</string>
+<string name="lx_text_album_label">專輯</string>
+<string name="lx_title_uncollect_confirm">取消收藏</string>
+<string name="lx_msg_uncollect_confirm">確定取消收藏該%1$s？</string>
+<string name="lx_msg_share_link_copied">分享連結已複製到剪貼簿</string>
+<string name="lx_title_netease_login">網易雲音樂登入</string>
+<string name="lx_title_qq_login">QQ音樂登入</string>
+<string name="lx_title_kugou_login">酷狗音樂登入</string>
+<string name="lx_title_kuwo_login">酷我音樂登入</string>
+<string name="lx_msg_login_success">登入成功</string>
+<string name="lx_msg_verifying_login">正在驗證登入…</string>
+<string name="lx_qr_tab_qq">QQ</string>
+<string name="lx_qr_scan_hint_qq">請開啟手機 QQ 掃碼登入</string>
+<string name="lx_qr_scan_hint_wechat">請開啟微信掃碼登入</string>
+<string name="lx_qr_status_wait">等待掃碼</string>
+<string name="lx_qr_status_scanned">已掃碼，請在手機上確認</string>
+<string name="lx_qr_status_expired">二維碼已過期</string>
+<string name="lx_qr_refresh">重新整理二維碼</string>
+<string name="lx_msg_login_failed">登入失敗，請重試</string>
+
+<!-- Batch Download -->
+<string name="lx_msg_batch_download_started">已開始下載 %1$d 首歌曲</string>
+<string name="lx_msg_batch_download_failed">批次下載啟動失敗</string>
+<string name="lx_msg_batch_download_partial">已開始 %1$d 首下載，%2$d 首失敗</string>
+    <string name="lx_msg_online_removed_local_restored">已從在線移除，恢復為本地歌曲</string>
+    <string name="lx_msg_album_not_found">未找到該專輯</string>
+    <string name="lx_msg_artist_not_found">未找到該歌手</string>
+
+    <string name="lx_brand_title">Lx音樂</string>
+    <string-array name="lx_mood_0_6">
+        <item>深夜</item>
+        <item>助眠</item>
+        <item>安靜</item>
+        <item>夜晚</item>
+    </string-array>
+    <string-array name="lx_mood_6_9">
+        <item>早安</item>
+        <item>清晨</item>
+        <item>晨間</item>
+        <item>輕音樂</item>
+    </string-array>
+    <string-array name="lx_mood_9_11">
+        <item>上午</item>
+        <item>輕音樂</item>
+        <item>學習</item>
+        <item>工作</item>
+    </string-array>
+    <string-array name="lx_mood_11_15">
+        <item>午安</item>
+        <item>午後</item>
+        <item>午休</item>
+        <item>輕鬆</item>
+    </string-array>
+    <string-array name="lx_mood_15_20">
+        <item>下午</item>
+        <item>放鬆</item>
+        <item>輕音樂</item>
+        <item>下午茶</item>
+    </string-array>
+    <string-array name="lx_mood_20_24">
+        <item>夜晚</item>
+        <item>晚安</item>
+        <item>睡前</item>
+        <item>助眠</item>
+    </string-array>
+
+</resources>

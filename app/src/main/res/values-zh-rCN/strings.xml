@@ -1,11 +1,11 @@
-<resources>
-<string name="app_name">PixelPlayerOSS</string>
+﻿<resources>
+<string name="app_name">PixelPlayerOLX</string>
 <string name="app_name_change_title">应用名称已变更</string>
-<string name="app_name_change_message">本应用现已更名为 PixelPlayerOSS！开启你的音乐之旅吧！</string>
+<string name="app_name_change_message">本应用现已更名为 PixelPlayerOLX！开启你的音乐之旅吧！</string>
 <string name="do_not_show_again">不再提示</string>
 <string name="dismiss">关闭</string>
 <string name="all_files_access_title">需要特殊权限</string>
-<string name="all_files_access_description">为了编辑歌曲元数据（mp3文件），PixelPlayerOSS需要全部文件访问权限，以此直接修改歌曲标签。请在下一界面授予权限，启用元数据编辑功能。</string>
+<string name="all_files_access_description">为了编辑歌曲元数据（mp3文件），PixelPlayerOLX需要全部文件访问权限，以此直接修改歌曲标签。请在下一界面授予权限，启用元数据编辑功能。</string>
 <string name="grant_permission_button">授予权限</string>
 <string name="error">错误</string>
 <string name="ok">确定</string>
@@ -127,7 +127,7 @@
 <string name="playlist_share_failed">分享失败：%1$s</string>
 <string name="playlist_none_to_export">没有可导出的播放列表</string>
 <string name="playlist_export_failed">导出失败：%1$s</string>
-<string name="playlist_export_folder_display">Music/PixelPlayerOSS Exports</string>
+<string name="playlist_export_folder_display">Music/PixelPlayerOLX Exports</string>
 <string name="error_unknown">未知错误</string>
 
 
@@ -223,6 +223,14 @@
 <string name="batch_edit_multiple_covers">（多张不同封面）</string>
 
 <string name="player_error_skipping">无法播放该曲目，自动跳过</string>
+<string name="player_error_lx_load_failed">歌曲加载失败了...请登录或加载音源脚本后重试</string>
+<string name="player_error_lx_load_failed_logged_in">歌曲加载失败了...请加载音源脚本后重试</string>
+<string name="player_error_lx_playback_failed">歌曲暂时无法播放，请稍后重试</string>
+<string name="player_error_lx_no_copyright">此歌曲无版权，无法播放</string>
+<string name="player_error_lx_vip_need_vip">此歌曲需要开通 VIP，或加载音源脚本播放</string>
+<string name="player_error_script_dead_retry">音源链接已失效，正在尝试官方试听…</string>
+<string name="player_error_lx_trial_playing">正在试听 VIP 歌曲（128k）</string>
+<string name="player_error_network_unavailable">当前网络不可用，请检查网络后重试</string>
 <string name="sync_failed_toast">曲库同步失败，下拉刷新重试。</string>
 
 <string name="a11y_toggle_on">开启</string>
@@ -237,5 +245,297 @@
 <string name="duplicates_group_title_format">%1$s — %2$s</string>
 <string name="setcat_find_duplicates_title">查找重复曲目</string>
 <string name="setcat_find_duplicates_subtitle">扫描曲库中多次出现的歌曲</string>
+
+<string name="cloud_download_action">下载</string>
+<string name="cloud_download_queued">已排队</string>
+<string name="cloud_downloading">下载中…</string>
+<string name="cloud_download_progress">%1$d%%</string>
+<string name="cloud_remove_download">移除下载</string>
+<string name="cloud_download_retry">重试</string>
+<string name="cloud_album_download">下载专辑</string>
+<string name="cloud_playlist_download">下载歌单</string>
+<string name="cloud_album_remove_downloads">移除下载</string>
+<string name="cloud_downloads_title">下载/播放缓存</string>
+    <string name="cloud_downloads_settings_subtitle">管理下载进度与播放缓存占用</string>
+    <string name="playback_cache_title">播放缓存</string>
+    <string name="playback_cache_usage_label">当前缓存用量</string>
+    <string name="playback_cache_clear">清除缓存</string>
+    <string name="playback_cache_cleared_toast">播放缓存已清除</string>
+    <string name="playback_cache_limit_label">最大用量</string>
+    <string name="playback_cache_disabled">缓存功能已关闭</string>
+    <string name="playback_cache_limit_value_mb">%1$s MB</string>
+    <string name="playback_cache_limit_value_gb">%1$s GB</string>
+    <string name="playback_cache_description">播放时自动缓存歌曲，重播秒开省流量，断网也能播放已缓存的歌曲；缓存按你设定的音质精确匹配。</string>
+<string name="cloud_downloads_storage_used">下载已用存储空间</string>
+<string name="cloud_downloads_storage_summary">%1$d 个已完成 · 共 %2$d 个</string>
+<string name="cloud_downloads_downloading_section">下载中</string>
+<string name="cloud_downloads_queued_section">等待中</string>
+<string name="cloud_downloads_failed_section">失败</string>
+<string name="cloud_downloads_completed_section">已完成</string>
+<string name="cloud_downloads_section_count">%1$s · %2$d</string>
+<string name="download_max_threads_title">下载线程数</string>
+<string name="download_max_threads_summary">同时下载的任务数量（1-5）</string>
+<string name="download_max_threads_value">%1$d 线程</string>
+<string name="cloud_downloads_unknown_track">未知曲目</string>
+<string name="cloud_downloads_downloaded_size">已下载 · %1$s</string>
+<string name="cloud_downloads_failed_fallback">下载失败</string>
+<string name="cloud_downloads_empty_title">没有下载内容</string>
+<string name="cloud_downloads_empty_subtitle">您下载的内容将显示在此处</string>
+<string name="cloud_download_selected">下载选中的云曲</string>
+<string name="cloud_download_selected_count">下载 %1$d 首云曲</string>
+<string name="cloud_download_selected_started">正在准备 %1$d 首云曲以供离线播放</string>
+
+<!-- LX Music: ViewModel Toast / error messages -->
+<string name="lx_msg_netease_login_expired">网易云登录已失效，请重新登录</string>
+<string name="lx_error_load_failed">加载失败: %1$s</string>
+<string name="lx_error_board_unsupported">该平台排行榜暂未支持，敬请期待</string>
+<string name="lx_error_playlist_unsupported">该平台歌单暂未支持，敬请期待</string>
+<string name="lx_error_board_load_failed">榜单加载失败或暂无歌曲</string>
+<string name="lx_error_playlist_load_failed">歌单加载失败或暂无数据</string>
+<string name="lx_error_playlist_songs_load_failed">歌单加载失败或暂无歌曲</string>
+<string name="lx_error_no_playlist_found">未找到相关歌单</string>
+<string name="lx_error_invalid_uid">无法识别网易云 UID 或主页链接</string>
+<string name="lx_error_user_playlists_not_found">未找到该用户的公开歌单（UID 有误或对方已设为私密）</string>
+<string name="lx_msg_no_login_info">未检测到登录信息，请在网页中完成登录</string>
+<string name="lx_default_nickname">网易云用户</string>
+<string name="lx_msg_login_invalid">登录信息无效，请在网页中重新登录</string>
+<string name="lx_msg_network_retrying">网络异常，正在自动重试…</string>
+<string name="lx_msg_invalid_mobile">请输入正确的手机号码</string>
+<string name="lx_msg_sms_send_failed">验证码发送失败，请稍后重试</string>
+<string name="lx_msg_invalid_code">请输入验证码</string>
+<string name="lx_field_mobile">手机号</string>
+<string name="lx_field_code">验证码</string>
+<string name="lx_action_get_code">获取验证码</string>
+<string name="lx_action_login">登录</string>
+<string name="lx_msg_sms_tip">未注册酷狗的手机号将自动注册</string>
+<string name="lx_title_daily_recommend">每日推荐</string>
+<string name="lx_title_heartbeat_mode">心动模式</string>
+<string name="lx_title_liked_roaming">根据你喜爱的歌曲推荐</string>
+<string name="lx_title_personal_fm">私人FM</string>
+<string name="lx_title_recommend_playlists">推荐歌单</string>
+<string name="lx_title_sub_artists">收藏的歌手</string>
+<string name="lx_title_sub_albums">收藏的专辑</string>
+<string name="lx_default_artist_name">歌手</string>
+<string name="lx_error_album_no_songs">该专辑暂无歌曲</string>
+<string name="lx_error_artist_no_hot_songs">该歌手暂无热门歌曲</string>
+<string name="lx_msg_operation_failed">操作失败，请稍后重试</string>
+<string name="lx_msg_add_to_playlist_success">已加入歌单</string>
+    <string name="lx_msg_add_to_playlist_already_exists">歌曲已在歌单中</string>
+    <string name="lx_msg_add_to_playlist_partial_exists">已加入歌单，部分歌单内歌曲重复</string>
+    <string name="lx_msg_add_to_playlist_failed">加入歌单失败，请稍后重试</string>
+<string name="lx_msg_no_own_playlist">暂无自建歌单，可先在对应平台创建</string>
+<string name="lx_action_remove_from_playlist">从歌单删除</string>
+<string name="lx_title_remove_from_playlist_confirm">从歌单删除</string>
+<string name="lx_msg_remove_from_playlist_confirm">确定要从「%2$s」中删除《%1$s》吗？</string>
+<string name="lx_msg_batch_remove_from_playlist_confirm">确定要从「%1$s」中删除选中的 %2$d 首歌曲吗？</string>
+<string name="lx_msg_remove_from_playlist_success">已从歌单删除</string>
+<string name="lx_msg_remove_from_playlist_failed">删除失败，请稍后重试</string>
+<string name="lx_msg_batch_add_mixed_source">请选择同一平台的歌曲后再加入歌单</string>
+<string name="lx_batch_dialog_title">批量下载（%1$d 首）</string>
+<string name="lx_msg_user_not_logged_in">当前用户未登录</string>
+<string name="lx_msg_subscribe_success">收藏成功</string>
+<string name="lx_msg_unsubscribe_success">已取消收藏</string>
+<string name="lx_msg_subscribe_failed">收藏失败，请稍后重试</string>
+<string name="lx_msg_unsubscribe_failed">取消收藏失败，请稍后重试</string>
+<string name="lx_error_no_content">暂无内容</string>
+<string name="lx_msg_login_expired">登录已失效，请重新登录</string>
+<string name="lx_error_load_failed_retry">加载失败，请检查网络后重试</string>
+<string name="lx_error_artist_no_albums">该歌手暂无专辑</string>
+<string name="lx_msg_playlist_loading">歌单加载中…</string>
+<string name="lx_default_playlist_name">歌单 %1$s</string>
+<string name="lx_error_playlist_not_found">未找到该歌单或歌单为空</string>
+<string name="lx_error_search_failed">搜索失败: %1$s</string>
+<string name="lx_error_import_failed">导入失败: %1$s</string>
+
+<!-- LX Music: Screen UI strings -->
+<string name="lx_msg_source_disabled">音源已禁用，请在脚本管理中开启</string>
+<string name="lx_queue_name_playlist">播放列表</string>
+<string name="lx_msg_playlist_no_songs">歌单暂无歌曲</string>
+<string name="lx_desc_script_management">音源脚本管理</string>
+<string name="lx_desc_settings">设置</string>
+<string name="lx_tab_mine">我的</string>
+<string name="lx_tab_board">排行榜</string>
+<string name="lx_tab_playlist">歌单</string>
+<string name="lx_tab_search">搜索</string>
+<string name="lx_title_source_scripts">音源脚本</string>
+<string name="lx_msg_script_intro">导入后可激活,长按脚本可删除,音源可启用多个,首选脚本优先；首选给不到所选音质时，其余启用的备用脚本会尝试补位更高音质，再与官方链路按音质择优。\n脚本采用用户偏好音质优先决策,故当多个脚本并行运行且用户选择音质偏高时音频加载速度可能会收到影响,请按需按情况酌情选择。\n为了您的账号安全，登录时请只使用手机验证码登录，登录完成后请等待跳转至首页后耐心静待自动跳转返回应用。\n如果脚本需要，您在平台登录后cookie可能被注入音源脚本，请只使用可信脚本。</string>
+<string name="lx_title_current_source">当前音源</string>
+<string name="lx_msg_loading">加载中…</string>
+<string name="lx_msg_declared_sources">已声明音源：%1$s</string>
+<string name="lx_btn_url_import">URL 导入</string>
+<string name="lx_btn_file_import">文件导入</string>
+<string name="lx_msg_not_logged_in">未登录，点击网页登录</string>
+<string name="lx_msg_not_logged_in_platform">未登录，点击网页登录</string>
+<string name="lx_msg_login_expired_status">登录已失效，点击重新登录</string>
+<string name="lx_status_logged_in_svip">已登录 · SVIP</string>
+<string name="lx_status_logged_in_vip">已登录 · 黑胶VIP</string>
+<string name="lx_status_logged_in">已登录</string>
+<string name="lx_status_nickname_svip">%1$s · SVIP</string>
+<string name="lx_status_nickname_vip">%1$s · 黑胶VIP</string>
+<string name="lx_status_nickname_logged_in">%1$s · 已登录</string>
+<string name="lx_title_netease_music">网易云音乐</string>
+<string name="lx_title_import_from_url">从 URL 导入音源</string>
+<string name="lx_desc_cancel">取消</string>
+<string name="lx_desc_import">导入</string>
+<string name="lx_title_delete_script">删除音源脚本</string>
+<string name="lx_msg_delete_script_confirm">确定要删除「%1$s」吗？此操作不可撤销。</string>
+<string name="lx_desc_delete">删除</string>
+<string name="lx_msg_preferred_suffix">（首选）</string>
+<string name="lx_msg_download_needs_script">此功能需要添加音源脚本支持，请先添加并激活音源脚本</string>
+<string name="lx_title_download_quality">下载音质</string>
+<string name="lx_download_quality_unsupported">当前音源不支持该音质</string>
+<string name="lx_download_size_unknown">文件大小未知</string>
+<string name="lx_download_estimated_size">预计大小 %1$s</string>
+<string name="lx_download_estimated_size_approx">约 %1$s（估值）</string>
+<string name="lx_desc_download">下载</string>
+<string name="lx_msg_download_downgraded">当前音源无法真正提供%1$s，已自动降为%2$s下载</string>
+<string name="lx_source_netease">网易云音乐</string>
+<string name="lx_source_kuwo">酷我音乐</string>
+<string name="lx_source_qq">QQ音乐</string>
+<string name="lx_source_wechat">微信</string>
+<string name="lx_source_kugou">酷狗音乐</string>
+<string name="lx_desc_clear">清空</string>
+<string name="lx_desc_search">搜索</string>
+<string name="lx_text_track_count_format">%1$d 首</string>
+<string name="lx_text_play_count_hundred_million_plus"> · 播放%1$d亿+</string>
+<string name="lx_text_play_count_ten_thousand_plus"> · 播放%1$d万+</string>
+<string name="lx_desc_back_to_top">返回顶部</string>
+<string name="lx_desc_locate_current">定位当前播放</string>
+<string name="lx_text_total_songs_count">共 %1$d 首</string>
+<string name="lx_text_total_playlists_count">共 %1$d 个歌单</string>
+<string name="lx_desc_shuffle">随机播放</string>
+<string name="lx_desc_play_all">播放全部</string>
+<string name="lx_text_playlist_list">歌单列表</string>
+<string name="lx_placeholder_search_playlist">搜索歌单 / 粘贴链接或歌单ID</string>
+<string name="lx_desc_fetch_user_playlists">按网易云 UID 拉取用户歌单</string>
+<string name="lx_text_back_to_categories">返回歌单分类</string>
+<string name="lx_text_netease_user_with_name">网易云用户 · %1$s</string>
+<string name="lx_title_netease_user_playlists">网易云用户歌单</string>
+<string name="lx_msg_netease_user_playlists_desc">输入对方网易云 UID 或主页链接，可查看其公开的“我喜欢的音乐”与收藏歌单；设为私密的内容无法获取。</string>
+<string name="lx_placeholder_uid_or_link">UID / 主页链接</string>
+<string name="lx_desc_view_playlists">查看歌单</string>
+<string name="lx_placeholder_search_songs">搜索歌名 / 歌手</string>
+<string name="lx_text_song_type">歌曲</string>
+<string name="lx_text_artist_type">歌手</string>
+<string name="lx_text_album_type">专辑</string>
+<string name="lx_text_search_results">搜索结果</string>
+
+<!-- LX Music: Mine page strings -->
+<string name="lx_btn_load_more_default">加载更多</string>
+<string name="lx_btn_refresh_batch">换一批</string>
+<string name="lx_desc_back">返回</string>
+<string name="lx_text_back">返回</string>
+<string name="lx_tab_hot_songs">热门歌曲</string>
+<string name="lx_tab_all_albums">所有专辑</string>
+<string name="lx_text_netease_svip">网易云音乐 SVIP</string>
+<string name="lx_text_netease_vip">网易云音乐 黑胶VIP</string>
+<string name="lx_desc_logout">退出登录</string>
+<string name="lx_btn_unfollow">取消关注</string>
+<string name="lx_btn_follow">关注</string>
+<string name="lx_tab_recommend">推荐</string>
+<string name="lx_tab_favorite">收藏</string>
+<string name="lx_subtitle_daily_recommend">根据你的口味每日更新</string>
+<string name="lx_subtitle_heartbeat_mode">从你喜欢的歌曲开始漫游</string>
+<string name="lx_subtitle_recommend_playlists_today">今日为你推荐 %1$d 张歌单</string>
+<string name="lx_subtitle_recommend_playlists_default">今天从你的喜好推荐歌单</string>
+<string name="lx_subtitle_liked_roaming">根据你喜爱的歌曲推荐相似好歌</string>
+<string name="lx_subtitle_personal_fm">专属私人电台，随时换一批</string>
+<string name="lx_subtitle_liked_music_default">我喜欢的音乐</string>
+<string name="lx_subtitle_sub_artists_default">我关注的歌手</string>
+<string name="lx_subtitle_sub_artists_count">%1$d 位歌手</string>
+<string name="lx_subtitle_sub_albums_default">我收藏的专辑</string>
+<string name="lx_subtitle_sub_albums_count">%1$d 张专辑</string>
+<string name="lx_text_album_count_format">%1$d 张专辑</string>
+<string name="lx_msg_no_recommend_playlists">暂无推荐歌单</string>
+<string name="lx_msg_no_albums">暂无专辑</string>
+<string name="lx_msg_no_followed_artists">还没有收藏的歌手</string>
+
+<!-- LX Music: Folder page actions strings -->
+<string name="lx_desc_collected_locked">已收藏（不可取消）</string>
+<string name="lx_desc_uncollect">取消收藏</string>
+<string name="lx_desc_collect">收藏歌单</string>
+<string name="lx_desc_share">分享</string>
+<string name="lx_text_playlist_label">歌单</string>
+<string name="lx_text_album_label">专辑</string>
+<string name="lx_title_uncollect_confirm">取消收藏</string>
+<string name="lx_msg_uncollect_confirm">确定取消收藏该%1$s？</string>
+<string name="lx_msg_share_link_copied">分享链接已复制到剪贴板</string>
+
+<!-- LX Music: Netease login strings -->
+<string name="lx_title_netease_login">网易云音乐登录</string>
+<string name="lx_title_qq_login">QQ音乐登录</string>
+<string name="lx_title_kugou_login">酷狗音乐登录</string>
+<string name="lx_title_kuwo_login">酷我音乐登录</string>
+<string name="lx_msg_login_success">登录成功</string>
+<string name="lx_msg_verifying_login">正在验证登录…</string>
+<string name="lx_qr_tab_qq">QQ</string>
+<string name="lx_qr_scan_hint_qq">请打开手机 QQ 扫码登录</string>
+<string name="lx_qr_scan_hint_wechat">请打开微信扫码登录</string>
+<string name="lx_qr_status_wait">等待扫码</string>
+<string name="lx_qr_status_scanned">已扫码，请在手机上确认</string>
+<string name="lx_qr_status_expired">二维码已过期</string>
+<string name="lx_qr_refresh">刷新二维码</string>
+<string name="lx_msg_login_failed">登录失败，请重试</string>
+
+<!-- Batch Download -->
+<string name="lx_msg_batch_download_started">已开始下载 %1$d 首歌曲</string>
+<string name="lx_msg_batch_download_failed">批量下载启动失败</string>
+<string name="lx_msg_batch_download_partial">已开始 %1$d 首下载，%2$d 首失败</string>
+    <string name="lx_msg_online_removed_local_restored">已从在线移除，恢复为本地歌曲</string>
+    <string name="lx_msg_album_not_found">未找到该专辑</string>
+    <string name="lx_msg_artist_not_found">未找到该歌手</string>
+
+<!-- 平台别名 -->
+<string name="lx_source_alias_netease">小芸音乐</string>
+<string name="lx_source_alias_kuwo">小窝音乐</string>
+<string name="lx_source_alias_qq">小鹅音乐</string>
+<string name="lx_source_alias_kugou">小汪音乐</string>
+
+<!-- 平台名称显示设置 -->
+<string name="lx_platform_name_style_title">平台名称显示</string>
+<string name="lx_platform_name_style_original">原版名称</string>
+<string name="lx_platform_name_style_alias">别名</string>
+
+<!-- 平台顺序 -->
+<string name="lx_platform_order_title">平台顺序</string>
+<string name="lx_platform_order_subtitle">调整搜索页平台标签顺序</string>
+
+    <string name="lx_brand_title">Lx音乐</string>
+    <string-array name="lx_mood_0_6">
+        <item>深夜</item>
+        <item>助眠</item>
+        <item>安静</item>
+        <item>夜晚</item>
+    </string-array>
+    <string-array name="lx_mood_6_9">
+        <item>早安</item>
+        <item>清晨</item>
+        <item>晨间</item>
+        <item>轻音乐</item>
+    </string-array>
+    <string-array name="lx_mood_9_11">
+        <item>上午</item>
+        <item>轻音乐</item>
+        <item>学习</item>
+        <item>工作</item>
+    </string-array>
+    <string-array name="lx_mood_11_15">
+        <item>午安</item>
+        <item>午后</item>
+        <item>午休</item>
+        <item>轻松</item>
+    </string-array>
+    <string-array name="lx_mood_15_20">
+        <item>下午</item>
+        <item>放松</item>
+        <item>轻音乐</item>
+        <item>下午茶</item>
+    </string-array>
+    <string-array name="lx_mood_20_24">
+        <item>夜晚</item>
+        <item>晚安</item>
+        <item>睡前</item>
+        <item>助眠</item>
+    </string-array>
 
 </resources>

@@ -26,6 +26,12 @@
     <string name="presentation_batch_b_delete_playlist">删除歌单</string>
     <string name="presentation_batch_b_set_default_transition">设置默认过渡效果</string>
     <string name="presentation_batch_b_export_playlist">导出歌单</string>
+    <string name="playlist_export_format_title">选择导出格式</string>
+    <string name="playlist_export_as_m3u">导出为 M3U 歌单</string>
+    <string name="playlist_export_as_m3u_desc">标准 .m3u 格式，包含全部歌曲，兼容大多数播放器</string>
+    <string name="playlist_export_as_lx">导出为 LX 歌单</string>
+    <string name="playlist_export_as_lx_desc">落雪 .lxmc 格式，仅包含lx获取到音源歌曲，可导入lx音乐</string>
+    <string name="playlist_export_lx_no_lx_songs">该歌单没有 LX 音源歌曲，无法导出为 LX 歌单</string>
     <string name="presentation_batch_b_delete_playlist_confirm_title">确定删除歌单？</string>
     <string name="presentation_batch_b_delete_playlist_confirm_body">你确定要删除这个歌单吗？</string>
     <string name="presentation_batch_b_rename_playlist_dialog_title">重命名歌单</string>

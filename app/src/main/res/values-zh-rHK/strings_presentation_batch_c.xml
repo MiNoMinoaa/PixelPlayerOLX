@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_tab_songs">歌曲</string>
+    <string name="library_tab_albums">專輯</string>
+    <string name="library_tab_artists">藝術家</string>
+    <string name="library_tab_playlists">歌單</string>
+    <string name="library_tab_folders">文件夾</string>
+    <string name="library_tab_liked">我喜歡</string>
+    <string name="library_error_loading_songs">加載歌曲出錯</string>
+    <string name="library_error_loading_albums">加載專輯出錯</string>
+    <string name="library_error_loading_artists">加載藝術家出錯</string>
+    <string name="library_retry">重試</string>
+
+    <string name="library_no_songs_in_library_message">音樂庫內未找到歌曲。</string>
+    <string name="library_no_songs_rescan_hint">設備內存有音樂的話，請前往設置重新掃描音樂庫。</string>
+    <string name="cd_no_songs_in_library">未找到歌曲</string>
+
+    <string name="library_action_new">新建</string>
+    <string name="cd_create_new_playlist">新建歌單</string>
+    <string name="cd_import_m3u_playlist">導入 M3U 歌單</string>
+    <string name="cd_locate_current_song">定位當前播放歌曲</string>
+    <string name="library_storage_filter_all_songs">全部歌曲</string>
+    <string name="library_storage_filter_online">雲端</string>
+    <string name="library_storage_filter_offline">本地</string>
+    <string name="cd_sort_options">排序選項</string>
+
+    <string name="lyrics_synced_badge">已同步</string>
+    <string name="song_field_artist_optional">藝術家（選填）</string>
+
+    <string name="song_picker_title">添加歌曲</string>
+    <string name="cd_confirm_add_songs">添加選中歌曲</string>
+    <string name="song_picker_action_add">添加</string>
+    <string name="song_picker_search_label">搜索或篩選歌曲…</string>
+    <string name="song_picker_filter_favorites">我喜歡</string>
+    <string name="song_picker_error_load_failed">歌曲加載失敗</string>
+    <string name="song_picker_load_more">加載更多</string>
+
+
+    <string name="lib_empty_songs_all_title">暫無歌曲</string>
+    <string name="lib_empty_songs_all_subtitle">向設備存入音樂或者同步雲端資源即可開始播放。</string>
+    <string name="lib_empty_songs_offline_title">未找到本地歌曲</string>
+    <string name="lib_empty_songs_offline_subtitle">更換篩選條件或重新掃描設備音樂庫。</string>
+    <string name="lib_empty_songs_online_title">未找到雲端歌曲</string>
+    <string name="lib_empty_songs_online_subtitle">同步 Navidrome / Jellyfin 歌曲，或切換至本地源。</string>
+    <string name="lib_empty_albums_all_title">暫無專輯</string>
+    <string name="lib_empty_albums_all_subtitle">音樂庫完成曲目分組後，專輯就會顯示在此。</string>
+    <string name="lib_empty_albums_offline_title">未找到本地專輯</string>
+    <string name="lib_empty_albums_offline_subtitle">需要存在本地歌曲才能生成本地專輯分組。</string>
+    <string name="lib_empty_albums_online_title">未找到雲端專輯</string>
+    <string name="lib_empty_albums_online_subtitle">同步完成後，帶有專輯信息的雲端歌曲將會展示在此。</string>
+    <string name="lib_empty_artists_all_title">暫無藝術家</string>
+    <string name="lib_empty_artists_all_subtitle">任意來源的歌曲完成索引後就會顯示藝術家。</string>
+    <string name="lib_empty_artists_offline_title">未找到本地藝術家</string>
+    <string name="lib_empty_artists_offline_subtitle">當前本地歌曲缺少藝術家元數據。</string>
+    <string name="lib_empty_artists_online_title">未找到雲端藝術家</string>
+    <string name="lib_empty_artists_online_subtitle">同步遠程歌曲之後，雲端藝術家條目就會出現。</string>
+    <string name="lib_empty_liked_all_title">還沒有喜歡的歌曲</string>
+    <string name="lib_empty_liked_all_subtitle">播放歌曲時點擊愛心圖標，即可收藏到這裡。</string>
+    <string name="lib_empty_liked_offline_title">暫無本地收藏歌曲</string>
+    <string name="lib_empty_liked_offline_subtitle">切換數據源，或是收藏設備上的歌曲。</string>
+    <string name="lib_empty_liked_online_title">暫無雲端收藏歌曲</string>
+    <string name="lib_empty_liked_online_subtitle">收藏 Navidrome 或 Jellyfin 的曲目就會在此顯示。</string>
+    <string name="lib_empty_folders_title">未找到文件夾</string>
+    <string name="lib_empty_folders_subtitle">存放音樂的內部存儲文件夾會顯示在這裡。</string>
+    <string name="lib_empty_playlists_title">暫無歌單</string>
+    <string name="lib_empty_playlists_subtitle">創建第一個歌單來整理你的音樂庫。</string>
+</resources>
