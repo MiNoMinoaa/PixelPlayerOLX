@@ -177,6 +177,9 @@
     <string name="about_app_name">PixelPlayerOLX</string>
     <string name="about_tagline">基於 Material 3 的開源播放器。</string>
     <string name="about_version_format">版本 v%1$s</string>
+    <string name="update_available_title">发现新版本 v%1$s</string>
+    <string name="update_available_download">去下载</string>
+    <string name="update_available_later">以后再说</string>
     <string name="about_contributions_format">%1$d 位貢獻者</string>
     <string name="screen_about">關於</string>
     <string name="about_olx_maintainer_title">PixelPlayerOLX 版本維護者</string>

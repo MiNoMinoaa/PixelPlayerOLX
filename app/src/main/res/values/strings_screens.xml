@@ -178,6 +178,9 @@
     <string name="about_app_name">PixelPlayerOLX</string>
     <string name="about_tagline">An open-source player based on Material 3.</string>
     <string name="about_version_format">Version v%1$s</string>
+    <string name="update_available_title">New version available: v%1$s</string>
+    <string name="update_available_download">Download</string>
+    <string name="update_available_later">Later</string>
     <string name="about_contributions_format">%1$d contrib.</string>
     <string name="screen_about">About</string>
     <string name="about_olx_maintainer_title">PixelPlayerOLX maintainers</string>
