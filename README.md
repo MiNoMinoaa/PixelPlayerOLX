@@ -217,6 +217,3 @@ PixelPlayerOLX 派生自 PixelPlayerOSS（GPL-3.0，版权所有 © 2026 Theo Vi
 <p align="center">
   由 <a href="https://github.com/MiNoMinoaa">MiNoMinoaa</a> 维护
 </p>
-<p align="center">
-  Logo designed by <a href="https://github.com/NPSummers">Aureal</a>.
-</p>
