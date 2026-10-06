@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="widget_tap_to_open">Tap to open</string>
     <string name="widget_album_art">Album art</string>
@@ -97,13 +97,14 @@
     <string name="cd_add_to_queue">Add to queue</string>
     <string name="cd_play_next_in_queue">Play next in queue</string>
     <string name="cd_add_to_playlist">Add to playlist</string>
+    <string name="action_add_to_playlist">Add to playlist</string>
     <string name="action_add_to_queue">Add to queue</string>
     <string name="action_queue_next">Next</string>
     <string name="song_info_set_as_short">Set as</string>
     <string name="song_info_choose_tone">Set as sound</string>
     <string name="cd_choose_song_tone">Choose how to use this song as a system sound</string>
     <string name="song_info_tone_picker_title">Use this song as</string>
-    <string name="song_info_tone_picker_body">Choose where PixelPlayerOSS should install this sound.</string>
+    <string name="song_info_tone_picker_body">Choose where PixelPlayerOLX should install this sound.</string>
     <string name="song_info_tone_ringtone_title">Phone ringtone</string>
     <string name="song_info_tone_ringtone_subtitle">Incoming calls</string>
     <string name="song_info_tone_notification_title">Notification sound</string>
@@ -117,7 +118,7 @@
     <string name="song_info_tone_ringtone_label">ringtone</string>
     <string name="song_info_tone_notification_label">notification sound</string>
     <string name="song_info_tone_alarm_label">alarm sound</string>
-    <string name="song_info_ringtone_permission_prompt">Enable Modify system settings, then return to PixelPlayerOSS to finish automatically.</string>
+    <string name="song_info_ringtone_permission_prompt">Enable Modify system settings, then return to PixelPlayerOLX to finish automatically.</string>
     <string name="song_info_ringtone_permission_missing">Modify system settings was not enabled.</string>
     <string name="song_info_ringtone_local_only">Only local songs can be used as ringtones.</string>
     <string name="song_info_ringtone_missing_file">Couldn\'t prepare this audio file for ringtone.</string>

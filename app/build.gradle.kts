@@ -39,7 +39,7 @@ val enableComposeCompilerReports = providers.gradleProperty("pixelplayer.enableC
 
 @Suppress("DEPRECATION")
 android {
-    namespace = "com.lostf1sh.pixelplayeross"
+    namespace = "com.minoppol.music"
     compileSdk = 37
 
     sourceSets {
@@ -55,7 +55,7 @@ android {
         localeFilters.addAll(
             listOf(
                 "en", "ar", "de", "es", "fr", "in",
-                "it", "ko", "nb", "ru", "tr", "zh-rCN"
+                "it", "ko", "nb", "ru", "tr", "zh", "zh-rCN", "zh-rHK"
             )
         )
     }
@@ -78,7 +78,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.lostf1sh.pixelplayeross"
+        applicationId = "com.minoppol.music"
         minSdk = 30
         targetSdk = 37
         versionCode = (project.findProperty("APP_VERSION_CODE") as? String)?.toInt() ?: 1
@@ -104,8 +104,10 @@ android {
         }
 
         release {
-            if (hasReleaseSigningConfig) {
-                signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (hasReleaseSigningConfig) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
             }
             isMinifyEnabled = true
             isShrinkResources = true
@@ -256,6 +258,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.logging.interceptor)
     implementation(libs.gson)
+    implementation(libs.quickjs.wrapper.android)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.snakeyaml)
     implementation(libs.kotlinx.collections.immutable)

@@ -1,1 +1,1 @@
-Local-first Android music player for offline and self-hosted libraries.
+Android music player for local, self-hosted, and optional LX Music online sources.

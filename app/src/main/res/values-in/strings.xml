@@ -213,4 +213,42 @@
     <string name="widget_bar_4x1_desc">Bilah pemutar ringkas</string>
     <string name="widget_control_4x2_desc">Kontrol penuh dengan acak dan ulangi</string>
     <string name="widget_grid_2x2_desc">Pemutar kotak minimalis</string>
+    <string name="lx_brand_title">Lx Musik</string>
+    <string-array name="lx_mood_0_6">
+        <item>Larut Malam</item>
+        <item>Bantu Tidur</item>
+        <item>Tenang</item>
+        <item>Malam</item>
+    </string-array>
+    <string-array name="lx_mood_6_9">
+        <item>Selamat Pagi</item>
+        <item>Fajar</item>
+        <item>Pagi</item>
+        <item>Musik Lembut</item>
+    </string-array>
+    <string-array name="lx_mood_9_11">
+        <item>Pagi</item>
+        <item>Musik Lembut</item>
+        <item>Belajar</item>
+        <item>Kerja</item>
+    </string-array>
+    <string-array name="lx_mood_11_15">
+        <item>Selamat Siang</item>
+        <item>Siang</item>
+        <item>Tidur Siang</item>
+        <item>Santai</item>
+    </string-array>
+    <string-array name="lx_mood_15_20">
+        <item>Sore</item>
+        <item>Relaksasi</item>
+        <item>Musik Lembut</item>
+        <item>Waktu Teh</item>
+    </string-array>
+    <string-array name="lx_mood_20_24">
+        <item>Malam</item>
+        <item>Selamat Malam</item>
+        <item>Sebelum Tidur</item>
+        <item>Bantu Tidur</item>
+    </string-array>
+
 </resources>

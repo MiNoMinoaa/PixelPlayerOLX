@@ -59,6 +59,7 @@ jose4j = "0.9.6"
 httpclient = "4.5.14"
 orgJson = "20260522"
 snakeYaml = "2.4"
+quickjsWrapper = "2.4.0"
 
 # DI
 dagger = "2.60.1"
@@ -182,6 +183,7 @@ turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine
 truth = { group = "com.google.truth", name = "truth", version.ref = "truth" }
 org-json = { group = "org.json", name = "json", version.ref = "orgJson" }
 snakeyaml = { group = "org.yaml", name = "snakeyaml", version.ref = "snakeYaml" }
+quickjs-wrapper-android = { group = "wang.harlon.quickjs", name = "wrapper-android", version.ref = "quickjsWrapper" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 
 

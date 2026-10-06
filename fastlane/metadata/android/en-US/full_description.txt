@@ -1,4 +1,4 @@
-PixelPlayerOSS is a FOSS Android music player focused on local playback, self-hosted music libraries, and user-controlled online lookups.
+PixelPlayerOLX is a fork of PixelPlayerOSS, an open-source Android music player focused on local playback, self-hosted music libraries, and user-controlled online lookups. It adds an optional lx-music-mobile-compatible online music source (自定义音源) system.
 
 The app works offline by default. Network features are optional and must be enabled by the user.
 
@@ -10,7 +10,10 @@ Features:
 * Smart playlists generated from local listening history and favorites
 * Self-hosted Navidrome/Subsonic and Jellyfin library sync and streaming
 * Optional LRCLIB lyric lookup and Deezer artist artwork lookup
+* Optional LX Music sources: import lx-music-mobile-compatible source scripts, search and play online music, quality selection, downloads, and .lxmc playlist import/export
 * Material 3 UI, dynamic color, light/dark themes, and Glance widgets
 * Backup and restore for preferences, playlists, favorites, lyrics, stats, and app state
 
-PixelPlayerOSS does not include analytics, ads, Firebase, Crashlytics, Play Store billing, or Google Play Services runtime dependencies.
+PixelPlayerOLX does not include analytics, ads, Firebase, Crashlytics, Play Store billing, or Google Play Services runtime dependencies.
+
+PixelPlayerOLX is not affiliated with or endorsed by any music platform. Please respect copyright and support the official platforms.

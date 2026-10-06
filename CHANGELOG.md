@@ -1,15 +1,40 @@
 # Changelog
 
-All notable changes to PixelPlayerOSS will be documented in this file.
+All notable changes to PixelPlayerOLX will be documented in this file.
 
-## [Unreleased]
-
-### Fixed
-- Jellyfin playlists no longer go missing on Jellyfin 10.10 and newer, where playlists can hold mixed content and audio playlists are often reported without a media type.
-
-## [0.3.0] - 2026-08-15
+## [0.1.0] - 2026-09-17
 
 ### Added
+- Forked from PixelPlayerOSS and rebranded as PixelPlayerOLX.
+- Discover page to enable online features.
+- Split online and local entries: online pages perform online operations only; local pages perform local operations only.
+- LX Music playlist import/export (落雪 `.lxmc` format).
+- Custom music source and script import for LX Music (lx-music-mobile-compatible source scripts).
+- LX Music song download, audio quality selection, login, and playback caching.
+- Mini player lyrics and player page lyrics.
+- Song sharing.
+- Traditional Chinese language.
+
+### Changed
+- Local search page is now hidden and disabled by default.
+- LRCLIB online lyrics enabled by default and removed from first-launch selection.
+- Theme style now follows the system by default.
+- Library navigation style selection removed from first-launch selection.
+
+---
+
+## Legacy: PixelPlayerOSS (upstream) history
+
+The sections below are the upstream [PixelPlayerOSS](https://github.com/PixelPlayerHQ/PixelPlayerOSS) changelog, retained for attribution.
+
+### [Unreleased] (upstream)
+
+#### Fixed
+- Jellyfin playlists no longer go missing on Jellyfin 10.10 and newer, where playlists can hold mixed content and audio playlists are often reported without a media type.
+
+### [0.3.0] - 2026-08-15 (upstream)
+
+#### Added
 - Optional ListenBrainz scrobbling, disabled by default. Connect a ListenBrainz account with a user token from the Accounts screen; listens that reach the ListenBrainz threshold (4 minutes or half the track, whichever is lower) queue offline and submit with retry, with per-source toggles for local files, Subsonic, and Jellyfin playback. Now-playing status is reported while scrobbling is enabled, and disconnecting deletes any queued listens. An optional custom server URL scrobbles to self-hosted ListenBrainz-compatible servers such as Maloja instead of listenbrainz.org.
 - Offline downloads for Navidrome/Subsonic and Jellyfin tracks, with per-track progress, retry/removal actions, album downloads, app-private storage, and transparent local playback when a download is available, plus a dedicated download management screen.
 - On-demand MusicBrainz enrichment with ranked result selection and local recording, release, and artist identifiers. Existing metadata is preserved except for missing or unknown values.
@@ -21,12 +46,12 @@ All notable changes to PixelPlayerOSS will be documented in this file.
 - Tempo-matched crossfades and smoother play/pause transitions.
 - Opt-in performance recorder for debugging lag reports.
 
-### Changed
+#### Changed
 - Listening-stats hour labels follow the system 12/24-hour clock format.
 - Cached album art is size-capped and artwork extraction is skipped during library scans, reducing memory use and scan time.
 - Alpha releases are skipped for docs-only and CI-only changes; the standalone phone APK workflows were dropped in favour of alpha releases.
 
-### Fixed
+#### Fixed
 - Cloud artwork now reaches media notifications, the lock screen, and external media controllers.
 - Offline download cancellation races that could leave partial files or stuck progress.
 - Restored queues no longer keep dead local proxy links.
@@ -38,58 +63,58 @@ All notable changes to PixelPlayerOSS will be documented in this file.
 - Bookmark buttons that were still hardcoded English are localized.
 - The themed launcher icon is restored.
 
-### Security
+#### Security
 - Credentials are redacted from debug network logs.
 
-### Removed
+#### Removed
 - Android Auto media-library browsing and discovery. Standard MediaSession playback controls for notifications, lock screen, Bluetooth devices, and other system surfaces remain available.
 
-## [0.2.0] - 2026-07-17
+### [0.2.0] - 2026-07-17 (upstream)
 
-### Added
+#### Added
 - Navidrome library selector for servers that expose more than one music library.
 - The Artists tab and cloud albums are grouped by album artist.
 - Source code and F-Droid links in the About screen, plus GitHub Sponsors metadata.
 
-### Changed
+#### Changed
 - Material 3 Expressive pass: motion scheme, wavy progress indicators, and shape morphs.
 - New app icon and redesigned header.
 - Leaner R8 rules and regenerated baseline profiles.
 - Coroutines, Flow, and Compose hygiene pass, plus dead-code and deprecated-API cleanup.
 - Dependency bumps across Material 3, Compose, OkHttp, core-ktx, and lifecycle.
 
-### Fixed
+#### Fixed
 - Local server connections on Android 17.
 - Plain HTTP is allowed for local Navidrome and Jellyfin servers, including Tailscale and VPN hosts.
 - GitLab mirror repository guard after the organisation move.
 
-### Security
+#### Security
 - User-installed CAs are trusted so self-signed cloud servers work without disabling verification.
 - State-changing media session commands are restricted to trusted clients, and artwork sharing stays private behind explicit URI grants.
 
-## [0.1.0] - 2026-06-09
+### [0.1.0] - 2026-06-09 (upstream)
 
-### Initial release
+#### Initial release
 - First public FOSS release of PixelPlayerOSS, an OSS-focused Android music player.
 - Includes local music playback, playlists, favorites, lyrics, listening stats, dynamic Material 3 theming, widgets, and backup/restore.
 - Keeps self-hosted library support for Navidrome/Subsonic and Jellyfin, plus optional LRCLIB lyrics and Deezer artist artwork lookups.
 
-### Removed for FOSS
+#### Removed for FOSS
 - Removed non-FOSS and Google Play oriented integrations: Telegram, NetEase, QQ Music, Google Drive, Gemini, Cast, Wear OS, Play Store billing, Firebase, Crashlytics, and Google Play Services runtime dependencies.
 - Removed public scrobbling integrations such as Last.fm and ListenBrainz; self-hosted Navidrome/Subsonic playback reporting remains scoped to the user's own server.
 - Removed bundled translations and the in-app language selector for the first FOSS release; the initial source release ships with English resources only.
 - Removed release paths that depended on local/private signing artifacts, dummy signing values, or app-store-only assumptions.
 
-### Release readiness
+#### Release readiness
 - Added F-Droid metadata, Fastlane store metadata, dependency/license documentation, privacy notes, security notes, and contributor guidance.
 - Release builds now stay unsigned when local signing keys are absent, and `pixelplayer.disableReleaseSigning=true` forces unsigned verification builds even on a maintainer machine.
 - Documented third-party asset and dependency licenses, including native/binary Maven artifacts and JitPack source trails.
 
-### Security and privacy
+#### Security and privacy
 - The loopback cloud-stream proxy now requires a per-session token so other apps on the device cannot stream the user's cloud library by guessing local proxy URLs.
 - Backup restore now ignores preference keys owned by dedicated module handlers, preventing crafted global-settings payloads from bypassing module validation.
 - Release logging is tightened so HTTP request headers and remaining raw Android logs do not bypass the Timber release filter.
 
-### App polish included in this FOSS release
+#### App polish included in this FOSS release
 - Added smart playlist persistence, duplicate-track scanning, playback speed control, clearer playback/sync failure messages, and retry actions on album/artist detail failures.
 - Improved accessibility for toggle states and song row actions.

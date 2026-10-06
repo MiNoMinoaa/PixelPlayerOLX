@@ -213,4 +213,42 @@
     <string name="widget_bar_4x1_desc">Компактная панель плеера</string>
     <string name="widget_control_4x2_desc">Полное управление с перемешиванием и повтором</string>
     <string name="widget_grid_2x2_desc">Минималистичный квадратный плеер</string>
+    <string name="lx_brand_title">Lx Музыка</string>
+    <string-array name="lx_mood_0_6">
+        <item>Поздняя ночь</item>
+        <item>Для сна</item>
+        <item>Тихо</item>
+        <item>Ночь</item>
+    </string-array>
+    <string-array name="lx_mood_6_9">
+        <item>Доброе утро</item>
+        <item>Рассвет</item>
+        <item>Утро</item>
+        <item>Лёгкая музыка</item>
+    </string-array>
+    <string-array name="lx_mood_9_11">
+        <item>До полудня</item>
+        <item>Лёгкая музыка</item>
+        <item>Учёба</item>
+        <item>Работа</item>
+    </string-array>
+    <string-array name="lx_mood_11_15">
+        <item>Добрый полдень</item>
+        <item>После полудня</item>
+        <item>Тихий час</item>
+        <item>Легко</item>
+    </string-array>
+    <string-array name="lx_mood_15_20">
+        <item>После полудня</item>
+        <item>Отдых</item>
+        <item>Лёгкая музыка</item>
+        <item>Чаепитие</item>
+    </string-array>
+    <string-array name="lx_mood_20_24">
+        <item>Ночь</item>
+        <item>Спокойной ночи</item>
+        <item>Перед сном</item>
+        <item>Для сна</item>
+    </string-array>
+
 </resources>

@@ -106,17 +106,17 @@ jobs:
         run: |
           if [ -n "$CI_KEYSTORE_B64" ] && [ -n "$CI_KEYSTORE_PASSWORD" ]; then
             KEYSTORE_PASSWORD="$CI_KEYSTORE_PASSWORD"
-            printf '%s' "$CI_KEYSTORE_B64" | base64 -d > pixelplayeross-ci.jks
+            printf '%s' "$CI_KEYSTORE_B64" | base64 -d > pixelplayerolx-ci.jks
           else
             KEYSTORE_PASSWORD="$(openssl rand -hex 24)"
-            keytool -genkey -v -keystore pixelplayeross-ci.jks -alias pixelplayeross-ci-key -keyalg RSA -keysize 4096 -validity 10000 \
+            keytool -genkey -v -keystore pixelplayerolx-ci.jks -alias pixelplayerolx-ci-key -keyalg RSA -keysize 4096 -validity 10000 \
               -storepass "$KEYSTORE_PASSWORD" -keypass "$KEYSTORE_PASSWORD" \
-              -dname "CN=PixelPlayerOSS CI Throwaway, OU=Dev, O=PixelPlayerOSS, L=World, S=World, C=US"
+              -dname "CN=PixelPlayerOLX CI Throwaway, OU=Dev, O=PixelPlayerOLX, L=World, S=World, C=US"
           fi
           {
-            echo "storeFile=pixelplayeross-ci.jks"
+            echo "storeFile=pixelplayerolx-ci.jks"
             echo "storePassword=$KEYSTORE_PASSWORD"
-            echo "keyAlias=pixelplayeross-ci-key"
+            echo "keyAlias=pixelplayerolx-ci-key"
             echo "keyPassword=$KEYSTORE_PASSWORD"
           } > keystore.properties
 
@@ -137,7 +137,7 @@ jobs:
       - name: Upload Phone nightly split APK artifacts
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: PixelPlayerOSS-phone-nightly-${{ needs.changes.outputs.short-sha }}
+          name: PixelPlayerOLX-phone-nightly-${{ needs.changes.outputs.short-sha }}
           path: |
             app/build/outputs/apk/release/app-arm64-v8a-release.apk
             app/build/outputs/apk/release/app-armeabi-v7a-release.apk

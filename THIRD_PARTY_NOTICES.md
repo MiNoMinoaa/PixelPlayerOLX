@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-PixelPlayerOSS is licensed under the GNU General Public License v3.0 (GPL-3.0). The app also includes third-party libraries and font assets. This file records source and license evidence useful for app-store and F-Droid review.
+PixelPlayerOLX is licensed under the GNU General Public License v3.0 (GPL-3.0). The app also includes third-party libraries and font assets. This file records source and license evidence useful for app-store review.
 
 ## Bundled Font Assets
 
@@ -19,7 +19,7 @@ The OFL text is included in `app/src/main/assets/licenses/OFL.txt`.
 | `io.github.kyant0:taglib:1.0.6` | `libtaglib.so` | `https://github.com/Kyant0/taglib` | Maven POM declares Apache-2.0 |
 | `androidx.graphics:graphics-shapes:1.1.0` | `libandroidx.graphics.path.so` | `https://android.googlesource.com/platform/frameworks/support` | Google Maven POM declares Apache-2.0 |
 
-The Jellyfin FFmpeg decoder bundled in the APK is GPL-3.0, consistent with the PixelPlayerOSS source license (GPL-3.0).
+The Jellyfin FFmpeg decoder bundled in the APK is GPL-3.0, consistent with the PixelPlayerOLX source license (GPL-3.0).
 
 ## JitPack Artifacts
 
@@ -41,6 +41,13 @@ The Jellyfin FFmpeg decoder bundled in the APK is GPL-3.0, consistent with the P
 | UI utilities | Accompanist, Coil, Capturable, CodeView, Reorderable, Wavy Slider | Apache-2.0/MIT or compatible licenses; verify current POMs when versions change |
 | Text/search utilities | Kuromoji, pinyin4j | Apache-2.0/BSD-style licenses; verify current POMs when versions change |
 | Security/compatibility transitive constraints | Bouncy Castle, Commons Lang, HttpClient, JDOM2, jose4j | MIT/Apache-2.0/Bouncy Castle/JDOM-style licenses; verify current POMs when versions change |
+
+## LX Music Integration
+
+| Component | Purpose | License/source |
+| --- | --- | --- |
+| `wang.harlon.quickjs:wrapper-android:2.4.0` | Sandboxed JavaScript engine that runs lx-music-compatible source scripts | QuickJS is MIT; wrapper license — verify current POM |
+| `app/src/main/assets/lxmusic/` | lx-music-mobile-compatible source-script bridge (`user-api-preload.js`) and bundled sources | Implemented with reference to `https://github.com/lyswhut/lx-music-mobile` (Apache-2.0) |
 
 Run a dependency/license review again whenever `gradle/libs.versions.toml` changes.
 
