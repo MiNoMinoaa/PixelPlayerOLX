@@ -123,7 +123,7 @@ PixelPlayerOLX is a fork of [PixelPlayerOSS](https://github.com/PixelPlayerHQ/Pi
 | Project | Repository | License | Copyright / attribution |
 | --- | --- | --- | --- |
 | PixelPlayerOSS | https://github.com/PixelPlayerHQ/PixelPlayerOSS | GPL-3.0 | Copyright © 2026 Theo Vilardo |
-| Pixel Player (upstream of PixelPlayerOSS) | — | — | Logo/design attributed to **Aureal** |
+| Pixel Player (upstream of PixelPlayerOSS) | https://github.com/PixelPlayerHQ/PixelPlayer | Proprietary (formerly MIT) | Logo/design attributed to **Aureal** |
 | lx-music-mobile | https://github.com/lyswhut/lx-music-mobile | Apache-2.0 | Copyright © lyswhut |
 | lx-lxwalnut-music-mobile | https://github.com/WalnutBai/lx-lxwalnut-music-mobile | Apache-2.0 | Copyright © WalnutBai |
 
@@ -173,7 +173,7 @@ Useful local checks:
 ./gradlew :app:testDebugUnitTest
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions, and [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
+See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
 
 Privacy policy: [PRIVACY.md](PRIVACY.md)
 
