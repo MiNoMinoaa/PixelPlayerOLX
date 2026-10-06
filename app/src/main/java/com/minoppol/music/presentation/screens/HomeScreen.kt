@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerValue
@@ -39,6 +40,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -79,6 +81,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.minoppol.music.R
+import android.content.Intent
+import androidx.core.net.toUri
 import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.preferences.CollagePattern
 import com.minoppol.music.presentation.components.AlbumArtCollage
@@ -100,6 +104,7 @@ import com.minoppol.music.presentation.model.mapRecentlyPlayedSongs
 import com.minoppol.music.presentation.components.subcomps.PlayingEqIcon
 import com.minoppol.music.presentation.navigation.Screen
 import com.minoppol.music.presentation.components.StreamingProviderSheet
+import com.minoppol.music.presentation.viewmodel.AppUpdateViewModel
 import com.minoppol.music.presentation.viewmodel.PlayerViewModel
 import com.minoppol.music.presentation.viewmodel.SettingsViewModel
 import com.minoppol.music.presentation.viewmodel.StatsViewModel
@@ -236,6 +241,14 @@ fun HomeScreen(
     var showOptionsBottomSheet by remember { mutableStateOf(false) }
     var showChangelogBottomSheet by remember { mutableStateOf(false) }
     var showBetaInfoBottomSheet by remember { mutableStateOf(false) }
+    var showUpdateDialog by remember { mutableStateOf(false) }
+    val appUpdateViewModel: AppUpdateViewModel = hiltViewModel()
+    val updateInfo by appUpdateViewModel.updateInfo.collectAsStateWithLifecycle()
+    val appVersionName = remember {
+        runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }
+            .getOrNull() ?: "0.0.0"
+    }
+    LaunchedEffect(Unit) { appUpdateViewModel.checkForUpdates(appVersionName) }
     var showStreamingProviderSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalSheetState()
     val betaSheetState = rememberModalSheetState()
@@ -298,14 +311,19 @@ fun HomeScreen(
                         showChangelogBottomSheet = true
                     },
                     onBetaClick = {
-                        showBetaInfoBottomSheet = true
+                        if (updateInfo != null) {
+                            showUpdateDialog = true
+                        } else {
+                            showBetaInfoBottomSheet = true
+                        }
                     },
                     onStreamingClick = {
                           showStreamingProviderSheet = true
                     },
                     onMenuClick = {
                     },
-                    isScrolled = isScrolledPastThreshold.value
+                    isScrolled = isScrolledPastThreshold.value,
+                    updateAvailable = updateInfo != null
                 )
             }
         ) { innerPadding ->
@@ -520,6 +538,57 @@ fun HomeScreen(
             sheetState = betaSheetState,
         ) {
             BetaInfoBottomSheet()
+        }
+    }
+    if (showUpdateDialog) {
+        updateInfo?.let { update ->
+            AlertDialog(
+                onDismissRequest = {
+                    showUpdateDialog = false
+                    appUpdateViewModel.dismissUpdate()
+                },
+                title = {
+                    Text(stringResource(R.string.update_available_title, update.latestVersion))
+                },
+                text = {
+                    update.releaseNotes?.takeIf { it.isNotBlank() }?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 10,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showUpdateDialog = false
+                            appUpdateViewModel.dismissUpdate()
+                            runCatching {
+                                context.startActivity(
+                                    Intent(
+                                        Intent.ACTION_VIEW,
+                                        update.downloadUrl.toUri()
+                                    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                )
+                            }
+                        }
+                    ) {
+                        Text(stringResource(R.string.update_available_download))
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            showUpdateDialog = false
+                            appUpdateViewModel.dismissUpdate()
+                        }
+                    ) {
+                        Text(stringResource(R.string.update_available_later))
+                    }
+                },
+            )
         }
     }
     if (showStreamingProviderSheet) {

@@ -4,9 +4,11 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -102,6 +104,7 @@ fun HomeGradientTopBar(
     onStreamingClick: () -> Unit,
     onMenuClick: () -> Unit = {},
     isScrolled: Boolean = false,
+    updateAvailable: Boolean = false,
 ) {
     val surfaceContainerHigh = MaterialTheme.colorScheme.surfaceContainerHighest
 
@@ -122,25 +125,36 @@ fun HomeGradientTopBar(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(start = 12.dp)
             ) {
-                FilledTonalButton(
-                    modifier = Modifier.padding(start = 4.dp),
-                    shape = CircleShape,
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    ),
-                    onClick = onBetaClick
-                ) {
-                    Text(
-                        text = when (BuildConfig.BUILD_TYPE) {
-                            "release" -> stringResource(R.string.presentation_batch_g_topbar_build_stable)
-                            "debug" -> stringResource(R.string.presentation_batch_g_topbar_build_debug)
-                            else -> BuildConfig.BUILD_TYPE.replaceFirstChar { it.uppercase() }
-                        },
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                Box {
+                    FilledTonalButton(
+                        modifier = Modifier.padding(start = 4.dp),
+                        shape = CircleShape,
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
+                        onClick = onBetaClick
+                    ) {
+                        Text(
+                            text = when (BuildConfig.BUILD_TYPE) {
+                                "release" -> stringResource(R.string.presentation_batch_g_topbar_build_stable)
+                                "debug" -> stringResource(R.string.presentation_batch_g_topbar_build_debug)
+                                else -> BuildConfig.BUILD_TYPE.replaceFirstChar { it.uppercase() }
+                            },
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    if (updateAvailable) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(top = 4.dp, end = 4.dp)
+                                .size(10.dp)
+                                .background(MaterialTheme.colorScheme.error, CircleShape)
+                        )
+                    }
                 }
             }
         },
