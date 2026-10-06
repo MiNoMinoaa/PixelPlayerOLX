@@ -75,7 +75,7 @@ The offline/self-hosted experience remains the core of the app.
 | --- | --- |
 | Online sources | lx-music-mobile-compatible source scripts (音源脚本), imported from a `.js` file or URL, managed from the in-app "LX Music" tab |
 | Script engine | Sandboxed QuickJS runtime (`user-api-preload.js` bridge) with per-script isolation and the lx-music `lx_setup` API |
-| Platforms | Built-in web browsing paths for NetEase Cloud Music, QQ Music, Kugou, and Kuwo; source scripts can declare additional sources |
+| Platforms | Built-in web browsing paths for major platforms; source scripts can declare additional sources |
 | Quality | Per-platform quality selection (master, atmos, 24-bit FLAC, FLAC, 320 kbps, 128 kbps) with automatic fallback/downgrade |
 | Playlists | Import/export `.lxmc` (落雪 / lx-music) playlists for interchange with lx-music-mobile |
 | Downloads | Download online tracks with quality selection, plus a cache/offline path for source songs |
@@ -98,7 +98,7 @@ The "LX Music" tab lets you search and play music from online platforms through 
 | Navidrome/Subsonic | Self-hosted library sync, streaming, and offline downloads | User login required |
 | Jellyfin | Self-hosted library sync, streaming, and offline downloads | User login required |
 | LX Music sources | Optional online search/playback via imported source scripts | Off until a script is enabled |
-| NetEase / QQ / Kugou / Kuwo | Official web service | Off until used |
+| Various platforms | Official web service | Off until used |
 | MusicBrainz | On-demand metadata matching and identifier enrichment | Only when requested |
 | LRCLIB | Search online lyrics when local or embedded lyrics are missing | ON |
 | Deezer | Fetch missing artist artwork and cache it locally | OFF |
