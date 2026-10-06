@@ -1,9 +1,7 @@
 # Contributing to PixelPlayerOLX
 
 Thanks for your interest in improving PixelPlayerOLX! This guide covers the
-conventions that aren't obvious from the code alone. For a deeper architectural
-overview, see [CLAUDE.md](CLAUDE.md) (written for AI assistants but accurate for
-humans too).
+conventions that aren't obvious from the code alone.
 
 ## Getting started
 
