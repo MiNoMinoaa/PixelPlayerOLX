@@ -125,7 +125,7 @@ PixelPlayerOLX 派生自 [PixelPlayerOSS](https://github.com/PixelPlayerHQ/Pixel
 | 项目 | 仓库 | 许可证 | 版权 / 署名 |
 | --- | --- | --- | --- |
 | PixelPlayerOSS | https://github.com/PixelPlayerHQ/PixelPlayerOSS | GPL-3.0 | 版权所有 © 2026 Theo Vilardo |
-| Pixel Player（PixelPlayerOSS 的上游） | — | — | Logo/设计署名归 **Aureal** |
+| Pixel Player（PixelPlayerOSS 的上游） | https://github.com/PixelPlayerHQ/PixelPlayer | 专有（原 MIT） | Logo/设计署名归 **Aureal** |
 | lx-music-mobile | https://github.com/lyswhut/lx-music-mobile | Apache-2.0 | 版权所有 © lyswhut |
 | lx-lxwalnut-music-mobile | https://github.com/WalnutBai/lx-lxwalnut-music-mobile | Apache-2.0 | 版权所有 © WalnutBai |
 
@@ -175,7 +175,7 @@ PixelPlayerOLX 派生自 [PixelPlayerOSS](https://github.com/PixelPlayerHQ/Pixel
 ./gradlew :app:testDebugUnitTest
 ```
 
-规范约定见 [CONTRIBUTING.md](CONTRIBUTING.md)，漏洞报告见 [SECURITY.md](SECURITY.md)。
+漏洞报告见 [SECURITY.md](SECURITY.md)。
 
 隐私政策：[PRIVACY.md](PRIVACY.md)
 

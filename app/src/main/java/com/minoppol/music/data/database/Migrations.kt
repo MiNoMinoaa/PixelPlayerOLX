@@ -8,7 +8,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  *
  * Platform Auto Backup can restore a database that reports the right schema version but whose
  * columns have drifted, so migrations guard each `ALTER` with this check instead of assuming a
- * bare `ADD COLUMN` is safe (see the migration notes in CLAUDE.md / CONTRIBUTING).
+ * bare `ADD COLUMN` is safe.
  */
 private fun SupportSQLiteDatabase.hasColumn(table: String, column: String): Boolean {
     query("PRAGMA table_info(`$table`)").use { cursor ->
