@@ -1462,7 +1462,7 @@ private fun FullPlayerPortraitContent(
                 vertical = 0.dp
             ),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceAround
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         albumCoverSection(Modifier.weight(1f, fill = false))
 
