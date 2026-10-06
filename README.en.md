@@ -122,7 +122,7 @@ PixelPlayerOLX is a fork of [PixelPlayerOSS](https://github.com/PixelPlayerHQ/Pi
 
 | Project | Repository | License | Copyright / attribution |
 | --- | --- | --- | --- |
-| PixelPlayerOSS | https://github.com/PixelPlayerHQ/PixelPlayerOSS | GPL-3.0 | Copyright © 2026 Theo Vilardo |
+| PixelPlayerOSS | https://github.com/PixelPlayerHQ/PixelPlayerOSS | GPL-3.0 | Copyright © 2026 Duhan (lostf1sh) |
 | Pixel Player (upstream of PixelPlayerOSS) | https://github.com/PixelPlayerHQ/PixelPlayer | Proprietary (formerly MIT) | Copyright © Theo Vilardo (theovilardo); logo designed by **Aureal** |
 | lx-music-mobile | https://github.com/lyswhut/lx-music-mobile | Apache-2.0 | Copyright © lyswhut |
 | lx-lxwalnut-music-mobile | https://github.com/WalnutBai/lx-lxwalnut-music-mobile | Apache-2.0 | Copyright © WalnutBai |
@@ -201,7 +201,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ```
 
-PixelPlayerOLX is a fork of PixelPlayerOSS (GPL-3.0, Copyright © 2026 Theo Vilardo). Some online-source features are implemented with reference to lx-music-mobile (Apache-2.0, Copyright © lyswhut) and lx-lxwalnut-music-mobile (Apache-2.0, Copyright © WalnutBai), and are used under their respective licenses.
+PixelPlayerOLX is a fork of PixelPlayerOSS (GPL-3.0, Copyright © 2026 Duhan (lostf1sh)). Some online-source features are implemented with reference to lx-music-mobile (Apache-2.0, Copyright © lyswhut) and lx-lxwalnut-music-mobile (Apache-2.0, Copyright © WalnutBai), and are used under their respective licenses.
 
 Distributed APKs include third-party components under their own licenses. In particular, the optional FFmpeg decoder dependency `org.jellyfin.media3:media3-ffmpeg-decoder` is GPL-3.0; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
