@@ -495,19 +495,31 @@ class DualPlayerEngine @Inject constructor(
         }
 
         override fun onTimelineChanged(timeline: Timeline, reason: Int) {
-            if (transitionRunning) return
-            if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED &&
-                preserveQueueSnapshotOnNextPlaylistChange
-            ) {
-                preserveQueueSnapshotOnNextPlaylistChange = false
-                return
-            }
-            if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED || queueSnapshot.isEmpty()) {
-                refreshQueueSnapshotFromMaster(windowStartIndex = 0, usesWindowedQueue = false)
+            try {
+                if (transitionRunning) return
+                if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED &&
+                    preserveQueueSnapshotOnNextPlaylistChange
+                ) {
+                    preserveQueueSnapshotOnNextPlaylistChange = false
+                    return
+                }
+                if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED || queueSnapshot.isEmpty()) {
+                    refreshQueueSnapshotFromMaster(windowStartIndex = 0, usesWindowedQueue = false)
+                }
+            } catch (e: Exception) {
+                Timber.tag("DualPlayerEngine").w(e, "onTimelineChanged error")
             }
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
+            try {
+                dispatchPlaybackStateChanged(playbackState)
+            } catch (e: Exception) {
+                Timber.tag("DualPlayerEngine").w(e, "onPlaybackStateChanged error")
+            }
+        }
+
+        private fun dispatchPlaybackStateChanged(playbackState: Int) {
             when (playbackState) {
                 Player.STATE_BUFFERING -> {
                     val now = SystemClock.elapsedRealtime()

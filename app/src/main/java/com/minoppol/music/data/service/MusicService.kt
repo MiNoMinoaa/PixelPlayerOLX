@@ -251,6 +251,7 @@ class MusicService : MediaSessionService() {
     private var isManualShuffleEnabled = false
     private var persistentShuffleEnabled = false
     private var previousMainThreadExceptionHandler: Thread.UncaughtExceptionHandler? = null
+    private var idleForegroundGuardJob: Job? = null
     private val playbackTimerController by lazy {
         PlaybackTimerController(
             playerProvider = { mediaSession?.player ?: engine.masterPlayer },
@@ -275,6 +276,7 @@ class MusicService : MediaSessionService() {
 
     companion object {
         private const val TAG = "MusicService_PixelPlayer"
+        private const val IDLE_FOREGROUND_GUARD_MS = 60_000L
         const val NOTIFICATION_ID = 101
         const val ACTION_SLEEP_TIMER_EXPIRED = "com.minoppol.music.ACTION_SLEEP_TIMER_EXPIRED"
         const val EXTRA_FORCE_FOREGROUND_ON_START =
@@ -1066,8 +1068,20 @@ class MusicService : MediaSessionService() {
     private fun Player.hasForegroundPlaybackIntent(): Boolean {
         return playWhenReady &&
             mediaItemCount > 0 &&
-            playbackState != Player.STATE_IDLE &&
             playbackState != Player.STATE_ENDED
+    }
+
+    private fun scheduleIdleForegroundGuard() {
+        idleForegroundGuardJob?.cancel()
+        idleForegroundGuardJob = serviceScope.launch {
+            delay(IDLE_FOREGROUND_GUARD_MS)
+            val player = mediaSession?.player ?: engine.masterPlayer
+            if (player.playbackState == Player.STATE_IDLE && player.playWhenReady) {
+                Timber.tag(TAG).w("Releasing foreground after idle timeout")
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                clearTemporaryForegroundNotification()
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -1372,6 +1386,12 @@ class MusicService : MediaSessionService() {
             }
             mediaSession?.let { refreshMediaSessionUi(it) }
             schedulePlaybackSnapshotPersist(immediate = playbackState == Player.STATE_IDLE)
+
+            if (playbackState == Player.STATE_IDLE) {
+                scheduleIdleForegroundGuard()
+            } else {
+                idleForegroundGuardJob?.cancel()
+            }
         }
 
         override fun onTimelineChanged(timeline: Timeline, reason: Int) {
@@ -1480,6 +1500,12 @@ class MusicService : MediaSessionService() {
         }
 
         override fun onPlayerError(error: PlaybackException) {
+            if (engine.masterPlayer.currentMediaItem == null ||
+                engine.masterPlayer.playbackState != Player.STATE_IDLE
+            ) {
+                consecutivePlaybackErrors = 0
+                return
+            }
             val player = mediaSession?.player ?: engine.masterPlayer
             Timber.tag(TAG).e(error, "Player error on item %s", player.currentMediaItem?.mediaId)
             AdvancedPerformanceDiagnostics.recordEventIfEnabled(

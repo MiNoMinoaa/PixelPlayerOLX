@@ -60,7 +60,7 @@
     <string name="lib_empty_liked_offline_title">No liked local songs</string>
     <string name="lib_empty_liked_offline_subtitle">Switch source filter or like songs from your device.</string>
     <string name="lib_empty_liked_online_title">No liked cloud songs</string>
-    <string name="lib_empty_liked_online_subtitle">Like Navidrome or Jellyfin tracks to see them in this view.</string>
+    <string name="lib_empty_liked_online_subtitle">Liked cloud tracks appear here.</string>
     <string name="lib_empty_folders_title">No folders found</string>
     <string name="lib_empty_folders_subtitle">Internal storage folders with music will appear here.</string>
     <string name="lib_empty_playlists_title">No playlists yet</string>
