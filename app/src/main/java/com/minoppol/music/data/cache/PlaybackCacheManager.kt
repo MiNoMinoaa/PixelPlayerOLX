@@ -48,12 +48,12 @@ class PlaybackCacheManager @Inject constructor(
             if (!evictNow && cache.cacheSpace <= limitBytes) return
             evictNow = false
             while (cache.cacheSpace > limitBytes) {
-                val oldest = cache.keys
+                val removed = cache.keys
                     .asSequence()
                     .flatMap { cache.getCachedSpans(it).asSequence() }
-                    .minByOrNull { it.lastTouchTimestamp } ?: break
-                runCatching { cache.removeSpan(oldest) }
-                    .onFailure { Timber.w(it, "PlaybackCache: evict span failed") }
+                    .sortedBy { it.lastTouchTimestamp }
+                    .firstOrNull { span -> runCatching { cache.removeSpan(span) }.isSuccess }
+                if (removed == null) break
             }
         }
 

@@ -59,7 +59,7 @@
     <string name="lib_empty_liked_offline_title">暂无本地收藏歌曲</string>
     <string name="lib_empty_liked_offline_subtitle">切换数据源，或是收藏设备上的歌曲。</string>
     <string name="lib_empty_liked_online_title">暂无云端收藏歌曲</string>
-    <string name="lib_empty_liked_online_subtitle">收藏 Navidrome 或 Jellyfin 的曲目就会在此显示。</string>
+    <string name="lib_empty_liked_online_subtitle">收藏的云端曲目会在此显示。</string>
     <string name="lib_empty_folders_title">未找到文件夹</string>
     <string name="lib_empty_folders_subtitle">存放音乐的内部存储文件夹会显示在这里。</string>
     <string name="lib_empty_playlists_title">暂无歌单</string>
