@@ -31,6 +31,7 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.NightsStay
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material.icons.rounded.Whatshot
 import androidx.compose.material3.Button
@@ -68,7 +69,10 @@ import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun BetaInfoBottomSheet(modifier: Modifier = Modifier) {
+fun BetaInfoBottomSheet(
+    modifier: Modifier = Modifier,
+    onCheckForUpdates: () -> Unit,
+) {
     val context = LocalContext.current
     val issuesUrl = "https://github.com/MiNoMinoaa/PixelPlayerOLX/issues"
     val reportUrl = "https://github.com/MiNoMinoaa/PixelPlayerOLX/issues/new/choose"
@@ -365,33 +369,62 @@ fun BetaInfoBottomSheet(modifier: Modifier = Modifier) {
                 Spacer(modifier = Modifier.height(104.dp))
             }
         }
-        ExtendedFloatingActionButton(
-            onClick = { launchUrl(context, reportUrl) },
-            shape = AbsoluteSmoothCornerShape(
-                cornerRadiusTR = fabCornerRadius,
-                cornerRadiusTL = fabCornerRadius,
-                cornerRadiusBL = fabCornerRadius,
-                cornerRadiusBR = fabCornerRadius,
-                smoothnessAsPercentTR = 60,
-                smoothnessAsPercentTL = 60,
-                smoothnessAsPercentBL = 60,
-                smoothnessAsPercentBR = 60
-            ),
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.github),
-                    contentDescription = null
-                )
-            },
-            text = {
-                Text(text = stringResource(R.string.presentation_batch_g_beta_sheet_report_bug))
-            },
+        Row(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(horizontal = 24.dp, vertical = 24.dp)
-        )
+                .padding(horizontal = 24.dp, vertical = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            ExtendedFloatingActionButton(
+                onClick = onCheckForUpdates,
+                shape = AbsoluteSmoothCornerShape(
+                    cornerRadiusTR = fabCornerRadius,
+                    cornerRadiusTL = fabCornerRadius,
+                    cornerRadiusBL = fabCornerRadius,
+                    cornerRadiusBR = fabCornerRadius,
+                    smoothnessAsPercentTR = 60,
+                    smoothnessAsPercentTL = 60,
+                    smoothnessAsPercentBL = 60,
+                    smoothnessAsPercentBR = 60
+                ),
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                icon = {
+                    Icon(
+                        imageVector = Icons.Rounded.SystemUpdate,
+                        contentDescription = null
+                    )
+                },
+                text = {
+                    Text(text = stringResource(R.string.check_for_updates))
+                }
+            )
+            ExtendedFloatingActionButton(
+                onClick = { launchUrl(context, reportUrl) },
+                shape = AbsoluteSmoothCornerShape(
+                    cornerRadiusTR = fabCornerRadius,
+                    cornerRadiusTL = fabCornerRadius,
+                    cornerRadiusBL = fabCornerRadius,
+                    cornerRadiusBR = fabCornerRadius,
+                    smoothnessAsPercentTR = 60,
+                    smoothnessAsPercentTL = 60,
+                    smoothnessAsPercentBL = 60,
+                    smoothnessAsPercentBR = 60
+                ),
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                icon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.github),
+                        contentDescription = null
+                    )
+                },
+                text = {
+                    Text(text = stringResource(R.string.presentation_batch_g_beta_sheet_report_bug))
+                }
+            )
+        }
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
