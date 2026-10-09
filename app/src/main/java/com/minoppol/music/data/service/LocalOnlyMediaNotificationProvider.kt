@@ -21,16 +21,23 @@ class LocalOnlyMediaNotificationProvider(
     var currentLyricLine: String? = null
 
     @Volatile
-    var cachedActionFactory: MediaNotification.ActionFactory? = null
+    private var cachedBaseNotification: MediaNotification? = null
 
     @Volatile
-    var cachedCallback: MediaNotification.Provider.Callback? = null
+    private var cachedSongTitle: String? = null
 
     @Volatile
-    var cachedCustomLayout: ImmutableList<CommandButton> = ImmutableList.of()
+    private var cachedSongArtist: String? = null
 
     fun setSmallIcon(iconResId: Int) {
         delegate.setSmallIcon(iconResId)
+    }
+
+    fun invalidateCache() {
+        cachedBaseNotification = null
+        cachedSongTitle = null
+        cachedSongArtist = null
+        currentLyricLine = null
     }
 
     override fun createNotification(
@@ -39,15 +46,17 @@ class LocalOnlyMediaNotificationProvider(
         actionFactory: MediaNotification.ActionFactory,
         callback: MediaNotification.Provider.Callback,
     ): MediaNotification {
-        cachedActionFactory = actionFactory
-        cachedCallback = callback
-        cachedCustomLayout = customLayout
         val mediaNotification = delegate.createNotification(
             mediaSession,
             customLayout,
             actionFactory,
             callback
         )
+        cachedBaseNotification = mediaNotification
+        cachedSongTitle = mediaNotification.notification.extras
+            ?.getString(Notification.EXTRA_TITLE)
+        cachedSongArtist = mediaNotification.notification.extras
+            ?.getString(Notification.EXTRA_TEXT)
         return MediaNotification(
             mediaNotification.notificationId,
             decorate(mediaNotification.notification)
@@ -55,17 +64,8 @@ class LocalOnlyMediaNotificationProvider(
     }
 
     fun buildNotification(mediaSession: MediaSession): MediaNotification? {
-        val factory = cachedActionFactory ?: return null
-        val callback = cachedCallback ?: return null
-        return runCatching {
-            val mediaNotification = delegate.createNotification(
-                mediaSession,
-                cachedCustomLayout,
-                factory,
-                callback
-            )
-            MediaNotification(mediaNotification.notificationId, decorate(mediaNotification.notification))
-        }.getOrNull()
+        val base = cachedBaseNotification ?: return null
+        return MediaNotification(base.notificationId, decorate(base.notification))
     }
 
     private fun decorate(notification: Notification): Notification {
@@ -73,15 +73,12 @@ class LocalOnlyMediaNotificationProvider(
             val builder = Notification.Builder.recoverBuilder(context, notification)
                 .setLocalOnly(true)
             val line = currentLyricLine?.takeIf { it.isNotBlank() }
-            line?.let {
-                val songTitle = notification.extras?.getString(Notification.EXTRA_TITLE)
-                val songArtist = notification.extras?.getString(Notification.EXTRA_TEXT)
-                builder.setContentTitle(it)
-                if (!songTitle.isNullOrBlank()) {
-                    builder.setContentText(songTitle)
-                    if (!songArtist.isNullOrBlank()) {
-                        builder.setSubText(songArtist)
-                    }
+            if (line != null) {
+                builder.setContentTitle(line)
+                builder.setContentText(cachedSongTitle ?: "")
+                val artist = cachedSongArtist
+                if (!artist.isNullOrBlank()) {
+                    builder.setSubText(artist)
                 }
             }
             builder.build()
