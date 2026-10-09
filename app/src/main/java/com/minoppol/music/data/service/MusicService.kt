@@ -242,6 +242,7 @@ class MusicService : MediaSessionService() {
     private var notificationLyricsLoadJob: Job? = null
     private var notificationLyricsInFlightId: String? = null
     private var notificationLyricsRetryCount = 0
+    private var notificationLyricsProbeAtMs = 0L
 
     private data class NotificationLyricsData(
         val mediaId: String,
@@ -996,6 +997,18 @@ class MusicService : MediaSessionService() {
             loadNotificationLyrics(mediaId)
         }
 
+        if (!force &&
+            mediaId != null &&
+            data != null &&
+            data.mediaId == mediaId &&
+            data.lines.isEmpty() &&
+            notificationLyricsInFlightId == null &&
+            SystemClock.elapsedRealtime() - notificationLyricsProbeAtMs >= 2_000L
+        ) {
+            notificationLyricsProbeAtMs = SystemClock.elapsedRealtime()
+            probeNotificationLyricsCache(mediaId)
+        }
+
         val lyricsUsable = notificationLyricsEnabled &&
             mediaId != null &&
             data != null &&
@@ -1067,6 +1080,22 @@ class MusicService : MediaSessionService() {
             if (notificationLyricsInFlightId == mediaId) {
                 notificationLyricsInFlightId = null
             }
+        }
+    }
+
+    private fun probeNotificationLyricsCache(mediaId: String) {
+        serviceScope.launch {
+            val cached = runCatching {
+                withContext(Dispatchers.IO) { musicRepository.getCachedLyrics(mediaId) }
+            }.getOrNull()
+            val synced = cached?.synced
+            if (synced.isNullOrEmpty()) return@launch
+            if (mediaId != mediaSession?.player?.currentMediaItem?.mediaId) return@launch
+            val current = notificationLyricsData ?: return@launch
+            if (current.mediaId != mediaId || current.lines.isNotEmpty()) return@launch
+            notificationLyricsData = NotificationLyricsData(mediaId, synced)
+            notificationLyricsRetryCount = 0
+            updateNotificationLyrics(force = true)
         }
     }
 
