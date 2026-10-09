@@ -10,6 +10,8 @@ interface LyricsRepository {
      */
     suspend fun getStoredLyrics(song: Song): Pair<Lyrics, String>?
 
+    suspend fun getCachedLyrics(songId: String): Lyrics?
+
     /**
      * Get lyrics for a song with source preference support.
      * 

@@ -877,6 +877,10 @@ class MusicRepositoryImpl @Inject constructor(
         return lyricsRepository.getStoredLyrics(song)
     }
 
+    override suspend fun getCachedLyrics(songId: String): Lyrics? {
+        return lyricsRepository.getCachedLyrics(songId)
+    }
+
     /**
      * Fetches a song's lyrics from the LRCLIB API, persists them in the database
      * and returns them as a parsed Lyrics object.

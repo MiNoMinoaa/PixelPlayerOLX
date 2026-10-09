@@ -474,6 +474,10 @@ class LyricsRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getCachedLyrics(songId: String): Lyrics? = withContext(Dispatchers.IO) {
+        lyricsCache.get(generateCacheKey(songId))
+    }
+
     /**
      * Fetches lyrics from LRCLIB API with rate limiting (matching Rhythm)
      */
