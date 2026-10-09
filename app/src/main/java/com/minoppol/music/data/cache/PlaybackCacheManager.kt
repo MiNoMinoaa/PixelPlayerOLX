@@ -71,12 +71,25 @@ class PlaybackCacheManager @Inject constructor(
     var isEnabled: Boolean = true
         private set
 
-    val cache: SimpleCache by lazy {
-        SimpleCache(
-            File(context.cacheDir, "playback_cache"),
-            evictor,
-            StandaloneDatabaseProvider(context),
-        )
+    @Volatile
+    private var cacheInitFailed = false
+
+    private var cachedSimpleCache: SimpleCache? = null
+
+    fun cacheOrNull(): Cache? {
+        if (!isEnabled || cacheInitFailed) return null
+        cachedSimpleCache?.let { return it }
+        return runCatching {
+            SimpleCache(
+                File(context.cacheDir, "playback_cache"),
+                evictor,
+                StandaloneDatabaseProvider(context),
+            )
+        }.onFailure { e ->
+            Timber.e(e, "PlaybackCache: SimpleCache init failed, disabling cache")
+            cacheInitFailed = true
+            isEnabled = false
+        }.getOrNull()?.also { cachedSimpleCache = it }
     }
 
     val limitMbFlow: Flow<Int> = userPreferencesRepository.playbackCacheLimitMbFlow
@@ -88,14 +101,15 @@ class PlaybackCacheManager @Inject constructor(
             limitMbFlow.collect { limitMb ->
                 isEnabled = limitMb > 0
                 evictor.limitBytes = limitMb.toLong() * 1024L * 1024L
-                runCatching { evictor.applyLimit(cache) }
+                cacheOrNull()?.let { runCatching { evictor.applyLimit(it) } }
             }
         }
     }
 
-    fun cacheSpaceBytes(): Long = runCatching { cache.cacheSpace }.getOrDefault(0L)
+    fun cacheSpaceBytes(): Long = cacheOrNull()?.let { runCatching { it.cacheSpace }.getOrDefault(0L) } ?: 0L
 
     suspend fun clearAll() = withContext(Dispatchers.IO) {
+        val cache = cacheOrNull() ?: return@withContext
         runCatching {
             cache.keys.toList().forEach { key ->
                 runCatching { cache.removeResource(key) }
@@ -106,6 +120,7 @@ class PlaybackCacheManager @Inject constructor(
     }
 
     fun findCachedEntries(source: String, songmid: String): List<CachedEntry> {
+        val cache = cacheOrNull() ?: return emptyList()
         val prefix = songKeyPrefix(source, songmid)
         val keys = runCatching { cache.keys.filter { it.startsWith(prefix) } }
             .getOrDefault(emptyList())
@@ -128,6 +143,7 @@ class PlaybackCacheManager @Inject constructor(
     data class CachedEntry(val quality: String, val cacheKey: String)
 
     fun removeLowerQualityCaches(source: String, songmid: String, quality: String) {
+        val cache = cacheOrNull() ?: return
         val curIndex = LxQualities.ALL.indexOf(quality)
         if (curIndex < 0) return
         findCachedEntries(source, songmid).forEach { e ->
@@ -139,8 +155,9 @@ class PlaybackCacheManager @Inject constructor(
         }
     }
 
-    fun debugDumpEntries(source: String, songmid: String): String =
-        findCachedEntries(source, songmid).joinToString("; ") { e ->
+    fun debugDumpEntries(source: String, songmid: String): String {
+        val cache = cacheOrNull() ?: return "cache disabled"
+        return findCachedEntries(source, songmid).joinToString("; ") { e ->
             val metaLen = runCatching {
                 cache.getContentMetadata(e.cacheKey)
                     .get(androidx.media3.datasource.cache.ContentMetadata.KEY_CONTENT_LENGTH, -1L)
@@ -150,8 +167,10 @@ class PlaybackCacheManager @Inject constructor(
             val spans = runCatching { cache.getCachedSpans(e.cacheKey).size }.getOrDefault(-1)
             "${e.quality}[cached=$cached metaLen=$metaLen spans=$spans]"
         }
+    }
 
     fun isCacheComplete(cacheKey: String): Boolean {
+        val cache = cacheOrNull() ?: return false
         val cached = runCatching { cache.getCachedBytes(cacheKey, 0, Long.MAX_VALUE) }
             .getOrDefault(0L)
         if (cached <= 0) return false

@@ -86,6 +86,8 @@ import com.minoppol.music.data.preferences.ThemePreference
 import com.minoppol.music.presentation.viewmodel.ColorSchemePair
 import com.minoppol.music.utils.ArtworkTransportSanitizer
 import com.minoppol.music.utils.MediaItemBuilder
+import com.minoppol.music.data.lxmusic.LxSongMapper
+import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.navidrome.NavidromeRepository
 import com.minoppol.music.di.AppScope
 import com.minoppol.music.presentation.viewmodel.ListeningStatsTracker
@@ -239,6 +241,7 @@ class MusicService : MediaSessionService() {
     private var notificationLyricsData: NotificationLyricsData? = null
     private var notificationLyricsLoadJob: Job? = null
     private var notificationLyricsInFlightId: String? = null
+    private var notificationLyricsRetryCount = 0
 
     private data class NotificationLyricsData(
         val mediaId: String,
@@ -870,7 +873,7 @@ class MusicService : MediaSessionService() {
         val song = currentSongForLike ?: return
         if (song.lxMusicSource != source) return
         if (mediaSession?.player?.currentMediaItem?.mediaId == song.id) {
-            mediaSession?.let { refreshMediaSessionUi(it) }
+            mediaSession?.let { refreshMediaSessionUi(it, force = true) }
             requestWidgetFullUpdate(force = true)
         }
     }
@@ -897,38 +900,85 @@ class MusicService : MediaSessionService() {
         if (currentSongForLike?.id == mediaId) return
         currentSongForLikeJob?.cancel()
         currentSongForLikeJob = serviceScope.launch {
-            val song = runCatching {
+            var song = runCatching {
                 withContext(Dispatchers.IO) { musicRepository.getSong(mediaId).firstOrNull() }
             }.getOrNull()
-            currentSongForLike = song
-            if (song?.lxMusicSource != null && likedListLoadedSources.add(song.lxMusicSource!!)) {
-                ensurePlatformLikedListLoaded(song.lxMusicSource!!)
+            if (song == null) {
+                song = buildSongFromMediaItem(mediaId)
             }
-            mediaSession?.let { refreshMediaSessionUi(it) }
+            currentSongForLike = song
+            if (song?.lxMusicSource != null) {
+                if (likedListLoadedSources.add(song.lxMusicSource!!)) {
+                    ensurePlatformLikedListLoaded(song.lxMusicSource!!)
+                } else if (!isOnlineSongLiked(song)) {
+                    ensurePlatformLikedListLoaded(song.lxMusicSource!!, forceRefresh = true)
+                }
+            }
+            mediaSession?.let {
+                refreshMediaSessionUiWithFollowUp(it, delayMs = 1500L)
+            }
             requestWidgetFullUpdate(force = true)
         }
     }
 
-    private fun ensurePlatformLikedListLoaded(source: String) {
+    private fun buildSongFromMediaItem(mediaId: String): Song? {
+        val item = mediaSession?.player?.currentMediaItem ?: return null
+        if (item.mediaId != mediaId) return null
+        val extras = item.mediaMetadata.extras ?: return null
+        val contentUri = extras.getString(MediaItemBuilder.EXTERNAL_EXTRA_CONTENT_URI) ?: return null
+        val parsed = LxSongMapper.parseContentUri(contentUri) ?: return null
+        return Song(
+            id = mediaId,
+            title = item.mediaMetadata.title?.toString() ?: "",
+            artist = item.mediaMetadata.artist?.toString() ?: "",
+            artistId = 0L,
+            album = "",
+            albumId = 0L,
+            path = "",
+            contentUriString = contentUri,
+            albumArtUriString = null,
+            duration = extras.getLong(MediaItemBuilder.EXTERNAL_EXTRA_DURATION),
+            mimeType = extras.getString(MediaItemBuilder.EXTERNAL_EXTRA_MIME_TYPE),
+            bitrate = extras.getInt(MediaItemBuilder.EXTERNAL_EXTRA_BITRATE).takeIf { it > 0 },
+            sampleRate = extras.getInt(MediaItemBuilder.EXTERNAL_EXTRA_SAMPLE_RATE).takeIf { it > 0 },
+            lxMusicSource = parsed.first,
+            lxMusicSongMid = parsed.second,
+            lxMusicHash = extras.getString(MediaItemBuilder.EXTERNAL_EXTRA_LX_HASH),
+        )
+    }
+
+    private fun ensurePlatformLikedListLoaded(source: String, forceRefresh: Boolean = false) {
         serviceScope.launch {
+            if (forceRefresh && source == "wy") {
+                lxMusicRepository.neteaseLikedListLoaded = false
+            }
             runCatching {
                 when (source) {
                     "wy" -> if (neteaseCookieStore.hasCookie()) {
                         lxMusicRepository.ensureNeteaseLikedListLoaded()
+                        neteaseLikedIds = lxMusicRepository.neteaseLikedSongIds.value
                     }
                     "tx" -> if (tencentCookieStore.hasCookie()) {
                         lxMusicRepository.setTxLikedSongIds(lxMusicRepository.fetchTxLikedSongIds())
+                        txLikedIds = lxMusicRepository.txLikedSongIds.value
                     }
                     "kg" -> if (kugouCookieStore.hasAppLogin()) {
                         lxMusicRepository.setKgLikedSongIds(lxMusicRepository.fetchKgLikedSongIds())
+                        kgLikedIds = lxMusicRepository.kgLikedSongIds.value
                     }
                     "kw" -> if (kuwoCookieStore.hasCookie()) {
                         lxMusicRepository.setKwLikedSongIds(lxMusicRepository.fetchKwLikedSongIds())
+                        kwLikedIds = lxMusicRepository.kwLikedSongIds.value
                     }
                 }
             }.onFailure {
                 Timber.tag(TAG).d(it, "ensurePlatformLikedListLoaded failed for %s", source)
                 likedListLoadedSources.remove(source)
+            }
+            val song = currentSongForLike
+            if (song?.lxMusicSource == source &&
+                mediaSession?.player?.currentMediaItem?.mediaId == song.id) {
+                mediaSession?.let { refreshMediaSessionUi(it, force = true) }
             }
         }
     }
@@ -940,11 +990,12 @@ class MusicService : MediaSessionService() {
         val player = session.player
         val mediaId = player.currentMediaItem?.mediaId
 
-        if (mediaId != null && mediaId != notificationLyricsData?.mediaId && notificationLyricsInFlightId != mediaId) {
+        val data = notificationLyricsData
+        if (mediaId != null && mediaId != data?.mediaId && notificationLyricsInFlightId != mediaId) {
+            notificationLyricsRetryCount = 0
             loadNotificationLyrics(mediaId)
         }
 
-        val data = notificationLyricsData
         val lyricsUsable = notificationLyricsEnabled &&
             mediaId != null &&
             data != null &&
@@ -971,20 +1022,47 @@ class MusicService : MediaSessionService() {
         notificationLyricsLoadJob?.cancel()
         notificationLyricsLoadJob = serviceScope.launch {
             var loaded: NotificationLyricsData? = null
+            var songFound = false
             runCatching {
                 val song = withContext(Dispatchers.IO) {
                     musicRepository.getSong(mediaId).firstOrNull()
                 }
                 if (song != null) {
+                    songFound = true
                     val stored = withContext(Dispatchers.IO) { musicRepository.getStoredLyrics(song) }
-                    loaded = NotificationLyricsData(mediaId, stored?.first?.synced.orEmpty())
+                    loaded = stored?.first?.synced?.let { NotificationLyricsData(mediaId, it) }
+                }
+                if (loaded == null) {
+                    val cached = withContext(Dispatchers.IO) { musicRepository.getCachedLyrics(mediaId) }
+                    loaded = cached?.synced?.let { NotificationLyricsData(mediaId, it) }
                 }
             }.onFailure {
                 Timber.tag(TAG).d(it, "notification lyrics load failed for %s", mediaId)
             }
-            if (mediaId == mediaSession?.player?.currentMediaItem?.mediaId) {
+            if (mediaId != mediaSession?.player?.currentMediaItem?.mediaId) {
+                if (notificationLyricsInFlightId == mediaId) notificationLyricsInFlightId = null
+                return@launch
+            }
+            if (loaded != null) {
                 notificationLyricsData = loaded
+                notificationLyricsRetryCount = 0
                 updateNotificationLyrics(force = true)
+            } else if (songFound || notificationLyricsRetryCount >= 3) {
+                notificationLyricsData = NotificationLyricsData(mediaId, emptyList())
+                notificationLyricsRetryCount = 0
+                updateNotificationLyrics(force = true)
+            } else {
+                notificationLyricsRetryCount++
+                val backoffMs = notificationLyricsRetryCount * 2000L
+                notificationLyricsInFlightId = null
+                serviceScope.launch {
+                    delay(backoffMs)
+                    if (mediaId == mediaSession?.player?.currentMediaItem?.mediaId &&
+                        mediaId != notificationLyricsData?.mediaId &&
+                        notificationLyricsInFlightId != mediaId) {
+                        loadNotificationLyrics(mediaId)
+                    }
+                }
             }
             if (notificationLyricsInFlightId == mediaId) {
                 notificationLyricsInFlightId = null
@@ -1473,6 +1551,9 @@ class MusicService : MediaSessionService() {
                 runCatching { replayGainProcessor.prefetch(player.getMediaItemAt(nextIndex)) }
             }
             requestWidgetFullUpdate(force = false)
+            notificationLyricsProvider?.invalidateCache()
+            notificationLyricsData = null
+            notificationLyricsRetryCount = 0
             mediaSession?.let { refreshMediaSessionUi(it) }
             schedulePlaybackSnapshotPersist()
             refreshCurrentSongForLike()
@@ -1526,6 +1607,7 @@ class MusicService : MediaSessionService() {
                 player.prepare()
             } else {
                 consecutivePlaybackErrors = 0
+                player.playWhenReady = false
             }
         }
     }
@@ -2651,10 +2733,16 @@ class MusicService : MediaSessionService() {
                     )
                 } else {
                     when (source) {
-                        "tx" -> lxMusicRepository.setTxLikedSongIds(
-                            if (targetFavoriteState) lxMusicRepository.txLikedSongIds.value + trackId
-                            else lxMusicRepository.txLikedSongIds.value - trackId
-                        )
+                        "wy" -> {
+                            neteaseLikedIds = lxMusicRepository.neteaseLikedSongIds.value
+                        }
+                        "tx" -> {
+                            lxMusicRepository.setTxLikedSongIds(
+                                if (targetFavoriteState) lxMusicRepository.txLikedSongIds.value + trackId
+                                else lxMusicRepository.txLikedSongIds.value - trackId
+                            )
+                            txLikedIds = lxMusicRepository.txLikedSongIds.value
+                        }
                         "kg" -> {
                             val ids = lxMusicRepository.kgLikedSongIds.value
                             val hash = song.lxMusicHash
@@ -2665,14 +2753,18 @@ class MusicService : MediaSessionService() {
                                     ids - trackId - listOfNotNull(hash)
                                 }
                             )
+                            kgLikedIds = lxMusicRepository.kgLikedSongIds.value
                         }
-                        "kw" -> lxMusicRepository.setKwLikedSongIds(
-                            if (targetFavoriteState) lxMusicRepository.kwLikedSongIds.value + trackId
-                            else lxMusicRepository.kwLikedSongIds.value - trackId
-                        )
+                        "kw" -> {
+                            lxMusicRepository.setKwLikedSongIds(
+                                if (targetFavoriteState) lxMusicRepository.kwLikedSongIds.value + trackId
+                                else lxMusicRepository.kwLikedSongIds.value - trackId
+                            )
+                            kwLikedIds = lxMusicRepository.kwLikedSongIds.value
+                        }
                     }
                 }
-                refreshMediaSessionUi(session)
+                refreshMediaSessionUi(session, force = true)
                 requestWidgetFullUpdate(force = true)
             } finally {
                 notificationLikeBusyIds.remove(trackId)

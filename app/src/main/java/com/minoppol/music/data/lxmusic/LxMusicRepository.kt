@@ -195,7 +195,6 @@ class LxMusicRepository @Inject constructor(
 
     @Volatile
     var neteaseLikedListLoaded: Boolean = false
-        private set
 
     @Volatile
     private var neteaseLikedListLoadingUid: String? = null

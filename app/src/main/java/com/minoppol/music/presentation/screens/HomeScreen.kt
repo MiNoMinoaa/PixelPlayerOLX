@@ -23,9 +23,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerValue
@@ -40,7 +42,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -59,6 +60,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -74,6 +76,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
@@ -82,6 +85,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.minoppol.music.R
 import android.content.Intent
+import android.widget.Toast
 import androidx.core.net.toUri
 import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.preferences.CollagePattern
@@ -249,6 +253,14 @@ fun HomeScreen(
             .getOrNull() ?: "0.0.0"
     }
     LaunchedEffect(Unit) { appUpdateViewModel.checkForUpdates(appVersionName) }
+    LaunchedEffect(Unit) {
+        appUpdateViewModel.toast.collect { msg ->
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        }
+    }
+    LaunchedEffect(Unit) {
+        appUpdateViewModel.showDialog.collect { showUpdateDialog = true }
+    }
     var showStreamingProviderSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalSheetState()
     val betaSheetState = rememberModalSheetState()
@@ -537,58 +549,91 @@ fun HomeScreen(
             onDismissRequest = { showBetaInfoBottomSheet = false },
             sheetState = betaSheetState,
         ) {
-            BetaInfoBottomSheet()
+            BetaInfoBottomSheet(
+                onCheckForUpdates = {
+                    showBetaInfoBottomSheet = false
+                    appUpdateViewModel.checkForUpdatesManual(appVersionName)
+                }
+            )
         }
     }
     if (showUpdateDialog) {
         updateInfo?.let { update ->
-            AlertDialog(
+            Dialog(
                 onDismissRequest = {
                     showUpdateDialog = false
                     appUpdateViewModel.dismissUpdate()
-                },
-                title = {
-                    Text(stringResource(R.string.update_available_title, update.latestVersion))
-                },
-                text = {
-                    update.releaseNotes?.takeIf { it.isNotBlank() }?.let {
+                }
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    tonalElevation = 6.dp
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
                         Text(
-                            text = it,
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 10,
-                            overflow = TextOverflow.Ellipsis,
+                            text = stringResource(R.string.update_available_title, update.latestVersion),
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
-                    }
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            showUpdateDialog = false
-                            appUpdateViewModel.dismissUpdate()
-                            runCatching {
-                                context.startActivity(
-                                    Intent(
-                                        Intent.ACTION_VIEW,
-                                        update.downloadUrl.toUri()
-                                    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                )
-                            }
+                        update.releaseNotes?.takeIf { it.isNotBlank() }?.let {
+                            Text(
+                                text = it,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 10,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
-                    ) {
-                        Text(stringResource(R.string.update_available_download))
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = {
-                            showUpdateDialog = false
-                            appUpdateViewModel.dismissUpdate()
+                        Spacer(Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            UpdateDialogButton(
+                                label = stringResource(R.string.update_available_ignore),
+                                icon = Icons.Rounded.Block,
+                                selected = false,
+                                onClick = {
+                                    showUpdateDialog = false
+                                    appUpdateViewModel.ignoreVersion(update.latestVersion)
+                                }
+                            )
+                            Spacer(Modifier.weight(1f))
+                            UpdateDialogButton(
+                                label = stringResource(R.string.update_available_cancel),
+                                icon = Icons.Rounded.Close,
+                                selected = false,
+                                onClick = {
+                                    showUpdateDialog = false
+                                    appUpdateViewModel.dismissUpdate()
+                                }
+                            )
+                            UpdateDialogButton(
+                                label = stringResource(R.string.update_available_go_download),
+                                icon = Icons.Rounded.Download,
+                                selected = true,
+                                onClick = {
+                                    showUpdateDialog = false
+                                    appUpdateViewModel.dismissUpdate()
+                                    runCatching {
+                                        context.startActivity(
+                                            Intent(
+                                                Intent.ACTION_VIEW,
+                                                update.downloadUrl.toUri()
+                                            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        )
+                                    }
+                                }
+                            )
                         }
-                    ) {
-                        Text(stringResource(R.string.update_available_later))
                     }
-                },
-            )
+                }
+            }
         }
     }
     if (showStreamingProviderSheet) {
@@ -889,5 +934,53 @@ private fun rememberYourMixTitleStyle(): TextStyle {
             fontSize = 64.sp,
             lineHeight = 62.sp
         )
+    }
+}
+
+@Composable
+private fun UpdateDialogButton(
+    label: String,
+    icon: ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(16.dp),
+        color = if (selected)
+            MaterialTheme.colorScheme.primary
+        else
+            MaterialTheme.colorScheme.secondaryContainer,
+        modifier = modifier,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+                tint = if (selected)
+                    MaterialTheme.colorScheme.onPrimary
+                else
+                    MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+            Spacer(Modifier.width(5.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                color = if (selected)
+                    MaterialTheme.colorScheme.onPrimary
+                else
+                    MaterialTheme.colorScheme.onSecondaryContainer,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Clip,
+            )
+        }
     }
 }
