@@ -297,6 +297,8 @@ interface MusicRepository {
 
     suspend fun getStoredLyrics(song: Song): Pair<Lyrics, String>?
 
+    suspend fun getCachedLyrics(songId: String): Lyrics?
+
     suspend fun getLyricsFromRemote(song: Song): Result<Pair<Lyrics, String>>
 
     /**

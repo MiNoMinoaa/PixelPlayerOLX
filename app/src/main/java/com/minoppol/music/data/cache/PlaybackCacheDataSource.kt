@@ -25,12 +25,15 @@ class PlaybackCacheDataSource(
     private val qualityTracker: LxPlaybackQualityTracker,
 ) : DataSource {
 
-    private val cachedDataSourceFactory: CacheDataSource.Factory =
-        CacheDataSource.Factory()
-            .setCache(cacheManager.cache)
-            .setUpstreamDataSourceFactory(upstreamFactory)
-
     private val upstreamDataSourceFactory: DataSource.Factory = upstreamFactory
+
+    private fun cachedDataSourceFactory(): CacheDataSource.Factory? {
+        val cache = cacheManager.cacheOrNull() ?: return null
+        return CacheDataSource.Factory()
+            .setCache(cache)
+            .setUpstreamDataSourceFactory(upstreamDataSourceFactory)
+            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+    }
 
     private var activeCacheKey: String? = null
 
@@ -142,14 +145,19 @@ class PlaybackCacheDataSource(
         listeners.forEach { upstream.addTransferListener(it) }
         delegate = upstream
         activeCacheKey = cacheKey
+        val cache = cacheManager.cacheOrNull()
+        if (cache == null) {
+            Timber.tag(TAG).w("cache unavailable, streaming without cache key=%s", cacheKey)
+            return
+        }
         val sinkSpec = dataSpec.buildUpon()
             .setKey(cacheKey)
             .setLength(C.LENGTH_UNSET.toLong())
             .setFlags(dataSpec.flags and DataSpec.FLAG_DONT_CACHE_IF_LENGTH_UNKNOWN.inv())
             .build()
-        fun newSink() = CacheDataSink(cacheManager.cache, CacheDataSink.DEFAULT_FRAGMENT_SIZE)
+        fun newSink() = CacheDataSink(cache, CacheDataSink.DEFAULT_FRAGMENT_SIZE)
         val holeSpan = runCatching {
-            cacheManager.cache.startReadWriteNonBlocking(cacheKey, dataSpec.position, C.LENGTH_UNSET.toLong())
+            cache.startReadWriteNonBlocking(cacheKey, dataSpec.position, C.LENGTH_UNSET.toLong())
         }.onFailure { Timber.tag(TAG).w(it, "tee lock failed key=%s", cacheKey) }
             .getOrNull()
         if (holeSpan == null) {
@@ -181,9 +189,17 @@ class PlaybackCacheDataSource(
         quality: String,
         fallbackToUpstream: Boolean,
     ): Long {
-        val cached = cachedDataSourceFactory.createDataSource()
+        val factory = cachedDataSourceFactory()
+        if (factory == null) {
+            if (fallbackToUpstream) {
+                return openDelegate(upstreamDataSourceFactory.createDataSource(), dataSpec)
+            }
+            throw IOException("Cache unavailable for $cacheKey")
+        }
+        val cache = cacheManager.cacheOrNull()
+        val cached = factory.createDataSource()
         val beforeBytes = runCatching {
-            cacheManager.cache.getCachedBytes(cacheKey, 0, Long.MAX_VALUE)
+            cache?.getCachedBytes(cacheKey, 0, Long.MAX_VALUE)
         }.getOrDefault(-2L)
         return try {
             val ret = openDelegate(cached, dataSpec.buildUpon().setKey(cacheKey).build())
@@ -191,7 +207,7 @@ class PlaybackCacheDataSource(
             activeId = id
             activeQuality = quality
             val afterBytes = runCatching {
-                cacheManager.cache.getCachedBytes(cacheKey, 0, Long.MAX_VALUE)
+                cache?.getCachedBytes(cacheKey, 0, Long.MAX_VALUE)
             }.getOrDefault(-2L)
             Timber.tag(TAG).d(
                 "openCached OK key=%s before=%d after=%d len=%d", cacheKey, beforeBytes, afterBytes, ret
@@ -231,7 +247,9 @@ class PlaybackCacheDataSource(
                 Timber.tag(TAG).w("tee write failed at %d, stop caching", teeWritten)
                 runCatching { sink.close() }
                 teeSink = null
-                teeHoleSpan?.let { runCatching { cacheManager.cache.releaseHoleSpan(it) } }
+                teeHoleSpan?.let { span ->
+                    runCatching { cacheManager.cacheOrNull()?.releaseHoleSpan(span) }
+                }
                 teeHoleSpan = null
             }
         }
@@ -245,14 +263,15 @@ class PlaybackCacheDataSource(
             runCatching { sink.close() }
             teeSink = null
         }
-        teeHoleSpan?.let { runCatching { cacheManager.cache.releaseHoleSpan(it) } }
+        val cache = cacheManager.cacheOrNull()
+        teeHoleSpan?.let { runCatching { cache?.releaseHoleSpan(it) } }
         teeHoleSpan = null
         val key = activeCacheKey
         if (key != null && teeContentLength > 0 && teeWritten >= teeContentLength) {
             runCatching {
                 val mutations = ContentMetadataMutations()
                 ContentMetadataMutations.setContentLength(mutations, teeContentLength)
-                cacheManager.cache.applyContentMetadataMutations(key, mutations)
+                cache?.applyContentMetadataMutations(key, mutations)
             }
         }
         delegate?.let { runCatching { it.close() } }
@@ -264,7 +283,7 @@ class PlaybackCacheDataSource(
         }
         key?.let { k ->
             val finalBytes = runCatching {
-                cacheManager.cache.getCachedBytes(k, 0, Long.MAX_VALUE)
+                cache?.getCachedBytes(k, 0, Long.MAX_VALUE)
             }.getOrDefault(-2L)
             Timber.tag(TAG).d("close key=%s finalCached=%d", k, finalBytes)
         }
