@@ -180,6 +180,14 @@
     <string name="update_available_title">发现新版本 v%1$s</string>
     <string name="update_available_download">去下载</string>
     <string name="update_available_later">以后再说</string>
+    <string name="update_available_go_download">前往下载</string>
+    <string name="update_available_cancel">取消</string>
+    <string name="update_available_ignore">忽略此版本</string>
+    <string name="check_for_updates">检查更新</string>
+    <string name="update_check_uptodate">已是最新版本</string>
+    <string name="update_check_ignored">已忽略此版本，新版本发布后将再次提醒</string>
+    <string name="update_check_error_network">网络连接失败，请检查网络后重试</string>
+    <string name="update_check_error_generic">检查更新失败，请稍后重试</string>
     <string name="about_contributions_format">%1$d 位贡献者</string>
     <string name="screen_about">关于</string>
     <string name="about_olx_maintainer_title">PixelPlayerOLX 版本维护者</string>

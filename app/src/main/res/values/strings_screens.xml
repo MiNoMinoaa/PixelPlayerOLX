@@ -181,6 +181,14 @@
     <string name="update_available_title">New version available: v%1$s</string>
     <string name="update_available_download">Download</string>
     <string name="update_available_later">Later</string>
+    <string name="update_available_go_download">Go to download</string>
+    <string name="update_available_cancel">Cancel</string>
+    <string name="update_available_ignore">Ignore this version</string>
+    <string name="check_for_updates">Check for updates</string>
+    <string name="update_check_uptodate">You are on the latest version.</string>
+    <string name="update_check_ignored">This version is ignored. You will be reminded when a newer version is released.</string>
+    <string name="update_check_error_network">Network connection failed. Please check your connection and try again.</string>
+    <string name="update_check_error_generic">Failed to check for updates. Please try again later.</string>
     <string name="about_contributions_format">%1$d contrib.</string>
     <string name="screen_about">About</string>
     <string name="about_olx_maintainer_title">PixelPlayerOLX maintainers</string>
