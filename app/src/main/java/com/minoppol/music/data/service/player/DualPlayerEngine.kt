@@ -52,6 +52,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -237,7 +238,15 @@ class DualPlayerEngine @Inject constructor(
         private val LOCAL_MEDIA_SCHEMES = setOf("content", "file", "android.resource")
         private val REMOTE_MEDIA_SCHEMES = setOf("http", "https", "navidrome", "jellyfin", "lxmusic")
         private val CLOUD_PROXY_SCHEMES = setOf("navidrome", "jellyfin", "lxmusic")
+        private const val OFFLINE_LOOKUP_TIMEOUT_MS = 3_000L
+        private const val CLOUD_RESOLVE_TIMEOUT_MS = 10_000L
     }
+
+    private fun <T> runBlockingWithTimeout(timeoutMs: Long, block: suspend () -> T): T =
+        runBlocking {
+            withTimeoutOrNull(timeoutMs) { block() }
+                ?: throw IOException("Timed out after ${timeoutMs}ms")
+        }
 
     data class TransitionTarget(
         val mediaItem: MediaItem,
@@ -1096,7 +1105,9 @@ class DualPlayerEngine @Inject constructor(
                 if (scheme in CLOUD_PROXY_SCHEMES) {
                     val originalUri = uri.toString()
                     val offlineResult = try {
-                        runBlocking { cloudOfflineRepository.resolveLocalUriWithQuality(originalUri) }
+                        runBlockingWithTimeout(OFFLINE_LOOKUP_TIMEOUT_MS) {
+                            cloudOfflineRepository.resolveLocalUriWithQuality(originalUri)
+                        }
                     } catch (e: Exception) {
                         Timber.tag("DualPlayerEngine").w(e, "Offline copy lookup failed")
                         null
@@ -1126,7 +1137,11 @@ class DualPlayerEngine @Inject constructor(
                     // "Source error" toast.
                     Timber.tag("DualPlayerEngine").d("resolveDataSpec: cache miss for %s — resolving inline", scheme)
                     val inlineResolved = try {
-                        runBlocking { resolveCloudUri(uri) }
+                        runBlockingWithTimeout(CLOUD_RESOLVE_TIMEOUT_MS) {
+                            resolveCloudUri(uri)
+                        } ?: throw IOException("Timed out resolving $scheme stream")
+                    } catch (e: IOException) {
+                        throw e
                     } catch (e: Exception) {
                         // Keep loader failures on the IOException path: ExoPlayer treats
                         // unexpected RuntimeExceptions from a DataSource as fatal.
