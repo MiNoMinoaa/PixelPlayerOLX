@@ -129,6 +129,9 @@
 <string name="playlist_export_failed">導出失敗：%1$s</string>
 <string name="playlist_export_folder_display">Music/PixelPlayerOLX Exports</string>
 <string name="error_unknown">未知錯誤</string>
+<string name="credential_storage_degraded_title">凭据无法安全保存</string>
+<string name="credential_storage_degraded_body">设备当前无法正常使用加密凭据存储。部分登录状态仅保存在内存中，应用进程退出后可能丢失。请检查设备环境，并在恢复正常后重新登录。</string>
+<string name="credential_storage_degraded_affected">受影响平台：%1$s</string>
 
 
 
@@ -351,7 +354,8 @@
 <string name="lx_tab_playlist">歌單</string>
 <string name="lx_tab_search">搜尋</string>
 <string name="lx_title_source_scripts">音源腳本</string>
-<string name="lx_msg_script_intro">導入後可啟用,長按腳本可刪除,音源可啟用多個,首選腳本優先；首選給不到所選音質時，其餘啟用的備用腳本會嘗試補位更高音質，再與官方鏈路按音質擇優\n為了您的帳號安全，登入時請只使用手機驗證碼登入\n如果腳本需要，您在平台登入後cookie可能被注入音源腳本，請只使用可信腳本。</string>
+<string name="lx_msg_script_intro">導入後可啟用,長按腳本可刪除,音源可啟用多個,首選腳本優先；首選給不到所選音質時，其餘啟用的備用腳本會嘗試補位更高音質，再與官方鏈路按音質擇優\n為了您的帳號安全，登入時請只使用手機驗證碼登入</string>
+<string name="lx_msg_script_cookie_notice">如果腳本需要，您在平台登入後 cookie 可能被注入音源腳本，惡意/失控腳本可能永久佔用音源執行線程，請只使用可信腳本。</string>
 <string name="lx_title_current_source">當前音源</string>
 <string name="lx_msg_loading">載入中…</string>
 <string name="lx_msg_declared_sources">已聲明音源：%1$s</string>

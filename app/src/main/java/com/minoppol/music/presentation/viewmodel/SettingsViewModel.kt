@@ -1113,8 +1113,12 @@ class SettingsViewModel @Inject constructor(
                 title = context.getString(R.string.backup_progress_preparing_restore),
                 detail = context.getString(R.string.backup_progress_starting_task),
             )
-            val result = backupManager.restore(uri, plan) { progress ->
-                _dataTransferProgress.value = progress
+            val result = try {
+                backupManager.restore(uri, plan) { progress ->
+                    _dataTransferProgress.value = progress
+                }
+            } finally {
+                runCatching { backupManager.discardDecryptedBackup(uri) }
             }
             when (result) {
                 is RestoreResult.Success -> {

@@ -115,6 +115,7 @@ import androidx.compose.material.icons.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.UploadFile
+import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
@@ -1165,12 +1166,29 @@ fun LxMusicScreen(
                     }
                 }
                 AnimatedVisibility(visible = scriptIntroExpanded) {
-                    Text(
-                        text = stringResource(R.string.lx_msg_script_intro),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 6.dp),
-                    )
+                    Column {
+                        Text(
+                            text = stringResource(R.string.lx_msg_script_intro),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(vertical = 6.dp),
+                        )
+                        Row(verticalAlignment = Alignment.Top) {
+                            Icon(
+                                imageVector = Icons.Rounded.WarningAmber,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.lx_msg_script_cookie_notice),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                        Spacer(Modifier.height(6.dp))
+                    }
                 }
 
                 if (activeScriptName != null) {

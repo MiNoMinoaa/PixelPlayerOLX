@@ -9,6 +9,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.WorkManager
 import com.minoppol.music.data.database.ListenBrainzDao
 import com.minoppol.music.data.database.ListenBrainzPendingListenEntity
+import com.minoppol.music.data.security.EncryptedCredentialPrefsFactory
 import com.minoppol.music.data.worker.ScrobbleFlushWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -97,8 +98,8 @@ class ListenBrainzRepository @Inject constructor(
         try {
             createEncryptedPrefs()
         } catch (e2: Exception) {
-            Timber.e(e2, "$TAG: Encrypted prefs unavailable, falling back to plain")
-            context.getSharedPreferences("${PREFS_NAME}_plain", Context.MODE_PRIVATE)
+            Timber.e(e2, "$TAG: Encrypted prefs unavailable, using in-memory fallback")
+            EncryptedCredentialPrefsFactory.inMemory(PREFS_NAME)
         }
     }
 

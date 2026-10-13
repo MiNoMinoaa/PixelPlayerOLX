@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.minoppol.music.data.security.EncryptedCredentialPrefsFactory
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -167,8 +168,8 @@ class KugouCookieStore @Inject constructor(
         try {
             createEncryptedPrefs()
         } catch (e2: Exception) {
-            Timber.e(e2, "$TAG: EncryptedSharedPreferences still failing, falling back to plain prefs")
-            context.getSharedPreferences("${PREFS_NAME}_plain", Context.MODE_PRIVATE)
+            Timber.e(e2, "$TAG: EncryptedSharedPreferences still failing, using in-memory fallback")
+            EncryptedCredentialPrefsFactory.inMemory(PREFS_NAME)
         }
     }
 
