@@ -221,6 +221,11 @@ fun AccountsScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            if (uiState.degradedCredentialPlatforms.isNotEmpty()) {
+                item(key = "credential_storage_degraded") {
+                    CredentialStorageDegradedCard(platforms = uiState.degradedCredentialPlatforms)
+                }
+            }
             if (uiState.connectedAccounts.isNotEmpty()) {
                 item {
                     Text(
@@ -517,6 +522,43 @@ private fun ConnectedAccountCard(
                 Text(
                     text = if (account.isLoggingOut) loggingOut else logOut,
                     fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CredentialStorageDegradedCard(platforms: List<String>) {
+    Card(
+        shape = AbsoluteSmoothCornerShape(28.dp, 60),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer
+        ),
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.credential_storage_degraded_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = stringResource(R.string.credential_storage_degraded_body),
+                style = MaterialTheme.typography.bodyMedium
+            )
+            if (platforms.isNotEmpty()) {
+                Text(
+                    text = stringResource(
+                        R.string.credential_storage_degraded_affected,
+                        platforms.joinToString("、")
+                    ),
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
         }

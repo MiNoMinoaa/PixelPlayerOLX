@@ -45,9 +45,16 @@ class ScrobbleFlushWorker @AssistedInject constructor(
                     listenBrainzDao.deleteByIds(batch.map { it.id })
                 }
                 ListenBrainzSubmitResult.InvalidPayload -> {
-                    if (!dropInvalidListens(batch)) {
-                        listenBrainzDao.incrementAttempts(batch.map { it.id })
-                        return Result.retry()
+                    when (dropInvalidListens(batch)) {
+                        DropOutcome.Completed -> Unit
+                        DropOutcome.Paused -> {
+                            Timber.w("ListenBrainz token rejected mid-batch; pausing scrobble flush")
+                            return Result.success()
+                        }
+                        DropOutcome.Retry -> {
+                            listenBrainzDao.incrementAttempts(batch.map { it.id })
+                            return Result.retry()
+                        }
                     }
                 }
                 ListenBrainzSubmitResult.AuthFailed -> {
@@ -73,10 +80,10 @@ class ScrobbleFlushWorker @AssistedInject constructor(
 
     /**
      * A batch-level 400 does not identify the offending listen, so resubmit individually:
-     * valid rows submit and delete, invalid rows delete. Returns false when no progress was
-     * made (transient failure mid-drain), signalling the caller to retry the whole batch.
+     * valid rows submit and delete, invalid rows delete. Returns Retry when no progress was
+     * made (transient failure mid-drain), Paused on a rejected token, Completed otherwise.
      */
-    private suspend fun dropInvalidListens(batch: List<ListenBrainzPendingListenEntity>): Boolean {
+    private suspend fun dropInvalidListens(batch: List<ListenBrainzPendingListenEntity>): DropOutcome {
         var progressed = false
         for (listen in batch) {
             when (repository.submitListens(listOf(listen))) {
@@ -92,11 +99,22 @@ class ScrobbleFlushWorker @AssistedInject constructor(
                     listenBrainzDao.deleteByIds(listOf(listen.id))
                     progressed = true
                 }
-                ListenBrainzSubmitResult.AuthFailed,
-                is ListenBrainzSubmitResult.TransientError -> return progressed
+                ListenBrainzSubmitResult.AuthFailed -> {
+                    Timber.w("ListenBrainz token rejected mid-batch; pausing scrobble flush")
+                    return DropOutcome.Paused
+                }
+                is ListenBrainzSubmitResult.TransientError -> {
+                    return if (progressed) DropOutcome.Completed else DropOutcome.Retry
+                }
             }
         }
-        return true
+        return DropOutcome.Completed
+    }
+
+    private enum class DropOutcome {
+        Completed,
+        Paused,
+        Retry
     }
 
     companion object {

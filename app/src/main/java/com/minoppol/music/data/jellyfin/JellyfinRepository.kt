@@ -24,6 +24,7 @@ import com.minoppol.music.data.network.jellyfin.JellyfinApiService
 import com.minoppol.music.data.network.jellyfin.JellyfinResponseParser
 import com.minoppol.music.data.preferences.PlaylistPreferencesRepository
 import com.minoppol.music.data.preferences.UserPreferencesRepository
+import com.minoppol.music.data.security.EncryptedCredentialPrefsFactory
 import com.minoppol.music.data.stream.BulkSyncResult
 import com.minoppol.music.data.stream.CloudMusicUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -91,8 +92,8 @@ class JellyfinRepository @Inject constructor(
         try {
             createEncryptedPrefs()
         } catch (e2: Exception) {
-            Timber.e(e2, "$TAG: Encrypted prefs unavailable, falling back to plain")
-            context.getSharedPreferences("${PREFS_NAME}_plain", Context.MODE_PRIVATE)
+            Timber.e(e2, "$TAG: Encrypted prefs unavailable, using in-memory fallback")
+            EncryptedCredentialPrefsFactory.inMemory(PREFS_NAME)
         }
     }
 

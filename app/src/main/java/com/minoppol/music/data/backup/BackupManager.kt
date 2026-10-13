@@ -52,15 +52,22 @@ class BackupManager @Inject constructor(
      * Populated by [inspectBackup]; consumed and cleaned up by [restore] or
      * [discardDecryptedBackup]. App-private cache only.
      */
-    private val decryptedBackups = mutableMapOf<String, File>()
+    private val decryptedBackups = LinkedHashMap<String, DecryptedBackupHandle>()
+    private val tempCounter = java.util.concurrent.atomic.AtomicLong(0)
+
+    private class DecryptedBackupHandle(val file: File) {
+        private val refs = java.util.concurrent.atomic.AtomicInteger(1)
+
+        fun release() {
+            if (refs.decrementAndGet() <= 0) {
+                runCatching { file.delete() }
+            }
+        }
+    }
 
     private val decryptedDir: File
         get() = File(context.cacheDir, "backup_dec").apply { mkdirs() }
 
-    /**
-     * Exports selected modules to a .pxpl file at the given URI. With a
-     * [passphrase], the archive body is AES-256-GCM encrypted (see BackupCrypto).
-     */
     suspend fun export(
         uri: Uri,
         sections: Set<BackupSection>,
@@ -255,8 +262,8 @@ class BackupManager @Inject constructor(
      * user dismisses the restore plan of an encrypted backup.
      */
     fun discardDecryptedBackup(uri: Uri) {
-        val temp = synchronized(decryptedBackups) { decryptedBackups.remove(uri.toString()) }
-        temp?.let { runCatching { it.delete() } }
+        val handle = synchronized(decryptedBackups) { decryptedBackups.remove(uri.toString()) }
+        handle?.release()
     }
 
     /**
@@ -270,11 +277,10 @@ class BackupManager @Inject constructor(
 
         val key = uri.toString()
         synchronized(decryptedBackups) { decryptedBackups[key] }
-            ?.takeIf { it.exists() }
-            ?.let { return Uri.fromFile(it) }
+            ?.takeIf { it.file.exists() }
+            ?.let { return Uri.fromFile(it.file) }
         if (passphrase == null) throw BackupEncryptedException()
-
-        val temp = File(decryptedDir, "decrypted_${System.currentTimeMillis()}.pxpl")
+        val temp = File(decryptedDir, "decrypted_${System.currentTimeMillis()}_${tempCounter.incrementAndGet()}.pxpl")
         try {
             context.contentResolver.openInputStream(uri)?.use { raw ->
                 skipFully(raw, BackupFormatDetector.PXPL_MAGIC_SIZE)
@@ -293,12 +299,19 @@ class BackupManager @Inject constructor(
             throw e
         }
 
+        val superseded = mutableListOf<DecryptedBackupHandle>()
         synchronized(decryptedBackups) {
-            // Keep at most one decrypted backup around at a time.
-            decryptedBackups.values.forEach { stale -> runCatching { stale.delete() } }
-            decryptedBackups.clear()
-            decryptedBackups[key] = temp
+            val replaced = decryptedBackups.put(key, DecryptedBackupHandle(temp))
+            if (replaced != null && replaced.file.absolutePath != temp.absolutePath) {
+                superseded.add(replaced)
+            }
+            while (decryptedBackups.size > MAX_CACHED_DECRYPTIONS) {
+                val oldestKey = decryptedBackups.keys.firstOrNull { it != key } ?: break
+                val evicted = decryptedBackups.remove(oldestKey)
+                if (evicted != null && evicted.file.absolutePath != temp.absolutePath) superseded.add(evicted)
+            }
         }
+        superseded.forEach { stale -> stale.release() }
         return Uri.fromFile(temp)
     }
 
@@ -352,5 +365,9 @@ class BackupManager @Inject constructor(
                 section = section
             )
         )
+    }
+
+    private companion object {
+        const val MAX_CACHED_DECRYPTIONS = 2
     }
 }

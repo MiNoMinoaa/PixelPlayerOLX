@@ -48,10 +48,7 @@ class LxScriptEngine @Inject constructor(
 
     private val runtimes = ConcurrentHashMap<String, Runtime>()
 
-    // 每次调脚本带一个 requestKey，JS 回 response 时按 key 找到对应请求唤醒
     private val eventWaiters = ConcurrentHashMap<String, CompletableDeferred<JsonElement>>()
-
-    private val networkCalls = ConcurrentHashMap<String, Call>()
 
     private class Runtime(
         val meta: LxScriptMeta,
@@ -61,6 +58,7 @@ class LxScriptEngine @Inject constructor(
     ) {
         @Volatile var context: QuickJSContext? = null
         @Volatile var capabilities: LxScriptCapabilities = LxScriptCapabilities()
+        val networkCalls = ConcurrentHashMap<String, Call>()
         val initDeferred = CompletableDeferred<LxScriptCapabilities>()
     }
 
@@ -108,7 +106,7 @@ class LxScriptEngine @Inject constructor(
         }
         val capsResult: Result<LxScriptCapabilities> = runCatching {
             withTimeoutOrNull(15_000) { runtime.initDeferred.await() }
-                ?: LxScriptCapabilities()
+                ?: throw LxScriptInitTimeoutException(meta.name)
         }
         return capsResult.fold(
             onSuccess = { caps ->
@@ -118,6 +116,11 @@ class LxScriptEngine @Inject constructor(
             },
             onFailure = { e ->
                 if (e is CancellationException) throw e
+                Timber.e(e, "LxScriptEngine: script ${meta.name} never reported capabilities")
+                runtimes.remove(meta.assetPath)
+                cancelRuntimeNetworkCalls(runtime)
+                runCatching { runtime.context?.close() }
+                runtime.thread.quitSafely()
                 Result.failure(e)
             },
         )
@@ -126,9 +129,15 @@ class LxScriptEngine @Inject constructor(
     fun unloadScript(assetPath: String) {
         val runtime = runtimes.remove(assetPath) ?: return
         runtime.handler.post {
+            cancelRuntimeNetworkCalls(runtime)
             runCatching { runtime.context?.close() }
             runtime.thread.quitSafely()
         }
+    }
+
+    private fun cancelRuntimeNetworkCalls(runtime: Runtime) {
+        runtime.networkCalls.values.forEach { runCatching { it.cancel() } }
+        runtime.networkCalls.clear()
     }
 
     fun isLoaded(assetPath: String): Boolean = runtimes.containsKey(assetPath)
@@ -530,9 +539,9 @@ class LxScriptEngine @Inject constructor(
             "showUpdateAlert" -> {
                 val log = dataJson?.let { runCatching { JsonParser.parseString(it) }.getOrNull() }
                     ?.takeIf { it.isJsonObject }?.asJsonObject?.get("log")?.takeIf { it.isJsonPrimitive }?.asString
-                Timber.d("LxScriptEngine[${runtime.meta.name}]: update alert: $log")
+                Timber.d("LxScriptEngine[${runtime.meta.name}]: update alert: ${redactSensitive(log)}")
             }
-            "log" -> Timber.d("LxScriptEngine[${runtime.meta.name}]: $dataJson")
+            "log" -> Timber.d("LxScriptEngine[${runtime.meta.name}]: ${redactSensitive(dataJson)}")
             else -> Timber.d("LxScriptEngine[${runtime.meta.name}]: unknown action $action")
         }
     }
@@ -540,6 +549,7 @@ class LxScriptEngine @Inject constructor(
     // 脚本支持哪些音源、每个音源有哪些动作和音质
     private fun handleInitEvent(runtime: Runtime, dataJson: String?) {
         if (runtime.capabilities.sources.isNotEmpty()) return
+        if (runtime.initDeferred.isCompleted) return
         val info = dataJson
             ?.let { runCatching { JsonParser.parseString(it) }.getOrNull() }
             ?.takeIf { it.isJsonObject }?.asJsonObject
@@ -607,24 +617,35 @@ class LxScriptEngine @Inject constructor(
             builder.method(method, null)
         }
         val binary = options?.get("binary")?.takeIf { it.isJsonPrimitive }?.asBoolean == true
-        val timeoutMs = options?.get("timeout")?.takeIf { it.isJsonPrimitive }?.asLong
+        val effectiveTimeoutMs = options?.get("timeout")?.takeIf { it.isJsonPrimitive }
+            ?.let { runCatching { it.asLong }.getOrNull() }
+            ?.takeIf { it > 0L }
+            ?: DEFAULT_SCRIPT_REQUEST_TIMEOUT_MS
+        val okHttpClient = if (effectiveTimeoutMs == DEFAULT_SCRIPT_REQUEST_TIMEOUT_MS) {
+            this.okHttpClient
+        } else {
+            this.okHttpClient.newBuilder()
+                .callTimeout(effectiveTimeoutMs, java.util.concurrent.TimeUnit.MILLISECONDS)
+                .build()
+        }
 
         val request = builder.build()
         val call = okHttpClient.newCall(request)
-        networkCalls[requestKey] = call
+        runtime.networkCalls[requestKey] = call
         try {
             call.enqueue(object : okhttp3.Callback {
                 override fun onFailure(call: Call, e: java.io.IOException) {
-                    networkCalls.remove(requestKey)
+                    runtime.networkCalls.remove(requestKey)
                     val response = JsonObject().apply {
                         addProperty("requestKey", requestKey)
                         add("error", JsonParser.parseString(gson.toJson(e.message ?: e.javaClass.simpleName)))
                     }
                     runtime.handler.post { callIntoJs(runtime, "response", response) }
+                    Timber.d("LxScriptEngine[${runtime.meta.name}]: request failed url=${redactUrl(url)}")
                 }
 
                 override fun onResponse(call: Call, response: Response) {
-                    networkCalls.remove(requestKey)
+                    runtime.networkCalls.remove(requestKey)
                     val bodyElement = response.body?.let { body ->
                         if (binary) {
                             val bytes = body.bytes()
@@ -652,12 +673,13 @@ class LxScriptEngine @Inject constructor(
                 }
             })
         } catch (e: Exception) {
-            networkCalls.remove(requestKey)
+            runtime.networkCalls.remove(requestKey)
             val response = JsonObject().apply {
                 addProperty("requestKey", requestKey)
                 add("error", JsonParser.parseString(gson.toJson(e.message ?: "request failed")))
             }
             callIntoJs(runtime, "response", response)
+            Timber.d("LxScriptEngine[${runtime.meta.name}]: request build failed url=${redactUrl(url)}")
         }
     }
 
@@ -667,7 +689,9 @@ class LxScriptEngine @Inject constructor(
 
     private fun handleCancelRequest(dataJson: String?) {
         val requestKey = dataJson?.trim('"') ?: return
-        networkCalls.remove(requestKey)?.cancel()
+        runtimes.values.forEach { runtime ->
+            runtime.networkCalls.remove(requestKey)?.cancel()
+        }
     }
 
     private fun handleEventResponse(dataJson: String?) {
@@ -717,7 +741,7 @@ class LxScriptEngine @Inject constructor(
         val headerMatch = Regex("^/\\*!(?:.|\\n)+?\\*/").find(raw)
         val header = headerMatch?.value
         return when {
-            header == null -> "/!*!\n$line\n */\n$raw"
+            header == null -> "/*!\n$line\n */\n$raw"
             header.lines().any { it.contains(marker) } ->
                 header.lines().joinToString("\n") {
                     if (it.contains(marker)) line else it
@@ -750,14 +774,46 @@ class LxScriptEngine @Inject constructor(
     private fun decodeB64(s: String): ByteArray = android.util.Base64.decode(s, android.util.Base64.NO_WRAP)
 
     private class LxConsole(private val name: String) : QuickJSContext.Console {
-        override fun log(message: String) { Timber.d("JS[$name] log: $message") }
-        override fun info(message: String) { Timber.d("JS[$name] info: $message") }
-        override fun warn(message: String) { Timber.w("JS[$name] warn: $message") }
-        override fun error(message: String) { Timber.e("JS[$name] error: $message") }
+        override fun log(message: String) { Timber.d("JS[$name] log: ${redactSensitive(message)}") }
+        override fun info(message: String) { Timber.d("JS[$name] info: ${redactSensitive(message)}") }
+        override fun warn(message: String) { Timber.w("JS[$name] warn: ${redactSensitive(message)}") }
+        override fun error(message: String) { Timber.e("JS[$name] error: ${redactSensitive(message)}") }
     }
 
     private companion object {
         const val PRELOAD_ASSET = "lxmusic/user-api-preload.js"
         const val EVENT_TIMEOUT_MS = 30_000L
+        const val DEFAULT_SCRIPT_REQUEST_TIMEOUT_MS = 30_000L
+        const val REDACTED = "[redacted]"
+
+        val cookieMarkers = listOf(
+            "@wy_cookie", "@tx_cookie", "@kg_cookie", "@kw_cookie",
+            "MUSIC_U", "__remember_me", "os", "NMTID", "WEVNSM",
+        )
+
+        fun redactSensitive(text: String?): String {
+            if (text.isNullOrEmpty()) return "null"
+            var out: String = text
+            for (marker in cookieMarkers) {
+                out = Regex(Regex.escape(marker) + "[=:\\s]+\\S+").replace(out) { "${marker}=$REDACTED" }
+            }
+            return out
+        }
+
+        fun redactUrl(url: String): String {
+            val schemeEnd = url.indexOf("://")
+            if (schemeEnd < 0) return url
+            val pathStart = url.indexOf('/', schemeEnd + 3)
+            if (pathStart < 0) return url.substring(0, schemeEnd + 3) + REDACTED
+            val queryStart = url.indexOf('?', pathStart)
+            return if (queryStart < 0) {
+                url.substring(0, pathStart) + REDACTED
+            } else {
+                url.substring(0, pathStart) + REDACTED + url.substring(queryStart)
+            }
+        }
     }
 }
+
+class LxScriptInitTimeoutException(scriptName: String) :
+    IllegalStateException("Script $scriptName did not report capabilities in time")

@@ -8,6 +8,8 @@ import androidx.glance.GlanceTheme
 import androidx.glance.color.ColorProvider
 import androidx.glance.unit.ColorProvider
 import com.minoppol.music.data.model.PlayerInfo
+import java.security.MessageDigest
+import java.util.Locale
 
 object AlbumArtBitmapCache {
     private const val CACHE_SIZE_BYTES = 4 * 1024 * 1024
@@ -26,7 +28,8 @@ object AlbumArtBitmapCache {
     }
 
     fun getKey(byteArray: ByteArray): String {
-        return byteArray.contentHashCode().toString()
+        val digest = MessageDigest.getInstance("SHA-256").digest(byteArray)
+        return digest.joinToString("") { String.format(Locale.US, "%02x", it) }
     }
 }
 

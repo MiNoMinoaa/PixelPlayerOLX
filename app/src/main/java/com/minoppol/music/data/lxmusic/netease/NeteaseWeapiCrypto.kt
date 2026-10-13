@@ -46,8 +46,8 @@ object NeteaseWeapiCrypto {
     }
 
     private fun generateSecretKey(): String {
-        val digits = "0123456789"
-        return (1..16).map { digits[secureRandom.nextInt(digits.length)] }.joinToString("")
+        val alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
+        return (1..16).map { alphabet[secureRandom.nextInt(alphabet.length)] }.joinToString("")
     }
 
     private fun aesCbcEncryptBase64(data: ByteArray, key: String, iv: String): String {

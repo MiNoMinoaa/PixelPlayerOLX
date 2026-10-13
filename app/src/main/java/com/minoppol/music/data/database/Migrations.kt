@@ -202,7 +202,7 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
 
 val MIGRATION_6_7 = object : Migration(6, 7) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("ALTER TABLE `songs` ADD COLUMN `lx_hash` TEXT")
+        db.addColumnIfMissing("songs", "lx_hash", "`lx_hash` TEXT")
     }
 }
 
@@ -221,13 +221,13 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
 
 val MIGRATION_8_9 = object : Migration(8, 9) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("ALTER TABLE `offline_tracks` ADD COLUMN `quality` TEXT")
-        db.execSQL("ALTER TABLE `offline_tracks` ADD COLUMN `script_path` TEXT")
+        db.addColumnIfMissing("offline_tracks", "quality", "`quality` TEXT")
+        db.addColumnIfMissing("offline_tracks", "script_path", "`script_path` TEXT")
     }
 }
 
 val MIGRATION_9_10 = object : Migration(9, 10) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("ALTER TABLE `songs` ADD COLUMN `lx_extra_fields_json` TEXT")
+        db.addColumnIfMissing("songs", "lx_extra_fields_json", "`lx_extra_fields_json` TEXT")
     }
 }

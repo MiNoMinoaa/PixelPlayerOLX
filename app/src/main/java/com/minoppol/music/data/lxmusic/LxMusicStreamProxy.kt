@@ -41,10 +41,9 @@ class LxMusicStreamProxy @Inject constructor(
     )
 
     private val metadataLock = Any()
-    // 代理 URL 里只有 source/songmid，歌名、歌手这些从此处缓存补回来取链
     private val metadataCache = object : LinkedHashMap<String, SongMetadata>(64, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, SongMetadata>?): Boolean =
-            size > MAX_METADATA_ENTRIES
+            size > MAX_CACHED_METADATA_ENTRIES
     }
     private val cacheFile: File by lazy {
         File(context.filesDir, "lxmusic_metadata_cache.json")
@@ -84,7 +83,12 @@ class LxMusicStreamProxy @Inject constructor(
             if (!savePending.compareAndSet(false, true)) return@launch
             delay(SAVE_DEBOUNCE_MS)
             savePending.set(false)
-            persistCache()
+            if (metadataCache.isEmpty()) {
+                persistCache()
+            } else {
+                delay(SAVE_DEBOUNCE_MS)
+                persistCache()
+            }
         }
     }
 
@@ -108,7 +112,12 @@ class LxMusicStreamProxy @Inject constructor(
                 }
                 root.add(key, obj)
             }
-            cacheFile.writeText(root.toString(), Charsets.UTF_8)
+            val tempFile = File(cacheFile.parentFile, "${cacheFile.name}.tmp")
+            tempFile.writeText(root.toString(), Charsets.UTF_8)
+            if (!tempFile.renameTo(cacheFile)) {
+                cacheFile.writeText(root.toString(), Charsets.UTF_8)
+                runCatching { tempFile.delete() }
+            }
         }.onFailure { Timber.w(it, "LxMusicStreamProxy: failed to save cache") }
     }
 
@@ -299,7 +308,7 @@ class LxMusicStreamProxy @Inject constructor(
     }
 
     private companion object {
-        const val MAX_METADATA_ENTRIES = 800
+        const val MAX_CACHED_METADATA_ENTRIES = 800
         const val SAVE_DEBOUNCE_MS = 800L
     }
 }

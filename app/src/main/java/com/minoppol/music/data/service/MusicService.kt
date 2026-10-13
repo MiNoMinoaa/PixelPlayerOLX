@@ -242,6 +242,9 @@ class MusicService : MediaSessionService() {
     private var notificationLyricsLoadJob: Job? = null
     private var notificationLyricsInFlightId: String? = null
     private var notificationLyricsRetryCount = 0
+    private var notificationLyricsProbeAtMs = 0L
+    private var notificationLyricsProbeCount = 0
+    private var notificationLyricsProbeJob: Job? = null
 
     private data class NotificationLyricsData(
         val mediaId: String,
@@ -289,6 +292,9 @@ class MusicService : MediaSessionService() {
         private const val MEDIA_SESSION_BUTTON_DEBOUNCE_MS = 250L
         private const val DEFERRED_SERVICE_STARTUP_WORK_DELAY_MS = 1_000L
         private const val PAUSED_RESTORE_PREPARE_QUEUE_LIMIT = 50
+        private const val NOTIFICATION_LYRICS_TICK_MS = 500L
+        private const val NOTIFICATION_LYRICS_PROBE_INTERVAL_MS = 2_000L
+        private const val MAX_NOTIFICATION_LYRICS_PROBES = 30
         private val pendingMediaButtonForegroundStarts = AtomicInteger(0)
 
         private const val APP_PACKAGE_PREFIX = "com.minoppol.music"
@@ -808,7 +814,7 @@ class MusicService : MediaSessionService() {
         }
         serviceScope.launch {
             while (true) {
-                delay(500L)
+                delay(NOTIFICATION_LYRICS_TICK_MS)
                 updateNotificationLyrics()
             }
         }
@@ -823,18 +829,16 @@ class MusicService : MediaSessionService() {
             musicRepository.getFavoriteSongIdsFlow().collect { ids ->
                 Timber.tag("MusicService")
                     .d("favoriteSongIdsFlow(Room) collected. New ids size: ${ids.size}")
-                val oldIds = favoriteSongIds
-                favoriteSongIds = ids
+                if (favoriteSongIds == ids) return@collect
                 val currentSongId = mediaSession?.player?.currentMediaItem?.mediaId
-                if (currentSongId != null) {
-                    val wasFavorite = oldIds.contains(currentSongId)
-                    val isFavorite = ids.contains(currentSongId)
-                    if (wasFavorite != isFavorite) {
-                        Timber.tag("MusicService")
-                            .d("Favorite status changed for current song. Updating notification.")
-                        mediaSession?.let { refreshMediaSessionUi(it) }
-                        requestWidgetFullUpdate(force = true)
-                    }
+                val changedCurrentSong = currentSongId != null &&
+                    favoriteSongIds.contains(currentSongId) != ids.contains(currentSongId)
+                favoriteSongIds = ids
+                if (changedCurrentSong) {
+                    Timber.tag("MusicService")
+                        .d("Favorite status changed for current song. Updating notification.")
+                    mediaSession?.let { refreshMediaSessionUi(it) }
+                    requestWidgetFullUpdate(force = true)
                 }
             }
         }
@@ -996,6 +1000,21 @@ class MusicService : MediaSessionService() {
             loadNotificationLyrics(mediaId)
         }
 
+        if (!force &&
+            notificationLyricsEnabled &&
+            mediaId != null &&
+            notificationLyricsData != null &&
+            notificationLyricsData!!.mediaId == mediaId &&
+            notificationLyricsData!!.lines.isEmpty() &&
+            notificationLyricsInFlightId == null &&
+            notificationLyricsProbeCount < MAX_NOTIFICATION_LYRICS_PROBES &&
+            SystemClock.elapsedRealtime() - notificationLyricsProbeAtMs >= NOTIFICATION_LYRICS_PROBE_INTERVAL_MS
+        ) {
+            notificationLyricsProbeAtMs = SystemClock.elapsedRealtime()
+            notificationLyricsProbeCount++
+            probeNotificationLyricsCache(mediaId)
+        }
+
         val lyricsUsable = notificationLyricsEnabled &&
             mediaId != null &&
             data != null &&
@@ -1067,6 +1086,19 @@ class MusicService : MediaSessionService() {
             if (notificationLyricsInFlightId == mediaId) {
                 notificationLyricsInFlightId = null
             }
+        }
+    }
+
+    private fun probeNotificationLyricsCache(mediaId: String) {
+        notificationLyricsProbeJob?.cancel()
+        notificationLyricsProbeJob = serviceScope.launch {
+            val cached = runCatching { musicRepository.getCachedLyrics(mediaId) }.getOrNull()
+            val synced = cached?.synced
+            if (synced.isNullOrEmpty()) return@launch
+            val current = notificationLyricsData
+            if (current == null || current.mediaId != mediaId || current.lines.isNotEmpty()) return@launch
+            notificationLyricsData = NotificationLyricsData(mediaId, synced)
+            updateNotificationLyrics(force = true)
         }
     }
 
@@ -1212,11 +1244,7 @@ class MusicService : MediaSessionService() {
                     if (!songId.isNullOrBlank()) {
                         serviceScope.launch {
                             val updatedFavorite = musicRepository.toggleFavoriteStatus(songId)
-                            favoriteSongIds = if (updatedFavorite) {
-                                favoriteSongIds + songId
-                            } else {
-                                favoriteSongIds - songId
-                            }
+                            favoriteSongIds = musicRepository.getFavoriteSongIdsFlow().first()
                             mediaSession?.let { refreshMediaSessionUi(it) }
                             requestWidgetFullUpdate(force = true)
                         }
@@ -1554,6 +1582,10 @@ class MusicService : MediaSessionService() {
             notificationLyricsProvider?.invalidateCache()
             notificationLyricsData = null
             notificationLyricsRetryCount = 0
+            notificationLyricsProbeCount = 0
+            notificationLyricsProbeAtMs = 0L
+            notificationLyricsProbeJob?.cancel()
+            notificationLyricsProbeJob = null
             mediaSession?.let { refreshMediaSessionUi(it) }
             schedulePlaybackSnapshotPersist()
             refreshCurrentSongForLike()
@@ -2468,15 +2500,15 @@ class MusicService : MediaSessionService() {
             } catch (e: ForegroundServiceStartNotAllowedException) {
                 Timber.tag(TAG).w(
                     e,
-                    "startForegroundService not allowed; ignoring redundant self-start request"
+                    "startForegroundService not allowed; self-start request will not run"
                 )
-                serviceIntent?.component ?: ComponentName(this, javaClass)
+                null
             } catch (e: BackgroundServiceStartNotAllowedException) {
                 Timber.tag(TAG).w(
                     e,
-                    "startForegroundService blocked (app in background); ignoring self-start request"
+                    "startForegroundService blocked (app in background); self-start request will not run"
                 )
-                serviceIntent?.component ?: ComponentName(this, javaClass)
+                null
             }
         }
         return super.startForegroundService(serviceIntent)

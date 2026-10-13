@@ -8,6 +8,7 @@ import com.minoppol.music.data.listenbrainz.ListenBrainzProfileStats
 import com.minoppol.music.data.listenbrainz.ListenBrainzRepository
 import com.minoppol.music.data.navidrome.NavidromeRepository
 import com.minoppol.music.data.preferences.ListenBrainzPreferencesRepository
+import com.minoppol.music.data.security.EncryptedCredentialPrefsFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,6 +31,16 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 
 private const val PROFILE_STATS_POLL_MS = 20_000L
+
+private val CREDENTIAL_PREF_LABELS = mapOf(
+    "netease_prefs" to "网易云音乐",
+    "tencent_prefs" to "QQ音乐",
+    "kugou_prefs" to "酷狗音乐",
+    "kuwo_prefs" to "酷我音乐",
+    "jellyfin_prefs" to "Jellyfin",
+    "navidrome_prefs" to "Subsonic",
+    "listenbrainz_prefs" to "ListenBrainz",
+)
 
 enum class ExternalServiceAccount {
     NAVIDROME,
@@ -76,7 +87,8 @@ sealed interface ListenBrainzConnectState {
 data class AccountsUiState(
     val connectedAccounts: List<ExternalAccountUiModel> = emptyList(),
     val disconnectedServices: ImmutableList<ExternalServiceAccount> = persistentListOf(),
-    val listenBrainz: ListenBrainzUiModel? = null
+    val listenBrainz: ListenBrainzUiModel? = null,
+    val degradedCredentialPlatforms: List<String> = emptyList()
 )
 
 @HiltViewModel
@@ -173,8 +185,9 @@ class AccountsViewModel @Inject constructor(
             )
         ) { it.toList() },
         listenBrainzStateFlow,
-        loggingOutServices
-    ) { states, listenBrainz, activeLogouts ->
+        loggingOutServices,
+        EncryptedCredentialPrefsFactory.degraded
+    ) { states, listenBrainz, activeLogouts, degradedKeys ->
         val (navidromeConnected, navidromePlaylistCount) = states[0]
         val (jellyfinConnected, jellyfinPlaylistCount) = states[1]
 
@@ -245,7 +258,10 @@ class AccountsViewModel @Inject constructor(
         AccountsUiState(
             connectedAccounts = connectedAccounts,
             disconnectedServices = disconnectedServices.toImmutableList(),
-            listenBrainz = listenBrainz
+            listenBrainz = listenBrainz,
+            degradedCredentialPlatforms = EncryptedCredentialPrefsFactory.degraded.value
+                .mapNotNull { CREDENTIAL_PREF_LABELS[it] }
+                .sorted()
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AccountsUiState())
 
