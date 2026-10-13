@@ -7,7 +7,7 @@ hs_err_pid*.log
 **.jks
 
 .idea/
-
+*.iml
 .gradle
 .gradle-local/
 .gradle-temp/
@@ -25,6 +25,8 @@ keystore.properties
 /.idea/planningMode.xml
 
 /build
+build/
+*/build/
 /apk-out/
 /captures
 .externalNativeBuild
@@ -47,5 +49,5 @@ markdown.xml
 
 graphify-out/
 
-# Route C: local-only private write implementations (never publish)
+# local-only private write implementations (never publish)
 /app/src/main/java/com/minoppol/music/data/lxmusic/LxPrivateAccountExtension.kt
