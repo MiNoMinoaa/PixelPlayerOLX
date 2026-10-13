@@ -59,6 +59,14 @@ class AppUpdateChecker @Inject constructor(
         }
         if (info == null) {
             try {
+                info = fromReleaseApi(MIRROR_GHPROXY_API_URL)
+            } catch (e: Exception) {
+                Timber.d(e, "AppUpdateChecker: mirror release api failed")
+                if (lastError == null) lastError = e
+            }
+        }
+        if (info == null) {
+            try {
                 info = fromRedirect(RELEASE_DIRECT_URL)
             } catch (e: Exception) {
                 Timber.d(e, "AppUpdateChecker: direct redirect failed")
@@ -90,9 +98,9 @@ class AppUpdateChecker @Inject constructor(
         }
     }
 
-    private fun fromReleaseApi(): AppUpdateInfo {
+    private fun fromReleaseApi(url: String = RELEASE_API_URL): AppUpdateInfo {
         val request = Request.Builder()
-            .url(RELEASE_API_URL)
+            .url(url)
             .header("Accept", "application/vnd.github+json")
             .build()
         return okHttpClient.newCall(request).execute().use { response ->
@@ -157,6 +165,7 @@ class AppUpdateChecker @Inject constructor(
         const val PREFS_NAME = "app_update_prefs"
         const val KEY_IGNORED_VERSION = "ignored_version"
         const val RELEASE_API_URL = "https://api.github.com/repos/MiNoMinoaa/PixelPlayerOLX/releases/latest"
+        const val MIRROR_GHPROXY_API_URL = "https://gh-proxy.com/https://api.github.com/repos/MiNoMinoaa/PixelPlayerOLX/releases/latest"
         const val RELEASE_DIRECT_URL = "https://github.com/MiNoMinoaa/PixelPlayerOLX/releases/latest"
         const val MIRROR_GHFAST_URL = "https://ghfast.top/https://github.com/MiNoMinoaa/PixelPlayerOLX/releases/latest"
         const val MIRROR_GHPROXY_URL = "https://gh-proxy.com/https://github.com/MiNoMinoaa/PixelPlayerOLX/releases/latest"

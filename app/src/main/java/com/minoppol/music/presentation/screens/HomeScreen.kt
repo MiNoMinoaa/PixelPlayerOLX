@@ -614,9 +614,10 @@ fun HomeScreen(
                                 }
                             )
                             UpdateDialogButton(
-                                label = stringResource(R.string.update_available_go_download),
+                                label = null,
                                 icon = Icons.Rounded.Download,
                                 selected = true,
+                                contentDescription = stringResource(R.string.update_available_go_download),
                                 onClick = {
                                     showUpdateDialog = false
                                     appUpdateViewModel.dismissUpdate()
@@ -939,11 +940,12 @@ private fun rememberYourMixTitleStyle(): TextStyle {
 
 @Composable
 private fun UpdateDialogButton(
-    label: String,
+    label: String?,
     icon: ImageVector,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    contentDescription: String? = null,
 ) {
     Surface(
         onClick = onClick,
@@ -955,32 +957,37 @@ private fun UpdateDialogButton(
         modifier = modifier,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+            modifier = Modifier.padding(
+                horizontal = if (label == null) 10.dp else 8.dp,
+                vertical = 8.dp,
+            ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
         ) {
             Icon(
                 icon,
-                contentDescription = null,
+                contentDescription = contentDescription,
                 modifier = Modifier.size(18.dp),
                 tint = if (selected)
                     MaterialTheme.colorScheme.onPrimary
                 else
                     MaterialTheme.colorScheme.onSecondaryContainer,
             )
-            Spacer(Modifier.width(5.dp))
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelLarge,
-                color = if (selected)
-                    MaterialTheme.colorScheme.onPrimary
-                else
-                    MaterialTheme.colorScheme.onSecondaryContainer,
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                softWrap = false,
-                overflow = TextOverflow.Clip,
-            )
+            if (label != null) {
+                Spacer(Modifier.width(5.dp))
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (selected)
+                        MaterialTheme.colorScheme.onPrimary
+                    else
+                        MaterialTheme.colorScheme.onSecondaryContainer,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Clip,
+                )
+            }
         }
     }
 }
