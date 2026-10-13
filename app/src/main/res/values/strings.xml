@@ -1,4 +1,4 @@
-﻿<resources xmlns:tools="http://schemas.android.com/tools">
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">PixelPlayerOLX</string>
     <string name="app_name_change_title">App Name Change</string>
     <string name="app_name_change_message">This app is now PixelPlayerOLX. Keep playing!</string>
@@ -129,6 +129,9 @@
     <string name="playlist_export_failed">Export failed: %1$s</string>
     <string name="playlist_export_folder_display">Music/PixelPlayerOLX Exports</string>
     <string name="error_unknown">Unknown error</string>
+    <string name="credential_storage_degraded_title">Credentials cannot be saved securely</string>
+    <string name="credential_storage_degraded_body">This device cannot use the encrypted credential store. Some sign-in states are kept in memory only and may be lost when the app process exits. Check your device environment and sign in again once it is working normally.</string>
+    <string name="credential_storage_degraded_affected">Affected platforms: %1$s</string>
 
 
 
@@ -393,7 +396,8 @@
     <string name="lx_tab_playlist">Playlists</string>
     <string name="lx_tab_search">Search</string>
     <string name="lx_title_source_scripts">Source Scripts</string>
-    <string name="lx_msg_script_intro">Once imported, scripts can be activated. Long-press to delete. Multiple sources can be enabled; the preferred script takes priority. If it can\'t provide the chosen quality, other enabled backup scripts try to fill a higher quality, then compete with the official pipeline by quality.\nFor your account safety, only use SMS verification code to log in.\nIf a script requires it, your platform cookie may be injected into the source script after login. Please use only trusted scripts.</string>
+    <string name="lx_msg_script_intro">Once imported, scripts can be activated. Long-press to delete. Multiple sources can be enabled; the preferred script takes priority. If it can\'t provide the chosen quality, other enabled backup scripts try to fill a higher quality, then compete with the official pipeline by quality.\nFor your account safety, only use SMS verification code to log in.</string>
+    <string name="lx_msg_script_cookie_notice">If a script needs it, your platform cookie may be injected into the source script after you log in. A malicious or runaway script may occupy the source execution thread permanently. Please only use trusted scripts.</string>
     <string name="lx_title_current_source">Current source</string>
     <string name="lx_msg_loading">Loading…</string>
     <string name="lx_msg_declared_sources">Declared sources: %1$s</string>

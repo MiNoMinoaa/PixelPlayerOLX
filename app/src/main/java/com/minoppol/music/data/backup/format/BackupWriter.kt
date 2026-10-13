@@ -7,9 +7,12 @@ import com.minoppol.music.data.backup.model.BackupManifest
 import com.minoppol.music.data.backup.model.BackupModuleInfo
 import com.minoppol.music.di.BackupGson
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.security.MessageDigest
+import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import javax.inject.Inject
@@ -27,51 +30,79 @@ class BackupWriter @Inject constructor(
         onProgress: (current: Int, total: Int) -> Unit = { _, _ -> },
         passphrase: String? = null
     ): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
-            val totalSteps = modulePayloads.size + 1
-            var currentStep = 0
+        val staged = File(context.cacheDir, "backup_stage_${stagingCounter.incrementAndGet()}.pxpl")
+        try {
+            stageArchive(staged, manifest, modulePayloads, onProgress, passphrase)
+            publish(staged, uri)
+            Result.success(Unit)
+        } catch (cancellation: CancellationException) {
+            runCatching { staged.delete() }
+            throw cancellation
+        } catch (failure: Throwable) {
+            runCatching { staged.delete() }
+            Result.failure(failure)
+        } finally {
+            runCatching { staged.delete() }
+        }
+    }
 
-            val modulesInfo = mutableMapOf<String, BackupModuleInfo>()
-            val payloadBytes = mutableMapOf<String, ByteArray>()
+    private fun stageArchive(
+        target: File,
+        manifest: BackupManifest,
+        modulePayloads: Map<String, String>,
+        onProgress: (current: Int, total: Int) -> Unit,
+        passphrase: String?
+    ) {
+        val totalSteps = modulePayloads.size + 1
+        var currentStep = 0
 
-            modulePayloads.forEach { (key, jsonPayload) ->
-                val bytes = jsonPayload.toByteArray(Charsets.UTF_8)
-                payloadBytes[key] = bytes
-                modulesInfo[key] = BackupModuleInfo(
-                    checksum = "sha256:${sha256(bytes)}",
-                    entryCount = countJsonArrayEntries(jsonPayload),
-                    sizeBytes = bytes.size.toLong()
-                )
+        val modulesInfo = mutableMapOf<String, BackupModuleInfo>()
+        val payloadBytes = mutableMapOf<String, ByteArray>()
+
+        modulePayloads.forEach { (key, jsonPayload) ->
+            val bytes = jsonPayload.toByteArray(Charsets.UTF_8)
+            payloadBytes[key] = bytes
+            modulesInfo[key] = BackupModuleInfo(
+                checksum = "sha256:${sha256(bytes)}",
+                entryCount = countJsonArrayEntries(jsonPayload),
+                sizeBytes = bytes.size.toLong()
+            )
+        }
+
+        val finalManifest = manifest.copy(modules = modulesInfo)
+        val manifestJson = gson.toJson(finalManifest)
+
+        target.outputStream().buffered().use { rawOutput ->
+            rawOutput.write(BackupFormatDetector.PXPL_MAGIC)
+
+            val archiveOutput = if (passphrase != null) {
+                BackupCrypto.encryptingStream(rawOutput, passphrase)
+            } else {
+                rawOutput
             }
 
-            val finalManifest = manifest.copy(modules = modulesInfo)
-            val manifestJson = gson.toJson(finalManifest)
+            ZipOutputStream(archiveOutput).use { zip ->
+                zip.putNextEntry(ZipEntry(BackupManifest.MANIFEST_FILENAME))
+                zip.write(manifestJson.toByteArray(Charsets.UTF_8))
+                zip.closeEntry()
+                onProgress(++currentStep, totalSteps)
 
-            context.contentResolver.openOutputStream(uri)?.use { rawOutput ->
-                rawOutput.write(BackupFormatDetector.PXPL_MAGIC)
-
-                // With a passphrase, everything after the magic is the
-                // encrypted container (header + AES-GCM ciphertext of the ZIP).
-                val archiveOutput = if (passphrase != null) {
-                    BackupCrypto.encryptingStream(rawOutput, passphrase)
-                } else {
-                    rawOutput
-                }
-
-                ZipOutputStream(archiveOutput).use { zip ->
-                    zip.putNextEntry(ZipEntry(BackupManifest.MANIFEST_FILENAME))
-                    zip.write(manifestJson.toByteArray(Charsets.UTF_8))
+                payloadBytes.forEach { (key, bytes) ->
+                    zip.putNextEntry(ZipEntry("$key.json"))
+                    zip.write(bytes)
                     zip.closeEntry()
                     onProgress(++currentStep, totalSteps)
-
-                    payloadBytes.forEach { (key, bytes) ->
-                        zip.putNextEntry(ZipEntry("$key.json"))
-                        zip.write(bytes)
-                        zip.closeEntry()
-                        onProgress(++currentStep, totalSteps)
-                    }
                 }
-            } ?: throw IllegalStateException("Unable to open output stream for backup")
+            }
+        }
+    }
+
+    private fun publish(staged: File, uri: Uri) {
+        val output = context.contentResolver.openOutputStream(uri)
+            ?: throw IllegalStateException("Unable to open output stream for backup")
+        output.use { destination ->
+            staged.inputStream().buffered().use { source -> source.copyTo(destination) }
+            destination.flush()
         }
     }
 
@@ -91,5 +122,9 @@ class BackupWriter @Inject constructor(
         } catch (_: Exception) {
             0
         }
+    }
+
+    private companion object {
+        val stagingCounter = AtomicLong(0)
     }
 }

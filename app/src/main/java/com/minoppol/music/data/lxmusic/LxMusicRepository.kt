@@ -199,7 +199,10 @@ class LxMusicRepository @Inject constructor(
     @Volatile
     private var neteaseLikedListLoadingUid: String? = null
 
+    @Volatile
     private var preferredScriptPath: String? = null
+
+    @Volatile
     private var disabledPaths: Set<String> = emptySet()
 
     fun setPreferredScript(path: String?) {
