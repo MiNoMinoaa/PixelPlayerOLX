@@ -46,6 +46,11 @@ internal fun sanitizeNavigationBarBottomInset(systemNavBarInset: Dp): Dp {
     return systemNavBarInset.coerceIn(0.dp, MaxNavigationBarBottomInset)
 }
 
+internal fun isUsefulBottomInset(systemNavBarInset: Dp): Boolean = systemNavBarInset >= 8.dp
+
+internal fun fallbackFloatingBottomInset(containerHeight: Dp): Dp =
+    (containerHeight * 0.015f).coerceIn(8.dp, 16.dp)
+
 internal fun calculatePlayerSheetCollapsedTargetY(
     containerHeightPx: Float,
     collapsedContentHeightPx: Float,
@@ -72,14 +77,7 @@ internal fun resolveNavBarSurfaceHeight(
     navBarStyle: String,
     systemNavBarInset: Dp,
     compactMode: Boolean
-): Dp {
-    val contentHeight = resolveNavBarContentHeight(compactMode)
-    return if (navBarStyle == NavBarStyle.FULL_WIDTH) {
-        contentHeight + systemNavBarInset
-    } else {
-        contentHeight
-    }
-}
+): Dp = resolveNavBarContentHeight(compactMode)
 
 internal fun resolveNavBarOccupiedHeight(
     systemNavBarInset: Dp,
