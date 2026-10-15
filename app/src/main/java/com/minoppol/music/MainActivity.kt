@@ -84,6 +84,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.window.core.layout.WindowSizeClass
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -124,6 +125,8 @@ import com.minoppol.music.presentation.components.PlayerInternalNavigationBar
 import com.minoppol.music.presentation.components.PlayerNavigationRail
 import com.minoppol.music.presentation.components.UnifiedPlayerSheetV2
 import com.minoppol.music.presentation.components.calculatePlayerSheetCollapsedTargetY
+import com.minoppol.music.presentation.components.fallbackFloatingBottomInset
+import com.minoppol.music.presentation.components.isUsefulBottomInset
 import com.minoppol.music.presentation.components.resolveNavBarOccupiedHeight
 import com.minoppol.music.presentation.components.resolveNavBarSurfaceHeight
 import com.minoppol.music.presentation.components.sanitizeNavigationBarBottomInset
@@ -720,30 +723,31 @@ class MainActivity : ComponentActivity() {
         val systemNavBarInset = sanitizeNavigationBarBottomInset(
             WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
         )
+        val floatingBottomInset = if (isUsefulBottomInset(systemNavBarInset)) {
+            systemNavBarInset
+        } else {
+            fallbackFloatingBottomInset(LocalConfiguration.current.screenHeightDp.dp)
+        }
 
         LaunchedEffect(hapticsEnabled, rootView) {
             rootView.isHapticFeedbackEnabled = hapticsEnabled
             rootView.rootView?.isHapticFeedbackEnabled = hapticsEnabled
         }
 
-        val horizontalPadding = if (navBarStyle == NavBarStyle.DEFAULT) {
-            if (systemNavBarInset > 30.dp) 14.dp else systemNavBarInset
-        } else {
-            0.dp
-        }
+        val horizontalPadding = 14.dp
         val animatedBottomBarPadding by animateDpAsState(
-            targetValue = if (navBarStyle == NavBarStyle.FULL_WIDTH) 0.dp else systemNavBarInset,
+            targetValue = floatingBottomInset,
             animationSpec = tween(400),
             label = "BottomBarPadding"
         )
         val bottomBarPadding = animatedBottomBarPadding
-        val navBarHeight = resolveNavBarSurfaceHeight(navBarStyle, systemNavBarInset, navBarCompactMode)
-        val navBarOccupiedHeight by remember(systemNavBarInset, navBarCompactMode, useNavigationRail) {
+        val navBarHeight = resolveNavBarSurfaceHeight(navBarStyle, 0.dp, navBarCompactMode)
+        val navBarOccupiedHeight by remember(floatingBottomInset, navBarCompactMode, useNavigationRail) {
             derivedStateOf {
                 if (useNavigationRail) {
                     0.dp
                 } else {
-                    resolveNavBarOccupiedHeight(systemNavBarInset, navBarCompactMode)
+                    resolveNavBarOccupiedHeight(floatingBottomInset, navBarCompactMode)
                 }
             }
         }
@@ -903,10 +907,7 @@ class MainActivity : ComponentActivity() {
                                             }
                                             else -> navBarCornerRadius.dp
                                         }
-                                        val bottomDp = when (navBarStyle) {
-                                            NavBarStyle.FULL_WIDTH -> 0.dp
-                                            else -> animatedNavBarCornerRadius.value
-                                        }
+                                        val bottomDp = animatedNavBarCornerRadius.value
                                         shape = navBarShapeCache.get(this, topDp.toPx(), bottomDp.toPx(), useSmoothCorners)
                                         clip = true
                                         shadowElevation = navBarElevationPx
