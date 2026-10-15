@@ -2370,7 +2370,7 @@ class LxMusicViewModel @Inject constructor(
                     pid to pl.name
                 }
                 LxSources.KUGOU, LxSources.KUWO ->
-                    if (pl.subscribed == true) null else pid to pl.name
+                    if (pl.subscribed == false) pid to pl.name else null
                 else -> null
             }
         }
@@ -2383,9 +2383,6 @@ class LxMusicViewModel @Inject constructor(
                 if (browsePlaylist.creatorUserId == null || browsePlaylist.creatorUserId != uid) return null
                 browsePlaylist.id to browsePlaylist.name
             }
-            LxSources.KUGOU, LxSources.KUWO ->
-                if (browsePlaylist.subscribed == true) null
-                else browsePlaylist.id to browsePlaylist.name
             else -> null
         }
     }

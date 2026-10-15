@@ -49,5 +49,4 @@ markdown.xml
 
 graphify-out/
 
-# local-only private write implementations (never publish)
 /app/src/main/java/com/minoppol/music/data/lxmusic/LxPrivateAccountExtension.kt
