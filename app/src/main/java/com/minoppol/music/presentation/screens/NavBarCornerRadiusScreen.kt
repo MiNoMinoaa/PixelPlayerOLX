@@ -300,17 +300,16 @@ fun NavBarCornerRadiusContent(
                     }
                 }
 
-                val bottomPadding = paddingValues.calculateBottomPadding()
                 val previewHeight = resolveNavBarSurfaceHeight(
                     navBarStyle = if (isFullWidth) NavBarStyle.FULL_WIDTH else NavBarStyle.DEFAULT,
-                    systemNavBarInset = bottomPadding,
+                    systemNavBarInset = paddingValues.calculateBottomPadding(),
                     compactMode = isCompactMode
                 )
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(previewHeight)
-                        .padding(horizontal = if (isFullWidth) 0.dp else bottomPadding),
+                        .padding(horizontal = 14.dp),
                     color = MaterialTheme.colorScheme.onBackground,
                     shape = if (isFullWidth) {
                         AbsoluteSmoothCornerShape(
