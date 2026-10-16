@@ -668,6 +668,16 @@ object SettingsRegistry {
                 type = SettingType.NAVIGABLE_CARD,
                 keywordsStatic = listOf("crash", "test", "diagnostics", "debug")
             ),
+            SettingSpec(
+                id = "developer_export_runlog",
+                itemKey = "item_developer_export_runlog",
+                titleRes = R.string.setcat_export_runlog_title,
+                subtitleRes = R.string.setcat_export_runlog_subtitle,
+                category = SettingsCategory.DEVELOPER,
+                subscreenRoute = Screen.SettingsCategory.createRoute("developer"),
+                type = SettingType.NAVIGABLE_CARD,
+                keywordsStatic = listOf("log", "export", "diagnostics", "debug", "runlog")
+            ),
 
             // --- EQUALIZER & DEVICE ---
             SettingSpec(

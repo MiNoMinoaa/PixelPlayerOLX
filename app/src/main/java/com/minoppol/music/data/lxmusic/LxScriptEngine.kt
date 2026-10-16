@@ -13,6 +13,9 @@ import com.whl.quickjs.wrapper.QuickJSContext
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.Call
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -47,6 +50,9 @@ class LxScriptEngine @Inject constructor(
     private val requestKeyCounter = AtomicLong(0)
 
     private val runtimes = ConcurrentHashMap<String, Runtime>()
+
+    private val _updateAlerts = MutableSharedFlow<LxScriptUpdateAlert>(extraBufferCapacity = 8)
+    val updateAlerts: SharedFlow<LxScriptUpdateAlert> = _updateAlerts.asSharedFlow()
 
     private val eventWaiters = ConcurrentHashMap<String, CompletableDeferred<JsonElement>>()
 
@@ -537,9 +543,22 @@ class LxScriptEngine @Inject constructor(
             "cancelRequest" -> handleCancelRequest(dataJson)
             "response" -> handleEventResponse(dataJson)
             "showUpdateAlert" -> {
-                val log = dataJson?.let { runCatching { JsonParser.parseString(it) }.getOrNull() }
-                    ?.takeIf { it.isJsonObject }?.asJsonObject?.get("log")?.takeIf { it.isJsonPrimitive }?.asString
+                val json = dataJson?.let { runCatching { JsonParser.parseString(it) }.getOrNull() }
+                    ?.takeIf { it.isJsonObject }?.asJsonObject
+                val log = json?.get("log")?.takeIf { it.isJsonPrimitive }?.asString ?: ""
+                val updateUrl = json?.get("updateUrl")?.takeIf { it.isJsonPrimitive }?.asString
+                    ?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
                 Timber.d("LxScriptEngine[${runtime.meta.name}]: update alert: ${redactSensitive(log)}")
+                _updateAlerts.tryEmit(
+                    LxScriptUpdateAlert(
+                        scriptName = runtime.meta.name,
+                        version = runtime.meta.version,
+                        updateUrl = updateUrl,
+                        log = log,
+                        assetPath = runtime.meta.assetPath,
+                        isImported = runtime.meta.isImported,
+                    )
+                )
             }
             "log" -> Timber.d("LxScriptEngine[${runtime.meta.name}]: ${redactSensitive(dataJson)}")
             else -> Timber.d("LxScriptEngine[${runtime.meta.name}]: unknown action $action")

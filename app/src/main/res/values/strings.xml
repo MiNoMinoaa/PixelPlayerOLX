@@ -389,13 +389,18 @@
     <string name="lx_msg_source_disabled">Source disabled, please enable it in script management</string>
     <string name="lx_queue_name_playlist">Playlist</string>
     <string name="lx_msg_playlist_no_songs">Playlist has no songs</string>
+    <string name="lx_action_add_to_library">Add to Library</string>
+    <string name="lx_msg_add_to_library_success">Added to Library</string>
+    <string name="lx_msg_add_to_library_success_count">Added %1$d songs</string>
+    <string name="lx_msg_add_to_library_partial">Added %1$d, %2$d already in Library</string>
+    <string name="lx_msg_add_to_library_duplicate">Already in Library</string>
     <string name="lx_desc_script_management">Source script management</string>
     <string name="lx_desc_settings">Settings</string>
     <string name="lx_tab_mine">Mine</string>
     <string name="lx_tab_board">Boards</string>
     <string name="lx_tab_playlist">Playlists</string>
     <string name="lx_tab_search">Search</string>
-    <string name="lx_title_source_scripts">Source Scripts</string>
+    <string name="lx_title_source_scripts">Lx Source Scripts</string>
     <string name="lx_msg_script_intro">Once imported, scripts can be activated. Long-press to delete. Multiple sources can be enabled; the preferred script takes priority. If it can\'t provide the chosen quality, other enabled backup scripts try to fill a higher quality, then compete with the official pipeline by quality.\nFor your account safety, only use SMS verification code to log in.</string>
     <string name="lx_msg_script_cookie_notice">If a script needs it, your platform cookie may be injected into the source script after you log in. A malicious or runaway script may occupy the source execution thread permanently. Please only use trusted scripts.</string>
     <string name="lx_title_current_source">Current source</string>
@@ -416,6 +421,9 @@
     <string name="lx_title_import_from_url">Import source from URL</string>
     <string name="lx_desc_cancel">Cancel</string>
     <string name="lx_desc_import">Import</string>
+    <string name="lx_title_script_update">Source Update</string>
+    <string name="lx_msg_script_updated">Source updated</string>
+    <string name="lx_msg_update_to_browser">In-app update failed, opened in browser instead</string>
     <string name="lx_title_delete_script">Delete source script</string>
     <string name="lx_msg_delete_script_confirm">Are you sure you want to delete \"%1$s\"? This action cannot be undone.</string>
     <string name="lx_desc_delete">Delete</string>
@@ -539,7 +547,7 @@
     <string name="lx_platform_order_title">Platform Order</string>
     <string name="lx_platform_order_subtitle">Reorder search page platform tabs</string>
 
-    <string name="lx_brand_title">Lx Music</string>
+    <string name="lx_brand_title">Discover</string>
     <string-array name="lx_mood_0_6">
         <item>Late Night</item>
         <item>Sleep Aid</item>

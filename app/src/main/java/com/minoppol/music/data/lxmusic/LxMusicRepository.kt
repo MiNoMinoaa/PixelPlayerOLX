@@ -1353,6 +1353,24 @@ class LxMusicRepository @Inject constructor(
         )
     }
 
+    suspend fun addLxSongsToLibrary(songs: List<LxSong>): Pair<Int, Int> = withContext(Dispatchers.IO) {
+        var inserted = 0
+        var skipped = 0
+        songs.forEach { song ->
+            val entity = LxSongMapper.toSongEntity(song)
+            ensureArtistAndAlbum(entity)
+            val existing = musicDao.getSongIdByContentUri(entity.contentUriString)
+            if (existing != null) {
+                skipped++
+            } else {
+                musicDao.insertSongsIgnoreConflicts(listOf(entity))
+                ensureSongArtistCrossRef(entity)
+                inserted++
+            }
+        }
+        inserted to skipped
+    }
+
     private suspend fun ensureSongArtistCrossRef(entity: SongEntity) {
         musicDao.insertSongArtistCrossRefs(
             listOf(SongArtistCrossRef(songId = entity.id, artistId = entity.artistId, isPrimary = true))
@@ -4789,6 +4807,9 @@ class LxMusicRepository @Inject constructor(
         return candidates.distinct()
     }
 
+    val scriptUpdateAlerts
+        get() = engine.updateAlerts
+
     suspend fun importFromUrl(url: String): Result<LxScriptMeta> = withContext(Dispatchers.IO) {
         runCatching {
             var lastErr: Exception? = null
@@ -4809,6 +4830,39 @@ class LxMusicRepository @Inject constructor(
                         file.writeText(body)
                         refreshScripts()
                         return@runCatching parseScriptMeta(fileName, file.absolutePath, body, isImported = true)
+                    }
+                } catch (e: Exception) {
+                    lastErr = e
+                }
+            }
+            throw lastErr ?: IllegalStateException("所有下载源均失败，请检查网络或稍后再试")
+        }
+    }
+
+    suspend fun updateScriptFromUrl(assetPath: String, url: String): Result<LxScriptMeta> = withContext(Dispatchers.IO) {
+        runCatching {
+            val target = _scripts.value.firstOrNull { it.assetPath == assetPath }
+                ?: throw IllegalStateException("脚本不存在或已被删除")
+            if (!File(assetPath).isFile) {
+                throw IllegalStateException("该脚本不支持应用内更新，请在浏览器中更新")
+            }
+            var lastErr: Exception? = null
+            for (candidate in buildScriptDownloadCandidates(url)) {
+                try {
+                    val client = okHttpClient.newBuilder()
+                        .callTimeout(12, java.util.concurrent.TimeUnit.SECONDS)
+                        .build()
+                    val req = Request.Builder().url(candidate).get().build()
+                    client.newCall(req).execute().use { resp ->
+                        if (!resp.isSuccessful) {
+                            throw IllegalStateException("下载失败：HTTP ${resp.code}，请检查链接是否有效")
+                        }
+                        val body = resp.body?.string().orEmpty()
+                        validateLxScriptBody(body)
+                        unload(assetPath)
+                        File(assetPath).writeText(body)
+                        refreshScripts()
+                        return@runCatching parseScriptMeta(File(assetPath).name, assetPath, body, isImported = target.isImported)
                     }
                 } catch (e: Exception) {
                     lastErr = e

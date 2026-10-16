@@ -380,7 +380,7 @@ Backslash (\) can be used to escape character delimiters.</string>
 
     <string name="presentation_batch_g_changelog_sec_whats_new">What\'s new</string>
     <string name="presentation_batch_g_changelog_sec_changes">Other changes</string>
-    <string name="presentation_batch_g_changelog_fork_title">A brand-new fork: PixelPlayerOLX</string>
+    <string name="presentation_batch_g_changelog_fork_title">All set: PixelPlayerOLX</string>
     <string name="presentation_batch_g_changelog_legacy_header">PixelPlayerOSS</string>
     <string name="presentation_batch_g_changelog_legacy_ellipsis">…</string>
     <!-- PixelPlayerOLX 0.1.0：新增功能 -->
@@ -405,5 +405,10 @@ Backslash (\) can be used to escape character delimiters.</string>
         <item>LRCLIB online lyrics are enabled by default and removed from first-launch selection; search no longer auto-selects the first result.</item>
         <item>Theme style now follows the system by default.</item>
         <item>Library navigation style selection has been removed from first-launch selection.</item>
+    </string-array>
+    <string-array name="presentation_batch_g_changelog_v020_whats_new">
+        <item>In-app update detection and seamless replacement for music source scripts.</item>
+        <item>Add-to-library support for songs (single song / multi-select).</item>
+        <item>Lightweight run logs, exportable manually from Developer options.</item>
     </string-array>
 </resources>

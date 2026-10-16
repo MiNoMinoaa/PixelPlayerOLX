@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import com.minoppol.music.utils.CrashLogData
 import androidx.compose.ui.res.stringResource
 import com.minoppol.music.R
+import com.minoppol.music.ReleaseTree
 
 /**
  * Material3 Expressive styled dialog that displays crash information
@@ -145,10 +146,12 @@ fun CrashReportDialog(
                 ) {
                     FilledTonalButton(
                         onClick = {
+                            val runLog = ReleaseTree.dumpToString()
+                            val reportText = crashLog.getFullLog() + (runLog?.let { "\n\n$it" } ?: "")
                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                             val clip = ClipData.newPlainText(
                                 context.getString(R.string.crash_report_clipboard_label),
-                                crashLog.getFullLog(),
+                                reportText,
                             )
                             clipboard.setPrimaryClip(clip)
                             Toast.makeText(context, context.getString(R.string.toast_crash_log_copied), Toast.LENGTH_SHORT).show()
@@ -166,10 +169,12 @@ fun CrashReportDialog(
 
                     FilledTonalButton(
                         onClick = {
+                            val runLog = ReleaseTree.dumpToString()
+                            val reportText = crashLog.getFullLog() + (runLog?.let { "\n\n$it" } ?: "")
                             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.crash_report_share_subject))
-                                putExtra(Intent.EXTRA_TEXT, crashLog.getFullLog())
+                                putExtra(Intent.EXTRA_TEXT, reportText)
                             }
                             context.startActivity(
                                 Intent.createChooser(shareIntent, context.getString(R.string.crash_report_share_chooser)),

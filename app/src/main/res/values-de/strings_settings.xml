@@ -217,6 +217,8 @@
     <string name="setcat_theme_follow_system">System folgen</string>
     <string name="setcat_theme_light">Hell</string>
     <string name="setcat_trigger_crash_subtitle">Crash simulieren, um das Absturz-Reporting zu testen.</string>
+    <string name="setcat_export_runlog_title">Laufzeitprotokoll exportieren</string>
+    <string name="setcat_export_runlog_subtitle">Aktuelles Laufzeitprotokoll der App zur Fehlerdiagnose teilen.</string>
     <string name="setcat_trigger_crash_title">Test-Absturz auslösen</string>
     <string name="settings_accounts_row_subtitle">Navidrome- und Jellyfin-Dienste verwalten</string>
     <string name="settings_accounts_row_title">Accounts</string>

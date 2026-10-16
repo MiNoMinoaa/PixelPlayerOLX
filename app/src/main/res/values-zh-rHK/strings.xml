@@ -343,13 +343,18 @@
 <string name="lx_msg_source_disabled">音源已停用，請在腳本管理中開啟</string>
 <string name="lx_queue_name_playlist">播放列表</string>
 <string name="lx_msg_playlist_no_songs">歌單暫無歌曲</string>
+<string name="lx_action_add_to_library">加入曲庫</string>
+<string name="lx_msg_add_to_library_success">已加入曲庫</string>
+<string name="lx_msg_add_to_library_success_count">已加入 %1$d 首歌曲</string>
+<string name="lx_msg_add_to_library_partial">已加入 %1$d 首，%2$d 首已存在</string>
+<string name="lx_msg_add_to_library_duplicate">歌曲已在曲庫中</string>
 <string name="lx_desc_script_management">音源腳本管理</string>
 <string name="lx_desc_settings">設定</string>
 <string name="lx_tab_mine">我的</string>
 <string name="lx_tab_board">排行榜</string>
 <string name="lx_tab_playlist">歌單</string>
 <string name="lx_tab_search">搜尋</string>
-<string name="lx_title_source_scripts">音源腳本</string>
+<string name="lx_title_source_scripts">Lx 音源腳本</string>
 <string name="lx_msg_script_intro">導入後可啟用,長按腳本可刪除,音源可啟用多個,首選腳本優先；首選給不到所選音質時，其餘啟用的備用腳本會嘗試補位更高音質，再與官方鏈路按音質擇優。\n脚本采用用户偏好音质优先决策,故当多个脚本并行运行且用户选择音质偏高时音频加载速度可能会收到影响,请按需按情况酌情选择。\n為了您的帳號安全，登入時請只使用手機驗證碼登入</string>
 <string name="lx_msg_script_cookie_notice">如果腳本需要，您在平台登入後 cookie 可能被注入音源腳本，惡意/失控腳本可能永久佔用音源執行線程，請只使用可信腳本。</string>
 <string name="lx_title_current_source">當前音源</string>
@@ -370,6 +375,9 @@
 <string name="lx_title_import_from_url">從 URL 導入音源</string>
 <string name="lx_desc_cancel">取消</string>
 <string name="lx_desc_import">導入</string>
+<string name="lx_title_script_update">音源更新</string>
+<string name="lx_msg_script_updated">音源已更新</string>
+<string name="lx_msg_update_to_browser">應用內更新失敗，已用瀏覽器打開</string>
 <string name="lx_title_delete_script">刪除音源腳本</string>
 <string name="lx_msg_delete_script_confirm">確定要刪除「%1$s」嗎？此操作不可撤銷。</string>
 <string name="lx_desc_delete">刪除</string>
@@ -472,7 +480,7 @@
     <string name="lx_msg_album_not_found">未找到該專輯</string>
     <string name="lx_msg_artist_not_found">未找到該歌手</string>
 
-    <string name="lx_brand_title">Lx音樂</string>
+    <string name="lx_brand_title">發現</string>
     <string-array name="lx_mood_0_6">
         <item>深夜</item>
         <item>助眠</item>

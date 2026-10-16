@@ -213,7 +213,7 @@
     <string name="widget_bar_4x1_desc">Barra di riproduzione compatta</string>
     <string name="widget_control_4x2_desc">Controlli completi con modalità casuale e ripetizione</string>
     <string name="widget_grid_2x2_desc">Lettore quadrato minimalista</string>
-    <string name="lx_brand_title">Lx Musica</string>
+    <string name="lx_brand_title">Esplora</string>
     <string-array name="lx_mood_0_6">
         <item>Notte fonda</item>
         <item>Per dormire</item>

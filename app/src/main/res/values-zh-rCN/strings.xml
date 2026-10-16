@@ -351,13 +351,18 @@
 <string name="lx_msg_source_disabled">音源已禁用，请在脚本管理中开启</string>
 <string name="lx_queue_name_playlist">播放列表</string>
 <string name="lx_msg_playlist_no_songs">歌单暂无歌曲</string>
+<string name="lx_action_add_to_library">加入曲库</string>
+<string name="lx_msg_add_to_library_success">已加入曲库</string>
+<string name="lx_msg_add_to_library_success_count">已加入 %1$d 首歌曲</string>
+<string name="lx_msg_add_to_library_partial">已加入 %1$d 首，%2$d 首已存在</string>
+<string name="lx_msg_add_to_library_duplicate">歌曲已在曲库中</string>
 <string name="lx_desc_script_management">音源脚本管理</string>
 <string name="lx_desc_settings">设置</string>
 <string name="lx_tab_mine">我的</string>
 <string name="lx_tab_board">排行榜</string>
 <string name="lx_tab_playlist">歌单</string>
 <string name="lx_tab_search">搜索</string>
-<string name="lx_title_source_scripts">音源脚本</string>
+<string name="lx_title_source_scripts">Lx 音源脚本</string>
 <string name="lx_msg_script_intro">导入后可激活,长按脚本可删除,音源可启用多个,首选脚本优先；首选给不到所选音质时，其余启用的备用脚本会尝试补位更高音质，再与官方链路按音质择优。\n脚本采用用户偏好音质优先决策,故当多个脚本并行运行且用户选择音质偏高时音频加载速度可能会收到影响,请按需按情况酌情选择。\n为了您的账号安全，登录时请只使用手机验证码登录，登录完成后请等待跳转至首页后耐心静待自动跳转返回应用。</string>
 <string name="lx_msg_script_cookie_notice">如果脚本需要，您在平台登录后cookie可能被注入音源脚本，恶意/失控脚本可能永久占用音源执行线程，请只使用可信脚本。</string>
 <string name="lx_title_current_source">当前音源</string>
@@ -378,6 +383,9 @@
 <string name="lx_title_import_from_url">从 URL 导入音源</string>
 <string name="lx_desc_cancel">取消</string>
 <string name="lx_desc_import">导入</string>
+<string name="lx_title_script_update">音源更新</string>
+<string name="lx_msg_script_updated">音源已更新</string>
+<string name="lx_msg_update_to_browser">应用内更新失败，已用浏览器打开</string>
 <string name="lx_title_delete_script">删除音源脚本</string>
 <string name="lx_msg_delete_script_confirm">确定要删除「%1$s」吗？此操作不可撤销。</string>
 <string name="lx_desc_delete">删除</string>
@@ -501,7 +509,7 @@
 <string name="lx_platform_order_title">平台顺序</string>
 <string name="lx_platform_order_subtitle">调整搜索页平台标签顺序</string>
 
-    <string name="lx_brand_title">Lx音乐</string>
+    <string name="lx_brand_title">发现</string>
     <string-array name="lx_mood_0_6">
         <item>深夜</item>
         <item>助眠</item>
