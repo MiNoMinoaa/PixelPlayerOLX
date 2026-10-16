@@ -148,6 +148,15 @@ data class LxScriptMeta(
     val isImported: Boolean = false,
 )
 
+data class LxScriptUpdateAlert(
+    val scriptName: String,
+    val version: String,
+    val updateUrl: String?,
+    val log: String,
+    val assetPath: String,
+    val isImported: Boolean,
+)
+
 data class LxSourceInfo(
     val source: String,
     val type: String = "music",

@@ -194,7 +194,7 @@
     <string name="presentation_batch_g_brick_try_again">Попробовать снова?</string>
     <string name="presentation_batch_g_cd_selected">Выбрано</string>
     <string name="presentation_batch_g_cd_switch_on">Переключатель включён</string>
-    <string name="presentation_batch_g_changelog_fork_title">Совершенно новый форк: PixelPlayerOLX</string>
+    <string name="presentation_batch_g_changelog_fork_title">Всё готово: PixelPlayerOLX</string>
     <string name="presentation_batch_g_changelog_legacy_header">PixelPlayerOSS</string>
     <string name="presentation_batch_g_changelog_legacy_ellipsis">…</string>
     <string name="presentation_batch_g_changelog_sec_whats_new">Что нового</string>

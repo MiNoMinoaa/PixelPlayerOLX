@@ -213,7 +213,7 @@
     <string name="widget_bar_4x1_desc">컴팩트 플레이어 바</string>
     <string name="widget_control_4x2_desc">셔플 및 반복 기능이 포함된 전체 컨트롤</string>
     <string name="widget_grid_2x2_desc">미니멀한 사각형 플레이어</string>
-    <string name="lx_brand_title">Lx 음악</string>
+    <string name="lx_brand_title">탐색</string>
     <string-array name="lx_mood_0_6">
         <item>심야</item>
         <item>수면 유도</item>

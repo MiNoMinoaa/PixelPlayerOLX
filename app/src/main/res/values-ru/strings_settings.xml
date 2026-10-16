@@ -217,6 +217,8 @@
     <string name="setcat_theme_follow_system">Как в системе</string>
     <string name="setcat_theme_light">Светлая тема</string>
     <string name="setcat_trigger_crash_subtitle">Симулировать сбой для проверки системы отчётов об ошибках.</string>
+    <string name="setcat_export_runlog_title">Экспорт журнала работы</string>
+    <string name="setcat_export_runlog_subtitle">Поделиться недавним журналом работы приложения для диагностики.</string>
     <string name="setcat_trigger_crash_title">Вызвать тестовый сбой</string>
     <string name="settings_accounts_row_subtitle">Управление сервисами Navidrome и Jellyfin</string>
     <string name="settings_accounts_row_title">Аккаунты</string>

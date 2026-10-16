@@ -1102,65 +1102,70 @@ private fun FullPlayerAlbumCoverSection(
             CarouselStyle.ONE_PEEK -> maxWidth * 0.8f
             CarouselStyle.TWO_PEEK -> maxWidth * 0.6f
             else -> maxWidth * 0.8f
-        }.coerceAtMost(maxHeight - 16.dp)
+        }
+        val coverSize = carouselHeight.coerceAtMost(maxHeight - 16.dp)
 
-        DelayedContent(
-            shouldDelay = shouldDelay,
-            showPlaceholders = loadingTweaks.showPlaceholders,
-            applyPlaceholderDelayOnClose = loadingTweaks.applyPlaceholdersOnClose,
-            switchOnDragRelease = loadingTweaks.switchOnDragRelease,
-            isSheetDragGestureActive = isSheetDragGestureActive,
-            sharedBoundsModifier = Modifier.fillMaxWidth().height(carouselHeight),
-            expansionFractionProvider = expansionFractionProvider,
-            isExpandedOverride = currentSheetState == PlayerSheetState.EXPANDED,
-            normalStartThreshold = 0.08f,
-            delayAppearThreshold = loadingTweaks.contentAppearThresholdPercent / 100f,
-            delayCloseThreshold = 1f - (loadingTweaks.contentCloseThresholdPercent / 100f),
-            placeholder = {
-                if (loadingTweaks.transparentPlaceholders) {
-                    Box(
-                        Modifier
-                            .height(carouselHeight)
-                            .fillMaxWidth()
-                            .graphicsLayer {
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            DelayedContent(
+                shouldDelay = shouldDelay,
+                showPlaceholders = loadingTweaks.showPlaceholders,
+                applyPlaceholderDelayOnClose = loadingTweaks.applyPlaceholdersOnClose,
+                switchOnDragRelease = loadingTweaks.switchOnDragRelease,
+                isSheetDragGestureActive = isSheetDragGestureActive,
+                sharedBoundsModifier = Modifier.size(coverSize),
+                expansionFractionProvider = expansionFractionProvider,
+                isExpandedOverride = currentSheetState == PlayerSheetState.EXPANDED,
+                normalStartThreshold = 0.08f,
+                delayAppearThreshold = loadingTweaks.contentAppearThresholdPercent / 100f,
+                delayCloseThreshold = 1f - (loadingTweaks.contentCloseThresholdPercent / 100f),
+                placeholder = {
+                    if (loadingTweaks.transparentPlaceholders) {
+                        Box(
+                            Modifier
+                                .size(coverSize)
+                                .graphicsLayer {
+                                    scaleX = albumArtScale
+                                    scaleY = albumArtScale
+                                }
+                        )
+                    } else {
+                        AlbumPlaceholder(
+                            size = coverSize,
+                            color = placeholderColor,
+                            onColor = placeholderOnColor,
+                            modifier = Modifier.graphicsLayer {
                                 scaleX = albumArtScale
                                 scaleY = albumArtScale
                             }
-                    )
-                } else {
-                    AlbumPlaceholder(
-                        height = carouselHeight,
-                        color = placeholderColor,
-                        onColor = placeholderOnColor,
-                        modifier = Modifier.graphicsLayer {
+                        )
+                    }
+                }
+            ) {
+                AlbumCarouselSection(
+                    currentSong = song,
+                    queue = currentPlaybackQueue,
+                    expansionFraction = 1f,
+                    currentMediaItemIndex = currentMediaItemIndex,
+                    requestedScrollIndex = requestedScrollIndex,
+                    onSongSelected = { newSong, index ->
+                        if (newSong.id != song.id || index != currentMediaItemIndex) {
+                            onSongSelected(newSong, index)
+                        }
+                    },
+                    onAlbumClick = onAlbumClick,
+                    carouselStyle = carouselStyle,
+                    modifier = Modifier
+                        .size(coverSize)
+                        .graphicsLayer {
                             scaleX = albumArtScale
                             scaleY = albumArtScale
-                        }
-                    )
-                }
+                        },
+                    albumArtQuality = albumArtQuality
+                )
             }
-        ) {
-            AlbumCarouselSection(
-                currentSong = song,
-                queue = currentPlaybackQueue,
-                expansionFraction = 1f,
-                currentMediaItemIndex = currentMediaItemIndex,
-                requestedScrollIndex = requestedScrollIndex,
-                onSongSelected = { newSong, index ->
-                    if (newSong.id != song.id || index != currentMediaItemIndex) {
-                        onSongSelected(newSong, index)
-                    }
-                },
-                onAlbumClick = onAlbumClick,
-                carouselStyle = carouselStyle,
-                modifier = Modifier
-                    .height(carouselHeight)
-                    .graphicsLayer {
-                        scaleX = albumArtScale
-                        scaleY = albumArtScale
-                    },
-                albumArtQuality = albumArtQuality
-            )
         }
     }
 }
@@ -2463,15 +2468,14 @@ private fun PlaceholderBox(
 
 @Composable
 private fun AlbumPlaceholder(
-    height: Dp,
+    size: Dp,
     color: Color,
     onColor: Color,
     modifier: Modifier = Modifier
 ) {
     Surface(
         modifier = modifier
-            .fillMaxWidth()
-            .height(height),
+            .size(size),
         shape = RoundedCornerShape(18.dp),
         color = color,
         tonalElevation = 0.dp

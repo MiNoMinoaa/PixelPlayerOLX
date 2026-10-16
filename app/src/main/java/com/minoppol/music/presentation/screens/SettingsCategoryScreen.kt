@@ -1,5 +1,7 @@
 package com.minoppol.music.presentation.screens
 
+import android.content.Intent
+import com.minoppol.music.ReleaseTree
 import com.minoppol.music.presentation.navigation.navigateSafely
 import com.minoppol.music.presentation.components.BackupModuleSelectionDialog
 import java.util.Locale
@@ -1214,6 +1216,27 @@ fun SettingsCategoryScreen(
                                     leadingIcon = { Icon(Icons.Outlined.Warning, null, tint = MaterialTheme.colorScheme.error) },
                                     modifier = Modifier.settingHighlight("item_developer_test_crash", highlightKey),
                                     onClick = { settingsViewModel.triggerTestCrash() }
+                                )
+                                SettingsItem(
+                                    title = stringResource(R.string.setcat_export_runlog_title),
+                                    subtitle = stringResource(R.string.setcat_export_runlog_subtitle),
+                                    leadingIcon = { Icon(Icons.Outlined.ClearAll, null, tint = MaterialTheme.colorScheme.secondary) },
+                                    modifier = Modifier.settingHighlight("item_developer_export_runlog", highlightKey),
+                                    onClick = {
+                                        val runLog = ReleaseTree.dumpToString()
+                                        if (runLog != null) {
+                                            context.startActivity(
+                                                Intent.createChooser(
+                                                    Intent(Intent.ACTION_SEND).apply {
+                                                        type = "text/plain"
+                                                        putExtra(Intent.EXTRA_SUBJECT, "PixelPlayerOLX Run Log")
+                                                        putExtra(Intent.EXTRA_TEXT, runLog)
+                                                    },
+                                                    null
+                                                )
+                                            )
+                                        }
+                                    }
                                 )
                             }
                         }

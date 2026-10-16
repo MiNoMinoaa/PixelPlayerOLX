@@ -217,6 +217,8 @@
     <string name="setcat_theme_follow_system">Ikuti Sistem</string>
     <string name="setcat_theme_light">Tema Terang</string>
     <string name="setcat_trigger_crash_subtitle">Simulasikan crash untuk menguji sistem pelaporan crash.</string>
+    <string name="setcat_export_runlog_title">Ekspor Log Berjalan</string>
+    <string name="setcat_export_runlog_subtitle">Bagikan log berjalan terbaru dari aplikasi untuk diagnosa.</string>
     <string name="setcat_trigger_crash_title">Picu Crash Uji Coba</string>
     <string name="settings_accounts_row_subtitle">Kelola layanan Navidrome dan Jellyfin</string>
     <string name="settings_accounts_row_title">Akun</string>

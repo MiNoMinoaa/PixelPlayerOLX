@@ -779,9 +779,13 @@ class LxMusicViewModel @Inject constructor(
         }
     }
 
-    fun onPlaybackSongChanged(songId: String?) {
+    fun onPlaybackSongChanged(songId: String?, song: com.minoppol.music.data.model.Song? = null) {
         if (songId == null) return
-        val lxSong = playbackQueueLxSongs[songId] ?: return
+        val lxSong = playbackQueueLxSongs[songId] ?: song?.let { current ->
+            com.minoppol.music.data.lxmusic.LxSongMapper.toLxSong(current)?.takeIf {
+                com.minoppol.music.data.lxmusic.LxSongMapper.unifiedSongId(it.source, it.songmid).toString() == songId
+            }
+        } ?: return
         recordPlay(lxSong)
     }
 
@@ -790,6 +794,24 @@ class LxMusicViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching { repository.persistLxSongs(songs) }
                 .onFailure { Timber.w(it, "persistSongs failed, size=${songs.size}") }
+        }
+    }
+
+    fun addLxSongsToLibrary(songs: List<LxSong>) {
+        if (songs.isEmpty()) return
+        viewModelScope.launch {
+            val (inserted, skipped) = runCatching { repository.addLxSongsToLibrary(songs) }
+                .getOrElse {
+                    Timber.w(it, "addLxSongsToLibrary failed, size=${songs.size}")
+                    return@launch
+                }
+            when {
+                inserted == 0 && skipped == 0 -> return@launch
+                inserted == 0 -> emitToast(context.getString(R.string.lx_msg_add_to_library_duplicate))
+                skipped == 0 && songs.size == 1 -> emitToast(context.getString(R.string.lx_msg_add_to_library_success))
+                skipped == 0 -> emitToast(context.getString(R.string.lx_msg_add_to_library_success_count, inserted))
+                else -> emitToast(context.getString(R.string.lx_msg_add_to_library_partial, inserted, skipped))
+            }
         }
     }
 
@@ -3600,6 +3622,27 @@ class LxMusicViewModel @Inject constructor(
                 onResult(null)
             }.onFailure { e ->
                 _loadState.value = LoadState(error = context.getString(R.string.lx_error_import_failed, e.message ?: ""))
+                onResult(e.message)
+            }
+        }
+    }
+
+    val scriptUpdateAlerts
+        get() = repository.scriptUpdateAlerts
+
+    fun updateScriptFromUrl(alert: com.minoppol.music.data.lxmusic.LxScriptUpdateAlert, onResult: (String?) -> Unit) {
+        viewModelScope.launch {
+            val url = alert.updateUrl
+            if (url.isNullOrBlank()) {
+                onResult(null)
+                return@launch
+            }
+            val result = repository.updateScriptFromUrl(alert.assetPath, url)
+            result.onSuccess {
+                _loadState.value = LoadState(loadedSources = emptyList())
+                emitToast(context.getString(R.string.lx_msg_script_updated))
+                onResult(null)
+            }.onFailure { e ->
                 onResult(e.message)
             }
         }

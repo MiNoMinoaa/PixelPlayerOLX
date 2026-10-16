@@ -2530,16 +2530,38 @@ class PlayerViewModel @Inject constructor(
                     ?.takeIf { it.isNotBlank() }
 
         return when {
-            metadataArtwork == null && song.albumArtUriString != null -> song.copy(albumArtUriString = null)
+            metadataArtwork == null && song.lxMusicSource == null && song.albumArtUriString != null ->
+                song.copy(albumArtUriString = null)
             metadataArtwork != null && song.albumArtUriString != metadataArtwork ->
                 song.copy(albumArtUriString = metadataArtwork)
             else -> song
         }
     }
 
+    private fun maybeRestoreMissingArtwork(song: Song?) {
+        if (song == null) return
+        if (song.albumArtUriString.isNullOrBlank() && !song.lxMusicSource.isNullOrBlank()) {
+            viewModelScope.launch { restoreMissingOnlineArtwork(song) }
+        }
+    }
+
+    private suspend fun restoreMissingOnlineArtwork(song: Song) {
+        if (!missingArtworkAttemptedIds.add(song.id)) return
+        val lxSong = com.minoppol.music.data.lxmusic.LxSongMapper.toLxSong(song) ?: return
+        val pic = runCatching { lxMusicRepository.fetchPic(lxSong) }.getOrNull()
+        if (pic.isNullOrBlank()) return
+        runCatching { lxMusicRepository.persistLxSong(lxSong.copy(pic = pic)) }
+        playbackStateHolder.updateStablePlayerState { state ->
+            val current = state.currentSong?.takeIf { it.id == song.id }
+                ?: return@updateStablePlayerState state
+            state.copy(currentSong = current.copy(albumArtUriString = pic))
+        }
+    }
+
     private var lastQueueUpdateRequestId = 0L
     private var lastQueueSignature: QueueTimelineSignature? = null
     private var lastQueueUpdateJob: Job? = null
+    private val missingArtworkAttemptedIds: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
 
     private fun updateCurrentPlaybackQueueFromPlayer(playerCtrl: MediaController?) {
         val currentMediaController = playerCtrl ?: mediaController ?: return
@@ -3041,6 +3063,7 @@ class PlayerViewModel @Inject constructor(
                         )
 
                         song?.let { currentSongValue ->
+                            maybeRestoreMissingArtwork(currentSongValue)
                             launch {
                                 val uri = currentSongValue.albumArtUriString?.toUri()
                                 val currentUri = playbackStateHolder.stablePlayerState.value.currentSong?.albumArtUriString
@@ -3464,6 +3487,7 @@ class PlayerViewModel @Inject constructor(
                 playWhenReady = true,
             )
         }
+        maybeRestoreMissingArtwork(effectiveStartSong)
         _isSheetVisible.value = true
 
         val startMediaItem = buildResolvedPlaybackMediaItem(effectiveStartSong, playlistId)
@@ -3523,6 +3547,7 @@ class PlayerViewModel @Inject constructor(
                 playWhenReady = true
             )
         }
+        maybeRestoreMissingArtwork(song)
         _isSheetVisible.value = true
 
         val controller = mediaController
@@ -4543,9 +4568,14 @@ class PlayerViewModel @Inject constructor(
                     playbackStateHolder.stablePlayerState.value.currentSong
                         ?.takeIf { !isLocalPlaybackSong(it) }
                         ?.let { beginPreparingSong(it) }
-                    controller.prepare()
+                    viewModelScope.launch {
+                        controller.currentMediaItem?.let { dualPlayerEngine.resolveMediaItem(it) }
+                        controller.prepare()
+                        controller.play()
+                    }
+                } else {
+                    controller.play()
                 }
-                controller.play()
             }
         }
     }

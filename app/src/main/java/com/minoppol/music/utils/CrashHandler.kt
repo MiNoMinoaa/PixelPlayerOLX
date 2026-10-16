@@ -7,6 +7,7 @@ import java.io.StringWriter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.minoppol.music.ReleaseTree
 
 /**
  * Data class representing a saved crash log entry.
@@ -80,6 +81,11 @@ object CrashHandler : Thread.UncaughtExceptionHandler {
             putString(KEY_EXCEPTION_MESSAGE, exceptionMessage)
             putString(KEY_STACK_TRACE, stackTrace)
             commit()
+        }
+
+        try {
+            ReleaseTree.writeDumpTo(appContext)
+        } catch (_: Exception) {
         }
     }
 
