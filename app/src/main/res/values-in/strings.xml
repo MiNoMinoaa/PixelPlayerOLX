@@ -213,7 +213,7 @@
     <string name="widget_bar_4x1_desc">Bilah pemutar ringkas</string>
     <string name="widget_control_4x2_desc">Kontrol penuh dengan acak dan ulangi</string>
     <string name="widget_grid_2x2_desc">Pemutar kotak minimalis</string>
-    <string name="lx_brand_title">Lx Musik</string>
+    <string name="lx_brand_title">Jelajahi</string>
     <string-array name="lx_mood_0_6">
         <item>Larut Malam</item>
         <item>Bantu Tidur</item>

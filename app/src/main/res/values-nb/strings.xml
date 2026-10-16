@@ -213,7 +213,7 @@
     <string name="widget_bar_4x1_desc">Kompakt spillerlinje</string>
     <string name="widget_control_4x2_desc">Full kontroll med blanding og repetisjon</string>
     <string name="widget_grid_2x2_desc">Minimalistisk kvadratisk spiller</string>
-    <string name="lx_brand_title">Lx Musikk</string>
+    <string name="lx_brand_title">Utforsk</string>
     <string-array name="lx_mood_0_6">
         <item>Sen kveld</item>
         <item>Søvnhjelp</item>

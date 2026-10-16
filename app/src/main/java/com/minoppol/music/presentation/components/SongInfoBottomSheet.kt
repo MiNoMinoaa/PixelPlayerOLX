@@ -28,6 +28,7 @@ import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.AudioFile
 import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.CloudDownload
+import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.CloudDone
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Favorite
@@ -125,6 +126,7 @@ fun SongInfoBottomSheet(
     cloudDownloadEnabled: Boolean = true,
     removeFromPlaylist: (() -> Unit)? = null,
     removeFromLibrary: (() -> Unit)? = null,
+    onAddToLibrary: (() -> Unit)? = null,
     songInfoViewModel: SongInfoBottomSheetViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -746,6 +748,32 @@ fun SongInfoBottomSheet(
                                                         overflow = TextOverflow.Ellipsis
                                                     )
                                                 }
+                                                }
+                                            }
+                                        }
+
+                                        if (onAddToLibrary != null) {
+                                            item {
+                                                FilledTonalButton(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .heightIn(min = 66.dp),
+                                                    colors = ButtonDefaults.filledTonalButtonColors(
+                                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                                    ),
+                                                    shape = CircleShape,
+                                                    onClick = {
+                                                        onAddToLibrary()
+                                                        onDismiss()
+                                                    }
+                                                ) {
+                                                    Icon(
+                                                        Icons.Rounded.LibraryAdd,
+                                                        contentDescription = stringResource(R.string.lx_action_add_to_library)
+                                                    )
+                                                    Spacer(Modifier.width(8.dp))
+                                                    Text(stringResource(R.string.lx_action_add_to_library))
                                                 }
                                             }
                                         }

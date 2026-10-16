@@ -247,7 +247,7 @@
     <string name="cloud_download_selected">Seçili bulut parçalarını indir</string>
     <string name="cloud_download_selected_count">%1$d bulut parçasını indir</string>
     <string name="cloud_download_selected_started">%1$d bulut parçası çevrimdışı dinleme için hazırlanıyor</string>
-    <string name="lx_brand_title">Lx Müzik</string>
+    <string name="lx_brand_title">Keşfet</string>
     <string-array name="lx_mood_0_6">
         <item>Gece geç saat</item>
         <item>Uyku yardımı</item>

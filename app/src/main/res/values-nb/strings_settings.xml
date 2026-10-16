@@ -217,6 +217,8 @@
     <string name="setcat_theme_follow_system">Følg system</string>
     <string name="setcat_theme_light">Lyst tema</string>
     <string name="setcat_trigger_crash_subtitle">Simuler et krasj for å teste rapporteringssystemet.</string>
+    <string name="setcat_export_runlog_title">Eksporter kjøringslogg</string>
+    <string name="setcat_export_runlog_subtitle">Del den siste kjøringsloggen fra appen for feilsøking.</string>
     <string name="setcat_trigger_crash_title">Utløs test-krasj</string>
     <string name="settings_accounts_row_subtitle">Administrer Navidrome- og Jellyfin-tjenester</string>
     <string name="settings_accounts_row_title">Kontoer</string>

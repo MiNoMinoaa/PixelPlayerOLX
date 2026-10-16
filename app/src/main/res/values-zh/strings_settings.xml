@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="setcat_m3u_sync_section">播放列表同步</string>
     <string name="setcat_m3u_sync_title">自動 M3U 檔案同步</string>
@@ -201,6 +201,8 @@
     <string name="setcat_diagnostics">診斷工具</string>
     <string name="setcat_trigger_crash_title">觸發測試崩潰</string>
     <string name="setcat_trigger_crash_subtitle">模擬程序崩潰，用於測試崩潰上報系統</string>
+    <string name="setcat_export_runlog_title">导出运行日志</string>
+    <string name="setcat_export_runlog_subtitle">分享应用内最近的运行日志，用于排查问题。</string>
     <string name="setcat_application">應用信息</string>
     <string name="setcat_about_pixelplayer_title">關於 PixelPlayerOLX</string>
     <string name="setcat_about_pixelplayer_subtitle">版本、致謝等更多信息</string>

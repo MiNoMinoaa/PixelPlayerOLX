@@ -1,5 +1,7 @@
 package com.minoppol.music.presentation.screens.lxmusic
 
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -229,7 +231,8 @@ fun LxMusicScreen(
 
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
     LaunchedEffect(stablePlayerState.currentSong?.id) {
-        viewModel.onPlaybackSongChanged(stablePlayerState.currentSong?.id)
+        val current = stablePlayerState.currentSong
+        viewModel.onPlaybackSongChanged(current?.id, current)
     }
     LaunchedEffect(Unit) {
         viewModel.toastMessage.collect { msg ->
@@ -248,6 +251,20 @@ fun LxMusicScreen(
     var showUrlImport by remember { mutableStateOf(false) }
     var urlInput by remember { mutableStateOf("") }
     var urlImporting by remember { mutableStateOf(false) }
+    var scriptUpdateQueue by remember { mutableStateOf(listOf<com.minoppol.music.data.lxmusic.LxScriptUpdateAlert>()) }
+    var scriptUpdateWorking by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        viewModel.scriptUpdateAlerts.collect { alert ->
+            if (alert.assetPath.isNotBlank()) {
+                scriptUpdateQueue = scriptUpdateQueue
+                    .filterNot { it.scriptName == alert.scriptName && it.log == alert.log }
+                    .plus(alert)
+            }
+        }
+    }
+
     var scriptToDelete by remember { mutableStateOf<LxScriptMeta?>(null) }
     var showPlatformNameDialog by remember { mutableStateOf(false) }
     var showPlatformOrderSheet by remember { mutableStateOf(false) }
@@ -255,7 +272,6 @@ fun LxMusicScreen(
     var showTxLoginDialog by remember { mutableStateOf(false) }
     var showKgLoginDialog by remember { mutableStateOf(false) }
     var showKwLoginDialog by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
 
     val neteaseCookie by viewModel.neteaseCookie.collectAsStateWithLifecycle()
     val neteaseVipType by viewModel.neteaseVipType.collectAsStateWithLifecycle()
@@ -876,6 +892,11 @@ fun LxMusicScreen(
                 showBatchDownloadDialog = true
                 showMultiSelectionSheet = false
             },
+            onAddToLibrary = {
+                viewModel.addLxSongsToLibrary(selectedLxSongs)
+                multiSelectionState.clearSelection()
+                showMultiSelectionSheet = false
+            },
             onDeleteAll = { _: android.app.Activity, onResult: (Boolean) -> Unit ->
                 viewModel.requestRemoveSongsFromOwnPlaylist(selectedLxSongs)
                 onResult(true)
@@ -937,6 +958,10 @@ fun LxMusicScreen(
             },
             onAddToPlayList = {
                 viewModel.openOnlineAddToPlaylist(infoLxSong)
+                lxInfoSong = null
+            },
+            onAddToLibrary = {
+                viewModel.addLxSongsToLibrary(listOf(infoLxSong))
                 lxInfoSong = null
             },
             addToPlaylistEnabled = when (infoLxSong.source) {
@@ -1655,6 +1680,98 @@ fun LxMusicScreen(
                             )
                         } else {
                             Icon(Icons.Rounded.KeyboardArrowRight, contentDescription = stringResource(R.string.lx_desc_import))
+                        }
+                    }
+                }
+            },
+        )
+    }
+
+    scriptUpdateQueue.firstOrNull()?.let { pendingUpdateAlert ->
+        AlertDialog(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            onDismissRequest = { if (!scriptUpdateWorking) scriptUpdateQueue = scriptUpdateQueue.drop(1) },
+            title = { Text(stringResource(R.string.lx_title_script_update)) },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = pendingUpdateAlert.scriptName,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    if (pendingUpdateAlert.version.isNotBlank()) {
+                        Text(
+                            text = pendingUpdateAlert.version,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = pendingUpdateAlert.log,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 8,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            },
+            confirmButton = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    FilledTonalIconButton(
+                        enabled = !scriptUpdateWorking,
+                        onClick = { scriptUpdateQueue = scriptUpdateQueue.drop(1) },
+                        shape = lxDialogCancelShape,
+                        modifier = Modifier
+                            .shadow(2.dp, lxDialogCancelShape)
+                            .size(42.dp),
+                    ) {
+                        Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.lx_desc_cancel))
+                    }
+                    if (pendingUpdateAlert.updateUrl != null) {
+                        FilledTonalIconButton(
+                            enabled = !scriptUpdateWorking,
+                            onClick = {
+                                val url = pendingUpdateAlert.updateUrl ?: return@FilledTonalIconButton
+                                val openInBrowser: () -> Unit = {
+                                    runCatching {
+                                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                                    }
+                                }
+                                if (url.startsWith("http://") || url.startsWith("https://")) {
+                                    scriptUpdateWorking = true
+                                    viewModel.updateScriptFromUrl(pendingUpdateAlert) { err ->
+                                        scriptUpdateWorking = false
+                                        if (err != null) {
+                                            viewModel.emitToast(context.getString(R.string.lx_msg_update_to_browser))
+                                            openInBrowser()
+                                        }
+                                        scriptUpdateQueue = scriptUpdateQueue.drop(1)
+                                    }
+                                } else {
+                                    openInBrowser()
+                                    scriptUpdateQueue = scriptUpdateQueue.drop(1)
+                                }
+                            },
+                            shape = lxDialogConfirmShape,
+                            modifier = Modifier
+                                .then(
+                                    if (!scriptUpdateWorking) Modifier.shadow(2.dp, lxDialogConfirmShape)
+                                    else Modifier
+                                )
+                                .size(42.dp),
+                        ) {
+                            if (scriptUpdateWorking) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp,
+                                )
+                            } else {
+                                Icon(Icons.Rounded.KeyboardArrowRight, contentDescription = stringResource(R.string.lx_desc_import))
+                            }
                         }
                     }
                 }
@@ -2751,19 +2868,19 @@ private fun LxBoardPage(
         ExpressiveScrollBar(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .padding(end = 4.dp, top = boardHeaderHeight + 4.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + 16.dp),
+                .padding(end = 4.dp, top = boardHeaderHeight + 4.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 16.dp),
             listState = listState,
         )
         LxScrollToTopFab(
             listState = listState,
             modifier = Modifier.align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + 14.dp),
+                .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
         )
         if (browseState.boardSongs.isNotEmpty()) {
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(start = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + 14.dp),
+                    .padding(start = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
@@ -3172,13 +3289,13 @@ private fun LxPlaylistPage(
         }
         ExpressiveScrollBar(
             modifier = Modifier.align(Alignment.CenterEnd)
-                .padding(end = 4.dp, top = headerHeight + 4.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + 16.dp),
+                .padding(end = 4.dp, top = headerHeight + 4.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 16.dp),
             listState = listState,
         )
         LxScrollToTopFab(
             listState = listState,
             modifier = Modifier.align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + 14.dp),
+                .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
         )
         if (browseState.selectedPlaylist != null && browseState.playlistSongs.isNotEmpty()) {
             LxBottomPlayActions(
@@ -3194,7 +3311,7 @@ private fun LxPlaylistPage(
                 },
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(start = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + 14.dp),
+                    .padding(start = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
             )
         }
         if (showNeteaseUidDialog) {
@@ -3551,7 +3668,7 @@ private fun LxSearchPage(
         }
         ExpressiveScrollBar(
             modifier = Modifier.align(Alignment.CenterEnd)
-                .padding(end = 4.dp, top = 102.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + 16.dp),
+                .padding(end = 4.dp, top = 102.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 16.dp),
             listState = listState,
         )
         LxLocateCurrentSongFab(
@@ -3560,18 +3677,18 @@ private fun LxSearchPage(
             songIds = searchSongIds,
             leadingItems = searchLeadingItems,
             modifier = Modifier.align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + 74.dp),
+                .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 74.dp),
         )
         LxScrollToTopFab(
             listState = listState,
             modifier = Modifier.align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + 14.dp),
+                .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
         )
         if (searchState.type == LxMusicViewModel.SearchType.SONG && searchState.results.isNotEmpty()) {
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(start = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + 14.dp),
+                    .padding(start = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
@@ -4121,13 +4238,13 @@ private fun LxSearchArtistPage(
                         leadingItems = 1,
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + 74.dp),
+                            .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 74.dp),
                     )
                     LxScrollToTopFab(
                         listState = albumListState,
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + 14.dp),
+                            .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
                     )
                 }
             }
@@ -4335,13 +4452,13 @@ private fun LxSearchArtistPage(
                     leadingItems = if (artistHasBrief) 2 else 1,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + 74.dp),
+                        .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 74.dp),
                 )
                 LxScrollToTopFab(
                     listState = listState,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + 14.dp),
+                        .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
                 )
             }
         }
@@ -4528,13 +4645,13 @@ private fun LxSearchAlbumPage(
                     leadingItems = 1,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + 74.dp),
+                        .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 74.dp),
                 )
                 LxScrollToTopFab(
                     listState = listState,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + 14.dp),
+                        .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
                 )
             }
         }
