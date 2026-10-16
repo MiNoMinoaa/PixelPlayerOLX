@@ -2,6 +2,13 @@
 
 All notable changes to PixelPlayerOLX will be documented in this file.
 
+## [0.2.0] - 2026-10-16
+
+### Added
+- In-app update detection and seamless replacement for music source scripts.
+- Add-to-library support for songs (single song / multi-select).
+- Lightweight run logs, exportable manually from Developer options.
+
 ## [0.1.0] - 2026-09-17
 
 ### Added

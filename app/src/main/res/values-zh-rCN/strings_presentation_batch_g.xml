@@ -380,7 +380,7 @@
 
     <string name="presentation_batch_g_changelog_sec_whats_new">新增功能</string>
     <string name="presentation_batch_g_changelog_sec_changes">部分改动</string>
-    <string name="presentation_batch_g_changelog_fork_title">全新的分支！PixelPlayerOLX</string>
+    <string name="presentation_batch_g_changelog_fork_title">一切就绪！PixelPlayerOLX</string>
     <string name="presentation_batch_g_changelog_legacy_header">PixelPlayerOSS</string>
     <string name="presentation_batch_g_changelog_legacy_ellipsis">……</string>
     <!-- PixelPlayerOLX 0.1.0：新增功能 -->
@@ -405,5 +405,10 @@
         <item>LRCLIB在线歌词功能默认启用并从首次启动选择中删除，搜索时默认不选择首条搜索结果</item>
         <item>主题样式默认跟随系统</item>
         <item>曲库导航方式样式选择功能已从首次启动选择中删除</item>
+    </string-array>
+    <string-array name="presentation_batch_g_changelog_v020_whats_new">
+        <item>音源脚本应用内更新检测与无缝替换</item>
+        <item>加入曲库功能（单曲 / 多选）</item>
+        <item>轻量运行日志：开发者选项内可手动导出</item>
     </string-array>
 </resources>

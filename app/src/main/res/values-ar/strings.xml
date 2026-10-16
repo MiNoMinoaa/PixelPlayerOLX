@@ -213,7 +213,7 @@
     <string name="widget_bar_4x1_desc">شريط مشغل مضغوط</string>
     <string name="widget_control_4x2_desc">عناصر تحكم كاملة مع التشغيل العشوائي والتكرار</string>
     <string name="widget_grid_2x2_desc">مشغل مربع بسيط</string>
-    <string name="lx_brand_title">Lx موسيقى</string>
+    <string name="lx_brand_title">اكتشف</string>
     <string-array name="lx_mood_0_6">
         <item>منتصف الليل</item>
         <item>مساعد النوم</item>

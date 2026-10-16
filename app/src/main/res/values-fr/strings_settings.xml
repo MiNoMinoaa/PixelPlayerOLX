@@ -217,6 +217,8 @@
     <string name="setcat_theme_follow_system">Suivre le système</string>
     <string name="setcat_theme_light">Thème clair</string>
     <string name="setcat_trigger_crash_subtitle">Simuler un crash pour tester le système de rapport.</string>
+    <string name="setcat_export_runlog_title">Exporter le journal d\'exécution</string>
+    <string name="setcat_export_runlog_subtitle">Partager le journal d\'exécution récent de l\'application pour le diagnostic.</string>
     <string name="setcat_trigger_crash_title">Déclencher un crash de test</string>
     <string name="settings_accounts_row_subtitle">Gérer les services Navidrome et Jellyfin</string>
     <string name="settings_accounts_row_title">Comptes</string>

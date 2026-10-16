@@ -122,7 +122,7 @@ class PixelPlayerApplication : Application(), ImageLoaderFactory, Configuration.
         }
 
         if (BuildConfig.DEBUG) {
-            Timber.plant(Timber.DebugTree())
+            Timber.plant(Timber.DebugTree(), ReleaseTree(logToLogcat = false))
         } else {
             Timber.plant(ReleaseTree())
         }

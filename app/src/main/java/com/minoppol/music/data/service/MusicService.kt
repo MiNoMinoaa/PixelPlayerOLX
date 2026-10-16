@@ -1,5 +1,6 @@
 package com.minoppol.music.data.service
 
+import com.minoppol.music.ReleaseTree
 import android.app.BackgroundServiceStartNotAllowedException
 import android.app.ForegroundServiceStartNotAllowedException
 import android.app.PendingIntent
@@ -1308,6 +1309,8 @@ class MusicService : MediaSessionService() {
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
 
     override fun onTaskRemoved(rootIntent: Intent?) {
+        Timber.tag(TAG).d("onTaskRemoved")
+        ReleaseTree.writeDumpTo(this)
         val session = mediaSession
         val continuePlayback = shouldContinuePlaybackAfterTaskRemoved(
             hasForegroundPlaybackIntent = session?.player?.hasForegroundPlaybackIntent() == true,
@@ -2578,6 +2581,7 @@ class MusicService : MediaSessionService() {
         player.playWhenReady = false
         player.stop()
         player.clearMediaItems()
+        engine.stopAllPlayback()
 
         requestWidgetFullUpdate(force = true)
         stopForeground(STOP_FOREGROUND_REMOVE)

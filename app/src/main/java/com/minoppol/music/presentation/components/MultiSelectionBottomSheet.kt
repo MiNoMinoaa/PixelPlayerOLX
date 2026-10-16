@@ -29,6 +29,7 @@ import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.CloudDownload
+import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.HeartBroken
@@ -110,6 +111,7 @@ fun MultiSelectionBottomSheet(
     showAddToPlaylist: Boolean = true,
     showDelete: Boolean = true,
     showBatchEdit: Boolean = true,
+    onAddToLibrary: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val sheetState = rememberModalSheetState(skipPartiallyExpanded = true)
@@ -371,6 +373,32 @@ fun MultiSelectionBottomSheet(
                         }
                     }
                     
+                    if (onAddToLibrary != null) {
+                        item {
+                            FilledTonalButton(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 66.dp),
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                ),
+                                shape = CircleShape,
+                                onClick = {
+                                    onAddToLibrary()
+                                    onDismiss()
+                                }
+                            ) {
+                                Icon(
+                                    Icons.Rounded.LibraryAdd,
+                                    contentDescription = stringResource(R.string.lx_action_add_to_library)
+                                )
+                                Spacer(Modifier.width(10.dp))
+                                Text(stringResource(R.string.lx_action_add_to_library))
+                            }
+                        }
+                    }
+
                     item {
                         Row(
                             modifier = Modifier

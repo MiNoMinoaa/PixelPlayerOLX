@@ -229,6 +229,8 @@
     <string name="setcat_theme_follow_system">Sistemi Takip Et</string>
     <string name="setcat_theme_light">Açık Tema</string>
     <string name="setcat_trigger_crash_subtitle">Çökme raporlama sistemini test etmek için bir çökme simüle edin.</string>
+    <string name="setcat_export_runlog_title">Çalışma Günlüğünü Dışa Aktar</string>
+    <string name="setcat_export_runlog_subtitle">Sorun giderme için uygulama içi son çalışma günlüğünü paylaş.</string>
     <string name="setcat_trigger_crash_title">Test Çökmesi Tetikle</string>
     <string name="settings_accounts_row_subtitle">Navidrome ve Jellyfin hizmetlerini yönetin</string>
     <string name="settings_accounts_row_title">Hesaplar</string>

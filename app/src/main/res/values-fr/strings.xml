@@ -213,7 +213,7 @@
     <string name="widget_bar_4x1_desc">Barre de lecture compacte</string>
     <string name="widget_control_4x2_desc">Contrôles complets avec mode aléatoire et répétition</string>
     <string name="widget_grid_2x2_desc">Lecteur carré minimaliste</string>
-    <string name="lx_brand_title">Lx Musique</string>
+    <string name="lx_brand_title">Découvrir</string>
     <string-array name="lx_mood_0_6">
         <item>Nuit tardive</item>
         <item>Aide au sommeil</item>

@@ -217,6 +217,8 @@
     <string name="setcat_theme_follow_system">시스템 설정 따르기</string>
     <string name="setcat_theme_light">밝은 테마</string>
     <string name="setcat_trigger_crash_subtitle">크래시 보고 시스템을 테스트하기 위해 크래시를 시뮬레이션합니다.</string>
+    <string name="setcat_export_runlog_title">실행 로그 내보내기</string>
+    <string name="setcat_export_runlog_subtitle">문제 진단을 위해 앱의 최근 실행 로그를 공유합니다.</string>
     <string name="setcat_trigger_crash_title">테스트 크래시 발생</string>
     <string name="settings_accounts_row_subtitle">Navidrome 및 Jellyfin 서비스를 관리합니다</string>
     <string name="settings_accounts_row_title">계정</string>

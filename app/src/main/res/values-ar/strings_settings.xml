@@ -217,6 +217,8 @@
     <string name="setcat_theme_follow_system">حسب النظام</string>
     <string name="setcat_theme_light">المظهر الفاتح</string>
     <string name="setcat_trigger_crash_subtitle">محاكاة تعطل مفاجئ للتطبيق لاختبار نظام تقارير الأخطاء.</string>
+    <string name="setcat_export_runlog_title">تصدير سجل التشغيل</string>
+    <string name="setcat_export_runlog_subtitle">مشاركة سجل التشغيل الأخير من التطبيق لأغراض التشخيص.</string>
     <string name="setcat_trigger_crash_title">إطلاق تعطل تجريبي</string>
     <string name="settings_accounts_row_subtitle">إدارة خدمات Navidrome وJellyfin</string>
     <string name="settings_accounts_row_title">الحسابات</string>

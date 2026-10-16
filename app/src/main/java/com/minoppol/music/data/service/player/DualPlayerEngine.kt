@@ -139,7 +139,7 @@ internal fun shouldDisableAudioOffloadByDefaultForDevice(
         brandName == "xiaomi" ||
         brandName == "redmi" ||
         brandName == "poco"
-    if (isXiaomiFamilyDevice && sdkInt >= 36) return true
+    if (isXiaomiFamilyDevice && sdkInt >= 33) return true
 
     val isGooglePixelDevice = manufacturerName == "google" || brandName == "google"
     if (isGooglePixelDevice && sdkInt >= 37) return true
@@ -1626,6 +1626,19 @@ class DualPlayerEngine @Inject constructor(
                 cont.invokeOnCancellation { player.removeListener(listener) }
             }
         } ?: false
+    }
+
+    fun stopAllPlayback() {
+        invalidateActiveTransition()
+        cancelAudioOffloadFallback()
+        if (::playerA.isInitialized) {
+            playerA.playWhenReady = false
+            playerA.stop()
+        }
+        playerB?.let {
+            it.playWhenReady = false
+            it.stop()
+        }
     }
 
     fun release() {

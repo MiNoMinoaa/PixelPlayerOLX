@@ -213,7 +213,7 @@
     <string name="widget_bar_4x1_desc">Barra de reproductor compacta</string>
     <string name="widget_control_4x2_desc">Controles completos con aleatorio y repetición</string>
     <string name="widget_grid_2x2_desc">Reproductor cuadrado minimalista</string>
-    <string name="lx_brand_title">Lx Música</string>
+    <string name="lx_brand_title">Descubrir</string>
     <string-array name="lx_mood_0_6">
         <item>Madrugada</item>
         <item>Para dormir</item>
