@@ -168,18 +168,6 @@ class ModuleSchemaValidator @Inject constructor(
     private fun validateFavorites(array: com.google.gson.JsonArray, errors: MutableList<ValidationError>) {
         array.forEachIndexed { i, element ->
             if (!element.isJsonObject) return@forEachIndexed
-            val obj = element.asJsonObject
-            val songId = readNumericField(obj, "songId", "song_id")
-            if (!songId.present || songId.value == null || songId.value <= 0L) {
-                errors.add(
-                    ValidationError(
-                        "INVALID_SONG_ID",
-                        "Favorites[$i]: invalid songId",
-                        module = "favorites",
-                        severity = Severity.WARNING
-                    )
-                )
-            }
         }
     }
 

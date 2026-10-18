@@ -17,11 +17,12 @@ private const val TAG_FADE = "FadingPlayerFade"
  * Wraps the session-facing player so play/pause ramp the volume over a short fade instead
  * of cutting the audio hard.
  *
- * The fade target is captured from the inner player at fade start: ReplayGain writes its
- * normalized volume directly on the engine's master player (not through this wrapper), so
- * tracking only wrapper-side [setVolume] calls would make every fade end at full volume and
- * defeat the normalization. [getVolume] reports the logical volume during a fade rather
- * than the transient mid-ramp value.
+ * The fade target is captured from the inner player only when no fade is running: ReplayGain
+ * writes its normalized volume directly on the engine's master player (not through this
+ * wrapper), so tracking only wrapper-side [setVolume] calls would make every fade end at full
+ * volume and defeat the normalization. When a fade is interrupted (rapid pause/play toggling),
+ * the mid-ramp transient volume is stale, so the next fade targets the logical volume instead.
+ * [getVolume] reports the logical volume during a fade rather than the transient mid-ramp value.
  */
 class FadingPlayer(
     val innerPlayer: Player,
@@ -44,15 +45,21 @@ class FadingPlayer(
     }
 
     override fun play() {
+        val hadActiveFade = fadeJob?.isActive == true
         fadeJob?.cancel()
         if (isPlaying) {
+            if (hadActiveFade) super.setVolume(logicalVolume)
             super.play()
             return
         }
 
         val tEnter = SystemClock.elapsedRealtimeNanos()
-        logicalVolume = innerPlayer.volume
-        val targetVolume = logicalVolume
+        val targetVolume = if (hadActiveFade) {
+            logicalVolume
+        } else {
+            logicalVolume = innerPlayer.volume
+            logicalVolume
+        }
         super.setVolume(0f)
         super.play()
         val tPlayCalled = SystemClock.elapsedRealtimeNanos()
@@ -72,15 +79,21 @@ class FadingPlayer(
     }
 
     override fun pause() {
+        val hadActiveFade = fadeJob?.isActive == true
         fadeJob?.cancel()
         if (!isPlaying) {
+            if (hadActiveFade) super.setVolume(logicalVolume)
             super.pause()
             return
         }
 
         val tEnter = SystemClock.elapsedRealtimeNanos()
-        val startVolume = innerPlayer.volume
-        logicalVolume = startVolume
+        val startVolume = if (hadActiveFade) {
+            logicalVolume
+        } else {
+            logicalVolume = innerPlayer.volume
+            logicalVolume
+        }
 
         // FIX: pause 必须立即调 super.pause()（和 play() 立即调 super.play() 对称），
         // 不能把 super.pause() 放在 fade 循环末尾（会让声音拖 FADE_DURATION_MS 才停，有点儿反直觉）

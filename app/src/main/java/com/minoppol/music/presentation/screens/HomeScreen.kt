@@ -66,6 +66,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -103,6 +104,7 @@ import com.minoppol.music.presentation.components.RecentlyPlayedSectionMinSongsT
 import com.minoppol.music.presentation.components.SmartImage
 import com.minoppol.music.presentation.components.StatsOverviewCard
 import com.minoppol.music.presentation.components.resolveMainScreenBottomGradientHeight
+import com.minoppol.music.data.preferences.NavBarStyle
 import com.minoppol.music.presentation.model.collectRecentlyPlayedSongIds
 import com.minoppol.music.presentation.model.mapRecentlyPlayedSongs
 import com.minoppol.music.presentation.components.subcomps.PlayingEqIcon
@@ -240,7 +242,13 @@ fun HomeScreen(
 
     val bottomPadding = if (currentSong != null) MiniPlayerHeight else 0.dp
     val navBarCompactMode by playerViewModel.navBarCompactMode.collectAsStateWithLifecycle()
-    val bottomGradientHeight = resolveMainScreenBottomGradientHeight(navBarCompactMode)
+    val navBarStyle by playerViewModel.navBarStyle.collectAsStateWithLifecycle()
+    val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
+    val bottomGradientHeight = if (navBarStyle == NavBarStyle.FLOATING) {
+        0.dp
+    } else {
+        resolveMainScreenBottomGradientHeight(navBarCompactMode)
+    }
 
     var showOptionsBottomSheet by remember { mutableStateOf(false) }
     var showChangelogBottomSheet by remember { mutableStateOf(false) }
@@ -343,6 +351,13 @@ fun HomeScreen(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(start = 12.dp, end = 12.dp, bottom = 6.dp)
+                    .clip(
+                        RoundedCornerShape(
+                            bottomStart = listBottomCornerRadius,
+                            bottomEnd = listBottomCornerRadius
+                        )
+                    )
                     .background(MaterialTheme.colorScheme.background),
                 contentPadding = PaddingValues(
                     top = innerPadding.calculateTopPadding(),

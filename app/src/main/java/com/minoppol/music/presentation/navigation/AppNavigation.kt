@@ -32,6 +32,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.minoppol.music.data.preferences.LaunchTab
+import com.minoppol.music.data.preferences.NavBarStyle
 import com.minoppol.music.data.preferences.UserPreferencesRepository
 import com.minoppol.music.presentation.screens.AlbumDetailScreen
 import com.minoppol.music.presentation.screens.AudioBookmarkFolderScreen
@@ -64,6 +65,9 @@ import com.minoppol.music.presentation.screens.EqualizerScreen
 import com.minoppol.music.presentation.viewmodel.PlayerViewModel
 import com.minoppol.music.presentation.viewmodel.PlaylistViewModel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minoppol.music.presentation.components.ScreenWrapper
 
 @OptIn(UnstableApi::class)
@@ -78,6 +82,12 @@ fun AppNavigation(
     onOpenSidebar: () -> Unit
 ) {
     var startDestination by remember { mutableStateOf<String?>(null) }
+
+    val floatingNavBarStyleActive by playerViewModel.navBarStyle
+        .map { it == NavBarStyle.FLOATING }
+        .distinctUntilChanged()
+        .collectAsStateWithLifecycle(initialValue = false)
+    floatingNavBarTransitionsActive = floatingNavBarStyleActive
 
     LaunchedEffect(Unit) {
         startDestination = userPreferencesRepository.launchTabFlow
@@ -359,6 +369,22 @@ fun AppNavigation(
                     RecentlyPlayedScreen(
                         playerViewModel = playerViewModel,
                         navController = navController
+                    )
+                }
+            }
+            composable(
+                Screen.RecentlyPlayedTab.route,
+                enterTransition = { enterTransition() },
+                exitTransition = { exitTransition() },
+                popEnterTransition = { popEnterTransition() },
+                popExitTransition = { popExitTransition() },
+            ) {
+                ScreenWrapper(navController = navController, playerViewModel = playerViewModel) {
+                    RecentlyPlayedScreen(
+                        playerViewModel = playerViewModel,
+                        navController = navController,
+                        showBackButton = false,
+                        showSettingsButton = true
                     )
                 }
             }
@@ -686,6 +712,13 @@ private enum class MainRootDirection {
 
 private const val BOTTOM_NAV_TRANSITION_DURATION = 380
 
+private var floatingNavBarTransitionsActive = false
+
+private val FloatingNavTransitionSpec = tween<IntOffset>(
+    durationMillis = 300,
+    easing = CubicBezierEasing(0f, 0f, 0.58f, 1f)
+)
+
 private val BottomNavEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 
 private val MAIN_ROOT_TRANSITION_SPEC =
@@ -710,16 +743,30 @@ private fun mainRootEnterTransition(
     fallback: EnterTransition
 ): EnterTransition = when (mainRootDirection(fromRoute, toRoute)) {
     MainRootDirection.FORWARD -> {
-        slideInHorizontally(
-            animationSpec = MAIN_ROOT_TRANSITION_SPEC,
-            initialOffsetX = { (it * 0.5f).toInt() }
-        ) + fadeIn(animationSpec = MAIN_ROOT_FADE_SPEC)
+        if (floatingNavBarTransitionsActive) {
+            slideInHorizontally(
+                animationSpec = FloatingNavTransitionSpec,
+                initialOffsetX = { it }
+            )
+        } else {
+            slideInHorizontally(
+                animationSpec = MAIN_ROOT_TRANSITION_SPEC,
+                initialOffsetX = { (it * 0.5f).toInt() }
+            ) + fadeIn(animationSpec = MAIN_ROOT_FADE_SPEC)
+        }
     }
     MainRootDirection.BACKWARD -> {
-        slideInHorizontally(
-            animationSpec = MAIN_ROOT_TRANSITION_SPEC,
-            initialOffsetX = { -(it * 0.5f).toInt() }
-        ) + fadeIn(animationSpec = MAIN_ROOT_FADE_SPEC)
+        if (floatingNavBarTransitionsActive) {
+            slideInHorizontally(
+                animationSpec = FloatingNavTransitionSpec,
+                initialOffsetX = { -it }
+            )
+        } else {
+            slideInHorizontally(
+                animationSpec = MAIN_ROOT_TRANSITION_SPEC,
+                initialOffsetX = { -(it * 0.5f).toInt() }
+            ) + fadeIn(animationSpec = MAIN_ROOT_FADE_SPEC)
+        }
     }
     null -> fallback
 }
@@ -730,16 +777,30 @@ private fun mainRootExitTransition(
     fallback: ExitTransition
 ): ExitTransition = when (mainRootDirection(fromRoute, toRoute)) {
     MainRootDirection.FORWARD -> {
-        slideOutHorizontally(
-            animationSpec = MAIN_ROOT_TRANSITION_SPEC,
-            targetOffsetX = { -(it * 0.5f).toInt() }
-        ) + fadeOut(animationSpec = MAIN_ROOT_FADE_SPEC)
+        if (floatingNavBarTransitionsActive) {
+            slideOutHorizontally(
+                animationSpec = FloatingNavTransitionSpec,
+                targetOffsetX = { -it }
+            )
+        } else {
+            slideOutHorizontally(
+                animationSpec = MAIN_ROOT_TRANSITION_SPEC,
+                targetOffsetX = { -(it * 0.5f).toInt() }
+            ) + fadeOut(animationSpec = MAIN_ROOT_FADE_SPEC)
+        }
     }
     MainRootDirection.BACKWARD -> {
-        slideOutHorizontally(
-            animationSpec = MAIN_ROOT_TRANSITION_SPEC,
-            targetOffsetX = { (it * 0.5f).toInt() }
-        ) + fadeOut(animationSpec = MAIN_ROOT_FADE_SPEC)
+        if (floatingNavBarTransitionsActive) {
+            slideOutHorizontally(
+                animationSpec = FloatingNavTransitionSpec,
+                targetOffsetX = { it }
+            )
+        } else {
+            slideOutHorizontally(
+                animationSpec = MAIN_ROOT_TRANSITION_SPEC,
+                targetOffsetX = { (it * 0.5f).toInt() }
+            ) + fadeOut(animationSpec = MAIN_ROOT_FADE_SPEC)
+        }
     }
     null -> fallback
 }
