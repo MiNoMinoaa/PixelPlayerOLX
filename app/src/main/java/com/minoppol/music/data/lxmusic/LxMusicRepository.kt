@@ -3896,18 +3896,34 @@ class LxMusicRepository @Inject constructor(
         val internalAvailable = sourceInfo.qualitys.map { normalizeScriptQuality(it) }
         val resolvedInternal: String? = when {
             quality == null -> null
-            quality == LxQualities.MASTER ||
-                quality == LxQualities.ATMOS ||
-                quality == LxQualities.FLAC24 -> quality
             quality in internalAvailable -> quality
             else -> PREFERRED_QUALITY_ORDER.firstOrNull { it in internalAvailable }
                 ?: internalAvailable.firstOrNull()
+        }
+        if (quality != null && resolvedInternal == null) {
+            LxResolveDiag.log(
+                "script_skip",
+                "script" to assetPath.substringAfterLast('/'),
+                "source" to song.source,
+                "songmid" to song.songmid,
+                "reqQ" to quality,
+                "reason" to "no_supported_quality",
+                "scriptQualitys" to sourceInfo.qualitys.joinToString(","),
+            )
+            return LxMusicUrlEvent.Unavailable
         }
         val resolvedQuality = resolvedInternal?.let { internal ->
             if (internal in sourceInfo.qualitys) internal
             else scriptQualityAliases[internal] ?: internal
         }
-        Timber.d("resolveMusicUrl: calling engine source=${song.source} mid=${song.songmid} q=$resolvedQuality")
+        LxResolveDiag.log(
+            "script_call",
+            "script" to assetPath.substringAfterLast('/'),
+            "source" to song.source,
+            "songmid" to song.songmid,
+            "reqQ" to (quality ?: "default"),
+            "sendQ" to (resolvedQuality ?: "320k"),
+        )
         val extraInfo = mutableMapOf(
             "name" to song.name,
             "singer" to song.singer,
@@ -3966,12 +3982,54 @@ class LxMusicRepository @Inject constructor(
     private val scriptUrlDeadAt = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val scriptUrlDeadTtlMs = 5 * 60 * 1000L
 
+    private val scriptConsecutiveFailures = java.util.concurrent.ConcurrentHashMap<String, Int>()
+    private val scriptCircuitOpenUntil = java.util.concurrent.ConcurrentHashMap<String, Long>()
+    private val scriptCircuitThreshold = 3
+    private val scriptCircuitCooldownMs = 10 * 60 * 1000L
+    private val lastScriptRejectReasons = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    private val _resolvePhase = MutableStateFlow<String?>(null)
+    val resolvePhase: StateFlow<String?> = _resolvePhase.asStateFlow()
+
+    private fun isScriptCircuitOpen(assetPath: String): Boolean {
+        val until = scriptCircuitOpenUntil[assetPath] ?: return false
+        if (System.currentTimeMillis() >= until) {
+            scriptCircuitOpenUntil.remove(assetPath)
+            scriptConsecutiveFailures.remove(assetPath)
+            return false
+        }
+        return true
+    }
+
+    private fun onScriptResolveOutcome(assetPath: String, outcome: ScriptOutcome) {
+        if (outcome is ScriptOutcome.Unavailable) {
+            val count = (scriptConsecutiveFailures[assetPath] ?: 0) + 1
+            if (count >= scriptCircuitThreshold) {
+                scriptConsecutiveFailures.remove(assetPath)
+                scriptCircuitOpenUntil[assetPath] = System.currentTimeMillis() + scriptCircuitCooldownMs
+                LxResolveDiag.log(
+                    "circuit_open",
+                    "script" to assetPath.substringAfterLast('/'),
+                    "cooldownMin" to (scriptCircuitCooldownMs / 60000),
+                )
+            } else {
+                scriptConsecutiveFailures[assetPath] = count
+            }
+        } else {
+            scriptConsecutiveFailures.remove(assetPath)
+        }
+    }
+
+    fun lastScriptRejectReason(source: String, songmid: String): String? =
+        lastScriptRejectReasons["$source/$songmid"]
+
     private val scriptResolveSemaphores = java.util.concurrent.ConcurrentHashMap<String, Semaphore>()
     private fun scriptSemaphore(assetPath: String): Semaphore =
         scriptResolveSemaphores.getOrPut(assetPath) { Semaphore(3) }
 
-    private val musicUrlEventTimeoutMs = 20_000L
+    private val musicUrlEventTimeoutMs = 8_000L
     private val fallbackTotalTimeoutMs = 20_000L
+    private val scriptChainBudgetMs = 10_000L
     private val crossSourceCandidateTimeoutMs = 8_000L
 
     data class ResolvedPlayUrl(
@@ -3990,6 +4048,7 @@ class LxMusicRepository @Inject constructor(
         quality: String? = null,
     ): ResolvedPlayUrl? {
         val cacheKey = "${song.source}/${song.songmid}"
+        val startMs = System.currentTimeMillis()
         val effectiveQuality = quality ?: runCatching {
             userPreferencesRepository.lxMusicPreferredQualityFlow.first()
         }.getOrNull()
@@ -4017,12 +4076,26 @@ class LxMusicRepository @Inject constructor(
                 }
             }
             if (!skipOriginalScript) {
-                resolveViaScripts(song, effectiveQuality)?.let { return it }
+                _resolvePhase.value = "scripts"
+                val chainStartMs = System.currentTimeMillis()
+                val viaScripts = kotlinx.coroutines.withTimeoutOrNull(scriptChainBudgetMs) {
+                    resolveViaScripts(song, effectiveQuality)
+                }
+                if (viaScripts != null) return viaScripts
+                if (System.currentTimeMillis() - chainStartMs >= scriptChainBudgetMs) {
+                    LxResolveDiag.log(
+                        "script_chain_timeout",
+                        "source" to song.source,
+                        "songmid" to song.songmid,
+                        "budgetMs" to scriptChainBudgetMs,
+                    )
+                }
             }
             if (allScriptPaths().none { it !in disabledPaths }) {
                 Timber.d("layerB: no enabled scripts, skip cross-source search for $cacheKey")
                 return null
             }
+            _resolvePhase.value = "cross_source"
             val candidates = findOtherSourceSongs(song)
                 .filterNot { matched != null && it.source == matched.source && it.songmid == matched.songmid }
                 .take(8)
@@ -4082,7 +4155,8 @@ class LxMusicRepository @Inject constructor(
             }
         }
 
-        val result = kotlinx.coroutines.withTimeoutOrNull(fallbackTotalTimeoutMs) {
+        val result = try {
+            kotlinx.coroutines.withTimeoutOrNull(fallbackTotalTimeoutMs) {
             if (route == PlaybackRoute.OFFICIAL_FIRST) {
                 when (val outcome = callOfficialLayer(song, effectiveQuality, cacheKey)) {
                     is OfficialOutcome.Full ->
@@ -4111,7 +4185,19 @@ class LxMusicRepository @Inject constructor(
                     )
                 else -> pickBest(scriptResult, outcome)
             }
+            }
+        } finally {
+            _resolvePhase.value = null
         }
+        LxResolveDiag.log(
+            "resolve_end",
+            "source" to song.source,
+            "songmid" to song.songmid,
+            "reqQ" to (effectiveQuality ?: "default"),
+            "success" to (result != null),
+            "quality" to result?.quality,
+            "ms" to (System.currentTimeMillis() - startMs),
+        )
         if (result == null) {
             Timber.w("resolveMusicUrlWithFallback: all sources failed or timed out for $cacheKey")
         } else if (result.quality != null) {
@@ -4353,37 +4439,75 @@ class LxMusicRepository @Inject constructor(
 
     private suspend fun resolveViaScripts(song: LxSong, quality: String?): Pair<String, String?>? {
         val tried = mutableSetOf<String>()
+        val rejections = mutableListOf<String>()
         val requestedRank = qualityRank(quality)
+        val rejectKey = "${song.source}/${song.songmid}"
         val supports: (String) -> Boolean = { p ->
             p !in disabledPaths && engine.isSourceSupported(p, song.source)
         }
+        val circuitFiltered = allScriptPaths().filter { path ->
+            val open = supports(path) && isScriptCircuitOpen(path)
+            if (open) {
+                LxResolveDiag.log(
+                    "script_skip",
+                    "script" to path.substringAfterLast('/'),
+                    "source" to song.source,
+                    "songmid" to song.songmid,
+                    "reason" to "circuit_open",
+                )
+            }
+            !open
+        }
 
-        val primaryPath = activeScriptPath()?.takeIf(supports)
+        val primaryPath = activeScriptPath()?.takeIf(supports)?.takeIf { it in circuitFiltered }
         if (primaryPath != null) {
             tried.add(primaryPath)
             when (val primary = resolveViaSingleScript(primaryPath, song, quality)) {
                 is ScriptOutcome.Ok -> {
-                    if (quality == null || qualityRank(primary.quality) >= requestedRank) return primary.url to primary.quality
-                    for (scriptPath in allScriptPaths()) {
+                    if (quality == null || qualityRank(primary.quality) >= requestedRank) {
+                        lastScriptRejectReasons.remove(rejectKey)
+                        return primary.url to primary.quality
+                    }
+                    for (scriptPath in circuitFiltered) {
                         if (!supports(scriptPath) || scriptPath in tried) continue
                         tried.add(scriptPath)
                         val high = tryScriptAtQuality(scriptPath, song, quality)
-                        if (high != null && qualityRank(high.second) >= requestedRank) return high
+                        if (high != null && qualityRank(high.second) >= requestedRank) {
+                            lastScriptRejectReasons.remove(rejectKey)
+                            return high
+                        }
                     }
+                    lastScriptRejectReasons.remove(rejectKey)
                     return primary.url to primary.quality
                 }
-                ScriptOutcome.Rejected -> return null
+                is ScriptOutcome.Rejected ->
+                    rejections.add("${primary.scriptPath.substringAfterLast('/')}: ${primary.reason ?: "rejected"}")
                 ScriptOutcome.Unavailable -> {}
             }
         }
-        for (scriptPath in allScriptPaths()) {
+        for (scriptPath in circuitFiltered) {
             if (!supports(scriptPath) || scriptPath in tried) continue
             tried.add(scriptPath)
             when (val r = resolveViaSingleScript(scriptPath, song, quality)) {
-                is ScriptOutcome.Ok -> return r.url to r.quality
-                ScriptOutcome.Rejected -> return null
+                is ScriptOutcome.Ok -> {
+                    lastScriptRejectReasons.remove(rejectKey)
+                    return r.url to r.quality
+                }
+                is ScriptOutcome.Rejected ->
+                    rejections.add("${r.scriptPath.substringAfterLast('/')}: ${r.reason ?: "rejected"}")
                 ScriptOutcome.Unavailable -> {}
             }
+        }
+        if (rejections.isNotEmpty()) {
+            lastScriptRejectReasons[rejectKey] = rejections.first()
+            LxResolveDiag.log(
+                "script_chain_end",
+                "source" to song.source,
+                "songmid" to song.songmid,
+                "reqQ" to (quality ?: "default"),
+                "tried" to tried.size,
+                "rejections" to rejections.joinToString(" | "),
+            )
         }
         return null
     }
@@ -4417,7 +4541,7 @@ class LxMusicRepository @Inject constructor(
 
     private sealed interface ScriptOutcome {
         data class Ok(val url: String, val quality: String?) : ScriptOutcome
-        object Rejected : ScriptOutcome
+        data class Rejected(val scriptPath: String, val reason: String?) : ScriptOutcome
         object Unavailable : ScriptOutcome
     }
 
@@ -4426,31 +4550,91 @@ class LxMusicRepository @Inject constructor(
         song: LxSong,
         quality: String?,
     ): ScriptOutcome = scriptSemaphore(scriptPath).withPermit {
-        val event = runCatching { resolveMusicUrlDetailed(scriptPath, song, quality) }
+        val startMs = System.currentTimeMillis()
+        val scriptName = scriptPath.substringAfterLast('/')
+        var requestQuality = quality
+        var event = runCatching { resolveMusicUrlDetailed(scriptPath, song, requestQuality) }
             .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
             .getOrElse { LxMusicUrlEvent.Unavailable }
-        when (event) {
+        if (event !is LxMusicUrlEvent.Success && event is LxMusicUrlEvent.ScriptRejected && quality != null) {
+            val nextQ = qualityFallbackNext[quality]
+            if (nextQ != null) {
+                LxResolveDiag.log(
+                    "script_retry",
+                    "script" to scriptName,
+                    "source" to song.source,
+                    "songmid" to song.songmid,
+                    "fromQ" to quality,
+                    "toQ" to nextQ,
+                )
+                requestQuality = nextQ
+                event = runCatching { resolveMusicUrlDetailed(scriptPath, song, requestQuality) }
+                    .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+                    .getOrElse { LxMusicUrlEvent.Unavailable }
+            }
+        }
+        val elapsedMs = System.currentTimeMillis() - startMs
+        val outcome = when (event) {
             is LxMusicUrlEvent.Success -> {
                 if (streamUrlValidator?.invoke(event.url) == false) {
                     Timber.w("resolveViaSingleScript: rejected by security (${event.url.take(80)}) for ${song.source}/${song.songmid}")
+                    LxResolveDiag.log(
+                        "script_result",
+                        "script" to scriptName,
+                        "source" to song.source,
+                        "songmid" to song.songmid,
+                        "outcome" to "Unavailable",
+                        "reason" to "security_reject",
+                        "ms" to elapsedMs,
+                    )
                     ScriptOutcome.Unavailable
                 } else {
-                    val actualQ = inferScriptResultQuality(event.url, quality)
-                    if (actualQ != quality) {
+                    val actualQ = inferScriptResultQuality(event.url, requestQuality)
+                    if (actualQ != requestQuality) {
                         Timber.d(
                             "resolveViaSingleScript: script returned lossy url for q=$quality, " +
                                 "relabel as $actualQ for ${song.source}/${song.songmid}"
                         )
                     }
+                    LxResolveDiag.log(
+                        "script_result",
+                        "script" to scriptName,
+                        "source" to song.source,
+                        "songmid" to song.songmid,
+                        "outcome" to "Ok",
+                        "reqQ" to (quality ?: "default"),
+                        "actualQ" to actualQ,
+                        "ms" to elapsedMs,
+                    )
                     ScriptOutcome.Ok(event.url, actualQ)
                 }
             }
             is LxMusicUrlEvent.ScriptRejected -> {
-                Timber.d("resolveViaSingleScript: script rejected '${event.message}' for ${song.source}/${song.songmid}, abort downgrade")
-                ScriptOutcome.Rejected
+                LxResolveDiag.log(
+                    "script_result",
+                    "script" to scriptName,
+                    "source" to song.source,
+                    "songmid" to song.songmid,
+                    "outcome" to "Rejected",
+                    "reason" to event.message,
+                    "ms" to elapsedMs,
+                )
+                ScriptOutcome.Rejected(scriptPath, event.message)
             }
-            LxMusicUrlEvent.Unavailable -> ScriptOutcome.Unavailable
+            LxMusicUrlEvent.Unavailable -> {
+                LxResolveDiag.log(
+                    "script_result",
+                    "script" to scriptName,
+                    "source" to song.source,
+                    "songmid" to song.songmid,
+                    "outcome" to "Unavailable",
+                    "ms" to elapsedMs,
+                )
+                ScriptOutcome.Unavailable
+            }
         }
+        onScriptResolveOutcome(scriptPath, outcome)
+        outcome
     }
 
     private fun inferScriptResultQuality(url: String, requested: String?): String? {

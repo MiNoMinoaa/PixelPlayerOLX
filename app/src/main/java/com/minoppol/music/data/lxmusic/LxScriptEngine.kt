@@ -37,6 +37,8 @@ sealed interface LxMusicUrlEvent {
     data object Unavailable : LxMusicUrlEvent
 }
 
+private class LxScriptRuntimeDestroyedException : Exception()
+
 @Singleton
 class LxScriptEngine @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -65,6 +67,7 @@ class LxScriptEngine @Inject constructor(
         @Volatile var context: QuickJSContext? = null
         @Volatile var capabilities: LxScriptCapabilities = LxScriptCapabilities()
         val networkCalls = ConcurrentHashMap<String, Call>()
+        val pendingKeys = ConcurrentHashMap.newKeySet<String>()
         val initDeferred = CompletableDeferred<LxScriptCapabilities>()
     }
 
@@ -134,11 +137,19 @@ class LxScriptEngine @Inject constructor(
 
     fun unloadScript(assetPath: String) {
         val runtime = runtimes.remove(assetPath) ?: return
+        failRuntimePendingEvents(runtime)
         runtime.handler.post {
             cancelRuntimeNetworkCalls(runtime)
             runCatching { runtime.context?.close() }
             runtime.thread.quitSafely()
         }
+    }
+
+    private fun failRuntimePendingEvents(runtime: Runtime) {
+        for (key in runtime.pendingKeys) {
+            eventWaiters.remove(key)?.completeExceptionally(LxScriptRuntimeDestroyedException())
+        }
+        runtime.pendingKeys.clear()
     }
 
     private fun cancelRuntimeNetworkCalls(runtime: Runtime) {
@@ -220,6 +231,7 @@ class LxScriptEngine @Inject constructor(
         val requestKey = nextKey()
         val deferred = CompletableDeferred<JsonElement>()
         eventWaiters[requestKey] = deferred
+        runtime.pendingKeys.add(requestKey)
         runtime.handler.post {
             val info = JsonObject().apply {
                 addProperty("name", keyword)
@@ -240,11 +252,15 @@ class LxScriptEngine @Inject constructor(
         }
         return try {
             withTimeoutOrNull(EVENT_TIMEOUT_MS) { deferred.await() }?.let { parseSearchResult(it) }
+        } catch (e: LxScriptRuntimeDestroyedException) {
+            Timber.w("LxScriptEngine: runtime destroyed while waiting for search $source")
+            null
         } catch (e: CancellationException) {
             eventWaiters.remove(requestKey)
             throw e
         } finally {
             eventWaiters.remove(requestKey)
+            runtime.pendingKeys.remove(requestKey)
         }
     }
 
@@ -265,6 +281,7 @@ class LxScriptEngine @Inject constructor(
         val requestKey = nextKey()
         val deferred = CompletableDeferred<JsonElement>()
         eventWaiters[requestKey] = deferred
+        runtime.pendingKeys.add(requestKey)
         runtime.handler.post {
             val meta = JsonObject().apply {
                 addProperty("songId", songmid)
@@ -327,11 +344,15 @@ class LxScriptEngine @Inject constructor(
                 Timber.w("LxScriptEngine: timeout waiting for $action $source/$songmid")
                 null
             }
+        } catch (e: LxScriptRuntimeDestroyedException) {
+            Timber.w("LxScriptEngine: runtime destroyed while waiting for $action $source/$songmid")
+            null
         } catch (e: CancellationException) {
             eventWaiters.remove(requestKey)
             throw e
         } finally {
             eventWaiters.remove(requestKey)
+            runtime.pendingKeys.remove(requestKey)
         }
     }
 
