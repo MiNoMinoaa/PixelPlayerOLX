@@ -13,7 +13,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 import okhttp3.OkHttpClient
 import timber.log.Timber
 import java.io.File
@@ -287,6 +289,8 @@ class LxMusicStreamProxy @Inject constructor(
         if (needSave) scheduleSaveCache()
     }
 
+    private val warmUpSemaphore = Semaphore(1)
+
     suspend fun warmUpStreamUrl(uriString: String) {
         val uri = Uri.parse(uriString)
         if (uri.scheme != "lxmusic") return
@@ -295,7 +299,9 @@ class LxMusicStreamProxy @Inject constructor(
         val id = LxStreamId(source, songmid)
         if (!validateId(id)) return
         try {
-            getOrFetchStreamUrl(id)
+            warmUpSemaphore.withPermit {
+                getOrFetchStreamUrl(id)
+            }
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             Timber.w(e, "warmUpStreamUrl failed for $uriString")

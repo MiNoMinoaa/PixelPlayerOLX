@@ -93,6 +93,7 @@ internal fun BoxScope.UnifiedPlayerMiniAndFullLayers(
                         derivedStateOf { playerContentExpansionFraction.value < 0.01f }
                     }
                     val miniNavBarStyle by playerViewModel.navBarStyle.collectAsStateWithLifecycle()
+                    val miniResolvePhase by playerViewModel.lxResolvePhase.collectAsStateWithLifecycle()
                     val miniPlaybackPosition by playerViewModel.currentPlaybackPosition.collectAsStateWithLifecycle()
                     val miniLyrics = infrequentPlayerState.lyrics
                     val miniPlayerLyricsOn by playerViewModel.miniPlayerLyricsEnabled.collectAsStateWithLifecycle()
@@ -109,6 +110,7 @@ internal fun BoxScope.UnifiedPlayerMiniAndFullLayers(
                         isOutputConnecting = isOutputConnecting,
                         isPreparingPlayback = isPreparingPlayback,
                         isBuffering = infrequentPlayerState.isBuffering,
+                        resolvePhase = miniResolvePhase,
                         onPlayPause = { playerViewModel.playPause() },
                         onPrevious = { playerViewModel.previousSong() },
                         onNext = { playerViewModel.nextSong() },

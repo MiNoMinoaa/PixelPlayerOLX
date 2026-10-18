@@ -543,6 +543,8 @@ class PlayerViewModel @Inject constructor(
             initialValue = true
         )
 
+    val lxResolvePhase: StateFlow<String?> = lxMusicRepository.resolvePhase
+
     val libraryNavigationMode: StateFlow<String> = userPreferencesRepository.libraryNavigationModeFlow
         .stateIn(
             scope = viewModelScope,
@@ -2988,7 +2990,7 @@ class PlayerViewModel @Inject constructor(
                             ?.let { (source, songmid) ->
                                 lxMusicRepository.isOfficialLayerTried(source, songmid)
                             } == true
-                        context.getString(
+                        val baseMsg = context.getString(
                             when {
                                 noCopyright -> R.string.player_error_lx_no_copyright
                                 platformDenied -> R.string.player_error_lx_vip_need_vip
@@ -3001,6 +3003,12 @@ class PlayerViewModel @Inject constructor(
                                 else -> R.string.player_error_lx_load_failed
                             }
                         )
+                        val scriptReason = parsedKey
+                            ?.let { (source, songmid) ->
+                                lxMusicRepository.lastScriptRejectReason(source, songmid)
+                            }
+                            ?.takeIf { it.isNotBlank() }
+                        if (scriptReason != null) "$baseMsg：$scriptReason" else baseMsg
                     } else {
                         context.getString(R.string.player_error_skipping)
                     }
