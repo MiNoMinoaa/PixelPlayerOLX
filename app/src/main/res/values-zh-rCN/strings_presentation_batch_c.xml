@@ -41,7 +41,7 @@
     <string name="lib_empty_songs_offline_title">未找到本地歌曲</string>
     <string name="lib_empty_songs_offline_subtitle">更换筛选条件或重新扫描设备音乐库。</string>
     <string name="lib_empty_songs_online_title">未找到云端歌曲</string>
-    <string name="lib_empty_songs_online_subtitle">同步 Navidrome / Jellyfin 歌曲，或切换至本地源。</string>
+    <string name="lib_empty_songs_online_subtitle">播放一首云端歌曲，或切换至本地源。</string>
     <string name="lib_empty_albums_all_title">暂无专辑</string>
     <string name="lib_empty_albums_all_subtitle">音乐库完成曲目分组后，专辑就会显示在此。</string>
     <string name="lib_empty_albums_offline_title">未找到本地专辑</string>
