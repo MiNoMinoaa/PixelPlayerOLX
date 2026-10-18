@@ -63,6 +63,7 @@
     <string name="setup_library_layout_footer">後續可在 設置＞外觀＞庫導航 中修改。</string>
     <string name="tab_library">曲庫</string>
     <string name="tab_search">搜索</string>
+    <string name="tab_recent">最近</string>
     <string name="tab_songs">歌曲</string>
     <string name="tab_albums">專輯</string>
     <string name="tab_artists">藝術家</string>
@@ -124,8 +125,9 @@
     <string name="setup_compact_mode_pill_hint">使用懸浮膠囊導航欄</string>
     <string name="setup_compact_mode_tab_hint">使用標準標籤欄</string>
     <string name="setup_preview_songs_label">歌曲</string>
-    <string name="setup_nav_floating_pill_description">圓角懸浮膠囊樣式</string>
+    <string name="setup_nav_floating_pill_description">懸浮膠囊樣式</string>
     <string name="setup_nav_full_width_description">標準通寬導航欄</string>
+    <string name="setup_nav_floating_lens_description">懸浮透鏡樣式</string>
 
     <string name="dialog_delete_song_title">刪除歌曲？</string>
     <string name="dialog_delete_song_message">「%1$s」 — %2$s\n\n該歌曲會從設備永久刪除，無法恢復。</string>

@@ -178,6 +178,7 @@
     <string name="setcat_navbar_style_default">Varsayılan</string>
     <string name="setcat_navbar_style_desc">Gezinme çubuğunun görünümünü seçin.</string>
     <string name="setcat_navbar_style_full_width">Tam Genişlik</string>
+    <string name="setcat_navbar_style_floating">Yüzen</string>
     <string name="setcat_navbar_style_label">Gezinme Çubuğu Stili</string>
     <string name="setcat_navigation_bar">Gezinme Çubuğu</string>
     <string name="setcat_now_playing">Şu An Çalınan</string>

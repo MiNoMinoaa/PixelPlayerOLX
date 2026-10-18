@@ -108,6 +108,7 @@ import com.minoppol.music.presentation.components.MiniPlayerHeight
 import com.minoppol.music.presentation.components.PlaylistBottomSheet
 import com.minoppol.music.presentation.components.PlaylistCover
 import com.minoppol.music.presentation.components.resolveMainScreenBottomGradientHeight
+import com.minoppol.music.data.preferences.NavBarStyle
 import com.minoppol.music.presentation.components.resolveNavBarOccupiedHeight
 import com.minoppol.music.presentation.navigation.Screen
 import com.minoppol.music.presentation.screens.search.components.GenreCategoriesGrid
@@ -145,8 +146,13 @@ fun SearchScreen(
     val statusBarTopInset = WindowInsets.systemBars.asPaddingValues().calculateTopPadding()
     val systemNavBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val navBarCompactMode by playerViewModel.navBarCompactMode.collectAsStateWithLifecycle()
+    val navBarStyle by playerViewModel.navBarStyle.collectAsStateWithLifecycle()
     val bottomBarHeightDp = resolveNavBarOccupiedHeight(systemNavBarInset, navBarCompactMode)
-    val bottomGradientHeight = resolveMainScreenBottomGradientHeight(navBarCompactMode)
+    val bottomGradientHeight = if (navBarStyle == NavBarStyle.FLOATING) {
+        0.dp
+    } else {
+        resolveMainScreenBottomGradientHeight(navBarCompactMode)
+    }
     var showPlaylistBottomSheet by remember { mutableStateOf(false) }
     val searchUiState by remember(playerViewModel) {
         playerViewModel.playerUiState

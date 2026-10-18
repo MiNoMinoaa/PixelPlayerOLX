@@ -77,7 +77,7 @@ import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.model.SortOption
 import com.minoppol.music.presentation.components.subcomps.SineWaveLine
 import com.minoppol.music.presentation.navigation.Screen
-import com.minoppol.music.presentation.screens.PlayerSheetCollapsedCornerRadius
+import com.minoppol.music.presentation.screens.rememberListBottomCornerRadius
 import com.minoppol.music.presentation.viewmodel.PlayerViewModel
 import com.minoppol.music.presentation.viewmodel.PlaylistUiState
 import com.minoppol.music.presentation.viewmodel.PlaylistSelectionStateHolder
@@ -236,6 +236,7 @@ fun PlaylistItems(
 ) {
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
+    val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
     val playlistFastScrollLabelProvider = remember(filteredPlaylists, currentSortOption) {
         { index: Int ->
             playlistFastScrollLabel(
@@ -270,8 +271,8 @@ fun PlaylistItems(
                     RoundedCornerShape(
                         topStart = 12.dp,
                         topEnd = 12.dp,
-                        bottomStart = PlayerSheetCollapsedCornerRadius,
-                        bottomEnd = PlayerSheetCollapsedCornerRadius
+                        bottomStart = listBottomCornerRadius,
+                        bottomEnd = listBottomCornerRadius
                     )
                 ),
             state = listState,

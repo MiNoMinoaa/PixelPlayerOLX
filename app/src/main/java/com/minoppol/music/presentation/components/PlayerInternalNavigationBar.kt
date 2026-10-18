@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,6 +33,7 @@ import com.minoppol.music.data.preferences.NavBarStyle
 import com.minoppol.music.presentation.components.scoped.CustomNavigationBarItem
 import com.minoppol.music.presentation.navigation.Screen
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -77,12 +79,138 @@ internal fun resolveNavBarSurfaceHeight(
     navBarStyle: String,
     systemNavBarInset: Dp,
     compactMode: Boolean
-): Dp = resolveNavBarContentHeight(compactMode)
+): Dp = if (navBarStyle == NavBarStyle.FLOATING) {
+    resolveFloatingNavBarHeight(compactMode)
+} else {
+    resolveNavBarContentHeight(compactMode)
+}
+
+internal fun resolveFloatingNavBarOccupiedHeight(
+    systemNavBarInset: Dp,
+    compactMode: Boolean
+): Dp = FloatingNavBarMetrics.ShadowRoom + resolveFloatingNavBarHeight(compactMode) +
+    maxOf(FloatingNavBarMetrics.EdgeMargin, sanitizeNavigationBarBottomInset(systemNavBarInset))
 
 internal fun resolveNavBarOccupiedHeight(
     systemNavBarInset: Dp,
     compactMode: Boolean
 ): Dp = resolveNavBarContentHeight(compactMode) + systemNavBarInset
+
+internal fun resolveFloatingNavBarHeight(compactMode: Boolean): Dp =
+    if (compactMode) FloatingNavBarMetrics.CompactBarHeight else FloatingNavBarMetrics.BarHeight
+
+internal class NavRowTapState {
+    var lastSearchTapTimestamp: Long by mutableStateOf(0L)
+}
+
+@Composable
+internal fun RowScope.NavBarNavItem(
+    navController: NavHostController,
+    item: BottomNavItem,
+    isSelected: Boolean,
+    currentRoute: String?,
+    compactMode: Boolean,
+    tapState: NavRowTapState,
+    scope: CoroutineScope,
+    onSearchIconDoubleTap: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val latestCurrentRoute by rememberUpdatedState(currentRoute)
+    val latestOnSearchIconDoubleTap by rememberUpdatedState(onSearchIconDoubleTap)
+    val latestNavigationEnabled by rememberUpdatedState(currentRoute != null)
+
+    val selectedColor = MaterialTheme.colorScheme.primary
+    val unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val indicatorColorFromTheme = MaterialTheme.colorScheme.secondaryContainer
+
+    val iconPainterResId = if (isSelected && item.selectedIconResId != null && item.selectedIconResId != 0) {
+        item.selectedIconResId
+    } else {
+        item.iconResId
+    }
+    val iconLambda: @Composable () -> Unit = remember(iconPainterResId, item.labelResId) {
+        {
+            Icon(
+                painter = painterResource(id = iconPainterResId),
+                contentDescription = stringResource(item.labelResId)
+            )
+        }
+    }
+    val selectedIconLambda: @Composable () -> Unit = remember(iconPainterResId, item.labelResId) {
+        {
+            Icon(
+                painter = painterResource(id = iconPainterResId),
+                contentDescription = stringResource(item.labelResId)
+            )
+        }
+    }
+    val labelLambda: (@Composable () -> Unit)? = if (compactMode) {
+        null
+    } else {
+        remember(item.labelResId) {
+            { Text(stringResource(item.labelResId)) }
+        }
+    }
+    val onClickLambda: () -> Unit = remember(item.screen.route, navController, scope) {
+        click@{
+            if (!latestNavigationEnabled) {
+                tapState.lastSearchTapTimestamp = 0L
+                return@click
+            }
+
+            val itemRoute = item.screen.route
+            val isSearchTab = itemRoute == Screen.Search.route
+            val isAlreadySelected = latestCurrentRoute == itemRoute
+
+            if (isSearchTab) {
+                val now = SystemClock.elapsedRealtime()
+                val isDoubleTap = now - tapState.lastSearchTapTimestamp <= 350L
+                tapState.lastSearchTapTimestamp = now
+
+                if (!isAlreadySelected) {
+                    if (!navController.navigateToTopLevelSafely(itemRoute)) {
+                        tapState.lastSearchTapTimestamp = 0L
+                        return@click
+                    }
+                }
+
+                if (isDoubleTap) {
+                    tapState.lastSearchTapTimestamp = 0L
+                    if (isAlreadySelected) {
+                        latestOnSearchIconDoubleTap()
+                    } else {
+                        scope.launch {
+                            delay(160L)
+                            latestOnSearchIconDoubleTap()
+                        }
+                    }
+                }
+            } else if (!isAlreadySelected) {
+                tapState.lastSearchTapTimestamp = 0L
+                navController.navigateToTopLevelSafely(itemRoute)
+            } else {
+                tapState.lastSearchTapTimestamp = 0L
+            }
+        }
+    }
+    CustomNavigationBarItem(
+        modifier = modifier,
+        selected = isSelected,
+        onClick = onClickLambda,
+        enabled = currentRoute != null,
+        compactMode = compactMode,
+        icon = iconLambda,
+        selectedIcon = selectedIconLambda,
+        label = labelLambda,
+        contentDescription = stringResource(item.labelResId),
+        alwaysShowLabel = true,
+        selectedIconColor = selectedColor,
+        unselectedIconColor = unselectedColor,
+        selectedTextColor = selectedColor,
+        unselectedTextColor = unselectedColor,
+        indicatorColor = indicatorColorFromTheme
+    )
+}
 
 @Composable
 private fun PlayerInternalNavigationItemsRow(
@@ -99,9 +227,6 @@ private fun PlayerInternalNavigationItemsRow(
         WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     )
     val innerRowPadding = (navBarInsetPadding - bottomBarPadding).coerceAtLeast(0.dp)
-    val latestCurrentRoute by rememberUpdatedState(currentRoute)
-    val latestOnSearchIconDoubleTap by rememberUpdatedState(onSearchIconDoubleTap)
-    val latestNavigationEnabled by rememberUpdatedState(currentRoute != null)
 
     val rowModifier = if (navBarStyle == NavBarStyle.FULL_WIDTH) {
         modifier
@@ -118,99 +243,19 @@ private fun PlayerInternalNavigationItemsRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         val scope = rememberCoroutineScope()
-        var lastSearchTapTimestamp by remember { mutableStateOf(0L) }
+        val tapState = remember { NavRowTapState() }
         navItems.forEach { item ->
             val isSelected = currentRoute != null && currentRoute == item.screen.route
-            val selectedColor = MaterialTheme.colorScheme.primary
-            val unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
-            val indicatorColorFromTheme = MaterialTheme.colorScheme.secondaryContainer
-
-            val iconPainterResId = if (isSelected && item.selectedIconResId != null && item.selectedIconResId != 0) {
-                item.selectedIconResId
-            } else {
-                item.iconResId
-            }
-            val iconLambda: @Composable () -> Unit = remember(iconPainterResId, item.labelResId) {
-                {
-                    Icon(
-                        painter = painterResource(id = iconPainterResId),
-                        contentDescription = stringResource(item.labelResId)
-                    )
-                }
-            }
-            val selectedIconLambda: @Composable () -> Unit = remember(iconPainterResId, item.labelResId) {
-                {
-                    Icon(
-                        painter = painterResource(id = iconPainterResId),
-                        contentDescription = stringResource(item.labelResId)
-                    )
-                }
-            }
-            val labelLambda: (@Composable () -> Unit)? = if (compactMode) {
-                null
-            } else {
-                remember(item.labelResId) {
-                    { Text(stringResource(item.labelResId)) }
-                }
-            }
-            val onClickLambda: () -> Unit = remember(item.screen.route, navController, scope) {
-                click@{
-                    if (!latestNavigationEnabled) {
-                        lastSearchTapTimestamp = 0L
-                        return@click
-                    }
-
-                    val itemRoute = item.screen.route
-                    val isSearchTab = itemRoute == Screen.Search.route
-                    val isAlreadySelected = latestCurrentRoute == itemRoute
-
-                    if (isSearchTab) {
-                        val now = SystemClock.elapsedRealtime()
-                        val isDoubleTap = now - lastSearchTapTimestamp <= 350L
-                        lastSearchTapTimestamp = now
-
-                        if (!isAlreadySelected) {
-                            if (!navController.navigateToTopLevelSafely(itemRoute)) {
-                                lastSearchTapTimestamp = 0L
-                                return@click
-                            }
-                        }
-
-                        if (isDoubleTap) {
-                            lastSearchTapTimestamp = 0L
-                            if (isAlreadySelected) {
-                                latestOnSearchIconDoubleTap()
-                            } else {
-                                scope.launch {
-                                    delay(160L)
-                                    latestOnSearchIconDoubleTap()
-                                }
-                            }
-                        }
-                    } else if (!isAlreadySelected) {
-                        lastSearchTapTimestamp = 0L
-                        navController.navigateToTopLevelSafely(itemRoute)
-                    } else {
-                        lastSearchTapTimestamp = 0L
-                    }
-                }
-            }
-            CustomNavigationBarItem(
-                modifier = Modifier.weight(1f),
-                selected = isSelected,
-                onClick = onClickLambda,
-                enabled = currentRoute != null,
+            NavBarNavItem(
+                navController = navController,
+                item = item,
+                isSelected = isSelected,
+                currentRoute = currentRoute,
                 compactMode = compactMode,
-                icon = iconLambda,
-                selectedIcon = selectedIconLambda,
-                label = labelLambda,
-                contentDescription = stringResource(item.labelResId),
-                alwaysShowLabel = true,
-                selectedIconColor = selectedColor,
-                unselectedIconColor = unselectedColor,
-                selectedTextColor = selectedColor,
-                unselectedTextColor = unselectedColor,
-                indicatorColor = indicatorColorFromTheme
+                tapState = tapState,
+                scope = scope,
+                onSearchIconDoubleTap = onSearchIconDoubleTap,
+                modifier = Modifier.weight(1f)
             )
         }
     }

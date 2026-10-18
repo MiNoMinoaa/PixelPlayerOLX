@@ -794,7 +794,8 @@ fun SettingsCategoryScreen(
                                     description = stringResource(R.string.setcat_navbar_style_desc),
                                     options = mapOf(
                                         NavBarStyle.DEFAULT to stringResource(R.string.setcat_navbar_style_default),
-                                        NavBarStyle.FULL_WIDTH to stringResource(R.string.setcat_navbar_style_full_width)
+                                        NavBarStyle.FULL_WIDTH to stringResource(R.string.setcat_navbar_style_full_width),
+                                        NavBarStyle.FLOATING to stringResource(R.string.setcat_navbar_style_floating)
                                     ),
                                     selectedKey = uiState.navBarStyle,
                                     onSelectionChanged = { settingsViewModel.setNavBarStyle(it) },
@@ -828,6 +829,20 @@ fun SettingsCategoryScreen(
                                         )
                                     },
                                     modifier = Modifier.settingHighlight("item_appearance_show_search_tab", highlightKey)
+                                )
+                                SwitchSettingItem(
+                                    title = stringResource(R.string.setcat_show_recent_tab_title),
+                                    subtitle = stringResource(R.string.setcat_show_recent_tab_subtitle),
+                                    checked = uiState.showRecentTab,
+                                    onCheckedChange = { settingsViewModel.setShowRecentTab(it) },
+                                    leadingIcon = {
+                                        Icon(
+                                            painterResource(R.drawable.rounded_schedule_24),
+                                            null,
+                                            tint = MaterialTheme.colorScheme.secondary
+                                        )
+                                    },
+                                    modifier = Modifier.settingHighlight("item_appearance_show_recent_tab", highlightKey)
                                 )
                                 SettingsItem(
                                     title = stringResource(R.string.setcat_navbar_corner_title),
@@ -1053,6 +1068,30 @@ fun SettingsCategoryScreen(
                                     onCheckedChange = { settingsViewModel.setShowQueueHistory(it) },
                                     leadingIcon = { Icon(painterResource(R.drawable.rounded_queue_music_24), null, tint = MaterialTheme.colorScheme.secondary) },
                                     modifier = Modifier.settingHighlight("item_playback_show_queue_history", highlightKey)
+                                )
+                                SwitchSettingItem(
+                                    title = stringResource(R.string.setcat_lx_board_include_queue_title),
+                                    subtitle = stringResource(R.string.setcat_lx_board_include_queue_subtitle),
+                                    checked = uiState.lxBoardIncludeQueue,
+                                    onCheckedChange = { settingsViewModel.setLxBoardIncludeQueue(it) },
+                                    leadingIcon = { Icon(painterResource(R.drawable.rounded_queue_music_24), null, tint = MaterialTheme.colorScheme.secondary) },
+                                    modifier = Modifier.settingHighlight("item_playback_lx_board_include_queue", highlightKey)
+                                )
+                                SwitchSettingItem(
+                                    title = stringResource(R.string.setcat_lx_board_show_shuffle_fab_title),
+                                    subtitle = stringResource(R.string.setcat_lx_board_show_shuffle_fab_subtitle),
+                                    checked = uiState.lxBoardShowShuffleFab,
+                                    onCheckedChange = { settingsViewModel.setLxBoardShowShuffleFab(it) },
+                                    leadingIcon = { Icon(painterResource(R.drawable.rounded_shuffle_24), null, tint = MaterialTheme.colorScheme.secondary) },
+                                    modifier = Modifier.settingHighlight("item_playback_lx_board_show_shuffle_fab", highlightKey)
+                                )
+                                SwitchSettingItem(
+                                    title = stringResource(R.string.setcat_lx_board_show_play_all_fab_title),
+                                    subtitle = stringResource(R.string.setcat_lx_board_show_play_all_fab_subtitle),
+                                    checked = uiState.lxBoardShowPlayAllFab,
+                                    onCheckedChange = { settingsViewModel.setLxBoardShowPlayAllFab(it) },
+                                    leadingIcon = { Icon(painterResource(R.drawable.rounded_play_arrow_24), null, tint = MaterialTheme.colorScheme.secondary) },
+                                    modifier = Modifier.settingHighlight("item_playback_lx_board_show_play_all_fab", highlightKey)
                                 )
                             }
 

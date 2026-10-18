@@ -166,6 +166,7 @@
     <string name="setcat_navbar_style_default">Standard</string>
     <string name="setcat_navbar_style_desc">Velg utseende for navigasjonslinjen.</string>
     <string name="setcat_navbar_style_full_width">Full bredde</string>
+    <string name="setcat_navbar_style_floating">Flytende</string>
     <string name="setcat_navbar_style_label">NavBar-stil</string>
     <string name="setcat_navigation_bar">Navigasjonslinje</string>
     <string name="setcat_now_playing">Spilles nå</string>

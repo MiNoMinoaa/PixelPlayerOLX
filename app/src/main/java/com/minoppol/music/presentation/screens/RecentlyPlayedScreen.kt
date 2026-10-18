@@ -75,8 +75,12 @@ import com.minoppol.music.presentation.components.MiniPlayerHeight
 import com.minoppol.music.presentation.components.PlaylistBottomSheet
 import com.minoppol.music.presentation.components.RecentlyPlayedRangeSelector
 import com.minoppol.music.presentation.components.SongInfoBottomSheet
+import com.minoppol.music.presentation.components.resolveNavBarOccupiedHeight
 import com.minoppol.music.presentation.components.subcomps.EnhancedSongListItem
 import com.minoppol.music.presentation.navigation.Screen
+import com.minoppol.music.presentation.screens.lxmusic.LxScrollToTopFab
+import com.minoppol.music.ui.theme.RoundedSans
+import androidx.compose.ui.res.painterResource
 import com.minoppol.music.presentation.model.RecentlyPlayedSongUiModel
 import com.minoppol.music.presentation.model.collectRecentlyPlayedSongIds
 import com.minoppol.music.presentation.model.mapRecentlyPlayedSongs
@@ -100,7 +104,9 @@ import kotlinx.collections.immutable.persistentListOf
 fun RecentlyPlayedScreen(
     playerViewModel: PlayerViewModel,
     playlistViewModel: PlaylistViewModel = hiltViewModel(),
-    navController: NavController
+    navController: NavController,
+    showBackButton: Boolean = true,
+    showSettingsButton: Boolean = false
 ) = traceSection("RecentlyPlayedScreen.Composition") {
     val context = LocalContext.current
     val queueRecentlyPlayed = stringResource(R.string.presentation_batch_b_queue_recently_played)
@@ -120,7 +126,9 @@ fun RecentlyPlayedScreen(
     val lazyListState = rememberLazyListState()
     var showSongInfoBottomSheet by remember { mutableStateOf(false) }
     var showPlaylistBottomSheet by remember { mutableStateOf(false) }
-    val bottomBarHeightDp = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val systemNavBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val navBarCompactMode by playerViewModel.navBarCompactMode.collectAsStateWithLifecycle()
+    val bottomBarHeightDp = resolveNavBarOccupiedHeight(systemNavBarInset, navBarCompactMode)
 
     val recentSongIds = remember(playbackHistory, selectedRange) {
         collectRecentlyPlayedSongIds(
@@ -158,9 +166,8 @@ fun RecentlyPlayedScreen(
     }
 
     val bgColors = listOf(
-        MaterialTheme.colorScheme.secondary.copy(alpha = 0.24f),
-        MaterialTheme.colorScheme.surface.copy(alpha = 0.55f),
-        MaterialTheme.colorScheme.surface
+        MaterialTheme.colorScheme.surface,
+        MaterialTheme.colorScheme.background
     )
 
     val backgroundBrush = remember {
@@ -187,7 +194,7 @@ fun RecentlyPlayedScreen(
                 state = lazyListState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    bottom = MiniPlayerHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 16.dp
+                    bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap
                 ),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -348,22 +355,58 @@ fun RecentlyPlayedScreen(
             }
         }
 
-        FilledIconButton(
-            onClick = { navController.popBackStack() },
-            colors = IconButtonDefaults.filledIconButtonColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurface
-            ),
-            modifier = Modifier
-                .statusBarsPadding()
-                .padding(start = 10.dp, top = 8.dp)
-                .clip(CircleShape)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                contentDescription = stringResource(R.string.auth_cd_back)
-            )
+        if (showBackButton) {
+            FilledIconButton(
+                onClick = { navController.popBackStack() },
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                ),
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .statusBarsPadding()
+                    .padding(end = 14.dp, top = 10.dp)
+                    .clip(CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = stringResource(R.string.auth_cd_back)
+                )
+            }
         }
+
+        if (showSettingsButton) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(end = 14.dp, top = 10.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                FilledIconButton(
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ),
+                    onClick = { navController.navigateSafely(Screen.Settings.route) }
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.rounded_settings_24),
+                        contentDescription = stringResource(R.string.presentation_batch_d_open_settings_cd)
+                    )
+                }
+            }
+        }
+
+        LxScrollToTopFab(
+            listState = lazyListState,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(
+                    end = 20.dp,
+                    bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp
+                ),
+        )
     }
 }
 
@@ -394,7 +437,7 @@ private fun ExpressiveRecentlyPlayedHeader(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(190.dp)
+            .height(130.dp)
             .graphicsLayer {
                 translationY = parallaxOffset
                 alpha = headerAlpha
@@ -411,7 +454,7 @@ private fun ExpressiveRecentlyPlayedHeader(
                             surface.copy(alpha = 0.95f),
                             surface
                         ),
-                        endY = 780f
+                        endY = 520f
                     )
                 )
         )
@@ -419,43 +462,28 @@ private fun ExpressiveRecentlyPlayedHeader(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.Bottom
+                .statusBarsPadding()
+                .padding(start = 16.dp, end = 16.dp, top = 10.dp),
+            verticalArrangement = Arrangement.Top
         ) {
-            Spacer(modifier = Modifier.height(10.dp))
-
             Text(
                 text = title,
                 style = titleStyle,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }
 }
 
-@OptIn(ExperimentalTextApi::class)
 @Composable
 private fun rememberRecentlyPlayedTitleStyle(): TextStyle {
     return remember {
         TextStyle(
-            fontFamily = FontFamily(
-                Font(
-                    resId = R.font.gflex_variable,
-                    variationSettings = FontVariation.Settings(
-                        FontVariation.weight(560),
-                        FontVariation.width(122f),
-                        FontVariation.grade(40),
-                        FontVariation.Setting("ROND", 100f),
-                        FontVariation.Setting("XTRA", 520f),
-                        FontVariation.Setting("YOPQ", 90f),
-                        FontVariation.Setting("YTLC", 505f)
-                    )
-                )
-            ),
-            fontWeight = FontWeight(560),
-            fontSize = 34.sp,
-            lineHeight = 38.sp,
-            letterSpacing = (-0.4).sp
+            fontFamily = RoundedSans,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 40.sp,
+            lineHeight = 44.sp,
+            letterSpacing = 1.sp
         )
     }
 }

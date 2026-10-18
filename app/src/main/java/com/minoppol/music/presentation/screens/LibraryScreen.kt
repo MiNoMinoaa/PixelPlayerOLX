@@ -138,6 +138,7 @@ import com.minoppol.music.presentation.components.MiniPlayerHeight
 import com.minoppol.music.presentation.components.SmartImage
 import com.minoppol.music.presentation.screens.lxmusic.LxBatchDownloadQualityDialog
 import com.minoppol.music.presentation.components.resolveMainScreenBottomGradientHeight
+import com.minoppol.music.data.preferences.NavBarStyle
 import com.minoppol.music.presentation.components.resolveNavBarOccupiedHeight
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
@@ -229,7 +230,12 @@ import kotlin.math.abs
 import com.minoppol.music.presentation.components.rememberModalSheetState
 
 val ListExtraBottomGap = 30.dp
-val PlayerSheetCollapsedCornerRadius = 32.dp
+
+@Composable
+fun rememberListBottomCornerRadius(playerViewModel: PlayerViewModel): Dp {
+    val navBarCornerRadius by playerViewModel.navBarCornerRadius.collectAsStateWithLifecycle()
+    return navBarCornerRadius.dp
+}
 private const val ENABLE_FOLDERS_SOURCE_TOGGLE = true
 private const val ENABLE_FOLDERS_STORAGE_FILTER = false
 private const val FOLDER_NAVIGATION_ROOT_KEY = "__folder_root__"
@@ -686,8 +692,13 @@ fun LibraryScreen(
 
     val systemNavBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val navBarCompactMode by playerViewModel.navBarCompactMode.collectAsStateWithLifecycle()
+    val navBarStyle by playerViewModel.navBarStyle.collectAsStateWithLifecycle()
     val bottomBarHeightDp = resolveNavBarOccupiedHeight(systemNavBarInset, navBarCompactMode)
-    val bottomGradientHeight = resolveMainScreenBottomGradientHeight(navBarCompactMode)
+    val bottomGradientHeight = if (navBarStyle == NavBarStyle.FLOATING) {
+        0.dp
+    } else {
+        resolveMainScreenBottomGradientHeight(navBarCompactMode)
+    }
 
     val dm = LocalPixelPlayerDarkTheme.current
 
@@ -880,6 +891,8 @@ fun LibraryScreen(
                 songCount == 0 && albums.isEmpty() && artists.isEmpty()
             }.distinctUntilChanged()
         }.collectAsStateWithLifecycle(initialValue = true)
+
+        val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
 
         Box(
             modifier = Modifier
@@ -1430,6 +1443,7 @@ fun LibraryScreen(
                                             currentFolder = currentFolder,
                                             isLoading = isLoading,
                                             bottomBarHeight = bottomBarHeightDp,
+                                            listBottomCornerRadius = listBottomCornerRadius,
                                             stablePlayerState = stablePlayerState,
                                             onNavigateBack = { playerViewModel.navigateBackFolder() },
                                             onFolderClick = { folderPath -> playerViewModel.navigateToFolder(folderPath) },
@@ -2555,6 +2569,7 @@ fun LibraryFoldersTab(
     onPlaySong: (Song, List<Song>) -> Unit,
     stablePlayerState: StablePlayerState,
     bottomBarHeight: Dp,
+    listBottomCornerRadius: Dp,
     onMoreOptionsClick: (Song) -> Unit,
     isPlaylistView: Boolean = false,
     currentSortOption: SortOption = SortOption.FolderNameAZ,
@@ -2770,8 +2785,8 @@ fun LibraryFoldersTab(
                                         RoundedCornerShape(
                                             topStart = 26.dp,
                                             topEnd = 26.dp,
-                                            bottomStart = PlayerSheetCollapsedCornerRadius,
-                                            bottomEnd = PlayerSheetCollapsedCornerRadius
+                                            bottomStart = listBottomCornerRadius,
+                                            bottomEnd = listBottomCornerRadius
                                         )
                                     ),
                                 state = listState,

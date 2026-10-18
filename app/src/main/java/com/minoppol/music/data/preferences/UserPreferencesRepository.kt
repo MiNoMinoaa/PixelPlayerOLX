@@ -117,8 +117,13 @@ constructor(
         val YOUR_MIX_SONG_IDS = stringPreferencesKey("your_mix_song_ids")
         val NAV_BAR_CORNER_RADIUS = intPreferencesKey("nav_bar_corner_radius")
         val NAV_BAR_STYLE = stringPreferencesKey("nav_bar_style")
+        val NAV_BAR_STYLE_FLOATING_MIGRATED = booleanPreferencesKey("nav_bar_style_floating_migrated_v1")
         val NAV_BAR_COMPACT_MODE = booleanPreferencesKey("nav_bar_compact_mode")
         val SHOW_SEARCH_TAB = booleanPreferencesKey("show_search_tab")
+        val SHOW_RECENT_TAB = booleanPreferencesKey("show_recent_tab")
+        val LX_BOARD_INCLUDE_QUEUE = booleanPreferencesKey("lx_board_include_queue")
+        val LX_BOARD_SHOW_SHUFFLE_FAB = booleanPreferencesKey("lx_board_show_shuffle_fab")
+        val LX_BOARD_SHOW_PLAY_ALL_FAB = booleanPreferencesKey("lx_board_show_play_all_fab")
         val CAROUSEL_STYLE = stringPreferencesKey("carousel_style")
         val LIBRARY_NAVIGATION_MODE = stringPreferencesKey("library_navigation_mode")
         val LAUNCH_TAB = stringPreferencesKey("launch_tab")
@@ -1395,6 +1400,16 @@ constructor(
         dataStore.edit { preferences -> preferences[PreferencesKeys.NAV_BAR_STYLE] = style }
     }
 
+    suspend fun ensureNavBarStyleFloatingDefault() {
+        dataStore.edit { preferences ->
+            val migrated = preferences[PreferencesKeys.NAV_BAR_STYLE_FLOATING_MIGRATED] ?: false
+            if (!migrated) {
+                preferences[PreferencesKeys.NAV_BAR_STYLE] = NavBarStyle.FLOATING
+                preferences[PreferencesKeys.NAV_BAR_STYLE_FLOATING_MIGRATED] = true
+            }
+        }
+    }
+
     val navBarCompactModeFlow: Flow<Boolean> =
             dataStore.data.map { preferences ->
                 preferences[PreferencesKeys.NAV_BAR_COMPACT_MODE] ?: false
@@ -1414,6 +1429,50 @@ constructor(
     suspend fun setShowSearchTab(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.SHOW_SEARCH_TAB] = enabled
+        }
+    }
+
+    val showRecentTabFlow: Flow<Boolean> =
+            dataStore.data.map { preferences ->
+                preferences[PreferencesKeys.SHOW_RECENT_TAB] ?: true
+            }
+
+    suspend fun setShowRecentTab(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.SHOW_RECENT_TAB] = enabled
+        }
+    }
+
+    val lxBoardIncludeQueueFlow: Flow<Boolean> =
+            dataStore.data.map { preferences ->
+                preferences[PreferencesKeys.LX_BOARD_INCLUDE_QUEUE] ?: true
+            }
+
+    suspend fun setLxBoardIncludeQueue(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.LX_BOARD_INCLUDE_QUEUE] = enabled
+        }
+    }
+
+    val lxBoardShowShuffleFabFlow: Flow<Boolean> =
+            dataStore.data.map { preferences ->
+                preferences[PreferencesKeys.LX_BOARD_SHOW_SHUFFLE_FAB] ?: true
+            }
+
+    suspend fun setLxBoardShowShuffleFab(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.LX_BOARD_SHOW_SHUFFLE_FAB] = enabled
+        }
+    }
+
+    val lxBoardShowPlayAllFabFlow: Flow<Boolean> =
+            dataStore.data.map { preferences ->
+                preferences[PreferencesKeys.LX_BOARD_SHOW_PLAY_ALL_FAB] ?: true
+            }
+
+    suspend fun setLxBoardShowPlayAllFab(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.LX_BOARD_SHOW_PLAY_ALL_FAB] = enabled
         }
     }
 
