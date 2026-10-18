@@ -166,6 +166,7 @@
     <string name="setcat_navbar_style_default">الافتراضي</string>
     <string name="setcat_navbar_style_desc">اختر مظهر ونمط شريط التنقل السفلي.</string>
     <string name="setcat_navbar_style_full_width">العرض الكامل</string>
+    <string name="setcat_navbar_style_floating">عائم</string>
     <string name="setcat_navbar_style_label">نمط شريط التنقل</string>
     <string name="setcat_navigation_bar">شريط التنقل</string>
     <string name="setcat_now_playing">شاشة المشغل الحالي</string>

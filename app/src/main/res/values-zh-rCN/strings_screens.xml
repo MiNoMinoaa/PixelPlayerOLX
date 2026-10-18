@@ -63,6 +63,7 @@
     <string name="setup_library_layout_footer">后续可在 设置＞外观＞库导航 中修改。</string>
     <string name="tab_library">曲库</string>
     <string name="tab_search">搜索</string>
+    <string name="tab_recent">最近</string>
     <string name="tab_songs">歌曲</string>
     <string name="tab_albums">专辑</string>
     <string name="tab_artists">艺术家</string>
@@ -124,7 +125,8 @@
     <string name="setup_compact_mode_pill_hint">使用悬浮胶囊导航栏</string>
     <string name="setup_compact_mode_tab_hint">使用标准标签栏</string>
     <string name="setup_preview_songs_label">歌曲</string>
-    <string name="setup_nav_floating_pill_description">圆角悬浮胶囊样式</string>
+    <string name="setup_nav_floating_pill_description">悬浮胶囊样式</string>
+    <string name="setup_nav_floating_lens_description">悬浮透镜样式</string>
     <string name="setup_nav_full_width_description">标准通宽导航栏</string>
 
     <string name="dialog_delete_song_title">删除歌曲？</string>

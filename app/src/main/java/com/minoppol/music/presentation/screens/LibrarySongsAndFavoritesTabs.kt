@@ -90,6 +90,7 @@ fun LibraryFavoritesTab(
     hasCurrentSong: Boolean = false
 ) {
     val listState = rememberLazyListState()
+    val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
     val coroutineScope = rememberCoroutineScope()
     val visibilityCallback by rememberUpdatedState(onLocateCurrentSongVisibilityChanged)
     val registerActionCallback by rememberUpdatedState(onRegisterLocateCurrentSongAction)
@@ -232,8 +233,8 @@ fun LibraryFavoritesTab(
                                 RoundedCornerShape(
                                     topStart = 26.dp,
                                     topEnd = 26.dp,
-                                    bottomStart = PlayerSheetCollapsedCornerRadius,
-                                    bottomEnd = PlayerSheetCollapsedCornerRadius
+                                    bottomStart = listBottomCornerRadius,
+                                    bottomEnd = listBottomCornerRadius
                                 )
                             ),
                         state = listState,
@@ -306,6 +307,7 @@ fun LibrarySongsTabPaginated(
     onRefresh: () -> Unit
 ) {
     val listState = rememberLazyListState()
+    val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
     val pullToRefreshState = rememberPullToRefreshState()
 
     when {
@@ -317,8 +319,8 @@ fun LibrarySongsTabPaginated(
                         RoundedCornerShape(
                             topStart = 26.dp,
                             topEnd = 26.dp,
-                            bottomStart = PlayerSheetCollapsedCornerRadius,
-                            bottomEnd = PlayerSheetCollapsedCornerRadius
+                            bottomStart = listBottomCornerRadius,
+                            bottomEnd = listBottomCornerRadius
                         )
                     )
                     .fillMaxSize(),
@@ -414,8 +416,8 @@ fun LibrarySongsTabPaginated(
                                     RoundedCornerShape(
                                         topStart = 26.dp,
                                         topEnd = 26.dp,
-                                        bottomStart = PlayerSheetCollapsedCornerRadius,
-                                        bottomEnd = PlayerSheetCollapsedCornerRadius
+                                        bottomStart = listBottomCornerRadius,
+                                        bottomEnd = listBottomCornerRadius
                                     )
                                 ),
                             state = listState,

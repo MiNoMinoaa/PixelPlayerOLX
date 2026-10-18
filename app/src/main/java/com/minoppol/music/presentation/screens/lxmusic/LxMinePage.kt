@@ -111,6 +111,7 @@ fun LxMinePage(
     playLxSong: (LxSong) -> Unit,
     playAllPlaylist: (List<LxSong>, String) -> Unit,
     shuffleAllPlaylist: (List<LxSong>, String) -> Unit,
+    playPageSong: (LxSong, List<LxSong>, String) -> Unit,
     bottomBarHeightDp: Dp,
     onScrollingChange: (Boolean) -> Unit = {},
     onLogout: () -> Unit = {},
@@ -137,6 +138,8 @@ fun LxMinePage(
     }
     val scope = rememberCoroutineScope()
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
+    val showShuffleFab by playerViewModel.lxBoardShowShuffleFab.collectAsStateWithLifecycle()
+    val showPlayAllFab by playerViewModel.lxBoardShowPlayAllFab.collectAsStateWithLifecycle()
 
     val page = mineState.page
     val isHome = page is LxMusicViewModel.MinePage.Home
@@ -323,7 +326,7 @@ fun LxMinePage(
                                 loading = mineState.pageLoading,
                                 error = mineState.error,
                                 stablePlayerState = stablePlayerState,
-                                playLxSong = playLxSong,
+                                playLxSong = { song -> playPageSong(song, mineState.pageSongs, mineState.pageTitle) },
                                 onSongMoreOptions = onSongMoreOptions,
                                 isSelectionMode = isSelectionMode,
                                 selectedSongIds = selectedSongIds,
@@ -366,7 +369,7 @@ fun LxMinePage(
                                     loading = mineState.pageLoading,
                                     error = mineState.error,
                                     stablePlayerState = stablePlayerState,
-                                    playLxSong = playLxSong,
+                                    playLxSong = { song -> playPageSong(song, mineState.pageSongs, mineState.pageTitle) },
                                     onSongMoreOptions = onSongMoreOptions,
                                     isSelectionMode = isSelectionMode,
                                     selectedSongIds = selectedSongIds,
@@ -573,7 +576,7 @@ fun LxMinePage(
             )
         }
 
-        if (showSongActions) {
+        if (showSongActions && (showShuffleFab || showPlayAllFab)) {
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
@@ -581,23 +584,27 @@ fun LxMinePage(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                FilledTonalIconButton(
-                    onClick = { shuffleAllPlaylist(mineState.pageSongs, mineState.pageTitle) },
-                    shape = CircleShape,
-                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                    ),
-                    modifier = Modifier.size(48.dp),
-                ) {
-                    Icon(Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.lx_desc_shuffle), modifier = Modifier.size(22.dp))
+                if (showShuffleFab) {
+                    FilledTonalIconButton(
+                        onClick = { shuffleAllPlaylist(mineState.pageSongs, mineState.pageTitle) },
+                        shape = CircleShape,
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        ),
+                        modifier = Modifier.size(48.dp),
+                    ) {
+                        Icon(Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.lx_desc_shuffle), modifier = Modifier.size(22.dp))
+                    }
                 }
-                FilledIconButton(
-                    onClick = { playAllPlaylist(mineState.pageSongs, mineState.pageTitle) },
-                    shape = CircleShape,
-                    modifier = Modifier.size(48.dp),
-                ) {
-                    Icon(Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.lx_desc_play_all), modifier = Modifier.size(26.dp))
+                if (showPlayAllFab) {
+                    FilledIconButton(
+                        onClick = { playAllPlaylist(mineState.pageSongs, mineState.pageTitle) },
+                        shape = CircleShape,
+                        modifier = Modifier.size(48.dp),
+                    ) {
+                        Icon(Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.lx_desc_play_all), modifier = Modifier.size(26.dp))
+                    }
                 }
             }
         }

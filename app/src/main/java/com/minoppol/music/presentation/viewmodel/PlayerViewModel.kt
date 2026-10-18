@@ -467,8 +467,15 @@ class PlayerViewModel @Inject constructor(
     private val _isMiniPlayerDismissing = MutableStateFlow(false)
     val isMiniPlayerDismissing: StateFlow<Boolean> = _isMiniPlayerDismissing.asStateFlow()
 
+    private val _dockExitDirectionSign = MutableStateFlow(0f)
+    val dockExitDirectionSign: StateFlow<Float> = _dockExitDirectionSign.asStateFlow()
+
     fun setMiniPlayerDismissing(dismissing: Boolean) {
         _isMiniPlayerDismissing.value = dismissing
+    }
+
+    fun setDockExitDirectionSign(sign: Float) {
+        _dockExitDirectionSign.value = sign
     }
 
     private val _selectedSongForInfo = MutableStateFlow<Song?>(null)
@@ -502,6 +509,34 @@ class PlayerViewModel @Inject constructor(
         )
 
     val showSearchTab: StateFlow<Boolean> = userPreferencesRepository.showSearchTabFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = true
+        )
+
+    val showRecentTab: StateFlow<Boolean> = userPreferencesRepository.showRecentTabFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = true
+        )
+
+    val lxBoardIncludeQueue: StateFlow<Boolean> = userPreferencesRepository.lxBoardIncludeQueueFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = true
+        )
+
+    val lxBoardShowShuffleFab: StateFlow<Boolean> = userPreferencesRepository.lxBoardShowShuffleFabFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = true
+        )
+
+    val lxBoardShowPlayAllFab: StateFlow<Boolean> = userPreferencesRepository.lxBoardShowPlayAllFabFlow
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
@@ -1795,6 +1830,10 @@ class PlayerViewModel @Inject constructor(
             }
 
             viewModelScope.launch {
+                userPreferencesRepository.ensureNavBarStyleFloatingDefault()
+            }
+
+            viewModelScope.launch {
                 val legacyFavoriteIds = userPreferencesRepository.favoriteSongIdsFlow.first()
                 if (legacyFavoriteIds.isNotEmpty()) {
                     val roomFavoriteIds = musicRepository.getFavoriteSongIdsOnce()
@@ -2225,7 +2264,9 @@ class PlayerViewModel @Inject constructor(
                 controller.seekTo(bookmarkStartPositionMs)
                 controller.play()
             } else {
+                val requestToken = directPlaybackToken
                 val mediaItem = buildResolvedPlaybackMediaItem(song)
+                throwIfDirectPlaybackRequestIsStale(requestToken)
                 controller.setMediaItem(mediaItem, bookmarkStartPositionMs)
                 controller.prepare()
                 controller.play()
@@ -3220,7 +3261,7 @@ class PlayerViewModel @Inject constructor(
             }
             throwIfDirectPlaybackRequestIsStale(requestToken)
 
-            internalPlaySongs(finalSongsToPlay, validStartSong, queueName, playlistId)
+            internalPlaySongs(requestToken, finalSongsToPlay, validStartSong, queueName, playlistId)
             if (requestToken == directPlaybackToken) {
                 directPlaybackJob = null
             }
@@ -3254,7 +3295,7 @@ class PlayerViewModel @Inject constructor(
             playbackStateHolder.updateStablePlayerState { it.copy(isShuffleEnabled = true) }
             launch { userPreferencesRepository.setShuffleOn(true) }
 
-            internalPlaySongs(shuffledQueue, startSong, queueName, playlistId)
+            internalPlaySongs(requestToken, shuffledQueue, startSong, queueName, playlistId)
             if (requestToken == directPlaybackToken) {
                 directPlaybackJob = null
             }
@@ -3263,6 +3304,7 @@ class PlayerViewModel @Inject constructor(
 
     fun playExternalUri(uri: Uri) {
         viewModelScope.launch {
+            val requestToken = beginDirectPlaybackRequest()
             val externalResult = externalMediaStateHolder.buildExternalSongFromUri(uri)
             if (externalResult == null) {
                 sendToast(context.getString(R.string.external_playback_error))
@@ -3301,7 +3343,7 @@ class PlayerViewModel @Inject constructor(
             _sheetState.value = PlayerSheetState.COLLAPSED
             _isSheetVisible.value = true
 
-            internalPlaySongs(queueSongs, externalResult.song, context.getString(R.string.external_queue_label), null)
+            internalPlaySongs(requestToken, queueSongs, externalResult.song, context.getString(R.string.external_queue_label), null)
             showPlayer()
         }
     }
@@ -3370,7 +3412,9 @@ class PlayerViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
+            val requestToken = directPlaybackToken
             val mediaItem = buildResolvedPlaybackMediaItem(song)
+            throwIfDirectPlaybackRequestIsStale(requestToken)
             runCatching {
                 if (controller.currentMediaItem?.mediaId == song.id && controller.mediaItemCount > 0) {
                     controller.replaceMediaItem(controller.currentMediaItemIndex, mediaItem)
@@ -3459,7 +3503,7 @@ class PlayerViewModel @Inject constructor(
 
 
 
-    private suspend fun internalPlaySongs(songsToPlay: List<Song>, startSong: Song, queueName: String = "None", playlistId: String? = null) {
+    private suspend fun internalPlaySongs(requestToken: Long, songsToPlay: List<Song>, startSong: Song, queueName: String = "None", playlistId: String? = null) {
         if (songsToPlay.isEmpty()) {
             clearPreparingSongIfMatching()
             return
@@ -3491,6 +3535,7 @@ class PlayerViewModel @Inject constructor(
         _isSheetVisible.value = true
 
         val startMediaItem = buildResolvedPlaybackMediaItem(effectiveStartSong, playlistId)
+        throwIfDirectPlaybackRequestIsStale(requestToken)
 
         val playSongsAction = {
             dualPlayerEngine.cancelNext()
@@ -3559,7 +3604,9 @@ class PlayerViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            val requestToken = directPlaybackToken
             val mediaItem = buildResolvedPlaybackMediaItem(song)
+            throwIfDirectPlaybackRequestIsStale(requestToken)
             if (controller.currentMediaItem?.mediaId == song.id) {
                 if (!controller.isPlaying) controller.play()
             } else {
@@ -4543,8 +4590,10 @@ class PlayerViewModel @Inject constructor(
                 when {
                     currentQueue.isNotEmpty() && currentSong != null -> {
                         viewModelScope.launch {
+                            val requestToken = beginDirectPlaybackRequest()
                             transitionSchedulerJob?.cancel()
                             internalPlaySongs(
+                                requestToken,
                                 currentQueue.toList(),
                                 currentSong,
                                 _playerUiState.value.currentQueueSourceName
@@ -4789,6 +4838,7 @@ class PlayerViewModel @Inject constructor(
     }
 
     fun dismissPlaylistAndShowUndo() {
+        beginDirectPlaybackRequest()
         setMiniPlayerDismissing(false)
         playlistDismissUndoStateHolder.dismissPlaylistAndShowUndo(
             scope = viewModelScope,
@@ -5464,7 +5514,9 @@ class PlayerViewModel @Inject constructor(
     fun playSong(song: Song) {
         viewModelScope.launch {
             val controller = mediaController ?: return@launch
+            val requestToken = directPlaybackToken
             val mediaItem = buildResolvedPlaybackMediaItem(song)
+            throwIfDirectPlaybackRequestIsStale(requestToken)
 
             controller.setMediaItem(mediaItem)
             controller.prepare()

@@ -166,6 +166,7 @@
     <string name="setcat_navbar_style_default">Par défaut</string>
     <string name="setcat_navbar_style_desc">Choisissez l\'apparence de la barre de navigation.</string>
     <string name="setcat_navbar_style_full_width">Pleine largeur</string>
+    <string name="setcat_navbar_style_floating">Flottant</string>
     <string name="setcat_navbar_style_label">Style de la barre de navigation</string>
     <string name="setcat_navigation_bar">Barre de navigation</string>
     <string name="setcat_now_playing">En cours de lecture</string>

@@ -195,6 +195,7 @@ import com.minoppol.music.presentation.components.rememberModalSheetState
 import com.minoppol.music.presentation.components.SongInfoBottomSheet
 import com.minoppol.music.presentation.components.subcomps.EnhancedSongListItem
 import com.minoppol.music.presentation.screens.ListExtraBottomGap
+import com.minoppol.music.presentation.screens.rememberListBottomCornerRadius
 import com.minoppol.music.presentation.screens.MusicIconPattern
 import com.minoppol.music.presentation.viewmodel.PlayerViewModel
 import com.minoppol.music.ui.theme.LocalPixelPlayerDarkTheme
@@ -240,6 +241,7 @@ fun LxMusicScreen(
         }
     }
     val browseState by viewModel.browseState.collectAsStateWithLifecycle()
+    val lxBoardIncludeQueue by playerViewModel.lxBoardIncludeQueue.collectAsStateWithLifecycle()
     val playerSheetState by playerViewModel.sheetState.collectAsStateWithLifecycle()
     val queueSheetVisible by playerViewModel.isQueueSheetVisible.collectAsStateWithLifecycle()
 
@@ -385,6 +387,25 @@ fun LxMusicScreen(
         }
     }
 
+    val playPageSong: (com.minoppol.music.data.lxmusic.LxSong, List<com.minoppol.music.data.lxmusic.LxSong>, String) -> Unit = { song, pageSongs, queueName ->
+        if (lxBoardIncludeQueue && pageSongs.isNotEmpty()) {
+            scope.launch {
+                if (!ensureScriptOrToast(song)) return@launch
+                viewModel.recordPlay(song)
+                viewModel.cacheSongsMetadata(pageSongs)
+                viewModel.setPlaybackQueueLxSongs(pageSongs)
+                playerViewModel.playSongs(
+                    songsToPlay = pageSongs.map { LxSongMapper.toSong(it) },
+                    startSong = LxSongMapper.toSong(song),
+                    queueName = queueName,
+                    origin = com.minoppol.music.presentation.viewmodel.PlaybackOrigin.ONLINE,
+                )
+            }
+        } else {
+            playLxSong(song)
+        }
+    }
+
     val playAllPlaylist: (List<com.minoppol.music.data.lxmusic.LxSong>, String) -> Unit = { songs, queueName ->
         if (songs.isEmpty()) {
             android.widget.Toast.makeText(context, context.getString(R.string.lx_msg_playlist_no_songs), android.widget.Toast.LENGTH_SHORT).show()
@@ -424,6 +445,14 @@ fun LxMusicScreen(
                 )
             }
         }
+    }
+
+    val playBoardSong: (com.minoppol.music.data.lxmusic.LxSong) -> Unit = { song ->
+        playPageSong(
+            song,
+            browseState.boardSongs,
+            browseState.selectedBoard?.name ?: context.getString(R.string.lx_tab_board),
+        )
     }
 
     val filePicker = rememberLauncherForActivityResult(
@@ -631,20 +660,31 @@ fun LxMusicScreen(
                     val boardLabel = stringResource(R.string.lx_tab_board)
                     val playlistLabel = stringResource(R.string.lx_tab_playlist)
                     val searchLabel = stringResource(R.string.lx_tab_search)
+                    val moduleButtonOuterCorner = 26.dp
+                    val moduleButtonInnerCorner = 12.dp
+                    val boardStartCorner by androidx.compose.animation.core.animateDpAsState(
+                        targetValue = if (mineAvailable) moduleButtonInnerCorner else moduleButtonOuterCorner,
+                        label = "BoardStartCorner",
+                    )
+                    val mineButtonShape = RoundedCornerShape(
+                        topStart = moduleButtonOuterCorner, bottomStart = moduleButtonOuterCorner,
+                        topEnd = moduleButtonInnerCorner, bottomEnd = moduleButtonInnerCorner,
+                    )
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(start = 12.dp, end = 12.dp, top = 16.dp, bottom = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
                         LxModuleButton(
                             label = mineLabel,
                             icon = Icons.Rounded.Person,
                             selected = indicatorModule == "mine",
                             onClick = { if (mineBubbleProgress > 0.5f) viewModel.selectModule("mine") },
+                            shape = mineButtonShape,
                             modifier = Modifier
                                 .weight(mineBubbleProgress.coerceIn(0.0001f, 1f))
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(mineButtonShape)
                                 .graphicsLayer {
                                     alpha = mineBubbleProgress
                                     scaleX = mineBubbleProgress
@@ -652,14 +692,23 @@ fun LxMusicScreen(
                                 },
                         )
                         LxModuleButton(boardLabel, Icons.Rounded.Leaderboard,
-                            indicatorModule == "board", { viewModel.selectModule("board") }, Modifier.weight(1f))
+                            indicatorModule == "board", { viewModel.selectModule("board") }, Modifier.weight(1f),
+                            RoundedCornerShape(
+                                topStart = boardStartCorner, bottomStart = boardStartCorner,
+                                topEnd = moduleButtonInnerCorner, bottomEnd = moduleButtonInnerCorner,
+                            ))
                         LxModuleButton(playlistLabel, Icons.Rounded.QueueMusic,
-                            indicatorModule == "playlist", { viewModel.selectModule("playlist") }, Modifier.weight(1f))
+                            indicatorModule == "playlist", { viewModel.selectModule("playlist") }, Modifier.weight(1f),
+                            RoundedCornerShape(moduleButtonInnerCorner))
                         LxModuleButton(searchLabel, Icons.Rounded.Search,
                             indicatorModule == "search", {
                                 viewModel.updateSearchQuery("")
                                 viewModel.selectModule("search")
-                            }, Modifier.weight(1f))
+                            }, Modifier.weight(1f),
+                            RoundedCornerShape(
+                                topStart = moduleButtonInnerCorner, bottomStart = moduleButtonInnerCorner,
+                                topEnd = moduleButtonOuterCorner, bottomEnd = moduleButtonOuterCorner,
+                            ))
                     }
                     Box(modifier = Modifier.fillMaxSize()) {
                     HorizontalPager(
@@ -714,7 +763,7 @@ fun LxMusicScreen(
                                     LxMinePage(
                                         mineState, mineNickname, mineAvatar, mineVipType,
                                         viewModel, playerViewModel, playLxSong,
-                                        playAllPlaylist, shuffleAllPlaylist, bottomBarHeightDp,
+                                        playAllPlaylist, shuffleAllPlaylist, playPageSong, bottomBarHeightDp,
                                         onScrollingChange = { if (pagerState.currentPage == 0) isListScrolling.value = it },
                                         showArtistFollow = mineShowFollow,
                                         onLogout = mineLogout,
@@ -731,7 +780,7 @@ fun LxMusicScreen(
                                     )
                                 }
                                 1 -> LxBoardPage(browseState, viewModel, playerViewModel, playLxSong,
-                                    playAllPlaylist, shuffleAllPlaylist, bottomBarHeightDp,
+                                    playBoardSong, playAllPlaylist, shuffleAllPlaylist, bottomBarHeightDp,
                                     onScrollingChange = { if (pagerState.currentPage == 1) isListScrolling.value = it },
                                     onSongMoreOptions = { lxInfoSong = it },
                                     isSelectionMode = isSelectionMode,
@@ -744,7 +793,7 @@ fun LxMusicScreen(
                                     multiSelectionState = multiSelectionState,
                                     onSelectionOptionsClick = { showMultiSelectionSheet = true })
                                 2 -> LxPlaylistPage(browseState, viewModel, playerViewModel, playLxSong,
-                                    playAllPlaylist, shuffleAllPlaylist, bottomBarHeightDp,
+                                    playAllPlaylist, shuffleAllPlaylist, playPageSong, bottomBarHeightDp,
                                     onScrollingChange = { if (pagerState.currentPage == 2) isListScrolling.value = it },
                                     onSongMoreOptions = { lxInfoSong = it },
                                     isSelectionMode = isSelectionMode,
@@ -757,7 +806,7 @@ fun LxMusicScreen(
                                     multiSelectionState = multiSelectionState,
                                     onSelectionOptionsClick = { showMultiSelectionSheet = true })
                                 else -> LxSearchPage(browseState, searchState, viewModel, playerViewModel, playLxSong,
-                                    playAllPlaylist, shuffleAllPlaylist, bottomBarHeightDp,
+                                    playAllPlaylist, shuffleAllPlaylist, playPageSong, bottomBarHeightDp,
                                     onScrollingChange = { if (pagerState.currentPage == 3) isListScrolling.value = it },
                                     onSongMoreOptions = { lxInfoSong = it },
                                     isSelectionMode = isSelectionMode,
@@ -773,7 +822,7 @@ fun LxMusicScreen(
                         } else {
                             when (page) {
                                 0 -> LxBoardPage(browseState, viewModel, playerViewModel, playLxSong,
-                                    playAllPlaylist, shuffleAllPlaylist, bottomBarHeightDp,
+                                    playBoardSong, playAllPlaylist, shuffleAllPlaylist, bottomBarHeightDp,
                                     onScrollingChange = { if (pagerState.currentPage == 0) isListScrolling.value = it },
                                     onSongMoreOptions = { lxInfoSong = it },
                                     isSelectionMode = isSelectionMode,
@@ -786,7 +835,7 @@ fun LxMusicScreen(
                                     multiSelectionState = multiSelectionState,
                                     onSelectionOptionsClick = { showMultiSelectionSheet = true })
                                 1 -> LxPlaylistPage(browseState, viewModel, playerViewModel, playLxSong,
-                                    playAllPlaylist, shuffleAllPlaylist, bottomBarHeightDp,
+                                    playAllPlaylist, shuffleAllPlaylist, playPageSong, bottomBarHeightDp,
                                     onScrollingChange = { if (pagerState.currentPage == 1) isListScrolling.value = it },
                                     onSongMoreOptions = { lxInfoSong = it },
                                     isSelectionMode = isSelectionMode,
@@ -799,7 +848,7 @@ fun LxMusicScreen(
                                     multiSelectionState = multiSelectionState,
                                     onSelectionOptionsClick = { showMultiSelectionSheet = true })
                                 else -> LxSearchPage(browseState, searchState, viewModel, playerViewModel, playLxSong,
-                                    playAllPlaylist, shuffleAllPlaylist, bottomBarHeightDp,
+                                    playAllPlaylist, shuffleAllPlaylist, playPageSong, bottomBarHeightDp,
                                     onScrollingChange = { if (pagerState.currentPage == 2) isListScrolling.value = it },
                                     onSongMoreOptions = { lxInfoSong = it },
                                     isSelectionMode = isSelectionMode,
@@ -1060,6 +1109,7 @@ fun LxMusicScreen(
                 playLxSong = playLxSong,
                 playAllPlaylist = playAllPlaylist,
                 shuffleAllPlaylist = shuffleAllPlaylist,
+                playPageSong = playPageSong,
                 bottomBarHeightDp = bottomBarHeightDp,
                 onBack = viewModel::dismissSearchAlbumOverlay,
                 onScrollingChange = {},
@@ -1098,6 +1148,7 @@ fun LxMusicScreen(
                 playLxSong = playLxSong,
                 playAllPlaylist = playAllPlaylist,
                 shuffleAllPlaylist = shuffleAllPlaylist,
+                playPageSong = playPageSong,
                 bottomBarHeightDp = bottomBarHeightDp,
                 showFollow = when (artistPageState.source) {
                     LxSources.TENCENT -> tencentLoggedIn && viewModel.accountWritesEnabled
@@ -2245,10 +2296,11 @@ private fun LxModuleButton(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(16.dp),
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(16.dp),
+        shape = shape,
         color = if (selected)
             MaterialTheme.colorScheme.primary
         else
@@ -2666,6 +2718,7 @@ private fun LxBoardPage(
     viewModel: LxMusicViewModel,
     playerViewModel: PlayerViewModel,
     playLxSong: (com.minoppol.music.data.lxmusic.LxSong) -> Unit,
+    playBoardSong: (com.minoppol.music.data.lxmusic.LxSong) -> Unit,
     playAllPlaylist: (List<com.minoppol.music.data.lxmusic.LxSong>, String) -> Unit,
     shuffleAllPlaylist: (List<com.minoppol.music.data.lxmusic.LxSong>, String) -> Unit,
     bottomBarHeightDp: Dp,
@@ -2680,7 +2733,10 @@ private fun LxBoardPage(
     onSelectionOptionsClick: () -> Unit = {},
 ) {
     val listState = rememberLazyListState()
+    val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
     val boardQueueFallback = stringResource(R.string.lx_tab_board)
+    val showShuffleFab by playerViewModel.lxBoardShowShuffleFab.collectAsStateWithLifecycle()
+    val showPlayAllFab by playerViewModel.lxBoardShowPlayAllFab.collectAsStateWithLifecycle()
 
     val pullToRefreshState = rememberPullToRefreshState()
     val boardHeaderHeight = 66.dp
@@ -2728,16 +2784,16 @@ private fun LxBoardPage(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = boardHeaderHeight)
+                    .padding(top = boardHeaderHeight, bottom = 6.dp)
                     .clip(
                         AbsoluteSmoothCornerShape(
                             cornerRadiusTL = 34.dp,
                             smoothnessAsPercentTL = 60,
                             cornerRadiusTR = 34.dp,
                             smoothnessAsPercentTR = 60,
-                            cornerRadiusBL = 0.dp,
+                            cornerRadiusBL = listBottomCornerRadius,
                             smoothnessAsPercentBL = 60,
-                            cornerRadiusBR = 0.dp,
+                            cornerRadiusBR = listBottomCornerRadius,
                             smoothnessAsPercentBR = 60,
                         )
                     )
@@ -2768,7 +2824,7 @@ private fun LxBoardPage(
                             if (isSelectionMode) {
                                 onSongSelectionToggle(song)
                             } else {
-                                playLxSong(song)
+                                playBoardSong(song)
                             }
                         },
                     )
@@ -2876,7 +2932,7 @@ private fun LxBoardPage(
             modifier = Modifier.align(Alignment.BottomEnd)
                 .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
         )
-        if (browseState.boardSongs.isNotEmpty()) {
+        if (browseState.boardSongs.isNotEmpty() && (showShuffleFab || showPlayAllFab)) {
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
@@ -2884,23 +2940,27 @@ private fun LxBoardPage(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                FilledTonalIconButton(
-                    onClick = { shuffleAllPlaylist(browseState.boardSongs, browseState.selectedBoard?.name ?: boardQueueFallback) },
-                    shape = CircleShape,
-                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                    ),
-                    modifier = Modifier.size(48.dp),
-                ) {
-                    Icon(Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.lx_desc_shuffle), modifier = Modifier.size(22.dp))
+                if (showShuffleFab) {
+                    FilledTonalIconButton(
+                        onClick = { shuffleAllPlaylist(browseState.boardSongs, browseState.selectedBoard?.name ?: boardQueueFallback) },
+                        shape = CircleShape,
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        ),
+                        modifier = Modifier.size(48.dp),
+                    ) {
+                        Icon(Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.lx_desc_shuffle), modifier = Modifier.size(22.dp))
+                    }
                 }
-                FilledIconButton(
-                    onClick = { playAllPlaylist(browseState.boardSongs, browseState.selectedBoard?.name ?: boardQueueFallback) },
-                    shape = CircleShape,
-                    modifier = Modifier.size(48.dp),
-                ) {
-                    Icon(Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.lx_desc_play_all), modifier = Modifier.size(26.dp))
+                if (showPlayAllFab) {
+                    FilledIconButton(
+                        onClick = { playAllPlaylist(browseState.boardSongs, browseState.selectedBoard?.name ?: boardQueueFallback) },
+                        shape = CircleShape,
+                        modifier = Modifier.size(48.dp),
+                    ) {
+                        Icon(Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.lx_desc_play_all), modifier = Modifier.size(26.dp))
+                    }
                 }
             }
         }
@@ -2928,6 +2988,7 @@ private fun LxPlaylistPage(
     playLxSong: (com.minoppol.music.data.lxmusic.LxSong) -> Unit,
     playAllPlaylist: (List<com.minoppol.music.data.lxmusic.LxSong>, String) -> Unit,
     shuffleAllPlaylist: (List<com.minoppol.music.data.lxmusic.LxSong>, String) -> Unit,
+    playPageSong: (com.minoppol.music.data.lxmusic.LxSong, List<com.minoppol.music.data.lxmusic.LxSong>, String) -> Unit,
     bottomBarHeightDp: Dp,
     onScrollingChange: (Boolean) -> Unit = {},
     onSongMoreOptions: (com.minoppol.music.data.lxmusic.LxSong) -> Unit = {},
@@ -2941,6 +3002,7 @@ private fun LxPlaylistPage(
 ) {
     val playlistListState = rememberLazyListState()
     val detailListState = rememberLazyListState()
+    val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
     val listState = if (browseState.selectedPlaylist != null) detailListState else playlistListState
 
     val pullToRefreshState = rememberPullToRefreshState()
@@ -2977,6 +3039,8 @@ private fun LxPlaylistPage(
         }
     }
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
+    val showShuffleFab by playerViewModel.lxBoardShowShuffleFab.collectAsStateWithLifecycle()
+    val showPlayAllFab by playerViewModel.lxBoardShowPlayAllFab.collectAsStateWithLifecycle()
     val detailSongIds = remember(browseState.playlistSongs) {
         browseState.playlistSongs.map { LxSongMapper.unifiedSongId(it.source, it.songmid).toString() }
     }
@@ -3009,16 +3073,16 @@ private fun LxPlaylistPage(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = headerHeight)
+                    .padding(top = headerHeight, bottom = 6.dp)
                     .clip(
                         AbsoluteSmoothCornerShape(
                             cornerRadiusTL = 34.dp,
                             smoothnessAsPercentTL = 60,
                             cornerRadiusTR = 34.dp,
                             smoothnessAsPercentTR = 60,
-                            cornerRadiusBL = 0.dp,
+                            cornerRadiusBL = listBottomCornerRadius,
                             smoothnessAsPercentBL = 60,
-                            cornerRadiusBR = 0.dp,
+                            cornerRadiusBR = listBottomCornerRadius,
                             smoothnessAsPercentBR = 60,
                         )
                     )
@@ -3069,7 +3133,7 @@ private fun LxPlaylistPage(
                                 if (isSelectionMode) {
                                     onSongSelectionToggle(song)
                                 } else {
-                                    playLxSong(song)
+                                    playPageSong(song, browseState.playlistSongs, browseState.selectedPlaylist.name)
                                 }
                             },
                         )
@@ -3297,8 +3361,10 @@ private fun LxPlaylistPage(
             modifier = Modifier.align(Alignment.BottomEnd)
                 .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
         )
-        if (browseState.selectedPlaylist != null && browseState.playlistSongs.isNotEmpty()) {
+        if (browseState.selectedPlaylist != null && browseState.playlistSongs.isNotEmpty() && (showShuffleFab || showPlayAllFab)) {
             LxBottomPlayActions(
+                showShuffle = showShuffleFab,
+                showPlayAll = showPlayAllFab,
                 onShuffle = {
                     shuffleAllPlaylist(
                         browseState.playlistSongs, browseState.selectedPlaylist.name
@@ -3443,6 +3509,7 @@ private fun LxSearchPage(
     playLxSong: (com.minoppol.music.data.lxmusic.LxSong) -> Unit,
     playAllPlaylist: (List<com.minoppol.music.data.lxmusic.LxSong>, String) -> Unit,
     shuffleAllPlaylist: (List<com.minoppol.music.data.lxmusic.LxSong>, String) -> Unit,
+    playPageSong: (com.minoppol.music.data.lxmusic.LxSong, List<com.minoppol.music.data.lxmusic.LxSong>, String) -> Unit,
     bottomBarHeightDp: Dp,
     onScrollingChange: (Boolean) -> Unit = {},
     onSongMoreOptions: (com.minoppol.music.data.lxmusic.LxSong) -> Unit = {},
@@ -3455,6 +3522,7 @@ private fun LxSearchPage(
     onSelectionOptionsClick: () -> Unit = {},
 ) {
     val listState = rememberLazyListState()
+    val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
     val searchResultsQueueName = stringResource(R.string.lx_text_search_results)
 
     val pullToRefreshState = rememberPullToRefreshState()
@@ -3478,6 +3546,8 @@ private fun LxSearchPage(
     }
 
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
+    val showShuffleFab by playerViewModel.lxBoardShowShuffleFab.collectAsStateWithLifecycle()
+    val showPlayAllFab by playerViewModel.lxBoardShowPlayAllFab.collectAsStateWithLifecycle()
     val searchSongIds = remember(searchState.results) {
         searchState.results.map { LxSongMapper.unifiedSongId(it.source, it.songmid).toString() }
     }
@@ -3505,15 +3575,16 @@ private fun LxSearchPage(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(bottom = 6.dp)
                     .clip(
                         AbsoluteSmoothCornerShape(
                             cornerRadiusTL = 34.dp,
                             smoothnessAsPercentTL = 60,
                             cornerRadiusTR = 34.dp,
                             smoothnessAsPercentTR = 60,
-                            cornerRadiusBL = 0.dp,
+                            cornerRadiusBL = listBottomCornerRadius,
                             smoothnessAsPercentBL = 60,
-                            cornerRadiusBR = 0.dp,
+                            cornerRadiusBR = listBottomCornerRadius,
                             smoothnessAsPercentBR = 60,
                         )
                     )
@@ -3638,7 +3709,7 @@ private fun LxSearchPage(
                             if (isSelectionMode) {
                                 onSongSelectionToggle(song)
                             } else {
-                                playLxSong(song)
+                                playPageSong(song, searchState.results, searchResultsQueueName)
                             }
                         },
                     )
@@ -3684,7 +3755,7 @@ private fun LxSearchPage(
             modifier = Modifier.align(Alignment.BottomEnd)
                 .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
         )
-        if (searchState.type == LxMusicViewModel.SearchType.SONG && searchState.results.isNotEmpty()) {
+        if (searchState.type == LxMusicViewModel.SearchType.SONG && searchState.results.isNotEmpty() && (showShuffleFab || showPlayAllFab)) {
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
@@ -3692,23 +3763,27 @@ private fun LxSearchPage(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                FilledTonalIconButton(
-                    onClick = { shuffleAllPlaylist(searchState.results, searchResultsQueueName) },
-                    shape = CircleShape,
-                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                    ),
-                    modifier = Modifier.size(48.dp),
-                ) {
-                    Icon(Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.lx_desc_shuffle), modifier = Modifier.size(22.dp))
+                if (showShuffleFab) {
+                    FilledTonalIconButton(
+                        onClick = { shuffleAllPlaylist(searchState.results, searchResultsQueueName) },
+                        shape = CircleShape,
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        ),
+                        modifier = Modifier.size(48.dp),
+                    ) {
+                        Icon(Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.lx_desc_shuffle), modifier = Modifier.size(22.dp))
+                    }
                 }
-                FilledIconButton(
-                    onClick = { playAllPlaylist(searchState.results, searchResultsQueueName) },
-                    shape = CircleShape,
-                    modifier = Modifier.size(48.dp),
-                ) {
-                    Icon(Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.lx_desc_play_all), modifier = Modifier.size(26.dp))
+                if (showPlayAllFab) {
+                    FilledIconButton(
+                        onClick = { playAllPlaylist(searchState.results, searchResultsQueueName) },
+                        shape = CircleShape,
+                        modifier = Modifier.size(48.dp),
+                    ) {
+                        Icon(Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.lx_desc_play_all), modifier = Modifier.size(26.dp))
+                    }
                 }
             }
         }
@@ -4058,6 +4133,7 @@ private fun LxSearchArtistPage(
     playLxSong: (com.minoppol.music.data.lxmusic.LxSong) -> Unit,
     playAllPlaylist: (List<com.minoppol.music.data.lxmusic.LxSong>, String) -> Unit,
     shuffleAllPlaylist: (List<com.minoppol.music.data.lxmusic.LxSong>, String) -> Unit,
+    playPageSong: (com.minoppol.music.data.lxmusic.LxSong, List<com.minoppol.music.data.lxmusic.LxSong>, String) -> Unit,
     bottomBarHeightDp: Dp,
     showFollow: Boolean,
     onBack: () -> Unit,
@@ -4073,6 +4149,8 @@ private fun LxSearchArtistPage(
 ) {
     val artist = state.artist ?: return
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
+    val showShuffleFab by playerViewModel.lxBoardShowShuffleFab.collectAsStateWithLifecycle()
+    val showPlayAllFab by playerViewModel.lxBoardShowPlayAllFab.collectAsStateWithLifecycle()
     state.selectedAlbum?.let { album ->
         BackHandler {
             if (isSelectionMode) multiSelectionState.clearSelection()
@@ -4136,7 +4214,7 @@ private fun LxSearchArtistPage(
                     ),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    if (state.albumSongs.isNotEmpty()) {
+                    if (state.albumSongs.isNotEmpty() && showPlayAllFab) {
                         item(key = "artist_album_play_all") {
                             LxSelectionSwitch(
                                 inSelectionMode = isSelectionMode,
@@ -4175,7 +4253,7 @@ private fun LxSearchArtistPage(
                         loading = state.albumLoading,
                         error = null,
                         stablePlayerState = stablePlayerState,
-                        playLxSong = playLxSong,
+                        playLxSong = { song -> playPageSong(song, state.albumSongs, album.name) },
                         onSongMoreOptions = onSongMoreOptions,
                         isSelectionMode = isSelectionMode,
                         selectedSongIds = selectedSongIds,
@@ -4205,7 +4283,7 @@ private fun LxSearchArtistPage(
                     collapseFraction = albumCollapseFraction,
                     headerHeightDp = albumHeaderHeightDp,
                     onBack = viewModel::backFromSearchArtistAlbum,
-                    onShuffle = if (state.albumSongs.isNotEmpty()) {
+                    onShuffle = if (state.albumSongs.isNotEmpty() && showShuffleFab) {
                         { shuffleAllPlaylist(state.albumSongs, album.name) }
                     } else null,
                     shuffleContentDescription = stringResource(R.string.lx_desc_shuffle),
@@ -4333,7 +4411,7 @@ private fun LxSearchArtistPage(
                             ArtistTabChip(stringResource(R.string.lx_tab_all_albums), state.tab == "albums") {
                                 viewModel.selectSearchArtistTab("albums")
                             }
-                            if (state.tab == "songs" && state.songs.isNotEmpty()) {
+                            if (state.tab == "songs" && state.songs.isNotEmpty() && showPlayAllFab) {
                                 Spacer(Modifier.weight(1f))
                                 FilledIconButton(
                                     onClick = { playAllPlaylist(state.songs, artist.name) },
@@ -4375,7 +4453,7 @@ private fun LxSearchArtistPage(
                         loading = state.loading,
                         error = state.error,
                         stablePlayerState = stablePlayerState,
-                        playLxSong = playLxSong,
+                        playLxSong = { song -> playPageSong(song, state.songs, artist.name) },
                         onSongMoreOptions = onSongMoreOptions,
                         isSelectionMode = isSelectionMode,
                         selectedSongIds = selectedSongIds,
@@ -4413,7 +4491,7 @@ private fun LxSearchArtistPage(
                 collapseFraction = artistCollapseFraction,
                 headerHeightDp = artistHeaderHeightDp,
                 onBack = onBack,
-                onShuffle = if (state.tab == "songs" && state.songs.isNotEmpty()) {
+                onShuffle = if (state.tab == "songs" && state.songs.isNotEmpty() && showShuffleFab) {
                     { shuffleAllPlaylist(state.songs, artist.name) }
                 } else null,
                 shuffleContentDescription = stringResource(R.string.lx_desc_shuffle),
@@ -4473,6 +4551,7 @@ private fun LxSearchAlbumPage(
     playLxSong: (com.minoppol.music.data.lxmusic.LxSong) -> Unit,
     playAllPlaylist: (List<com.minoppol.music.data.lxmusic.LxSong>, String) -> Unit,
     shuffleAllPlaylist: (List<com.minoppol.music.data.lxmusic.LxSong>, String) -> Unit,
+    playPageSong: (com.minoppol.music.data.lxmusic.LxSong, List<com.minoppol.music.data.lxmusic.LxSong>, String) -> Unit,
     bottomBarHeightDp: Dp,
     onBack: () -> Unit,
     onScrollingChange: (Boolean) -> Unit = {},
@@ -4488,6 +4567,8 @@ private fun LxSearchAlbumPage(
     val album = state.album ?: return
     val listState = rememberLazyListState()
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
+    val showShuffleFab by playerViewModel.lxBoardShowShuffleFab.collectAsStateWithLifecycle()
+    val showPlayAllFab by playerViewModel.lxBoardShowPlayAllFab.collectAsStateWithLifecycle()
     val songIds = remember(state.songs) {
         state.songs.map { com.minoppol.music.data.lxmusic.LxSongMapper.unifiedSongId(it.source, it.songmid).toString() }
     }
@@ -4547,7 +4628,7 @@ private fun LxSearchAlbumPage(
                 ),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                if (state.songs.isNotEmpty()) {
+                if (state.songs.isNotEmpty() && showPlayAllFab) {
                     item(key = "search_album_play_all") {
                         LxSelectionSwitch(
                             inSelectionMode = isSelectionMode,
@@ -4586,7 +4667,7 @@ private fun LxSearchAlbumPage(
                     loading = state.loading,
                     error = state.error,
                     stablePlayerState = stablePlayerState,
-                    playLxSong = playLxSong,
+                    playLxSong = { song -> playPageSong(song, state.songs, album.name) },
                     onSongMoreOptions = onSongMoreOptions,
                     isSelectionMode = isSelectionMode,
                     selectedSongIds = selectedSongIds,
@@ -4602,7 +4683,7 @@ private fun LxSearchAlbumPage(
                 collapseFraction = albumCollapseFraction,
                 headerHeightDp = albumHeaderHeightDp,
                 onBack = onBack,
-                onShuffle = if (state.songs.isNotEmpty()) {
+                onShuffle = if (state.songs.isNotEmpty() && showShuffleFab) {
                     { shuffleAllPlaylist(state.songs, album.name) }
                 } else null,
                 shuffleContentDescription = stringResource(R.string.lx_desc_shuffle),

@@ -64,6 +64,7 @@
     <string name="setup_library_layout_footer">You can change this later in Settings &gt; Appearance &gt; Library Navigation.</string>
     <string name="tab_library">Library</string>
     <string name="tab_search">Search</string>
+    <string name="tab_recent">Recent</string>
     <string name="tab_songs">SONGS</string>
     <string name="tab_albums">ALBUMS</string>
     <string name="tab_artists">ARTISTS</string>
@@ -125,8 +126,9 @@
     <string name="setup_compact_mode_pill_hint">Using minimal pill navigation</string>
     <string name="setup_compact_mode_tab_hint">Using standard tab row</string>
     <string name="setup_preview_songs_label">Songs</string>
-    <string name="setup_nav_floating_pill_description">Floating pill with rounded corners</string>
+    <string name="setup_nav_floating_pill_description">Floating capsule style</string>
     <string name="setup_nav_full_width_description">Standard full-width bar</string>
+    <string name="setup_nav_floating_lens_description">Floating lens style</string>
 
     <string name="dialog_delete_song_title">Delete song?</string>
     <string name="dialog_delete_song_message">\"%1$s\" by %2$s\n\nThis song will be permanently deleted from your device and cannot be recovered.</string>

@@ -166,6 +166,7 @@
     <string name="setcat_navbar_style_default">Default</string>
     <string name="setcat_navbar_style_desc">Pilih tampilan untuk bilah navigasi.</string>
     <string name="setcat_navbar_style_full_width">Lebar Penuh</string>
+    <string name="setcat_navbar_style_floating">Mengambang</string>
     <string name="setcat_navbar_style_label">Gaya NavBar</string>
     <string name="setcat_navigation_bar">Bilah Navigasi</string>
     <string name="setcat_now_playing">Sedang Diputar</string>

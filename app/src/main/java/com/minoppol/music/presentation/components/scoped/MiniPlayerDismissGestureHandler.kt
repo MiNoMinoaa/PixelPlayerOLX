@@ -103,6 +103,7 @@ internal class MiniPlayerDismissGestureHandler(
     private val layoutDirection: LayoutDirection,
     private val onDismissPlaylistAndShowUndo: () -> Unit,
     private val onDismissStarted: () -> Unit = {},
+    private val onDismissDirection: (Float) -> Unit = {},
     private val onPrevious: () -> Unit,
     private val onNext: () -> Unit
 ) {
@@ -191,6 +192,9 @@ internal class MiniPlayerDismissGestureHandler(
             MiniPlayerGestureOutcome.DismissRight -> {
                 performGestureHapticOnce()
                 onDismissStarted()
+                onDismissDirection(
+                    if (outcome == MiniPlayerGestureOutcome.DismissLeft) -1f else 1f
+                )
                 val targetDismissOffset = when (outcome) {
                     MiniPlayerGestureOutcome.DismissLeft -> -screenWidthPx
                     else -> screenWidthPx
@@ -204,7 +208,6 @@ internal class MiniPlayerDismissGestureHandler(
                         )
                     )
                     onDismissPlaylistAndShowUndo()
-                    offsetAnimatable.snapTo(0f)
                 }
             }
 
@@ -259,12 +262,14 @@ internal fun rememberMiniPlayerDismissGestureHandler(
     screenWidthPx: Float,
     onDismissPlaylistAndShowUndo: () -> Unit,
     onDismissStarted: () -> Unit,
+    onDismissDirection: (Float) -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit
 ): MiniPlayerDismissGestureHandler {
     val layoutDirection = LocalLayoutDirection.current
     val onDismissPlaylistAndShowUndoState = rememberUpdatedState(onDismissPlaylistAndShowUndo)
     val onDismissStartedState = rememberUpdatedState(onDismissStarted)
+    val onDismissDirectionState = rememberUpdatedState(onDismissDirection)
     val onPreviousState = rememberUpdatedState(onPrevious)
     val onNextState = rememberUpdatedState(onNext)
     return remember(scope, density, hapticFeedback, offsetAnimatable, screenWidthPx, layoutDirection) {
@@ -277,6 +282,7 @@ internal fun rememberMiniPlayerDismissGestureHandler(
             layoutDirection = layoutDirection,
             onDismissPlaylistAndShowUndo = { onDismissPlaylistAndShowUndoState.value() },
             onDismissStarted = { onDismissStartedState.value() },
+            onDismissDirection = { sign -> onDismissDirectionState.value(sign) },
             onPrevious = { onPreviousState.value() },
             onNext = { onNextState.value() }
         )

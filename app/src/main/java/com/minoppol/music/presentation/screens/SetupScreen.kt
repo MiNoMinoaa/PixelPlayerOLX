@@ -57,6 +57,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.PhoneAndroid
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.RoundedCorner
 import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material3.Button
@@ -67,6 +68,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.LoadingIndicator
 
@@ -1649,7 +1651,7 @@ fun NavBarLayoutPage(
     onCustomizeRadius: () -> Unit,
     onSkip: () -> Unit
 ) {
-    val isDefault = uiState.navBarStyle != "full_width"
+    val currentNavStyle = uiState.navBarStyle
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -1686,7 +1688,7 @@ fun NavBarLayoutPage(
                 .weight(1f),
             contentAlignment = Alignment.Center
         ) {
-            NavBarPreview(isDefault = isDefault)
+            NavBarPreview(style = currentNavStyle)
         }
         
         Column(
@@ -1697,38 +1699,52 @@ fun NavBarLayoutPage(
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
-                shape = RoundedCornerShape(24.dp),
-                onClick = { onModeSelected(if (isDefault) "full_width" else "default") }
+                shape = RoundedCornerShape(24.dp)
             ) {
                 Column(
                     modifier = Modifier
                        .padding(horizontal = 20.dp, vertical = 16.dp)
                        .fillMaxWidth()
                 ) {
+                    Text(
+                        text = stringResource(R.string.setcat_navbar_style_label),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = when (currentNavStyle) {
+                            "full_width" -> stringResource(R.string.setup_nav_full_width_description)
+                            "floating" -> stringResource(R.string.setup_nav_floating_lens_description)
+                            else -> stringResource(R.string.setup_nav_floating_pill_description)
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
                     Row(
-                       modifier = Modifier.fillMaxWidth(),
-                       verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(R.string.setup_navbar_default_style),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = if (isDefault) stringResource(R.string.setup_nav_floating_pill_description) else stringResource(R.string.setup_nav_full_width_description),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Switch(
-                            checked = isDefault,
-                            onCheckedChange = { checked ->
-                                onModeSelected(if (checked) "default" else "full_width")
-                            }
+                        FilterChip(
+                            selected = currentNavStyle == "default",
+                            onClick = { onModeSelected("default") },
+                            label = { Text(stringResource(R.string.setcat_navbar_style_default)) },
+                            modifier = Modifier.weight(1f)
+                        )
+                        FilterChip(
+                            selected = currentNavStyle == "full_width",
+                            onClick = { onModeSelected("full_width") },
+                            label = { Text(stringResource(R.string.setcat_navbar_style_full_width)) },
+                            modifier = Modifier.weight(1f)
+                        )
+                        FilterChip(
+                            selected = currentNavStyle == "floating",
+                            onClick = { onModeSelected("floating") },
+                            label = { Text(stringResource(R.string.setcat_navbar_style_floating)) },
+                            modifier = Modifier.weight(1f)
                         )
                     }
-                    
+
                     AnimatedVisibility(
                         visible = true,
                         enter =   androidx.compose.animation.expandVertically() + fadeIn(),
@@ -1769,7 +1785,7 @@ fun NavBarLayoutPage(
 }
 
 @Composable
-fun NavBarPreview(isDefault: Boolean) {
+fun NavBarPreview(style: String) {
     val gradientColors = listOf(
         MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.5f),
         MaterialTheme.colorScheme.surfaceContainer,
@@ -1810,68 +1826,127 @@ fun NavBarPreview(isDefault: Boolean) {
                 modifier = Modifier.align(Alignment.BottomCenter)
             ) {
                 AnimatedContent(
-                    targetState = isDefault,
+                    targetState = style,
                     transitionSpec = {
                         (fadeIn(animationSpec = tween(400)) + slideInVertically { it })
                             .togetherWith(fadeOut(animationSpec = tween(200)) + slideOutVertically { it })
                     },
                     label = "NavbarPreviewAnim"
-                ) { default ->
-                    if (default) {
-                         Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp)
-                                .height(80.dp),
-                            shape = AbsoluteSmoothCornerShape(
-                                cornerRadiusTL = 28.dp,
-                                cornerRadiusTR = 28.dp,
-                                cornerRadiusBL = 28.dp,
-                                cornerRadiusBR = 28.dp,
-                                smoothnessAsPercentTL = 60,
-                                smoothnessAsPercentTR = 60,
-                                smoothnessAsPercentBL = 60,
-                                smoothnessAsPercentBR = 60
-                            ),
-                            color = MaterialTheme.colorScheme.surfaceContainer,
-                            tonalElevation = 6.dp
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxSize(),
-                                horizontalArrangement = Arrangement.SpaceEvenly,
-                                verticalAlignment = Alignment.CenterVertically
+                ) { navStyle ->
+                    when (navStyle) {
+                        "full_width" -> {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(80.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainer,
+                                tonalElevation = 6.dp,
+                                shape = AbsoluteSmoothCornerShape(
+                                    cornerRadiusTL = 28.dp,
+                                    smoothnessAsPercentTL = 60,
+                                    cornerRadiusTR = 28.dp,
+                                    smoothnessAsPercentTR = 60,
+                                    cornerRadiusBL = 0.dp,
+                                    smoothnessAsPercentBL = 60,
+                                    cornerRadiusBR = 0.dp,
+                                    smoothnessAsPercentBR = 60
+                                )
                             ) {
-                                Icon(painterResource(R.drawable.rounded_home_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Icon(painterResource(R.drawable.rounded_search_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Icon(painterResource(R.drawable.rounded_library_music_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                 Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(painterResource(R.drawable.rounded_home_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Icon(painterResource(R.drawable.rounded_search_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Icon(painterResource(R.drawable.rounded_library_music_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
                             }
                         }
-                    } else {
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(80.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainer,
-                            tonalElevation = 6.dp,
-                            shape = AbsoluteSmoothCornerShape(
-                                cornerRadiusTL = 28.dp,
-                                smoothnessAsPercentTL = 60,
-                                cornerRadiusTR = 28.dp,
-                                smoothnessAsPercentTR = 60,
-                                cornerRadiusBL = 0.dp,
-                                smoothnessAsPercentBL = 60,
-                                cornerRadiusBR = 0.dp,
-                                smoothnessAsPercentBR = 60
-                            )
-                        ) {
-                             Row(
-                                modifier = Modifier.fillMaxSize(),
-                                horizontalArrangement = Arrangement.SpaceEvenly,
+                        "floating" -> {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp)
+                                    .height(80.dp),
+                                horizontalArrangement = Arrangement.Center,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(painterResource(R.drawable.rounded_home_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Icon(painterResource(R.drawable.rounded_search_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Icon(painterResource(R.drawable.rounded_library_music_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Surface(
+                                    modifier = Modifier
+                                        .height(80.dp)
+                                        .weight(1f),
+                                    shape = AbsoluteSmoothCornerShape(
+                                        cornerRadiusTL = 28.dp,
+                                        cornerRadiusTR = 28.dp,
+                                        cornerRadiusBL = 28.dp,
+                                        cornerRadiusBR = 28.dp,
+                                        smoothnessAsPercentTL = 60,
+                                        smoothnessAsPercentTR = 60,
+                                        smoothnessAsPercentBL = 60,
+                                        smoothnessAsPercentBR = 60
+                                    ),
+                                    color = MaterialTheme.colorScheme.surfaceContainer,
+                                    tonalElevation = 6.dp
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxSize(),
+                                        horizontalArrangement = Arrangement.SpaceEvenly,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(painterResource(R.drawable.rounded_home_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Icon(painterResource(R.drawable.rounded_search_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Icon(painterResource(R.drawable.rounded_library_music_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Surface(
+                                    modifier = Modifier.size(64.dp),
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    tonalElevation = 6.dp
+                                ) {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.PlayArrow,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onPrimary
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        else -> {
+                             Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp)
+                                    .height(80.dp),
+                                shape = AbsoluteSmoothCornerShape(
+                                    cornerRadiusTL = 28.dp,
+                                    cornerRadiusTR = 28.dp,
+                                    cornerRadiusBL = 28.dp,
+                                    cornerRadiusBR = 28.dp,
+                                    smoothnessAsPercentTL = 60,
+                                    smoothnessAsPercentTR = 60,
+                                    smoothnessAsPercentBL = 60,
+                                    smoothnessAsPercentBR = 60
+                                ),
+                                color = MaterialTheme.colorScheme.surfaceContainer,
+                                tonalElevation = 6.dp
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(painterResource(R.drawable.rounded_home_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Icon(painterResource(R.drawable.rounded_search_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Icon(painterResource(R.drawable.rounded_library_music_24), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
                             }
                         }
                     }

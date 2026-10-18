@@ -3961,7 +3961,7 @@ class LxMusicRepository @Inject constructor(
     private fun scriptSemaphore(assetPath: String): Semaphore =
         scriptResolveSemaphores.getOrPut(assetPath) { Semaphore(3) }
 
-    private val musicUrlEventTimeoutMs = 6_000L
+    private val musicUrlEventTimeoutMs = 20_000L
     private val fallbackTotalTimeoutMs = 20_000L
     private val crossSourceCandidateTimeoutMs = 8_000L
 
