@@ -129,12 +129,15 @@
     <string name="setcat_navigation_bar">Navigation Bar</string>
     <string name="setcat_navbar_style_label">NavBar Style</string>
     <string name="setcat_navbar_style_desc">Choose the appearance for the navigation bar.</string>
-    <string name="setcat_navbar_style_default">Default</string>
+    <string name="setcat_navbar_style_default">Floating Capsule</string>
     <string name="setcat_navbar_style_full_width">Full Width</string>
+    <string name="setcat_navbar_style_floating">Floating Lens</string>
     <string name="setcat_compact_mode_title">Compact mode</string>
     <string name="setcat_compact_mode_subtitle">Show only icons and reduce the navbar height.</string>
     <string name="setcat_show_search_tab_title">Show Search tab</string>
     <string name="setcat_show_search_tab_subtitle">Search shows content you have played locally or from cache.</string>
+    <string name="setcat_show_recent_tab_title">Show Recently Played</string>
+    <string name="setcat_show_recent_tab_subtitle">Display Recently Played as a tab in the bottom navigation bar.</string>
     <string name="setcat_navbar_corner_title">NavBar Corner Radius</string>
     <string name="setcat_navbar_corner_subtitle">Adjust the corner radius of the navigation bar.</string>
     <string name="setcat_lyrics_screen">Lyrics Screen</string>
@@ -190,6 +193,12 @@
     <string name="setcat_persistent_shuffle_subtitle">Remember shuffle setting even after closing the app.</string>
     <string name="setcat_show_queue_history_title">Show queue history</string>
     <string name="setcat_show_queue_history_subtitle">Show previously played songs in the queue.</string>
+    <string name="setcat_lx_board_include_queue_title">Discover page play includes queue</string>
+    <string name="setcat_lx_board_include_queue_subtitle">When on, tapping a song on the discover page adds the whole chart list to the queue and starts from the tapped song. When off, only the tapped song plays.</string>
+    <string name="setcat_lx_board_show_shuffle_fab_title">Show discover shuffle button</string>
+    <string name="setcat_lx_board_show_shuffle_fab_subtitle">When off, the floating shuffle button at the bottom-left of the discover page is hidden.</string>
+    <string name="setcat_lx_board_show_play_all_fab_title">Show discover play-all button</string>
+    <string name="setcat_lx_board_show_play_all_fab_subtitle">When off, the floating play-all button at the bottom-left of the discover page is hidden.</string>
 
     <string name="setcat_folders">Folders</string>
     <string name="setcat_folder_back_gesture_title">Back gesture controls folders</string>

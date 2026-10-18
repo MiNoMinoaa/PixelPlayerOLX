@@ -63,6 +63,15 @@
     <string name="setup_library_layout_footer">後續可在 設置＞外觀＞庫導航 中修改。</string>
     <string name="tab_library">曲庫</string>
     <string name="tab_search">搜索</string>
+    <string name="tab_recent">最近</string>
+    <string name="nav_bar_style_default">懸浮膠囊</string>
+    <string name="nav_bar_style_full_width">通欄鋪滿</string>
+    <string name="nav_bar_style_floating">懸浮透鏡</string>
+    <string name="setup_nav_bar_choose_style">選擇導航欄樣式</string>
+    <string name="setup_nav_bar_style_default_subtitle">圓角膠囊浮於內容之上。</string>
+    <string name="setup_nav_bar_style_full_width_subtitle">貼齊螢幕底部的全寬導航欄。</string>
+    <string name="setup_nav_bar_style_floating_subtitle">圓角懸浮透鏡樣式，正在播放時會延伸出播放按鈕。</string>
+    <string name="setup_nav_floating_lens_description">懸浮透鏡樣式</string>
     <string name="tab_songs">歌曲</string>
     <string name="tab_albums">專輯</string>
     <string name="tab_artists">藝術家</string>
@@ -280,4 +289,15 @@
     <string name="lxmusic_quality_master">臻品母帶</string>
     <string name="lxmusic_quality_master_desc">錄音室母帶級音質</string>
     <string name="lxmusic_need_script_or_cookie">請先加載音源腳本或設置網易雲 Cookie</string>
+    <string name="update_available_title">發現新版本 v%1$s</string>
+    <string name="update_available_download">去下載</string>
+    <string name="update_available_later">以後再說</string>
+    <string name="update_available_go_download">前往下載</string>
+    <string name="update_available_cancel">取消</string>
+    <string name="update_available_ignore">忽略此版本</string>
+    <string name="check_for_updates">檢查更新</string>
+    <string name="update_check_uptodate">已是最新版本。</string>
+    <string name="update_check_ignored">此版本已忽略，有新版本發佈時會再提醒。</string>
+    <string name="update_check_error_network">網絡連接失敗，請檢查網絡後重試。</string>
+    <string name="update_check_error_generic">檢查更新失敗，請稍後重試。</string>
 </resources>

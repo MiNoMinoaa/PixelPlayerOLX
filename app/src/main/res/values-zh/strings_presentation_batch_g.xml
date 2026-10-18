@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="presentation_batch_g_stats_range_today">今日</string>
-    <string name="presentation_batch_g_stats_range_week_to_date">本周至今</string>
-    <string name="presentation_batch_g_stats_range_month_to_date">本月至今</string>
-    <string name="presentation_batch_g_stats_range_year_to_date">本年至今</string>
-    <string name="presentation_batch_g_stats_range_all_time">全部時間</string>
+    <string name="presentation_batch_g_stats_range_today">今天</string>
+    <string name="presentation_batch_g_stats_range_week_to_date">最近一週</string>
+    <string name="presentation_batch_g_stats_range_month_to_date">最近一月</string>
+    <string name="presentation_batch_g_stats_range_year_to_date">最近一年</string>
+    <string name="presentation_batch_g_stats_range_all_time">所有時間</string>
     <string name="presentation_batch_g_stats_title">收聽統計</string>
     <string name="presentation_batch_g_stats_cd_refresh">刷新收聽統計</string>
     <string name="presentation_batch_g_stats_hero_listening">收聽時長</string>

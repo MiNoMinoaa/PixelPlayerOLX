@@ -80,6 +80,7 @@ fun LibrarySongsTab(
     hasCurrentSong: Boolean = false
 ) {
     val listState = rememberLazyListState()
+    val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
     val pullToRefreshState = rememberPullToRefreshState()
     val coroutineScope = rememberCoroutineScope()
     val visibilityCallback by rememberUpdatedState(onLocateCurrentSongVisibilityChanged)
@@ -237,8 +238,8 @@ fun LibrarySongsTab(
                         RoundedCornerShape(
                             topStart = 26.dp,
                             topEnd = 26.dp,
-                            bottomStart = PlayerSheetCollapsedCornerRadius,
-                            bottomEnd = PlayerSheetCollapsedCornerRadius
+                            bottomStart = listBottomCornerRadius,
+                            bottomEnd = listBottomCornerRadius
                         )
                     )
                     .fillMaxSize(),
@@ -288,8 +289,8 @@ fun LibrarySongsTab(
                                     RoundedCornerShape(
                                         topStart = 26.dp,
                                         topEnd = 26.dp,
-                                        bottomStart = PlayerSheetCollapsedCornerRadius,
-                                        bottomEnd = PlayerSheetCollapsedCornerRadius
+                                        bottomStart = listBottomCornerRadius,
+                                        bottomEnd = listBottomCornerRadius
                                     )
                                 ),
                             state = listState,

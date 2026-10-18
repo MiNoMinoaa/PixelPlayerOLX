@@ -51,6 +51,9 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
@@ -94,6 +97,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectTapGestures
 
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -121,7 +125,10 @@ import com.minoppol.music.presentation.components.DismissUndoBar
 import com.minoppol.music.presentation.components.DrawerDestination
 import com.minoppol.music.presentation.components.MiniPlayerBottomSpacer
 import com.minoppol.music.presentation.components.MiniPlayerHeight
+import com.minoppol.music.presentation.components.FloatingNavBar
+import com.minoppol.music.presentation.components.FloatingNavBarMetrics
 import com.minoppol.music.presentation.components.PlayerInternalNavigationBar
+import com.minoppol.music.presentation.components.resolveFloatingNavBarOccupiedHeight
 import com.minoppol.music.presentation.components.PlayerNavigationRail
 import com.minoppol.music.presentation.components.UnifiedPlayerSheetV2
 import com.minoppol.music.presentation.components.calculatePlayerSheetCollapsedTargetY
@@ -632,23 +639,29 @@ class MainActivity : ComponentActivity() {
         navController: NavHostController
     ) = traceSection("MainActivity.MainUI") {
         val showSearchTab by playerViewModel.showSearchTab.collectAsStateWithLifecycle()
-        val commonNavItems = remember(showSearchTab) {
-            val base = persistentListOf(
+        val showRecentTab by playerViewModel.showRecentTab.collectAsStateWithLifecycle()
+        val commonNavItems = remember(showSearchTab, showRecentTab) {
+            var items = persistentListOf(
                 BottomNavItem(R.string.tab_home, R.drawable.rounded_home_24, R.drawable.home_24_rounded_filled, Screen.Home),
                 BottomNavItem(R.string.tab_online, R.drawable.rounded_headphones_24, R.drawable.rounded_headphones_24, Screen.LxMusic),
                 BottomNavItem(R.string.tab_library, R.drawable.rounded_library_music_24, R.drawable.rounded_library_music_24, Screen.Library),
             )
-            if (showSearchTab) {
-                base.adding(BottomNavItem(R.string.tab_search, R.drawable.rounded_search_24, R.drawable.rounded_search_24, Screen.Search))
-            } else {
-                base
+            if (showRecentTab) {
+                items = items.adding(BottomNavItem(R.string.tab_recent, R.drawable.rounded_schedule_24, R.drawable.rounded_schedule_24, Screen.RecentlyPlayedTab))
             }
+            if (showSearchTab) {
+                items = items.adding(BottomNavItem(R.string.tab_search, R.drawable.rounded_search_24, R.drawable.rounded_search_24, Screen.Search))
+            }
+            items
         }
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
         var isSearchBarActive by remember { mutableStateOf(false) }
-        LaunchedEffect(showSearchTab, currentRoute) {
+        LaunchedEffect(showSearchTab, showRecentTab, currentRoute) {
             if (!showSearchTab && currentRoute == Screen.Search.route) {
+                navController.navigateToTopLevelSafely(Screen.Home.route)
+            }
+            if (!showRecentTab && currentRoute == Screen.RecentlyPlayedTab.route) {
                 navController.navigateToTopLevelSafely(Screen.Home.route)
             }
         }
@@ -734,7 +747,28 @@ class MainActivity : ComponentActivity() {
             rootView.rootView?.isHapticFeedbackEnabled = hapticsEnabled
         }
 
-        val horizontalPadding = 14.dp
+        val horizontalPadding = when {
+            navBarStyle == NavBarStyle.FLOATING -> {
+                val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+                val alignedMargin = if (navBarCompactMode) {
+                    FloatingNavBarMetrics.MiniAlignedMarginCompact
+                } else {
+                    FloatingNavBarMetrics.MiniAlignedMargin
+                }
+                val dockTotalWidth = FloatingNavBarMetrics.dockTotalMaxWidth(
+                    commonNavItems.size, navBarCompactMode
+                )
+                val maxMiniWidth = screenWidth - alignedMargin * 2
+                val rawMiniWidth = if (maxMiniWidth > dockTotalWidth) dockTotalWidth else maxMiniWidth
+                val floorWidth = minOf(
+                    FloatingNavBarMetrics.dockTotalMaxWidth(4, false),
+                    screenWidth - FloatingNavBarMetrics.MiniAlignedMargin * 2
+                )
+                val miniWidth = maxOf(rawMiniWidth, floorWidth)
+                (screenWidth - miniWidth) / 2
+            }
+            else -> 14.dp
+        }
         val animatedBottomBarPadding by animateDpAsState(
             targetValue = floatingBottomInset,
             animationSpec = tween(400),
@@ -742,10 +776,12 @@ class MainActivity : ComponentActivity() {
         )
         val bottomBarPadding = animatedBottomBarPadding
         val navBarHeight = resolveNavBarSurfaceHeight(navBarStyle, 0.dp, navBarCompactMode)
-        val navBarOccupiedHeight by remember(floatingBottomInset, navBarCompactMode, useNavigationRail) {
+        val navBarOccupiedHeight by remember(floatingBottomInset, navBarCompactMode, useNavigationRail, navBarStyle) {
             derivedStateOf {
                 if (useNavigationRail) {
                     0.dp
+                } else if (navBarStyle == NavBarStyle.FLOATING) {
+                    resolveFloatingNavBarOccupiedHeight(floatingBottomInset, navBarCompactMode)
                 } else {
                     resolveNavBarOccupiedHeight(floatingBottomInset, navBarCompactMode)
                 }
@@ -832,7 +868,7 @@ class MainActivity : ComponentActivity() {
                     .weight(1f)
                     .fillMaxHeight(),
                 bottomBar = {
-                    if (!useNavigationRail && shouldRenderNavigationBar) {
+                    if (!useNavigationRail && shouldRenderNavigationBar && navBarStyle != NavBarStyle.FLOATING) {
                         val currentSongId by remember {
                             playerViewModel.stablePlayerState
                                 .map { it.currentSong?.id }
@@ -877,54 +913,54 @@ class MainActivity : ComponentActivity() {
                             }
 
                             Surface(
-                                modifier = Modifier
-                                    .align(Alignment.BottomCenter)
-                                    .fillMaxWidth()
-                                    .padding(bottom = bottomBarPadding)
-                                    .onSizeChanged { componentHeightPx = it.height }
-                                    .graphicsLayer {
-                                        val expansionHide = if (showPlayerContentArea) {
-                                            playerViewModel.playerContentExpansionFraction.value.coerceIn(0f, 1f)
-                                        } else {
-                                            0f
-                                        }
-                                        val routeHide = (1f - navBarVisibilityProgressState.value).coerceIn(0f, 1f)
-                                        val hideFraction = maxOf(expansionHide, routeHide)
-                                        translationY = (componentHeightPx + shadowOverflowPx + bottomBarPaddingPx) * hideFraction
-                                        alpha = 1f
-                                    }
-                                    .height(navBarHeight)
-                                    .padding(horizontal = horizontalPadding)
-                                    .graphicsLayer {
-                                        val fraction = playerViewModel.playerContentExpansionFraction.value
-                                        val topDp = when {
-                                            navBarStyle == NavBarStyle.DEFAULT -> animatedDefaultTopCornerRadius.value
-                                            navBarStyle == NavBarStyle.FULL_WIDTH -> lerp(navBarCornerRadius.dp, 26.dp, fraction)
-                                            showPlayerContentArea -> if (fraction < 0.2f) {
-                                                lerp(navBarCornerRadius.dp, 26.dp, (fraction / 0.2f).coerceIn(0f, 1f))
+                                    modifier = Modifier
+                                        .align(Alignment.BottomCenter)
+                                        .fillMaxWidth()
+                                        .padding(bottom = bottomBarPadding)
+                                        .onSizeChanged { componentHeightPx = it.height }
+                                        .graphicsLayer {
+                                            val expansionHide = if (showPlayerContentArea) {
+                                                playerViewModel.playerContentExpansionFraction.value.coerceIn(0f, 1f)
                                             } else {
-                                                26.dp
+                                                0f
                                             }
-                                            else -> navBarCornerRadius.dp
+                                            val routeHide = (1f - navBarVisibilityProgressState.value).coerceIn(0f, 1f)
+                                            val hideFraction = maxOf(expansionHide, routeHide)
+                                            translationY = (componentHeightPx + shadowOverflowPx + bottomBarPaddingPx) * hideFraction
+                                            alpha = 1f
                                         }
-                                        val bottomDp = animatedNavBarCornerRadius.value
-                                        shape = navBarShapeCache.get(this, topDp.toPx(), bottomDp.toPx(), useSmoothCorners)
-                                        clip = true
-                                        shadowElevation = navBarElevationPx
-                                    },
-                                color = NavigationBarDefaults.containerColor
-                            ) {
-                                PlayerInternalNavigationBar(
-                                    navController = navController,
-                                    navItems = commonNavItems,
-                                    currentRoute = currentRoute,
-                                    navBarStyle = navBarStyle,
-                                    compactMode = navBarCompactMode,
-                                    bottomBarPadding = bottomBarPadding,
-                                    onSearchIconDoubleTap = onSearchIconDoubleTap,
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            }
+                                        .height(navBarHeight)
+                                        .padding(horizontal = horizontalPadding)
+                                        .graphicsLayer {
+                                            val fraction = playerViewModel.playerContentExpansionFraction.value
+                                            val topDp = when {
+                                                navBarStyle == NavBarStyle.DEFAULT -> animatedDefaultTopCornerRadius.value
+                                                navBarStyle == NavBarStyle.FULL_WIDTH -> lerp(navBarCornerRadius.dp, 26.dp, fraction)
+                                                showPlayerContentArea -> if (fraction < 0.2f) {
+                                                    lerp(navBarCornerRadius.dp, 26.dp, (fraction / 0.2f).coerceIn(0f, 1f))
+                                                } else {
+                                                    26.dp
+                                                }
+                                                else -> navBarCornerRadius.dp
+                                            }
+                                            val bottomDp = animatedNavBarCornerRadius.value
+                                            shape = navBarShapeCache.get(this, topDp.toPx(), bottomDp.toPx(), useSmoothCorners)
+                                            clip = true
+                                            shadowElevation = navBarElevationPx
+                                        },
+                                    color = NavigationBarDefaults.containerColor
+                                ) {
+                                    PlayerInternalNavigationBar(
+                                        navController = navController,
+                                        navItems = commonNavItems,
+                                        currentRoute = currentRoute,
+                                        navBarStyle = navBarStyle,
+                                        compactMode = navBarCompactMode,
+                                        bottomBarPadding = bottomBarPadding,
+                                        onSearchIconDoubleTap = onSearchIconDoubleTap,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
                         }
                     }
                 }
@@ -934,6 +970,21 @@ class MainActivity : ComponentActivity() {
                         val containerHeight = this.maxHeight
                         val screenHeightPx = remember(containerHeight, density) {
                             with(density) { containerHeight.toPx() }
+                        }
+
+                        val effectiveInnerPadding = if (
+                            !useNavigationRail &&
+                            shouldRenderNavigationBar &&
+                            navBarStyle == NavBarStyle.FLOATING
+                        ) {
+                            PaddingValues(
+                                start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                                top = innerPadding.calculateTopPadding(),
+                                end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
+                                bottom = navBarOccupiedHeight
+                            )
+                        } else {
+                            innerPadding
                         }
 
                         val showPlayerContentInitially by remember {
@@ -951,7 +1002,12 @@ class MainActivity : ComponentActivity() {
 
                         val bottomMargin = miniPlayerBottomMargin
 
-                        val spacerPx = with(density) { MiniPlayerBottomSpacer.toPx() }
+                        val spacerDp = if (navBarStyle == NavBarStyle.FLOATING) {
+                            MiniPlayerBottomSpacer - 2.dp
+                        } else {
+                            MiniPlayerBottomSpacer
+                        }
+                        val spacerPx = with(density) { spacerDp.toPx() }
                         val bottomMarginPx = with(density) { bottomMargin.toPx() }
                         val sheetCollapsedTargetY = calculatePlayerSheetCollapsedTargetY(
                             containerHeightPx = screenHeightPx,
@@ -966,7 +1022,7 @@ class MainActivity : ComponentActivity() {
                             AppNavigation(
                                 playerViewModel = playerViewModel,
                                 navController = navController,
-                                paddingValues = innerPadding,
+                                paddingValues = effectiveInnerPadding,
                                 userPreferencesRepository = userPreferencesRepository,
                                 onSearchBarActiveChange = { isSearchBarActive = it },
                                 onOpenSidebar = { scope.launch { drawerState.open() } }
@@ -1007,7 +1063,12 @@ class MainActivity : ComponentActivity() {
                             hideMiniPlayer = shouldHideMiniPlayer,
                             containerHeight = containerHeight,
                             navController = navController,
-                            isNavBarHidden = isNavBarEffectivelyHidden
+                            isNavBarHidden = isNavBarEffectivelyHidden,
+                            dockCenterControlsVisible = !useNavigationRail &&
+                                shouldRenderNavigationBar &&
+                                navBarStyle == NavBarStyle.FLOATING &&
+                                showPlayerContentInitially &&
+                                !isMiniPlayerDismissing
                         )
 
                         val dismissUndoBarSlice by remember {
@@ -1033,7 +1094,7 @@ class MainActivity : ComponentActivity() {
                             exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
-                                .padding(bottom = innerPadding.calculateBottomPadding() + MiniPlayerBottomSpacer)
+                                .padding(bottom = effectiveInnerPadding.calculateBottomPadding() + MiniPlayerBottomSpacer)
                                 .padding(horizontal = horizontalPadding)
                         ) {
                             DismissUndoBar(
@@ -1045,6 +1106,54 @@ class MainActivity : ComponentActivity() {
                                 onClose = onCloseDismissUndoBar,
                                 durationMillis = dismissUndoBarSlice.durationMillis
                             )
+                        }
+
+                        if (
+                            !useNavigationRail &&
+                            shouldRenderNavigationBar &&
+                            navBarStyle == NavBarStyle.FLOATING
+                        ) {
+                            val dockIsPlaying by remember {
+                                playerViewModel.stablePlayerState
+                                    .map { it.isPlaying }
+                                    .distinctUntilChanged()
+                            }.collectAsStateWithLifecycle(initialValue = false)
+                            val dockExitDirectionSign by playerViewModel.dockExitDirectionSign.collectAsStateWithLifecycle()
+                            var floatingComponentHeightPx by remember { mutableStateOf(0) }
+                            val onSearchIconDoubleTap = remember(playerViewModel) {
+                                { playerViewModel.onSearchNavIconDoubleTapped() }
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .fillMaxWidth()
+                                    .onSizeChanged { floatingComponentHeightPx = it.height }
+                                    .graphicsLayer {
+                                        val expansionHide = if (showPlayerContentInitially) {
+                                            playerViewModel.playerContentExpansionFraction.value.coerceIn(0f, 1f)
+                                        } else {
+                                            0f
+                                        }
+                                        val routeHide = (1f - navBarVisibilityProgressState.value).coerceIn(0f, 1f)
+                                        val hideFraction = maxOf(expansionHide, routeHide)
+                                        translationY = floatingComponentHeightPx * hideFraction
+                                        alpha = 1f
+                                    }
+                            ) {
+                                FloatingNavBar(
+                                    navController = navController,
+                                    navItems = commonNavItems,
+                                    currentRoute = currentRoute,
+                                    compactMode = navBarCompactMode,
+                                    hasMiniPlayer = showPlayerContentInitially && !isMiniPlayerDismissing,
+                                    isPlaying = dockIsPlaying,
+                                    exitDirectionSign = dockExitDirectionSign,
+                                    cornerRadius = navBarCornerRadius.dp,
+                                    onPlayPauseClick = { playerViewModel.playPause() },
+                                    onSearchIconDoubleTap = onSearchIconDoubleTap,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
                         }
                     }
                 }

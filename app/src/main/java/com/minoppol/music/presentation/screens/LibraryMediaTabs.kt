@@ -96,6 +96,7 @@ fun LibraryAlbumsTab(
 ) {
     val gridState = rememberLazyGridState()
     val listState = rememberLazyListState()
+    val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
     val context = LocalContext.current
     val imageLoader = context.imageLoader
 
@@ -245,8 +246,8 @@ fun LibraryAlbumsTab(
                             RoundedCornerShape(
                                 topStart = 16.dp,
                                 topEnd = 16.dp,
-                                bottomStart = PlayerSheetCollapsedCornerRadius,
-                                bottomEnd = PlayerSheetCollapsedCornerRadius
+                                bottomStart = listBottomCornerRadius,
+                                bottomEnd = listBottomCornerRadius
                             )
                         )
                         .fillMaxSize(),
@@ -271,8 +272,8 @@ fun LibraryAlbumsTab(
                             RoundedCornerShape(
                                 topStart = 16.dp,
                                 topEnd = 16.dp,
-                                bottomStart = PlayerSheetCollapsedCornerRadius,
-                                bottomEnd = PlayerSheetCollapsedCornerRadius
+                                bottomStart = listBottomCornerRadius,
+                                bottomEnd = listBottomCornerRadius
                             )
                         )
                         .fillMaxSize(),
@@ -327,8 +328,8 @@ fun LibraryAlbumsTab(
                                         RoundedCornerShape(
                                             topStart = 16.dp,
                                             topEnd = 16.dp,
-                                            bottomStart = PlayerSheetCollapsedCornerRadius,
-                                            bottomEnd = PlayerSheetCollapsedCornerRadius
+                                            bottomStart = listBottomCornerRadius,
+                                            bottomEnd = listBottomCornerRadius
                                         )
                                     ),
                                 state = listState,
@@ -399,8 +400,8 @@ fun LibraryAlbumsTab(
                                         RoundedCornerShape(
                                             topStart = 16.dp,
                                             topEnd = 16.dp,
-                                            bottomStart = PlayerSheetCollapsedCornerRadius,
-                                            bottomEnd = PlayerSheetCollapsedCornerRadius
+                                            bottomStart = listBottomCornerRadius,
+                                            bottomEnd = listBottomCornerRadius
                                         )
                                     ),
                                 state = gridState,
@@ -493,6 +494,7 @@ fun LibraryArtistsTab(
     storageFilter: StorageFilter = StorageFilter.ALL
 ) {
     val listState = rememberLazyListState()
+    val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
     val artistFastScrollLabelProvider = remember(artists, currentArtistSortOption) {
         { index: Int ->
             artistFastScrollLabel(
@@ -567,8 +569,8 @@ fun LibraryArtistsTab(
                         RoundedCornerShape(
                             topStart = 26.dp,
                             topEnd = 26.dp,
-                            bottomStart = PlayerSheetCollapsedCornerRadius,
-                            bottomEnd = PlayerSheetCollapsedCornerRadius
+                            bottomStart = listBottomCornerRadius,
+                            bottomEnd = listBottomCornerRadius
                         )
                     )
                     .fillMaxSize(),
@@ -621,8 +623,8 @@ fun LibraryArtistsTab(
                                     RoundedCornerShape(
                                         topStart = 26.dp,
                                         topEnd = 26.dp,
-                                        bottomStart = PlayerSheetCollapsedCornerRadius,
-                                        bottomEnd = PlayerSheetCollapsedCornerRadius
+                                        bottomStart = listBottomCornerRadius,
+                                        bottomEnd = listBottomCornerRadius
                                     )
                                 ),
                             state = listState,

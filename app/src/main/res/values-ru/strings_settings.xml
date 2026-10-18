@@ -166,6 +166,7 @@
     <string name="setcat_navbar_style_default">По умолчанию</string>
     <string name="setcat_navbar_style_desc">Выберите внешний вид панели навигации.</string>
     <string name="setcat_navbar_style_full_width">На всю ширину</string>
+    <string name="setcat_navbar_style_floating">Плавающий</string>
     <string name="setcat_navbar_style_label">Стиль панели навигации</string>
     <string name="setcat_navigation_bar">Панель навигации</string>
     <string name="setcat_now_playing">Сейчас играет</string>

@@ -30,6 +30,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.preferences.FullPlayerLoadingTweaks
+import com.minoppol.music.data.preferences.NavBarStyle
 import com.minoppol.music.presentation.components.player.FullPlayerContent
 import com.minoppol.music.presentation.components.scoped.FullPlayerVisualState
 import com.minoppol.music.presentation.components.scoped.rememberFullPlayerRuntimePolicy
@@ -64,7 +65,8 @@ internal fun BoxScope.UnifiedPlayerMiniAndFullLayers(
     onShowQueueClicked: () -> Unit,
     onQueueDragStart: () -> Unit,
     onQueueDrag: (Float) -> Unit,
-    onQueueRelease: (Float, Float) -> Unit
+    onQueueRelease: (Float, Float) -> Unit,
+    dockCenterControlsVisible: Boolean = false
 ) {
     currentSong?.let { currentSongNonNull ->
         miniPlayerScheme?.let { readyScheme ->
@@ -90,6 +92,7 @@ internal fun BoxScope.UnifiedPlayerMiniAndFullLayers(
                     val isMiniPlayerVisible by remember {
                         derivedStateOf { playerContentExpansionFraction.value < 0.01f }
                     }
+                    val miniNavBarStyle by playerViewModel.navBarStyle.collectAsStateWithLifecycle()
                     val miniPlaybackPosition by playerViewModel.currentPlaybackPosition.collectAsStateWithLifecycle()
                     val miniLyrics = infrequentPlayerState.lyrics
                     val miniPlayerLyricsOn by playerViewModel.miniPlayerLyricsEnabled.collectAsStateWithLifecycle()
@@ -111,6 +114,7 @@ internal fun BoxScope.UnifiedPlayerMiniAndFullLayers(
                         onNext = { playerViewModel.nextSong() },
                         currentLyricLine = miniCurrentLine,
                         canScroll = isMiniPlayerVisible && infrequentPlayerState.isPlaying,
+                        showCenterControls = miniNavBarStyle != NavBarStyle.FLOATING || !dockCenterControlsVisible,
                         modifier = Modifier.fillMaxSize()
                     )
                 }

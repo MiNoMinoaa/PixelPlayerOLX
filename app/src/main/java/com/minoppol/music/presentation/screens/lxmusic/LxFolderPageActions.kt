@@ -72,31 +72,37 @@ internal fun LxBottomPlayActions(
     onPlayAll: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    showShuffle: Boolean = true,
+    showPlayAll: Boolean = true,
 ) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        FilledTonalIconButton(
-            onClick = onShuffle,
-            enabled = enabled,
-            shape = CircleShape,
-            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-            ),
-            modifier = Modifier.size(48.dp),
-        ) {
-            Icon(Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.lx_desc_shuffle), modifier = Modifier.size(22.dp))
+        if (showShuffle) {
+            FilledTonalIconButton(
+                onClick = onShuffle,
+                enabled = enabled,
+                shape = CircleShape,
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                ),
+                modifier = Modifier.size(48.dp),
+            ) {
+                Icon(Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.lx_desc_shuffle), modifier = Modifier.size(22.dp))
+            }
         }
-        FilledIconButton(
-            onClick = onPlayAll,
-            enabled = enabled,
-            shape = CircleShape,
-            modifier = Modifier.size(48.dp),
-        ) {
-            Icon(Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.lx_desc_play_all), modifier = Modifier.size(26.dp))
+        if (showPlayAll) {
+            FilledIconButton(
+                onClick = onPlayAll,
+                enabled = enabled,
+                shape = CircleShape,
+                modifier = Modifier.size(48.dp),
+            ) {
+                Icon(Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.lx_desc_play_all), modifier = Modifier.size(26.dp))
+            }
         }
     }
 }

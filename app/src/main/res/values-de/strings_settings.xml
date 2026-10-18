@@ -166,6 +166,7 @@
     <string name="setcat_navbar_style_default">Standard</string>
     <string name="setcat_navbar_style_desc">Wie die Navigationsleiste aussieht.</string>
     <string name="setcat_navbar_style_full_width">Volle Breite</string>
+    <string name="setcat_navbar_style_floating">Schwebend</string>
     <string name="setcat_navbar_style_label">NavBar-Stil</string>
     <string name="setcat_navigation_bar">Navigationsleiste</string>
     <string name="setcat_now_playing">Läuft gerade</string>

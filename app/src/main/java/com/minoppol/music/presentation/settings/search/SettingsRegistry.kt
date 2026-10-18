@@ -382,6 +382,18 @@ object SettingsRegistry {
                 onToggle = { viewModel, checked -> viewModel.setShowSearchTab(checked) }
             ),
             SettingSpec(
+                id = "appearance_show_recent_tab",
+                itemKey = "item_appearance_show_recent_tab",
+                titleRes = R.string.setcat_show_recent_tab_title,
+                subtitleRes = R.string.setcat_show_recent_tab_subtitle,
+                category = SettingsCategory.APPEARANCE,
+                subscreenRoute = Screen.SettingsCategory.createRoute("appearance"),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf("recent", "recently played", "history", "tab", "navbar", "hide", "show", "visibility"),
+                getValue = { it.showRecentTab },
+                onToggle = { viewModel, checked -> viewModel.setShowRecentTab(checked) }
+            ),
+            SettingSpec(
                 id = "appearance_navbar_corner",
                 itemKey = "item_appearance_navbar_corner",
                 titleRes = R.string.setcat_navbar_corner_title,
@@ -546,6 +558,42 @@ object SettingsRegistry {
                 keywordsStatic = listOf("queue", "history", "previous songs", "played"),
                 getValue = { it.showQueueHistory },
                 onToggle = { viewModel, checked -> viewModel.setShowQueueHistory(checked) }
+            ),
+            SettingSpec(
+                id = "playback_lx_board_include_queue",
+                itemKey = "item_playback_lx_board_include_queue",
+                titleRes = R.string.setcat_lx_board_include_queue_title,
+                subtitleRes = R.string.setcat_lx_board_include_queue_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.SettingsCategory.createRoute("playback"),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf("discover", "board", "queue", "online", "chart", "playlist queue"),
+                getValue = { it.lxBoardIncludeQueue },
+                onToggle = { viewModel, checked -> viewModel.setLxBoardIncludeQueue(checked) }
+            ),
+            SettingSpec(
+                id = "playback_lx_board_show_shuffle_fab",
+                itemKey = "item_playback_lx_board_show_shuffle_fab",
+                titleRes = R.string.setcat_lx_board_show_shuffle_fab_title,
+                subtitleRes = R.string.setcat_lx_board_show_shuffle_fab_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.SettingsCategory.createRoute("playback"),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf("discover", "board", "shuffle", "floating", "button", "random"),
+                getValue = { it.lxBoardShowShuffleFab },
+                onToggle = { viewModel, checked -> viewModel.setLxBoardShowShuffleFab(checked) }
+            ),
+            SettingSpec(
+                id = "playback_lx_board_show_play_all_fab",
+                itemKey = "item_playback_lx_board_show_play_all_fab",
+                titleRes = R.string.setcat_lx_board_show_play_all_fab_title,
+                subtitleRes = R.string.setcat_lx_board_show_play_all_fab_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.SettingsCategory.createRoute("playback"),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf("discover", "board", "play all", "floating", "button"),
+                getValue = { it.lxBoardShowPlayAllFab },
+                onToggle = { viewModel, checked -> viewModel.setLxBoardShowPlayAllFab(checked) }
             ),
 
             // --- BEHAVIOR CATEGORY ---

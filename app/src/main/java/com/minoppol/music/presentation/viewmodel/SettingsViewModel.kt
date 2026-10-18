@@ -65,6 +65,10 @@ data class SettingsUiState(
     val navBarStyle: String = NavBarStyle.DEFAULT,
     val navBarCompactMode: Boolean = false,
     val showSearchTab: Boolean = true,
+    val showRecentTab: Boolean = true,
+    val lxBoardIncludeQueue: Boolean = true,
+    val lxBoardShowShuffleFab: Boolean = true,
+    val lxBoardShowPlayAllFab: Boolean = true,
     val carouselStyle: String = CarouselStyle.NO_PEEK,
     val libraryNavigationMode: String = LibraryNavigationMode.TAB_ROW,
     val launchTab: String = LaunchTab.HOME,
@@ -153,7 +157,11 @@ private sealed interface SettingsUiUpdate {
         val launchTab: String,
         val showPlayerFileInfo: Boolean,
         val globalNowPlayingThemeEnabled: Boolean,
-        val showSearchTab: Boolean
+        val showSearchTab: Boolean,
+        val showRecentTab: Boolean,
+        val lxBoardIncludeQueue: Boolean,
+        val lxBoardShowShuffleFab: Boolean,
+        val lxBoardShowPlayAllFab: Boolean
     ) : SettingsUiUpdate
 
     data class Group2(
@@ -271,7 +279,11 @@ class SettingsViewModel @Inject constructor(
                 userPreferencesRepository.launchTabFlow,
                 userPreferencesRepository.showPlayerFileInfoFlow,
                 themePreferencesRepository.globalNowPlayingThemeEnabledFlow,
-                userPreferencesRepository.showSearchTabFlow
+                userPreferencesRepository.showSearchTabFlow,
+                userPreferencesRepository.showRecentTabFlow,
+                userPreferencesRepository.lxBoardIncludeQueueFlow,
+                userPreferencesRepository.lxBoardShowShuffleFabFlow,
+                userPreferencesRepository.lxBoardShowPlayAllFabFlow
             ) { values ->
                 SettingsUiUpdate.Group1(
                     appRebrandDialogShown = values[0] as Boolean,
@@ -288,7 +300,11 @@ class SettingsViewModel @Inject constructor(
                     launchTab = values[11] as String,
                     showPlayerFileInfo = values[12] as Boolean,
                     globalNowPlayingThemeEnabled = values[13] as Boolean,
-                    showSearchTab = values[14] as Boolean
+                    showSearchTab = values[14] as Boolean,
+                    showRecentTab = values[15] as Boolean,
+                    lxBoardIncludeQueue = values[16] as Boolean,
+                    lxBoardShowShuffleFab = values[17] as Boolean,
+                    lxBoardShowPlayAllFab = values[18] as Boolean
                 )
             }.collect { update ->
                 _uiState.update { state ->
@@ -307,7 +323,11 @@ class SettingsViewModel @Inject constructor(
                         launchTab = update.launchTab,
                         showPlayerFileInfo = update.showPlayerFileInfo,
                         globalNowPlayingThemeEnabled = update.globalNowPlayingThemeEnabled,
-                        showSearchTab = update.showSearchTab
+                        showSearchTab = update.showSearchTab,
+                        showRecentTab = update.showRecentTab,
+                        lxBoardIncludeQueue = update.lxBoardIncludeQueue,
+                        lxBoardShowShuffleFab = update.lxBoardShowShuffleFab,
+                        lxBoardShowPlayAllFab = update.lxBoardShowPlayAllFab
                     )
                 }
             }
@@ -630,6 +650,30 @@ class SettingsViewModel @Inject constructor(
     fun setShowSearchTab(enabled: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setShowSearchTab(enabled)
+        }
+    }
+
+    fun setShowRecentTab(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setShowRecentTab(enabled)
+        }
+    }
+
+    fun setLxBoardIncludeQueue(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setLxBoardIncludeQueue(enabled)
+        }
+    }
+
+    fun setLxBoardShowShuffleFab(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setLxBoardShowShuffleFab(enabled)
+        }
+    }
+
+    fun setLxBoardShowPlayAllFab(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setLxBoardShowPlayAllFab(enabled)
         }
     }
 

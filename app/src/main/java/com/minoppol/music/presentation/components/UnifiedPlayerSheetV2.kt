@@ -106,7 +106,8 @@ fun UnifiedPlayerSheetV2(
     collapsedStateHorizontalPadding: Dp = 12.dp,
     navController: NavHostController,
     hideMiniPlayer: Boolean = false,
-    isNavBarHidden: Boolean = false
+    isNavBarHidden: Boolean = false,
+    dockCenterControlsVisible: Boolean = false
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -191,6 +192,11 @@ fun UnifiedPlayerSheetV2(
     val scope = rememberCoroutineScope()
 
     val offsetAnimatable = remember { Animatable(0f) }
+    LaunchedEffect(infrequentPlayerState.currentSong) {
+        if (infrequentPlayerState.currentSong == null) {
+            offsetAnimatable.snapTo(0f)
+        }
+    }
     val screenWidthPx = remember(configuration, density) {
         with(density) { configuration.screenWidthDp.dp.toPx() }
     }
@@ -417,6 +423,7 @@ fun UnifiedPlayerSheetV2(
         screenWidthPx = screenWidthPx,
         onDismissPlaylistAndShowUndo = { playerViewModel.dismissPlaylistAndShowUndo() },
         onDismissStarted = { playerViewModel.setMiniPlayerDismissing(true) },
+        onDismissDirection = { sign -> playerViewModel.setDockExitDirectionSign(sign) },
         onPrevious = { playerViewModel.previousSong() },
         onNext = { playerViewModel.nextSong() }
     )
@@ -663,6 +670,7 @@ fun UnifiedPlayerSheetV2(
                             onQueueDragStart = sheetActionHandlers.beginQueueDrag,
                             onQueueDrag = sheetActionHandlers.dragQueueBy,
                             onQueueRelease = sheetActionHandlers.endQueueDrag,
+                            dockCenterControlsVisible = dockCenterControlsVisible,
                         )
                     }
                 }

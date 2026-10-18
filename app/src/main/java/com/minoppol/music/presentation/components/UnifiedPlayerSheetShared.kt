@@ -75,7 +75,8 @@ internal fun MiniPlayerContentInternal(
     onNext: () -> Unit,
     currentLyricLine: String? = null,
     modifier: Modifier = Modifier,
-    canScroll: Boolean = true
+    canScroll: Boolean = true,
+    showCenterControls: Boolean = true
 ) {
     val hapticFeedback = LocalHapticFeedback.current
     val controlsEnabled = !isOutputConnecting && !isPreparingPlayback
@@ -181,34 +182,35 @@ internal fun MiniPlayerContentInternal(
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        val playPauseCorner by animateDpAsState(
-            targetValue = if (isPlaying) 10.dp else 18.dp,
-            animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
-            label = "MiniPlayerPlayPauseCorner"
-        )
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(playPauseCorner))
-                .background(LocalMaterialTheme.current.primary)
-                .clickable(
-                    interactionSource = playPauseInteraction,
-                    indication = miniPlayerIndication,
-                    enabled = controlsEnabled
-                ) {
-                    hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    onPlayPause()
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            MorphingPlayPauseIcon(
-                isPlaying = isPlaying,
-                tint = LocalMaterialTheme.current.onPrimary,
-                size = 22.dp
+        if (showCenterControls) {
+            val playPauseCorner by animateDpAsState(
+                targetValue = if (isPlaying) 10.dp else 18.dp,
+                animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
+                label = "MiniPlayerPlayPauseCorner"
             )
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(playPauseCorner))
+                    .background(LocalMaterialTheme.current.primary)
+                    .clickable(
+                        interactionSource = playPauseInteraction,
+                        indication = miniPlayerIndication,
+                        enabled = controlsEnabled
+                    ) {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onPlayPause()
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                MorphingPlayPauseIcon(
+                    isPlaying = isPlaying,
+                    tint = LocalMaterialTheme.current.onPrimary,
+                    size = 22.dp
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
         }
-
-        Spacer(modifier = Modifier.width(8.dp))
 
         Box(
             modifier = Modifier

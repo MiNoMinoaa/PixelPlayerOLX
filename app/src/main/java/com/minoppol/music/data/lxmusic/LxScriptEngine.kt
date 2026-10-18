@@ -609,19 +609,44 @@ class LxScriptEngine @Inject constructor(
         val options = obj.get("options")?.takeIf { it.isJsonObject }?.asJsonObject
 
         val builder = Request.Builder().url(url)
-        options?.get("headers")?.takeIf { it.isJsonObject }?.asJsonObject?.entrySet()?.forEach { (name, value) ->
-            if (value.isJsonPrimitive) builder.header(name, value.asString)
+        val headersObj = options?.get("headers")?.takeIf { it.isJsonObject }?.asJsonObject
+        var hasUserAgent = false
+        var hasAccept = false
+        headersObj?.entrySet()?.forEach { (name, value) ->
+            if (value.isJsonPrimitive) {
+                if (name.equals("User-Agent", ignoreCase = true)) hasUserAgent = true
+                if (name.equals("Accept", ignoreCase = true)) hasAccept = true
+                builder.header(name, value.asString)
+            }
+        }
+        if (!hasUserAgent) {
+            builder.header(
+                "User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36",
+            )
+        }
+        if (!hasAccept) {
+            builder.header("Accept", "application/json")
         }
         val method = options?.get("method")?.takeIf { it.isJsonPrimitive }?.asString?.uppercase() ?: "GET"
         if (method != "GET" && method != "HEAD") {
             val bodyPrimitive = options?.get("body")?.takeIf { it.isJsonPrimitive }?.asString
             val bodyObject = options?.get("body")?.takeIf { it.isJsonObject || it.isJsonArray }
             val formObj = options?.get("form")?.takeIf { it.isJsonObject }?.asJsonObject
+            val formDataObj = options?.get("formData")?.takeIf { it.isJsonObject }?.asJsonObject
             val contentType = options?.get("headers")?.takeIf { it.isJsonObject }?.asJsonObject
                 ?.get("Content-Type")?.takeIf { it.isJsonPrimitive }?.asString
             val requestBody = when {
                 bodyPrimitive != null -> bodyPrimitive.toRequestBody(contentType?.toMediaTypeOrNull())
                 bodyObject != null -> bodyObject.toString().toRequestBody(contentType?.toMediaTypeOrNull())
+                formDataObj != null -> {
+                    builder.removeHeader("Content-Type")
+                    val multipartBody = okhttp3.MultipartBody.Builder().setType(okhttp3.MultipartBody.FORM)
+                    for ((k, v) in formDataObj.entrySet()) {
+                        if (v.isJsonPrimitive) multipartBody.addFormDataPart(k, v.asString)
+                    }
+                    multipartBody.build()
+                }
                 formObj != null -> {
                     val formBody = okhttp3.FormBody.Builder()
                     for ((k, v) in formObj.entrySet()) {
@@ -802,7 +827,7 @@ class LxScriptEngine @Inject constructor(
     private companion object {
         const val PRELOAD_ASSET = "lxmusic/user-api-preload.js"
         const val EVENT_TIMEOUT_MS = 30_000L
-        const val DEFAULT_SCRIPT_REQUEST_TIMEOUT_MS = 30_000L
+        const val DEFAULT_SCRIPT_REQUEST_TIMEOUT_MS = 13_000L
         const val REDACTED = "[redacted]"
 
         val cookieMarkers = listOf(
