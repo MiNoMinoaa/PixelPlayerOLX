@@ -70,6 +70,7 @@ internal fun MiniPlayerContentInternal(
     isOutputConnecting: Boolean,
     isPreparingPlayback: Boolean,
     isBuffering: Boolean = false,
+    resolvePhase: String? = null,
     onPlayPause: () -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
@@ -136,6 +137,7 @@ internal fun MiniPlayerContentInternal(
             AutoScrollingText(
                 text = when {
                     isOutputConnecting -> "正在连接设备..."
+                    isPreparingPlayback && resolvePhase == "cross_source" -> "正在尝试切换平台..."
                     isPreparingPlayback -> "正在解析播放链接..."
                     isBuffering -> "正在缓冲..."
                     else -> song.title
