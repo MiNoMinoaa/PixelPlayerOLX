@@ -94,6 +94,7 @@ import com.minoppol.music.presentation.components.SmartImage
 import com.minoppol.music.presentation.components.SmartImageListTargetSize
 import com.minoppol.music.presentation.components.subcomps.EnhancedSongListItem
 import com.minoppol.music.presentation.screens.ListExtraBottomGap
+import com.minoppol.music.presentation.screens.rememberListBottomCornerRadius
 import com.minoppol.music.presentation.viewmodel.PlayerViewModel
 import kotlinx.coroutines.launch
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
@@ -128,6 +129,7 @@ fun LxMinePage(
     onSelectionOptionsClick: () -> Unit = {},
 ) {
     val density = LocalDensity.current
+    val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
     var headerHeightPx by remember { mutableIntStateOf(0) }
     val headerHeight = with(density) { headerHeightPx.toDp() }.takeIf { it > 0.dp } ?: 72.dp
     val pullToRefreshState = rememberPullToRefreshState()
@@ -260,9 +262,9 @@ fun LxMinePage(
                 smoothnessAsPercentTL = 60,
                 cornerRadiusTR = 34.dp,
                 smoothnessAsPercentTR = 60,
-                cornerRadiusBL = 0.dp,
+                cornerRadiusBL = listBottomCornerRadius,
                 smoothnessAsPercentBL = 60,
-                cornerRadiusBR = 0.dp,
+                cornerRadiusBR = listBottomCornerRadius,
                 smoothnessAsPercentBR = 60,
             )
             if (isHome) {
@@ -287,7 +289,7 @@ fun LxMinePage(
                         state = homeListState,
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(top = headerHeight)
+                            .padding(top = headerHeight, bottom = 6.dp)
                             .clip(clipShape)
                             .mineVerticalDragGate(onScrollingChange),
                         contentPadding = PaddingValues(
@@ -309,7 +311,7 @@ fun LxMinePage(
                     state = subListState,
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(top = headerHeight)
+                        .padding(top = headerHeight, bottom = 6.dp)
                         .clip(clipShape)
                         .mineVerticalDragGate(onScrollingChange),
                     contentPadding = PaddingValues(

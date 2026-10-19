@@ -64,6 +64,7 @@ fun LxDownloadQualityDialog(
 ) {
     val options = listOf(
         LxQualities.MASTER to (R.string.lxmusic_quality_master to R.string.lxmusic_quality_master_desc),
+        LxQualities.ATMOS_PLUS to (R.string.lxmusic_quality_atmos_plus to R.string.lxmusic_quality_atmos_plus_desc),
         LxQualities.ATMOS to (R.string.lxmusic_quality_atmos to R.string.lxmusic_quality_atmos_desc),
         LxQualities.FLAC24 to (R.string.lxmusic_quality_flac24bit to R.string.lxmusic_quality_flac24bit_desc),
         LxQualities.FLAC to (R.string.lxmusic_quality_flac to R.string.lxmusic_quality_flac_desc),
@@ -84,13 +85,15 @@ fun LxDownloadQualityDialog(
                     val probe = state.probes[key]
                     val availability = probe?.availability
                         ?: LxDownloadQualityProber.QualityAvailability.PROBING
-                    val isAvailable = availability == LxDownloadQualityProber.QualityAvailability.AVAILABLE
-                    val isSelected = state.selectedQuality == key && isAvailable
-                    val rowAlpha = if (isAvailable) 1f else 0.45f
+                    val isSelected = state.selectedQuality == key
+                    val rowAlpha = when (availability) {
+                        LxDownloadQualityProber.QualityAvailability.AVAILABLE -> 1f
+                        LxDownloadQualityProber.QualityAvailability.PROBING -> 0.8f
+                        LxDownloadQualityProber.QualityAvailability.UNAVAILABLE -> 0.5f
+                    }
 
                     Surface(
-                        onClick = { if (isAvailable) onSelect(key) },
-                        enabled = isAvailable,
+                        onClick = { onSelect(key) },
                         shape = RoundedCornerShape(18.dp),
                         color = if (isSelected)
                             MaterialTheme.colorScheme.primaryContainer
@@ -127,7 +130,7 @@ fun LxDownloadQualityDialog(
                                 )
                                 val sizeText = when (availability) {
                                     LxDownloadQualityProber.QualityAvailability.UNAVAILABLE ->
-                                        stringResource(R.string.lx_download_quality_unsupported)
+                                        stringResource(R.string.lx_download_quality_probe_failed)
                                     else -> formatLxDownloadSize(probe?.bytes)?.let { size ->
                                         if (probe?.bytesEstimated == true) {
                                             stringResource(R.string.lx_download_estimated_size_approx, size)

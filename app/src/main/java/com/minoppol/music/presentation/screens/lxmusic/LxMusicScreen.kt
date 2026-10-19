@@ -1517,6 +1517,7 @@ fun LxMusicScreen(
                     "flac" -> stringResource(R.string.lxmusic_quality_flac)
                     "flac24bit" -> stringResource(R.string.lxmusic_quality_flac24bit)
                     "atmos" -> stringResource(R.string.lxmusic_quality_atmos)
+                    "atmos+" -> stringResource(R.string.lxmusic_quality_atmos_plus)
                     "master" -> stringResource(R.string.lxmusic_quality_master)
                     else -> stringResource(R.string.lxmusic_quality_320k)
                 }
@@ -2002,6 +2003,7 @@ fun LxMusicScreen(
     if (showQualityDialog) {
         val options = listOf(
             "master" to (R.string.lxmusic_quality_master to R.string.lxmusic_quality_master_desc),
+            "atmos+" to (R.string.lxmusic_quality_atmos_plus to R.string.lxmusic_quality_atmos_plus_desc),
             "atmos" to (R.string.lxmusic_quality_atmos to R.string.lxmusic_quality_atmos_desc),
             "flac24bit" to (R.string.lxmusic_quality_flac24bit to R.string.lxmusic_quality_flac24bit_desc),
             "flac" to (R.string.lxmusic_quality_flac to R.string.lxmusic_quality_flac_desc),

@@ -194,7 +194,9 @@ private fun reconcileScriptQuality(raw: String, meta: PlaybackAudioMetadata?): S
     val mime = meta.mimeType.lowercase()
     val atmosLike = mime.contains("ec-3") || mime.contains("eac3") ||
         mime.contains("ac-4") || mime.contains("ac4") || (meta.channelCount ?: 0) >= 6
-    if (raw == com.minoppol.music.data.lxmusic.LxQualities.ATMOS && atmosLike) return raw
+    if ((raw == com.minoppol.music.data.lxmusic.LxQualities.ATMOS ||
+            raw == com.minoppol.music.data.lxmusic.LxQualities.ATMOS_PLUS) && atmosLike
+    ) return raw
     return when {
         mime.contains("mpeg") || mime.contains("mp4a") || mime.contains("aac") ||
             mime.contains("opus") || mime.contains("vorbis") || mime.contains("amr") ->
@@ -2952,23 +2954,34 @@ class PlayerViewModel @Inject constructor(
                 }
                 viewModelScope.launch {
                     val currentSong = playbackStateHolder.stablePlayerState.value.currentSong
+                    val playerItemId = runCatching { playerCtrl.currentMediaItem?.mediaId }.getOrNull()
+                    val isStaleError = playerItemId != null && currentSong?.id != null && playerItemId != currentSong.id
+                    if (isStaleError) {
+                        Timber.w(
+                            "onPlayerError: stale error for item %s while current is %s, skip dead-link retry only",
+                            playerItemId,
+                            currentSong.id
+                        )
+                    }
                     val isLxSource = currentSong
                         ?.contentUriString?.startsWith("lxmusic://") == true
-                    if (isLxSource && currentSong != null &&
-                        deadLinkRetriedKey != currentSong.id &&
+                    if (!isStaleError && isLxSource && currentSong != null &&
+                        (deadLinkRetryCounts[currentSong.id] ?: 0) < 2 &&
                         isDeadLinkError(error) &&
                         lxMusicRepository.hasActiveScript()
                     ) {
                         val parsed = com.minoppol.music.data.lxmusic.LxSongMapper
                             .parseContentUri(currentSong.contentUriString)
                         if (parsed != null) {
-                            deadLinkRetriedKey = currentSong.id
+                            deadLinkRetryCounts[currentSong.id] =
+                                (deadLinkRetryCounts[currentSong.id] ?: 0) + 1
                             lxMusicRepository.markScriptUrlDead(parsed.first, parsed.second)
+                            lxMusicRepository.invalidateCrossSourceMatch(parsed.first, parsed.second)
                             lxStreamProxy.invalidateUrlCacheForId(
                                 com.minoppol.music.data.lxmusic.LxStreamId(parsed.first, parsed.second)
                             )
                             sendToast(context.getString(R.string.player_error_script_dead_retry))
-                            Timber.w("onPlayerError: script dead link ${parsed.first}/${parsed.second}, retry via official trial")
+                            Timber.w("onPlayerError: script dead link ${parsed.first}/${parsed.second}, retry via cross-source")
                             delay(300)
                             replayCurrentSongPreservingQueue(currentSong)
                             return@launch
@@ -3013,12 +3026,25 @@ class PlayerViewModel @Inject constructor(
                         context.getString(R.string.player_error_skipping)
                     }
                     _toastEvents.emit(msg)
+                    if (!isStaleError) {
+                        delay(700)
+                        val stillFailing = playerItemId != null &&
+                            playerCtrl.currentMediaItem?.mediaId == playerItemId
+                        if (stillFailing) {
+                            if (playerCtrl.hasNextMediaItem()) {
+                                playerCtrl.seekToNextMediaItem()
+                                playerCtrl.prepare()
+                            } else {
+                                playerCtrl.playWhenReady = false
+                            }
+                        }
+                    }
                 }
             }
 
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 if (isPlaying) {
-                    deadLinkRetriedKey = null
+                    deadLinkRetryCounts.clear()
                 }
                 playbackStateHolder.updateStablePlayerState {
                     it.copy(
@@ -3054,6 +3080,7 @@ class PlayerViewModel @Inject constructor(
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                lxItemReachedReady = false
                 playbackStateHolder.onPlaybackOccurrenceTransition(mediaItem?.mediaId)
                 preparePlaybackAudioMetadataForMedia(mediaItem?.mediaId)
                 transitionSchedulerJob?.cancel()
@@ -3157,6 +3184,7 @@ class PlayerViewModel @Inject constructor(
                 }
 
                 if (playbackState == Player.STATE_READY) {
+                    lxItemReachedReady = true
                     clearPreparingSongIfMatching()
                     val readyPosition = playerCtrl.currentPosition.coerceAtLeast(0L)
                     val songDurationHint = playbackStateHolder.stablePlayerState.value.currentSong?.duration ?: 0L
@@ -3397,8 +3425,8 @@ class PlayerViewModel @Inject constructor(
         return scheme == null || scheme in LOCAL_PLAYBACK_SCHEMES
     }
 
-    @Volatile
-    private var deadLinkRetriedKey: String? = null
+    private val deadLinkRetryCounts = mutableMapOf<String, Int>()
+    @Volatile private var lxItemReachedReady = false
 
     private fun isDeadLinkError(error: PlaybackException): Boolean {
         var cause: Throwable? = error.cause
@@ -3407,6 +3435,9 @@ class PlayerViewModel @Inject constructor(
             if (c is androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException) {
                 return c.responseCode == 403 || c.responseCode == 404 ||
                     c.responseCode == 410 || c.responseCode == 502
+            }
+            if (c is androidx.media3.exoplayer.source.UnrecognizedInputFormatException) {
+                return !lxItemReachedReady
             }
             cause = c.cause
         }

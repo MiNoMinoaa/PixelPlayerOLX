@@ -44,7 +44,6 @@ fun mapRecentlyPlayedSongs(
 
     val sortedHistory = playbackHistory.sortedWith(
         compareByDescending<PlaybackStatsRepository.PlaybackHistoryEntry> { it.timestamp }
-            .thenBy { it.songId }
     )
 
     for (entry in sortedHistory) {
@@ -81,7 +80,6 @@ fun collectRecentlyPlayedSongIds(
     val seenSongIds = LinkedHashSet<String>()
     val sortedHistory = playbackHistory.sortedWith(
         compareByDescending<PlaybackStatsRepository.PlaybackHistoryEntry> { it.timestamp }
-            .thenBy { it.songId }
     )
 
     for (entry in sortedHistory) {

@@ -389,11 +389,12 @@
 <string name="lx_msg_download_needs_script">此功能需要新增音源腳本支援，請先新增並啟用音源腳本</string>
 <string name="lx_title_download_quality">下載音質</string>
 <string name="lx_download_quality_unsupported">目前音源不支援此音質</string>
+<string name="lx_download_quality_probe_failed">探測未通過，仍可嘗試下載</string>
 <string name="lx_download_size_unknown">檔案大小未知</string>
 <string name="lx_download_estimated_size">預計大小 %1$s</string>
 <string name="lx_download_estimated_size_approx">約 %1$s（估值）</string>
 <string name="lx_desc_download">下載</string>
-<string name="lx_msg_download_downgraded">目前音源無法真正提供%1$s，已自動降為%2$s下載</string>
+<string name="lx_msg_download_downgraded">目前音源未提供%1$s，已按實際音質%2$s下載</string>
 <string name="lx_source_netease">網易雲音樂</string>
 <string name="lx_source_kuwo">酷我音樂</string>
 <string name="lx_source_qq">QQ音樂</string>

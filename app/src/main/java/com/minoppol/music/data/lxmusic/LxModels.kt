@@ -45,9 +45,10 @@ object LxQualities {
     const val FLAC = "flac"
     const val FLAC24 = "flac24bit"
     const val ATMOS = "atmos"
+    const val ATMOS_PLUS = "atmos+"
     const val MASTER = "master"
 
-    val ALL = listOf(MASTER, ATMOS, FLAC24, FLAC, Q320, Q128)
+    val ALL = listOf(MASTER, ATMOS_PLUS, ATMOS, FLAC24, FLAC, Q320, Q128)
 }
 
 data class LxSong(

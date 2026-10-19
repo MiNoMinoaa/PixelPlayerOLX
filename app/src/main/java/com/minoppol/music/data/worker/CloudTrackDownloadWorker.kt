@@ -251,10 +251,6 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
     ): Result {
         val requestedQuality = inputData.getString(KEY_QUALITY)
             ?: return failOrRetry(downloadId, attemptId, IOException("Missing quality for lx download"))
-        val preferredScript = inputData.getString(KEY_SCRIPT_PATH)
-            ?: return failOrRetry(downloadId, attemptId, IOException("Missing script path for lx download"))
-        val orderedScripts = (listOf(preferredScript) +
-            inputData.getStringArray(KEY_SCRIPT_PATHS).orEmpty().toList()).distinct()
 
         val (source, songmid) = LxSongMapper.parseContentUri(sourceUri)
             ?: return failOrRetry(downloadId, attemptId, IOException("Bad lx uri: $sourceUri"))
@@ -270,10 +266,14 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
             interval = (songEntity?.duration ?: 0L) / 1000L,
             pic = songEntity?.albumArtUriString,
             hash = songEntity?.lxHash,
+            extraFields = songEntity?.lxExtraFieldsJson?.let { json ->
+                runCatching {
+                    val obj = org.json.JSONObject(json)
+                    obj.keys().asSequence().associateWith { key -> obj.optString(key, "") }
+                }.getOrDefault(emptyMap())
+            } ?: emptyMap(),
         )
 
-        val startIndex = LxQualities.ALL.indexOf(requestedQuality).let { if (it < 0) LxQualities.ALL.size - 1 else it }
-        val qualityChain = LxQualities.ALL.drop(startIndex)
         val marked = dao.updateState(
             downloadId = downloadId,
             attemptId = attemptId,
@@ -287,33 +287,40 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
         if (marked == 0) return Result.success()
         var sawFake = false
         var sawNetworkError = false
-        var scriptRejectMessage: String? = null
+        val triedUrls = mutableSetOf<String>()
+        val startIndex = LxQualities.ALL.indexOf(requestedQuality).let { if (it < 0) 0 else it }
+        val qualityChain = LxQualities.ALL.drop(startIndex)
         for (quality in qualityChain) {
-            for (script in orderedScripts) {
-                when (val attempt = attemptLxQuality(downloadId, attemptId, lxSong, quality, script)) {
-                    is LxAttempt.Ok ->
-                        return finalizeLxDownload(downloadId, attemptId, lxSong, quality, attempt)
-                    LxAttempt.Fake -> {
-                        sawFake = true
-                        Timber.tag(TAG).w(
-                            "lx download: %s from %s is fake/low-bitrate, downgrade",
-                            quality, script,
-                        )
-                    }
-                    LxAttempt.Unavailable -> sawNetworkError = true
-                    is LxAttempt.ScriptRejected -> scriptRejectMessage = attempt.message
+            if (!dao.isCurrentAttempt(downloadId, attemptId)) return Result.success()
+            val resolved = runCatching {
+                withTimeoutOrNull(RESOLVE_TIMEOUT_MS) {
+                    lxMusicRepository.resolveMusicUrlWithFallbackMeta(lxSong, quality)
                 }
-                if (!dao.isCurrentAttempt(downloadId, attemptId)) {
-                    return Result.success()
+            }.getOrNull() ?: continue
+            if (!triedUrls.add(resolved.url)) continue
+            val actualQuality = resolved.quality ?: quality
+            when (val attempt =
+                downloadAndVerifyLxUrl(downloadId, attemptId, lxSong, actualQuality, resolved.url)) {
+                is LxAttempt.Ok ->
+                    return finalizeLxDownload(downloadId, attemptId, lxSong, attempt.audio.actualQuality, attempt)
+                LxAttempt.Fake -> {
+                    sawFake = true
+                    lxMusicRepository.invalidateCrossSourceMatch(source, songmid)
+                    Timber.tag(TAG).w("lx download: quality %s fake/low-bitrate, degrade", actualQuality)
+                }
+                LxAttempt.Unavailable -> {
+                    sawNetworkError = true
+                    lxMusicRepository.invalidateCrossSourceMatch(source, songmid)
                 }
             }
         }
-        val error = scriptRejectMessage?.let { LxScriptRejectedException(it) }
-            ?: if (sawFake && !sawNetworkError) {
-                LxFakeQualityException("当前音源各音质档实际码率均不足，换个音源脚本试试")
-            } else {
-                IOException("All lx qualities failed to download")
-            }
+        val error = if (!sawFake && sawNetworkError) {
+            IOException("Network error during lx download")
+        } else if (sawFake) {
+            LxFakeQualityException("当前音源各音质档实际码率均不足，换个音源脚本试试")
+        } else {
+            LxScriptRejectedException("所有音源均无法获取该歌曲的下载链接")
+        }
         return failOrRetry(downloadId, attemptId, error)
     }
 
@@ -321,36 +328,27 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
         data class Ok(val file: File, val bytes: Long, val audio: VerifiedAudio) : LxAttempt
         data object Fake : LxAttempt
         data object Unavailable : LxAttempt
-        data class ScriptRejected(val message: String) : LxAttempt
     }
 
     private data class VerifiedAudio(
         val mediaStoreMime: String,
         val extension: String,
         val avgBitrateBps: Long,
+        val actualQuality: String,
     )
 
-    private suspend fun attemptLxQuality(
+    private suspend fun downloadAndVerifyLxUrl(
         downloadId: String,
         attemptId: String,
         song: LxSong,
         quality: String,
-        scriptPath: String,
+        url: String,
     ): LxAttempt {
         val defaultExt = if (quality == LxQualities.Q128 || quality == LxQualities.Q320) "mp3" else "flac"
         val tempFile = CloudOfflineRepository.downloadDirectory(applicationContext)
             .resolve("${CloudOfflineRepository.attemptFileStem(downloadId, attemptId)}.$defaultExt.tmp")
         tempFile.delete()
         try {
-            val event = withTimeoutOrNull(RESOLVE_TIMEOUT_MS) {
-                runCatching { lxMusicRepository.resolveMusicUrlEvent(scriptPath, song, quality) }.getOrNull()
-            } ?: return LxAttempt.Unavailable
-            val url = when (event) {
-                is LxMusicUrlEvent.ScriptRejected -> return LxAttempt.ScriptRejected(event.message)
-                LxMusicUrlEvent.Unavailable -> return LxAttempt.Unavailable
-                is LxMusicUrlEvent.Success -> event.url
-            }
-
             var copied = 0L
             var lastPublished = 0L
             client.newCall(Request.Builder().url(url).get().build()).execute().use { response ->
@@ -406,7 +404,7 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
             throw StaleDownloadAttemptException()
         } catch (error: Throwable) {
             tempFile.delete()
-            Timber.tag(TAG).w(error, "lx quality %s via %s failed", quality, scriptPath)
+            Timber.tag(TAG).w(error, "lx quality %s download failed", quality)
             return LxAttempt.Unavailable
         }
     }
@@ -427,12 +425,8 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
             val fmt = format ?: return null
             val mime = fmt.getString(MediaFormat.KEY_MIME).orEmpty()
 
-            if (LxAudioHeadInspector.expectsLossless(requestedQuality) &&
-                mime == "audio/mpeg"
-            ) return null
-
-            if (requestedQuality == LxQualities.FLAC24 && mime.contains("flac")) {
-                val bits = runCatching {
+            val flacBits = if (mime.contains("flac")) {
+                runCatching {
                     file.inputStream().use { input ->
                         val head = ByteArray(262_144)
                         var read = 0
@@ -444,8 +438,7 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
                         LxAudioHeadInspector.inspect(head.copyOf(read)).bitsPerSample
                     }
                 }.getOrNull()
-                if (bits != null && bits < 24) return null
-            }
+            } else null
 
             val bitrate = if (fmt.containsKey(MediaFormat.KEY_BIT_RATE)) {
                 fmt.getInteger(MediaFormat.KEY_BIT_RATE).toLong()
@@ -459,20 +452,41 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
                 fallbackDurationSec > 0L -> file.length() * 8L / fallbackDurationSec
                 else -> -1L
             }
-            if (avgBps in 0 until LxAudioHeadInspector.minPlausibleBitrateBps(requestedQuality)) return null
+
+            val isDolby = mime.contains("ec-3") || mime.contains("eac3") ||
+                mime.contains("ac-4") || mime.contains("ac4")
+            val actualQuality = when {
+                mime.contains("flac") ->
+                    if ((flacBits ?: 16) >= 24) LxQualities.FLAC24 else LxQualities.FLAC
+                isDolby -> LxQualities.ATMOS
+                else -> if (avgBps >= LxAudioHeadInspector.minPlausibleBitrateBps(LxQualities.Q320)) {
+                    LxQualities.Q320
+                } else {
+                    LxQualities.Q128
+                }
+            }
+
+            val floorBps = when {
+                mime.contains("flac") -> LxAudioHeadInspector.minPlausibleBitrateBps(LxQualities.FLAC)
+                isDolby -> LxAudioHeadInspector.minPlausibleBitrateBps(LxQualities.FLAC)
+                else -> LxAudioHeadInspector.minPlausibleBitrateBps(LxQualities.Q128)
+            }
+            if (avgBps in 0 until floorBps) return null
 
             val extension = when {
                 mime.contains("flac") -> "flac"
                 mime == "audio/mpeg" -> "mp3"
                 mime.contains("mp4") || mime.contains("aac") -> "m4a"
+                isDolby -> "ec3"
                 else -> if (requestedQuality == LxQualities.Q128 || requestedQuality == LxQualities.Q320) "mp3" else "flac"
             }
             val storeMime = when (extension) {
                 "mp3" -> "audio/mpeg"
                 "m4a" -> "audio/mp4"
+                "ec3" -> "audio/eac3"
                 else -> "audio/flac"
             }
-            return VerifiedAudio(storeMime, extension, avgBps)
+            return VerifiedAudio(storeMime, extension, avgBps, actualQuality)
         } catch (error: Exception) {
             Timber.tag(TAG).w(error, "verify downloaded file failed: %s", file.absolutePath)
             return null
