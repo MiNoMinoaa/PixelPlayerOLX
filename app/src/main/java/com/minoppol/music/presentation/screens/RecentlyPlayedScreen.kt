@@ -3,6 +3,13 @@ package com.minoppol.music.presentation.screens
 import com.minoppol.music.presentation.navigation.navigateSafely
 
 import com.minoppol.music.utils.traceSection
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,6 +52,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,7 +62,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
@@ -70,13 +81,18 @@ import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
 import com.minoppol.music.R
 import com.minoppol.music.data.model.Song
+import com.minoppol.music.data.lxmusic.LxQualities
 import com.minoppol.music.data.stats.StatsTimeRange
 import com.minoppol.music.presentation.components.MiniPlayerHeight
+import com.minoppol.music.presentation.components.MultiSelectionBottomSheet
 import com.minoppol.music.presentation.components.PlaylistBottomSheet
 import com.minoppol.music.presentation.components.RecentlyPlayedRangeSelector
 import com.minoppol.music.presentation.components.SongInfoBottomSheet
 import com.minoppol.music.presentation.components.resolveNavBarOccupiedHeight
 import com.minoppol.music.presentation.components.subcomps.EnhancedSongListItem
+import com.minoppol.music.presentation.components.subcomps.SelectionActionRow
+import com.minoppol.music.presentation.components.subcomps.SelectionCountPill
+import com.minoppol.music.presentation.screens.lxmusic.LxBatchDownloadQualityDialog
 import com.minoppol.music.presentation.navigation.Screen
 import com.minoppol.music.presentation.screens.lxmusic.LxScrollToTopFab
 import com.minoppol.music.ui.theme.RoundedSans
@@ -84,9 +100,11 @@ import androidx.compose.ui.res.painterResource
 import com.minoppol.music.presentation.model.RecentlyPlayedSongUiModel
 import com.minoppol.music.presentation.model.collectRecentlyPlayedSongIds
 import com.minoppol.music.presentation.model.mapRecentlyPlayedSongs
+import com.minoppol.music.presentation.viewmodel.CloudDownloadsViewModel
 import com.minoppol.music.presentation.viewmodel.PlaylistViewModel
 import com.minoppol.music.presentation.viewmodel.PlayerViewModel
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import java.time.Instant
@@ -104,6 +122,7 @@ import kotlinx.collections.immutable.persistentListOf
 fun RecentlyPlayedScreen(
     playerViewModel: PlayerViewModel,
     playlistViewModel: PlaylistViewModel = hiltViewModel(),
+    cloudDownloadsViewModel: CloudDownloadsViewModel = hiltViewModel(),
     navController: NavController,
     showBackButton: Boolean = true,
     showSettingsButton: Boolean = false
@@ -126,9 +145,33 @@ fun RecentlyPlayedScreen(
     val lazyListState = rememberLazyListState()
     var showSongInfoBottomSheet by remember { mutableStateOf(false) }
     var showPlaylistBottomSheet by remember { mutableStateOf(false) }
+    var playlistSheetSongs by remember { mutableStateOf<ImmutableList<Song>>(persistentListOf()) }
+    var showMultiSelectionSheet by remember { mutableStateOf(false) }
+    var showBatchDownloadQualityDialog by remember { mutableStateOf(false) }
+    var batchDownloadQuality by remember { mutableStateOf(LxQualities.Q320) }
+    val multiSelectionState = playerViewModel.multiSelectionStateHolder
+    val selectedSongs by multiSelectionState.selectedSongs.collectAsStateWithLifecycle()
+    val isSelectionMode by multiSelectionState.isSelectionMode.collectAsStateWithLifecycle()
+    val selectedSongIds by multiSelectionState.selectedSongIds.collectAsStateWithLifecycle()
+    val haptic = LocalHapticFeedback.current
     val systemNavBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val navBarCompactMode by playerViewModel.navBarCompactMode.collectAsStateWithLifecycle()
     val bottomBarHeightDp = resolveNavBarOccupiedHeight(systemNavBarInset, navBarCompactMode)
+
+    LaunchedEffect(selectedRange) {
+        multiSelectionState.clearSelection()
+        showMultiSelectionSheet = false
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { multiSelectionState.clearSelection() }
+    }
+
+    BackHandler(enabled = isSelectionMode) {
+        showMultiSelectionSheet = false
+        showBatchDownloadQualityDialog = false
+        multiSelectionState.clearSelection()
+    }
 
     val recentSongIds = remember(playbackHistory, selectedRange) {
         collectRecentlyPlayedSongIds(
@@ -217,21 +260,43 @@ fun RecentlyPlayedScreen(
 
                 if (recentlyPlayedSongs.isNotEmpty()) {
                     item(key = "recently_played_actions") {
-                        RecentlyPlayedActions(
-                            onPlay = {
-                                val firstSong = queueSongs.firstOrNull() ?: return@RecentlyPlayedActions
-                                playerViewModel.playSongs(queueSongs, firstSong, queueRecentlyPlayed)
-                            },
-                            onShuffle = {
-                                playerViewModel.playSongsShuffled(
-                                    songsToPlay = queueSongs,
-                                    queueName = queueRecentlyPlayed,
-                                    startAtZero = true,
+                        AnimatedContent(
+                            targetState = isSelectionMode,
+                            label = "RecentlyPlayedActionRowModeSwitch",
+                            transitionSpec = {
+                                (slideInHorizontally { -it } + fadeIn()) togetherWith
+                                        (slideOutHorizontally { it } + fadeOut())
+                            }
+                        ) { inSelectionMode ->
+                            if (inSelectionMode) {
+                                SelectionActionRow(
+                                    selectedCount = selectedSongs.size,
+                                    onSelectAll = { multiSelectionState.selectAll(queueSongs) },
+                                    onDeselect = { multiSelectionState.clearSelection() },
+                                    onOptionsClick = { showMultiSelectionSheet = true },
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    trailingContentBeforeOptions = {
+                                        SelectionCountPill(selectedCount = selectedSongs.size)
+                                    }
                                 )
-                            },
-                            shuffleLabel = shuffleLabel,
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        )
+                            } else {
+                                RecentlyPlayedActions(
+                                    onPlay = {
+                                        val firstSong = queueSongs.firstOrNull() ?: return@RecentlyPlayedActions
+                                        playerViewModel.playSongs(queueSongs, firstSong, queueRecentlyPlayed)
+                                    },
+                                    onShuffle = {
+                                        playerViewModel.playSongsShuffled(
+                                            songsToPlay = queueSongs,
+                                            queueName = queueRecentlyPlayed,
+                                            startAtZero = true,
+                                        )
+                                    },
+                                    shuffleLabel = shuffleLabel,
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -257,12 +322,24 @@ fun RecentlyPlayedScreen(
                                 song = item.song,
                                 isCurrentSong = currentSongId == item.song.id,
                                 isPlaying = currentSongId == item.song.id && isPlaying,
+                                showSourceTag = true,
+                                isSelected = selectedSongIds.contains(item.song.id),
+                                isSelectionMode = isSelectionMode,
+                                selectionIndex = if (isSelectionMode) multiSelectionState.getSelectionIndex(item.song.id) else null,
+                                onLongPress = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    multiSelectionState.toggleSelection(item.song)
+                                },
                                 onClick = {
-                                    playerViewModel.playSongs(
-                                        songsToPlay = queueSongs,
-                                        startSong = item.song,
-                                        queueName = queueRecentlyPlayed
-                                    )
+                                    if (isSelectionMode) {
+                                        multiSelectionState.toggleSelection(item.song)
+                                    } else {
+                                        playerViewModel.playSongs(
+                                            songsToPlay = queueSongs,
+                                            startSong = item.song,
+                                            queueName = queueRecentlyPlayed
+                                        )
+                                    }
                                 },
                                 onMoreOptionsClick = { song ->
                                     playerViewModel.selectSongForInfo(song)
@@ -302,9 +379,20 @@ fun RecentlyPlayedScreen(
                     showSongInfoBottomSheet = false
                 },
                 onAddToPlayList = {
+                    playlistSheetSongs = persistentListOf(song)
                     showPlaylistBottomSheet = true
                 },
                 onDeleteFromDevice = playerViewModel::deleteFromDevice,
+                removeFromLibrary = if (song.contentUriString.startsWith("lxmusic://")) {
+                    {
+                        val activity = context as? android.app.Activity
+                        if (activity != null) {
+                            playerViewModel.deleteFromDevice(activity, song) { result ->
+                                if (result) showSongInfoBottomSheet = false
+                            }
+                        }
+                    }
+                } else null,
                 onNavigateToAlbum = {
                     navController.navigateSafely(Screen.AlbumDetail.createRoute(song.albumId))
                     showSongInfoBottomSheet = false
@@ -343,15 +431,84 @@ fun RecentlyPlayedScreen(
                 },
                 removeFromListTrigger = {}
             )
+        }
 
-            if (showPlaylistBottomSheet) {
-                PlaylistBottomSheet(
-                    playlistUiState = playlistUiState,
-                    songs = persistentListOf(song),
-                    onDismiss = { showPlaylistBottomSheet = false },
-                    bottomBarHeight = bottomBarHeightDp,
-                    playerViewModel = playerViewModel,
-                )
+        if (showPlaylistBottomSheet && playlistSheetSongs.isNotEmpty()) {
+            PlaylistBottomSheet(
+                playlistUiState = playlistUiState,
+                songs = playlistSheetSongs,
+                onDismiss = { showPlaylistBottomSheet = false },
+                bottomBarHeight = bottomBarHeightDp,
+                playerViewModel = playerViewModel,
+            )
+        }
+
+        if (showMultiSelectionSheet && selectedSongs.isNotEmpty()) {
+            MultiSelectionBottomSheet(
+                selectedSongs = selectedSongs,
+                favoriteSongIds = favoriteSongIds,
+                onDismiss = { showMultiSelectionSheet = false },
+                onPlayAll = {
+                    playerViewModel.playSelectedSongs(selectedSongs)
+                    showMultiSelectionSheet = false
+                },
+                onAddToQueue = {
+                    playerViewModel.addSelectedToQueue(selectedSongs)
+                    showMultiSelectionSheet = false
+                },
+                onPlayNext = {
+                    playerViewModel.addSelectedAsNext(selectedSongs)
+                    showMultiSelectionSheet = false
+                },
+                onAddToPlaylist = {
+                    playlistSheetSongs = selectedSongs
+                    multiSelectionState.clearSelection()
+                    showMultiSelectionSheet = false
+                    showPlaylistBottomSheet = true
+                },
+                onToggleLikeAll = { shouldLike ->
+                    if (shouldLike) {
+                        playerViewModel.likeSelectedSongs(selectedSongs)
+                    } else {
+                        playerViewModel.unlikeSelectedSongs(selectedSongs)
+                    }
+                    showMultiSelectionSheet = false
+                },
+                onShareAll = {
+                    playerViewModel.shareSelectedSongs(selectedSongs)
+                    showMultiSelectionSheet = false
+                },
+                onDownloadAll = {
+                    showBatchDownloadQualityDialog = true
+                    showMultiSelectionSheet = false
+                },
+                onDeleteAll = { deleteActivity, onComplete ->
+                    playerViewModel.deleteSelectedFromDevice(deleteActivity, selectedSongs) {
+                        showMultiSelectionSheet = false
+                        onComplete(true)
+                    }
+                },
+                showBatchEdit = false
+            )
+        }
+
+        if (showBatchDownloadQualityDialog && selectedSongs.isNotEmpty()) {
+            LxBatchDownloadQualityDialog(
+                songCount = selectedSongs.size,
+                selectedQuality = batchDownloadQuality,
+                onSelect = { batchDownloadQuality = it },
+                onConfirm = {
+                    cloudDownloadsViewModel.downloadSelected(selectedSongs, batchDownloadQuality)
+                    showBatchDownloadQualityDialog = false
+                    multiSelectionState.clearSelection()
+                },
+                onDismiss = { showBatchDownloadQualityDialog = false }
+            )
+        }
+
+        LaunchedEffect(cloudDownloadsViewModel) {
+            cloudDownloadsViewModel.downloadEvents.collect { message ->
+                playerViewModel.sendToast(message)
             }
         }
 

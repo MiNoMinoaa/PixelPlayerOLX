@@ -1663,6 +1663,25 @@ class MusicService : MediaSessionService() {
                     "message" to (error.message ?: error.javaClass.simpleName)
                 )
             }
+            if (player.currentMediaItem?.localConfiguration?.uri?.scheme == "lxmusic") {
+                consecutivePlaybackErrors = 0
+                val failedMediaId = player.currentMediaItem?.mediaId
+                serviceScope.launch {
+                    delay(1500)
+                    val activePlayer = mediaSession?.player ?: engine.masterPlayer
+                    if (activePlayer.currentMediaItem?.mediaId == failedMediaId &&
+                        activePlayer.playbackState == Player.STATE_IDLE
+                    ) {
+                        if (activePlayer.hasNextMediaItem()) {
+                            activePlayer.seekToNextMediaItem()
+                            activePlayer.prepare()
+                        } else {
+                            activePlayer.playWhenReady = false
+                        }
+                    }
+                }
+                return
+            }
             if (isLxDeadLinkFirstError(player.currentMediaItem, error)) {
                 val mediaId = player.currentMediaItem!!.mediaId
                 val seenCount = lxDeadLinkSeenMediaIds[mediaId] ?: 0
