@@ -2082,6 +2082,7 @@ private fun EfficientTimeLabels(
 private fun LxQualityBadge(quality: String) {
     val (label, accent) = when (quality) {
         "master" -> "母带" to Color(0xFFE0A33E)
+        "atmos+" -> "全景声+" to Color(0xFF9B7CFF)
         "atmos" -> "全景声" to Color(0xFF7C83FF)
         "flac24bit" -> "Hi-Res" to Color(0xFFE0863E)
         "flac" -> "无损" to Color(0xFF35B68C)

@@ -147,7 +147,7 @@ internal fun MiniPlayerContentInternal(
                 canScroll = canScroll
             )
             AutoScrollingText(
-                text = if (!currentLyricLine.isNullOrBlank()) {
+                text = if (!showLoading && !currentLyricLine.isNullOrBlank()) {
                     "${song.displayArtist}  ·  $currentLyricLine"
                 } else {
                     song.displayArtist

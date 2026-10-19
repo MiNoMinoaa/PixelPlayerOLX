@@ -238,7 +238,8 @@ class DualPlayerEngine @Inject constructor(
         private val LOCAL_MEDIA_SCHEMES = setOf("content", "file", "android.resource")
         private val REMOTE_MEDIA_SCHEMES = setOf("http", "https", "navidrome", "jellyfin", "lxmusic")
         private val CLOUD_PROXY_SCHEMES = setOf("navidrome", "jellyfin", "lxmusic")
-        private const val OFFLINE_LOOKUP_TIMEOUT_MS = 3_000L
+        private const val OFFLINE_LOOKUP_TIMEOUT_MS = 1_000L
+        private const val OFFLINE_NEGATIVE_TTL_MS = 20_000L
         private const val CLOUD_RESOLVE_TIMEOUT_MS = 10_000L
     }
 
@@ -690,6 +691,8 @@ class DualPlayerEngine @Inject constructor(
 
     private var isReleased = false
     private val resolvedUriCache = LruCache<String, Uri>(100)
+    private class OfflineLookupResult(val uri: Uri?, val quality: String?, val atMs: Long)
+    private val offlineLookupCache = LruCache<String, OfflineLookupResult>(100)
 
     fun initialize() {
         if (!isReleased && ::playerA.isInitialized && playerA.applicationLooper.thread.isAlive) return
@@ -1104,13 +1107,24 @@ class DualPlayerEngine @Inject constructor(
                 val scheme = uri.scheme
                 if (scheme in CLOUD_PROXY_SCHEMES) {
                     val originalUri = uri.toString()
-                    val offlineResult = try {
-                        runBlockingWithTimeout(OFFLINE_LOOKUP_TIMEOUT_MS) {
-                            cloudOfflineRepository.resolveLocalUriWithQuality(originalUri)
+                    val memo = offlineLookupCache.get(originalUri)
+                    val nowMs = android.os.SystemClock.elapsedRealtime()
+                    val offlineResult = if (memo != null && (memo.uri != null || nowMs - memo.atMs < OFFLINE_NEGATIVE_TTL_MS)) {
+                        memo.uri?.let { it to memo.quality }
+                    } else {
+                        val looked = try {
+                            runBlockingWithTimeout(OFFLINE_LOOKUP_TIMEOUT_MS) {
+                                cloudOfflineRepository.resolveLocalUriWithQuality(originalUri)
+                            }
+                        } catch (e: Exception) {
+                            Timber.tag("DualPlayerEngine").w(e, "Offline copy lookup failed")
+                            null
                         }
-                    } catch (e: Exception) {
-                        Timber.tag("DualPlayerEngine").w(e, "Offline copy lookup failed")
-                        null
+                        offlineLookupCache.put(
+                            originalUri,
+                            OfflineLookupResult(looked?.first, looked?.second, android.os.SystemClock.elapsedRealtime())
+                        )
+                        looked
                     }
                     if (offlineResult != null) {
                         val (offlineUri, downloadedQuality) = offlineResult

@@ -79,7 +79,7 @@ class NeteaseOfficialApi @Inject constructor(
             buildList {
                 add(lxQuality)
                 when (lxQuality) {
-                    LxQualities.MASTER, LxQualities.ATMOS, LxQualities.FLAC24 -> {
+                    LxQualities.MASTER, LxQualities.ATMOS_PLUS, LxQualities.ATMOS, LxQualities.FLAC24 -> {
                         add(LxQualities.FLAC); add(LxQualities.Q320); add(LxQualities.Q128)
                     }
                     LxQualities.FLAC -> {
@@ -355,6 +355,7 @@ class NeteaseOfficialApi @Inject constructor(
         "flac" -> "lossless" to "aac"
         "flac24bit" -> "hires" to "flac"
         "atmos" -> "jyeffect" to "flac"
+        "atmos+" -> "sky" to "flac"
         "master" -> "jymaster" to "flac"
         else -> "exhigh" to "flac"
     }

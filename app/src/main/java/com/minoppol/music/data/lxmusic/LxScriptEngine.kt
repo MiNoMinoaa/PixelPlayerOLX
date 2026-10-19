@@ -713,10 +713,24 @@ class LxScriptEngine @Inject constructor(
                     runtime.networkCalls.remove(requestKey)
                     val bodyElement = response.body?.let { body ->
                         if (binary) {
-                            val bytes = body.bytes()
-                            gson.toJsonTree(bytes.toList())
+                            val bytes = readBodyBytesLimited(body, MAX_BINARY_RESPONSE_BODY_BYTES)
+                            if (bytes == null) {
+                                Timber.w(
+                                    "LxScriptEngine[${runtime.meta.name}]: binary body exceeded %s bytes, dropped url=%s",
+                                    MAX_BINARY_RESPONSE_BODY_BYTES, redactUrl(url),
+                                )
+                                JsonParser.parseString("null")
+                            } else {
+                                gson.toJsonTree(bytes.toList())
+                            }
+                        } else if (body.contentLength() > MAX_RESPONSE_BODY_BYTES) {
+                            Timber.w(
+                                "LxScriptEngine[${runtime.meta.name}]: response body too large (%s bytes), dropped url=%s",
+                                body.contentLength(), redactUrl(url),
+                            )
+                            JsonParser.parseString("null")
                         } else {
-                            val text = body.string()
+                            val text = readBodyLimited(body)
                             parseBodyToElement(text)
                         }
                     } ?: JsonParser.parseString("null")
@@ -748,8 +762,52 @@ class LxScriptEngine @Inject constructor(
         }
     }
 
+    private fun readBodyBytesLimited(body: okhttp3.ResponseBody, maxBytes: Long): ByteArray? {
+        return runCatching {
+            val source = body.source()
+            val buffer = okio.Buffer()
+            var total = 0L
+            while (total <= maxBytes) {
+                val read = source.read(buffer, maxBytes + 1L - total)
+                if (read == -1L) break
+                total += read
+            }
+            if (total > maxBytes) return null
+            buffer.readByteArray()
+        }.getOrNull()
+    }
+
+    private fun readBodyLimited(body: okhttp3.ResponseBody): String {
+        return runCatching {
+            val source = body.source()
+            val buffer = okio.Buffer()
+            var total = 0L
+            while (total <= MAX_RESPONSE_BODY_BYTES) {
+                val read = source.read(buffer, MAX_RESPONSE_BODY_BYTES + 1L - total)
+                if (read == -1L) break
+                total += read
+            }
+            if (total > MAX_RESPONSE_BODY_BYTES) {
+                Timber.w("LxScriptEngine: streamed body exceeded %s bytes, dropped", MAX_RESPONSE_BODY_BYTES)
+                return ""
+            }
+            buffer.readUtf8()
+        }.getOrDefault("")
+    }
+
     private fun parseBodyToElement(text: String): JsonElement {
-        return runCatching { JsonParser.parseString(text) }.getOrElse { JsonParser.parseString(gson.toJson(text)) }
+        if (text.isEmpty()) return JsonParser.parseString("null")
+        if (text.length > MAX_RESPONSE_BODY_CHARS) {
+            Timber.w("LxScriptEngine: body text too large (%s chars), dropped", text.length)
+            return JsonParser.parseString("null")
+        }
+        val parsed = runCatching { JsonParser.parseString(text) }.getOrNull()
+        if (parsed != null) return parsed
+        if (text.length > MAX_JSON_FALLBACK_CHARS) {
+            Timber.w("LxScriptEngine: non-json body %s chars too large, dropped", text.length)
+            return JsonParser.parseString("null")
+        }
+        return JsonParser.parseString(gson.toJson(text))
     }
 
     private fun handleCancelRequest(dataJson: String?) {
@@ -850,6 +908,10 @@ class LxScriptEngine @Inject constructor(
         const val EVENT_TIMEOUT_MS = 30_000L
         const val DEFAULT_SCRIPT_REQUEST_TIMEOUT_MS = 13_000L
         const val REDACTED = "[redacted]"
+        const val MAX_RESPONSE_BODY_BYTES = 8L * 1024 * 1024
+        const val MAX_RESPONSE_BODY_CHARS = 8_000_000
+        const val MAX_BINARY_RESPONSE_BODY_BYTES = 256L * 1024
+        const val MAX_JSON_FALLBACK_CHARS = 1_000_000
 
         val cookieMarkers = listOf(
             "@wy_cookie", "@tx_cookie", "@kg_cookie", "@kw_cookie",

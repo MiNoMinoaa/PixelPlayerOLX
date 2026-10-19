@@ -206,9 +206,22 @@ class PlaybackCacheDataSource(
             activeCacheKey = cacheKey
             activeId = id
             activeQuality = quality
+            val cachedLen = ret
             val afterBytes = runCatching {
                 cache?.getCachedBytes(cacheKey, 0, Long.MAX_VALUE)
             }.getOrDefault(-2L)
+            if (cachedLen > 0 && afterBytes != null && afterBytes > cachedLen) {
+                Timber.tag(TAG).w(
+                    "cache stale key=%s cachedBytes=%d upstreamLen=%d, drop and refetch",
+                    cacheKey, afterBytes, cachedLen
+                )
+                runCatching { cached.close() }
+                runCatching { cache?.removeResource(cacheKey) }
+                activeCacheKey = null
+                activeId = null
+                activeQuality = null
+                return openDelegate(upstreamDataSourceFactory.createDataSource(), dataSpec)
+            }
             Timber.tag(TAG).d(
                 "openCached OK key=%s before=%d after=%d len=%d", cacheKey, beforeBytes, afterBytes, ret
             )
@@ -267,6 +280,9 @@ class PlaybackCacheDataSource(
         teeHoleSpan?.let { runCatching { cache?.releaseHoleSpan(it) } }
         teeHoleSpan = null
         val key = activeCacheKey
+        val finalBytes = key?.let {
+            runCatching { cache?.getCachedBytes(it, 0, Long.MAX_VALUE) }.getOrDefault(-2L)
+        } ?: -2L
         if (key != null && teeContentLength > 0 && teeWritten >= teeContentLength) {
             runCatching {
                 val mutations = ContentMetadataMutations()
@@ -275,16 +291,20 @@ class PlaybackCacheDataSource(
             }
         }
         delegate?.let { runCatching { it.close() } }
+        val truncated = key != null && teeContentLength > 0 && finalBytes >= 0 && finalBytes < teeContentLength
+        if (truncated) {
+            val removed = runCatching { cache?.removeResource(key) }.getOrDefault(false)
+            Timber.tag(TAG).w(
+                "cache dropped, incomplete key=%s cached=%d of %d removed=%s", key, finalBytes, teeContentLength, removed
+            )
+        }
         val id = activeId
         val q = activeQuality
-        if (key != null && id != null && q != null && cacheManager.isCacheComplete(key)) {
+        if (!truncated && key != null && id != null && q != null && cacheManager.isCacheComplete(key)) {
             Timber.tag(TAG).d("cache complete key=%s q=%s teeWritten=%d — evict lower", key, q, teeWritten)
             cacheManager.removeLowerQualityCaches(id.source, id.songmid, q)
         }
         key?.let { k ->
-            val finalBytes = runCatching {
-                cache?.getCachedBytes(k, 0, Long.MAX_VALUE)
-            }.getOrDefault(-2L)
             Timber.tag(TAG).d("close key=%s finalCached=%d", k, finalBytes)
         }
         activeCacheKey = null
@@ -306,7 +326,8 @@ class PlaybackCacheDataSource(
             "flac" -> 2
             "flac24bit" -> 3
             "atmos" -> 4
-            "master" -> 5
+            "atmos+" -> 5
+            "master" -> 6
             else -> 1
         }
     }

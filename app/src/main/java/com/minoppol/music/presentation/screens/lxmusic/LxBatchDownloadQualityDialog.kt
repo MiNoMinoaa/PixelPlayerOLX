@@ -48,6 +48,7 @@ fun LxBatchDownloadQualityDialog(
 ) {
     val options = listOf(
         LxQualities.MASTER to (R.string.lxmusic_quality_master to R.string.lxmusic_quality_master_desc),
+        LxQualities.ATMOS_PLUS to (R.string.lxmusic_quality_atmos_plus to R.string.lxmusic_quality_atmos_plus_desc),
         LxQualities.ATMOS to (R.string.lxmusic_quality_atmos to R.string.lxmusic_quality_atmos_desc),
         LxQualities.FLAC24 to (R.string.lxmusic_quality_flac24bit to R.string.lxmusic_quality_flac24bit_desc),
         LxQualities.FLAC to (R.string.lxmusic_quality_flac to R.string.lxmusic_quality_flac_desc),

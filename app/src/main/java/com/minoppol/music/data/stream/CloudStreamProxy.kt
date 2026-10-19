@@ -280,6 +280,8 @@ abstract class CloudStreamProxy<K : Any>(
      */
     protected open fun upstreamHeaders(): Map<String, String> = emptyMap()
 
+    protected open fun onUpstreamStreamFailure(id: K, upstreamStatus: Int) {}
+
     private fun generateSessionToken(): String {
         val bytes = ByteArray(16)
         SecureRandom().nextBytes(bytes)
@@ -410,6 +412,7 @@ abstract class CloudStreamProxy<K : Any>(
                                 streamUrl.take(120),
                             )
                             if (upstream.code != 200 && upstream.code != 206) {
+                                runCatching { onUpstreamStreamFailure(id, upstream.code) }
                                 call.respond(
                                     CloudStreamSecurity.mapUpstreamStatusToProxyStatus(upstream.code),
                                     "Upstream stream request failed"

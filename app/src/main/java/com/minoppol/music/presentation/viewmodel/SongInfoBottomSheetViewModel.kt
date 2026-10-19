@@ -145,9 +145,7 @@ class SongInfoBottomSheetViewModel @Inject constructor(
         val allProbed: Boolean,
     ) {
         val canDownload: Boolean
-            get() = selectedQuality
-                ?.let { probes[it]?.availability == LxDownloadQualityProber.QualityAvailability.AVAILABLE }
-                ?: false
+            get() = selectedQuality != null
 
         val selectedAssetPath: String?
             get() = selectedQuality?.let { probes[it]?.assetPath }
@@ -166,6 +164,7 @@ class SongInfoBottomSheetViewModel @Inject constructor(
 
     private fun qualityLabelRes(quality: String): Int = when (quality) {
         LxQualities.MASTER -> R.string.lxmusic_quality_master
+        LxQualities.ATMOS_PLUS -> R.string.lxmusic_quality_atmos_plus
         LxQualities.ATMOS -> R.string.lxmusic_quality_atmos
         LxQualities.FLAC24 -> R.string.lxmusic_quality_flac24bit
         LxQualities.FLAC -> R.string.lxmusic_quality_flac
@@ -191,7 +190,7 @@ class SongInfoBottomSheetViewModel @Inject constructor(
             _toastEvents.tryEmit(appContext.getString(R.string.lx_msg_download_needs_script))
             return
         }
-        openQualityDialog(song, lxSong, scripts)
+        openQualityDialog(song, lxSong)
     }
 
     fun lxDownloadEnabled(song: Song): Boolean {
@@ -201,7 +200,7 @@ class SongInfoBottomSheetViewModel @Inject constructor(
         return lxMusicRepository.activeRuntimeScriptPathsOrdered(lxSong.source).isNotEmpty()
     }
 
-    private fun openQualityDialog(song: Song, lxSong: LxSong, scripts: List<String>) {
+    private fun openQualityDialog(song: Song, lxSong: LxSong) {
         probeJob?.cancel()
         val cached = lxDownloadQualityProber.cached(lxSong) ?: persistentMapOf()
         val initialSelected = cached.values
@@ -219,20 +218,18 @@ class SongInfoBottomSheetViewModel @Inject constructor(
             val preferred = runCatching {
                 userPreferencesRepository.lxMusicPreferredQualityFlow.first()
             }.getOrDefault(LxQualities.Q320)
+            if (_downloadQualityDialog.value?.selectedQuality == null) {
+                _downloadQualityDialog.value = _downloadQualityDialog.value?.copy(
+                    selectedQuality = preferred,
+                )
+            }
             val ordered = (listOf(preferred) + LxQualities.ALL).distinct()
-            lxDownloadQualityProber.probe(lxSong, ordered, scripts) { probe ->
+            lxDownloadQualityProber.probe(lxSong, ordered) { probe ->
                 val current = _downloadQualityDialog.value ?: return@probe
                 if (current.song.contentUriString != song.contentUriString) return@probe
                 val probes = (current.probes + (probe.quality to probe)).toImmutableMap()
-                val keepSelected = current.selectedQuality
-                    ?.takeIf { probes[it]?.availability == LxDownloadQualityProber.QualityAvailability.AVAILABLE }
-                val autoSelected = keepSelected
-                    ?: probe.takeIf {
-                        it.availability == LxDownloadQualityProber.QualityAvailability.AVAILABLE
-                    }?.quality
                 _downloadQualityDialog.value = current.copy(
                     probes = probes,
-                    selectedQuality = autoSelected,
                     allProbed = probes.size >= LxQualities.ALL.size,
                 )
             }
@@ -242,9 +239,6 @@ class SongInfoBottomSheetViewModel @Inject constructor(
 
     fun selectDownloadQuality(quality: String) {
         val current = _downloadQualityDialog.value ?: return
-        if (current.probes[quality]?.availability !=
-            LxDownloadQualityProber.QualityAvailability.AVAILABLE
-        ) return
         _downloadQualityDialog.value = current.copy(selectedQuality = quality)
     }
 
@@ -256,7 +250,7 @@ class SongInfoBottomSheetViewModel @Inject constructor(
     fun confirmLxDownload() {
         val state = _downloadQualityDialog.value ?: return
         val quality = state.selectedQuality ?: return
-        val assetPath = state.selectedAssetPath ?: return
+        val assetPath = state.selectedAssetPath
         val song = state.song
         val lxSong = state.lxSong
         probeJob?.cancel()

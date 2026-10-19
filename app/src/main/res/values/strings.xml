@@ -231,7 +231,7 @@
     <string name="player_error_lx_playback_failed">The song is temporarily unavailable. Please try again later.</string>
     <string name="player_error_lx_no_copyright">This song has no copyright and cannot be played</string>
     <string name="player_error_lx_vip_need_vip">This song requires VIP or a music source script to play</string>
-    <string name="player_error_script_dead_retry">Source link expired, trying official preview…</string>
+    <string name="player_error_script_dead_retry">Source link expired, trying other sources…</string>
     <string name="player_error_lx_trial_playing">Playing VIP song trial (128k)</string>
     <string name="player_error_network_unavailable">Network unavailable, please check your connection and retry</string>
     <string name="sync_failed_toast">Library sync failed. Pull down to refresh and try again.</string>
@@ -318,6 +318,8 @@
     <string name="lxmusic_quality_flac24bit_desc">Best quality, large files</string>
     <string name="lxmusic_quality_atmos">Atmos Spatial Audio</string>
     <string name="lxmusic_quality_atmos_desc">Immersive spatial sound</string>
+    <string name="lxmusic_quality_atmos_plus">Atmos+</string>
+    <string name="lxmusic_quality_atmos_plus_desc">Enhanced spatial audio</string>
     <string name="lxmusic_quality_master">Master Quality</string>
     <string name="lxmusic_quality_master_desc">Studio master tape</string>
     <string name="lxmusic_need_script_or_cookie">Load a source script or set Netease Cookie first</string>
@@ -431,11 +433,12 @@
     <string name="lx_msg_download_needs_script">This feature requires a music source script. Please add and activate one first.</string>
     <string name="lx_title_download_quality">Download Quality</string>
     <string name="lx_download_quality_unsupported">Unavailable for current scripts</string>
+    <string name="lx_download_quality_probe_failed">Probe failed, tap to try anyway</string>
     <string name="lx_download_size_unknown">Estimated size unknown</string>
     <string name="lx_download_estimated_size">Est. size: %1$s</string>
     <string name="lx_download_estimated_size_approx">~%1$s (estimated)</string>
     <string name="lx_desc_download">Download</string>
-    <string name="lx_msg_download_downgraded">%1$s is not truly available from current source. Downloaded as %2$s instead.</string>
+    <string name="lx_msg_download_downgraded">%1$s is not available from this source. Downloaded with the actual quality %2$s.</string>
     <string name="lx_source_netease">Netease Music</string>
     <string name="lx_source_kuwo">Kuwo Music</string>
     <string name="lx_source_qq">QQ Music</string>

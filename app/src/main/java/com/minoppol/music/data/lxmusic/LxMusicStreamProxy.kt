@@ -152,6 +152,8 @@ class LxMusicStreamProxy @Inject constructor(
 
     private val degradedCacheMs = 3L * 60 * 1000L
 
+    private val deadUpstreamStatusCodes = setOf(400, 402, 403, 404, 410, 502)
+
     override suspend fun cacheKeySuffix(id: LxStreamId): String =
         repository.currentPreferredQuality()
 
@@ -251,6 +253,17 @@ class LxMusicStreamProxy @Inject constructor(
             Timber.w(e, "LxMusicStreamProxy: resolve with fallback failed for $key")
             null
         }
+    }
+
+    override fun onUpstreamStreamFailure(id: LxStreamId, upstreamStatus: Int) {
+        if (upstreamStatus !in deadUpstreamStatusCodes) return
+        invalidateUrlCacheForId(id)
+        repository.invalidateCrossSourceMatch(id.source, id.songmid)
+        repository.markScriptUrlDead(id.source, id.songmid)
+        Timber.w(
+            "LxMusicStreamProxy: upstream %d dead for %s/%s, invalidated",
+            upstreamStatus, id.source, id.songmid,
+        )
     }
 
     fun resolveLxMusicUri(uriString: String): String? = resolveUri(uriString)
