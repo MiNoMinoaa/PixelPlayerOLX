@@ -15,6 +15,7 @@ import com.minoppol.music.data.lxmusic.platform.KugouOfficialApi
 import com.minoppol.music.data.lxmusic.platform.PlatformResult
 import com.minoppol.music.data.lxmusic.platform.TencentOfficialApi
 import com.minoppol.music.data.preferences.UserPreferencesRepository
+import com.minoppol.music.data.stream.CloudStreamSecurity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -718,12 +719,13 @@ class LxMusicRepository @Inject constructor(
     }
 
 
-    private suspend fun kwRsSearch(keyword: String, ft: String, pn: Int, rn: Int): com.google.gson.JsonObject? =
+    private suspend fun kwRsSearch(keyword: String, ft: String, pn: Int, rn: Int, correct: Boolean = true): com.google.gson.JsonObject? =
         withContext(Dispatchers.IO) {
             val encoded = URLEncoder.encode(keyword, "UTF-8")
+            val correctParam = if (correct) "" else "&correct=0"
             val url = "https://search.kuwo.cn/r.s?client=kt&all=$encoded&pn=$pn&rn=$rn" +
                 "&uid=794762570&ver=kwplayer_ar_9.2.2.1&vipver=1&show_copyright_off=1&newver=1&ft=$ft" +
-                "&cluster=0&strategy=2012&encoding=utf8&rformat=json&vermerge=1&mobi=1&issubtitle=1"
+                "&cluster=0&strategy=2012&encoding=utf8&rformat=json&vermerge=1&mobi=1&issubtitle=1$correctParam"
             try {
                 val req = Request.Builder().url(url)
                     .header("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36")
@@ -825,20 +827,36 @@ class LxMusicRepository @Inject constructor(
 
     suspend fun fetchKwArtistSongs(artistId: String, artistName: String, offset: Int = 0, limit: Int = 30): Pair<List<LxSong>, Int> =
         withContext(Dispatchers.IO) {
-            val root = kwRsSearch(artistName, "music", pn = offset / limit, rn = limit)
-                ?: return@withContext emptyList<LxSong>() to 0
-            val raw = root.getAsJsonArray("abslist")?.mapNotNull { el ->
-                runCatching { el.asJsonObject }.getOrNull()
-            } ?: emptyList()
-            val songs = raw.mapNotNull { o ->
-                // 合作曲的 ARTISTID 里只有主歌手查 allartistid
-                val allIds = jsonStr(o, "allartistid")?.split('&').orEmpty()
-                if (artistId !in allIds && jsonStr(o, "ARTISTID") != artistId) return@mapNotNull null
-                runCatching { kwSongFromAbslist(o) }.getOrNull()
+            val primary = kwArtistSongsFromSearch(artistId, artistName, offset, limit, correct = true)
+            if (primary.first.isNotEmpty() || offset != 0) {
+                primary
+            } else {
+                val exact = kwArtistSongsFromSearch(artistId, artistName, offset, limit, correct = false)
+                if (exact.first.isNotEmpty()) exact else primary
             }
-            val total = if (raw.size >= limit) offset + limit + 1 else offset + songs.size
-            songs to total
         }
+
+    private suspend fun kwArtistSongsFromSearch(
+        artistId: String,
+        artistName: String,
+        offset: Int,
+        limit: Int,
+        correct: Boolean,
+    ): Pair<List<LxSong>, Int> {
+        val root = kwRsSearch(artistName, "music", pn = offset / limit, rn = limit, correct = correct)
+            ?: return emptyList<LxSong>() to 0
+        val raw = root.getAsJsonArray("abslist")?.mapNotNull { el ->
+            runCatching { el.asJsonObject }.getOrNull()
+        } ?: emptyList()
+        val songs = raw.mapNotNull { o ->
+            // 合作曲的 ARTISTID 里只有主歌手查 allartistid
+            val allIds = jsonStr(o, "allartistid")?.split('&').orEmpty()
+            if (artistId !in allIds && jsonStr(o, "ARTISTID") != artistId) return@mapNotNull null
+            runCatching { kwSongFromAbslist(o) }.getOrNull()
+        }
+        val total = if (raw.size >= limit) offset + limit + 1 else offset + songs.size
+        return songs to total
+    }
 
     suspend fun fetchKwArtistDetail(artistId: String, artistName: String): LxArtistDetail? =
         withContext(Dispatchers.IO) {
@@ -3944,9 +3962,6 @@ class LxMusicRepository @Inject constructor(
         )
     }
 
-    suspend fun resolveMusicUrlStrict(assetPath: String, song: LxSong, quality: String): String? =
-        (resolveMusicUrlEvent(assetPath, song, quality) as? LxMusicUrlEvent.Success)?.url
-
     suspend fun resolveMusicUrlEvent(assetPath: String, song: LxSong, quality: String): LxMusicUrlEvent {
         if (!engine.isLoaded(assetPath) && _scripts.value.any { it.assetPath == assetPath }) {
             runCatching { load(assetPath) }
@@ -3979,8 +3994,55 @@ class LxMusicRepository @Inject constructor(
     private val otherSourceCache = android.util.LruCache<String, List<LxSong>>(100)
     private val matchedSongCache = android.util.LruCache<String, LxSong>(200)
 
+    private data class CachedResolved(val result: ResolvedPlayUrl, val expiresAt: Long)
+    private val resolvedPlayCache = android.util.LruCache<String, CachedResolved>(64)
+    private val resolvedPlayTtlMs = 5 * 60 * 1000L
+
     private val scriptUrlDeadAt = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val scriptUrlDeadTtlMs = 5 * 60 * 1000L
+
+    private val candidateProbeCache = android.util.LruCache<String, Long>(128)
+    private val candidateProbeAliveTtlMs = 60_000L
+    private val candidateProbeDeadTtlMs = 30_000L
+    private val candidateProbeClient by lazy {
+        okHttpClient.newBuilder()
+            .connectTimeout(4, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(4, java.util.concurrent.TimeUnit.SECONDS)
+            .retryOnConnectionFailure(false)
+            .build()
+    }
+
+    private suspend fun probeCandidateAlive(url: String): Boolean {
+        if (!url.startsWith("http://", true) && !url.startsWith("https://", true)) return true
+        val now = System.currentTimeMillis()
+        candidateProbeCache.get(url)?.let { cached ->
+            if (cached > 0L) {
+                if (now < cached) return true
+            } else if (now < -cached) {
+                return false
+            }
+            candidateProbeCache.remove(url)
+        }
+        val alive = withContext(Dispatchers.IO) {
+            runCatching {
+                val req = Request.Builder().url(url)
+                    .header("Range", "bytes=0-1")
+                    .build()
+                candidateProbeClient.newCall(req).execute().use { resp ->
+                    if (resp.code != 200 && resp.code != 206) {
+                        false
+                    } else {
+                        CloudStreamSecurity.isSupportedAudioContentType(resp.header("Content-Type"))
+                    }
+                }
+            }.getOrDefault(false)
+        }
+        candidateProbeCache.put(
+            url,
+            if (alive) now + candidateProbeAliveTtlMs else -(now + candidateProbeDeadTtlMs),
+        )
+        return alive
+    }
 
     private val scriptConsecutiveFailures = java.util.concurrent.ConcurrentHashMap<String, Int>()
     private val scriptCircuitOpenUntil = java.util.concurrent.ConcurrentHashMap<String, Long>()
@@ -4031,6 +4093,7 @@ class LxMusicRepository @Inject constructor(
     private val fallbackTotalTimeoutMs = 20_000L
     private val scriptChainBudgetMs = 10_000L
     private val crossSourceCandidateTimeoutMs = 8_000L
+    private val crossSourceGraceMs = 1_500L
 
     data class ResolvedPlayUrl(
         val url: String,
@@ -4046,6 +4109,7 @@ class LxMusicRepository @Inject constructor(
     suspend fun resolveMusicUrlWithFallbackMeta(
         song: LxSong,
         quality: String? = null,
+        forceCrossSourceOnly: Boolean = false,
     ): ResolvedPlayUrl? {
         val cacheKey = "${song.source}/${song.songmid}"
         val startMs = System.currentTimeMillis()
@@ -4055,9 +4119,24 @@ class LxMusicRepository @Inject constructor(
 
         val route = decidePlaybackRoute(song, effectiveQuality)
 
-        // 脚本链：先试上次跨源命中的，再试本音源脚本（主脚本音质不够会换别的试），都不行才去其他音源搜
-        suspend fun layerB(): Pair<String, String?>? {
-            val skipOriginalScript = isScriptUrlDead(song.source, song.songmid)
+        resolvedPlayCache.get(cacheKey)?.let { cached ->
+            if (System.currentTimeMillis() < cached.expiresAt &&
+                qualityRank(cached.result.quality) >= qualityRank(effectiveQuality)
+            ) {
+                LxResolveDiag.log(
+                    "resolve_cache_hit",
+                    "source" to song.source,
+                    "songmid" to song.songmid,
+                    "quality" to cached.result.quality,
+                )
+                return cached.result
+            }
+            resolvedPlayCache.remove(cacheKey)
+        }
+        suspend fun layerB(): Pair<String, String?>? = coroutineScope layerScope@{
+            val skipOriginalScript = isScriptUrlDead(song.source, song.songmid) ||
+                forceCrossSourceOnly ||
+                song.extraFields["noCopyright"] == "1"
             if (skipOriginalScript) {
                 Timber.d("layerB: script URL dead for $cacheKey, skip original source scripts but still try cross-source")
             }
@@ -4065,23 +4144,27 @@ class LxMusicRepository @Inject constructor(
             val matched = matchedSongCache.get(cacheKey)
             if (matched != null) {
                 val viaMatched = resolveViaScripts(matched, effectiveQuality)
-                if (viaMatched == null) {
+                if (viaMatched == null || !probeCandidateAlive(viaMatched.first)) {
                     matchedSongCache.remove(cacheKey)
                 } else {
                     val (_, matchedQ) = viaMatched
-                    if (qualityRank(matchedQ) >= requestedRank) return viaMatched
+                    if (qualityRank(matchedQ) >= requestedRank) return@layerScope viaMatched
                     Timber.d("layerB: cached match ${matched.source}/${matched.songmid} " +
                         "quality=$matchedQ below requested=$effectiveQuality, drop and retry chain for $cacheKey")
                     matchedSongCache.remove(cacheKey)
                 }
             }
+            val crossSearchDeferred = if (allScriptPaths().any { it !in disabledPaths }) {
+                async { runCatching { findOtherSourceSongs(song) }.getOrDefault(emptyList()) }
+            } else null
             if (!skipOriginalScript) {
                 _resolvePhase.value = "scripts"
                 val chainStartMs = System.currentTimeMillis()
-                val viaScripts = kotlinx.coroutines.withTimeoutOrNull(scriptChainBudgetMs) {
-                    resolveViaScripts(song, effectiveQuality)
+                val viaScripts = resolveViaScripts(song, effectiveQuality)
+                if (viaScripts != null) {
+                    crossSearchDeferred?.cancel()
+                    return@layerScope viaScripts
                 }
-                if (viaScripts != null) return viaScripts
                 if (System.currentTimeMillis() - chainStartMs >= scriptChainBudgetMs) {
                     LxResolveDiag.log(
                         "script_chain_timeout",
@@ -4091,34 +4174,59 @@ class LxMusicRepository @Inject constructor(
                     )
                 }
             }
-            if (allScriptPaths().none { it !in disabledPaths }) {
+            if (crossSearchDeferred == null) {
                 Timber.d("layerB: no enabled scripts, skip cross-source search for $cacheKey")
-                return null
+                return@layerScope null
             }
             _resolvePhase.value = "cross_source"
-            val candidates = findOtherSourceSongs(song)
+            val candidates = crossSearchDeferred.await()
                 .filterNot { matched != null && it.source == matched.source && it.songmid == matched.songmid }
                 .take(8)
-            if (candidates.isEmpty()) return null
+            if (candidates.isEmpty()) return@layerScope null
             val best = coroutineScope {
                 val deferreds = candidates
                     .map { candidate ->
                         async {
                             kotlinx.coroutines.withTimeoutOrNull(crossSourceCandidateTimeoutMs) {
-                                resolveViaScripts(candidate, effectiveQuality)?.let { candidate to it }
+                                resolveViaScripts(candidate, effectiveQuality)
+                                    ?.takeIf { probeCandidateAlive(it.first) }
+                                    ?.let { candidate to it }
                             }
                         }
                     }
                 try {
-                    firstNonNull(deferreds)
+                    var bestSoFar: Pair<LxSong, Pair<String, String?>>? = null
+                    var firstHitAt = 0L
+                    val pending = deferreds.toMutableList()
+                    while (pending.isNotEmpty()) {
+                        val done = kotlinx.coroutines.selects.select<kotlinx.coroutines.Deferred<Pair<LxSong, Pair<String, String?>>?>> {
+                            pending.forEach { d -> d.onAwait { d } }
+                        }
+                        pending.remove(done)
+                        val hit = done.getCompleted() ?: continue
+                        if (qualityRank(hit.second.second) >= requestedRank) {
+                            bestSoFar = hit
+                            break
+                        }
+                        val prev = bestSoFar
+                        if (prev == null || qualityRank(hit.second.second) > qualityRank(prev.second.second)) {
+                            bestSoFar = hit
+                        }
+                        if (firstHitAt == 0L) {
+                            firstHitAt = System.currentTimeMillis()
+                        } else if (System.currentTimeMillis() - firstHitAt >= crossSourceGraceMs) {
+                            break
+                        }
+                    }
+                    bestSoFar
                 } finally {
                     deferreds.forEach { it.cancel() }
                 }
             }
-            if (best == null) return null
+            if (best == null) return@layerScope null
             matchedSongCache.put(cacheKey, best.first)
             Timber.d("resolveMusicUrlWithFallback: cross-source hit ${best.first.source}/${best.first.songmid} for $cacheKey")
-            return best.second
+            return@layerScope best.second
         }
 
         val requestedRankFinal = qualityRank(effectiveQuality)
@@ -4176,14 +4284,17 @@ class LxMusicRepository @Inject constructor(
                     quality = scriptResult.second,
                 )
             }
-            when (val outcome = callOfficialLayer(song, effectiveQuality, cacheKey)) {
-                is OfficialOutcome.Full ->
-                    ResolvedPlayUrl(
-                        outcome.url, fullQuality = true,
-                        quality = officialLevelToQuality(outcome.level),
-                        qualityTrusted = true,
-                    )
-                else -> pickBest(scriptResult, outcome)
+            val official = callOfficialLayer(song, effectiveQuality, cacheKey)
+            if (official is OfficialOutcome.Full &&
+                (scriptResult == null || qualityRank(scriptResult.second) <= officialLevelRank(official.level))
+            ) {
+                ResolvedPlayUrl(
+                    official.url, fullQuality = true,
+                    quality = officialLevelToQuality(official.level),
+                    qualityTrusted = true,
+                )
+            } else {
+                pickBest(scriptResult, official)
             }
             }
         } finally {
@@ -4202,6 +4313,12 @@ class LxMusicRepository @Inject constructor(
             Timber.w("resolveMusicUrlWithFallback: all sources failed or timed out for $cacheKey")
         } else if (result.quality != null) {
             playbackQualityTracker.report(song.source, song.songmid, result.quality, result.qualityTrusted)
+            if (result.fullQuality) {
+                resolvedPlayCache.put(
+                    cacheKey,
+                    CachedResolved(result, System.currentTimeMillis() + resolvedPlayTtlMs),
+                )
+            }
         }
         return result
     }
@@ -4242,6 +4359,7 @@ class LxMusicRepository @Inject constructor(
     fun clearCrossSourceCaches() {
         matchedSongCache.evictAll()
         otherSourceCache.evictAll()
+        resolvedPlayCache.evictAll()
     }
 
 
@@ -4259,9 +4377,18 @@ class LxMusicRepository @Inject constructor(
 
     fun markScriptUrlDead(source: String, songmid: String) {
         val key = "$source/$songmid"
+        resolvedPlayCache.remove(key)
         scriptUrlDeadAt[key] = System.currentTimeMillis() + scriptUrlDeadTtlMs
         sweepExpiredEntries(scriptUrlDeadAt)
         Timber.w("markScriptUrlDead: $key blacklisted for ${scriptUrlDeadTtlMs / 1000}s")
+    }
+
+    fun invalidateCrossSourceMatch(source: String, songmid: String) {
+        val key = "$source/$songmid"
+        matchedSongCache.remove(key)
+        otherSourceCache.remove(key)
+        resolvedPlayCache.remove(key)
+        Timber.w("invalidateCrossSourceMatch: cleared cross-source match cache for $key")
     }
 
     fun isScriptUrlDead(source: String, songmid: String): Boolean {
@@ -4398,7 +4525,8 @@ class LxMusicRepository @Inject constructor(
         LxQualities.FLAC -> 2
         LxQualities.FLAC24 -> 3
         LxQualities.ATMOS -> 4
-        LxQualities.MASTER -> 5
+        LxQualities.ATMOS_PLUS -> 5
+        LxQualities.MASTER -> 6
         else -> 1
     }
 
@@ -4407,8 +4535,9 @@ class LxMusicRepository @Inject constructor(
         "exhigh", "higher" -> 1
         "lossless" -> 2
         "hires" -> 3
-        "jyeffect", "jydj", "sky" -> 4
-        "jymaster" -> 5
+        "jyeffect", "jydj" -> 4
+        "sky" -> 5
+        "jymaster" -> 6
         else -> -1
     }
 
@@ -4417,29 +4546,18 @@ class LxMusicRepository @Inject constructor(
         "exhigh", "higher" -> LxQualities.Q320
         "lossless" -> LxQualities.FLAC
         "hires" -> LxQualities.FLAC24
-        "jyeffect", "jydj", "sky" -> LxQualities.ATMOS
+        "jyeffect", "jydj" -> LxQualities.ATMOS
+        "sky" -> LxQualities.ATMOS_PLUS
         "jymaster" -> LxQualities.MASTER
         else -> null
     }
 
-    private suspend fun <T> firstNonNull(
-        deferreds: List<kotlinx.coroutines.Deferred<T?>>,
-    ): T? {
-        val pending = deferreds.toMutableList()
-        while (pending.isNotEmpty()) {
-            val done = kotlinx.coroutines.selects.select<kotlinx.coroutines.Deferred<T?>> {
-                pending.forEach { d -> d.onAwait { d } }
-            }
-            pending.remove(done)
-            val r = done.getCompleted()
-            if (r != null) return r
-        }
-        return null
-    }
-
-    private suspend fun resolveViaScripts(song: LxSong, quality: String?): Pair<String, String?>? {
+    private suspend fun resolveViaScripts(
+        song: LxSong,
+        quality: String?,
+    ): Pair<String, String?>? {
         val tried = mutableSetOf<String>()
-        val rejections = mutableListOf<String>()
+        val rejections = java.util.Collections.synchronizedList(mutableListOf<String>())
         val requestedRank = qualityRank(quality)
         val rejectKey = "${song.source}/${song.songmid}"
         val supports: (String) -> Boolean = { p ->
@@ -4460,44 +4578,68 @@ class LxMusicRepository @Inject constructor(
         }
 
         val primaryPath = activeScriptPath()?.takeIf(supports)?.takeIf { it in circuitFiltered }
-        if (primaryPath != null) {
-            tried.add(primaryPath)
-            when (val primary = resolveViaSingleScript(primaryPath, song, quality)) {
-                is ScriptOutcome.Ok -> {
-                    if (quality == null || qualityRank(primary.quality) >= requestedRank) {
-                        lastScriptRejectReasons.remove(rejectKey)
-                        return primary.url to primary.quality
-                    }
-                    for (scriptPath in circuitFiltered) {
-                        if (!supports(scriptPath) || scriptPath in tried) continue
-                        tried.add(scriptPath)
-                        val high = tryScriptAtQuality(scriptPath, song, quality)
-                        if (high != null && qualityRank(high.second) >= requestedRank) {
-                            lastScriptRejectReasons.remove(rejectKey)
-                            return high
+        val primaryOutcome = primaryPath?.let {
+            tried.add(it)
+            resolveViaSingleScript(it, song, quality)
+        }
+        if (primaryOutcome is ScriptOutcome.Ok) {
+            lastScriptRejectReasons.remove(rejectKey)
+            return primaryOutcome.url to primaryOutcome.quality
+        }
+        var bestSoFar: Pair<String, String?>? = null
+        if (primaryOutcome is ScriptOutcome.Rejected) {
+            rejections.add("${primaryOutcome.scriptPath.substringAfterLast('/')}: ${primaryOutcome.reason ?: "rejected"}")
+        }
+
+        val others = circuitFiltered.filter { it !in tried && supports(it) }
+        if (others.isEmpty()) {
+            if (rejections.isNotEmpty()) lastScriptRejectReasons[rejectKey] = rejections.first()
+            return bestSoFar
+        }
+        val results = coroutineScope {
+            val deadlineMs = System.currentTimeMillis() + scriptChainBudgetMs
+            val deferreds = others.map { scriptPath ->
+                async {
+                    tried.add(scriptPath)
+                    when (val r = resolveViaSingleScript(scriptPath, song, quality)) {
+                        is ScriptOutcome.Ok -> Triple(r.url, r.quality, qualityRank(r.quality) >= requestedRank)
+                        is ScriptOutcome.Rejected -> {
+                            rejections.add("${r.scriptPath.substringAfterLast('/')}: ${r.reason ?: "rejected"}")
+                            null
                         }
+                        ScriptOutcome.Unavailable -> null
                     }
-                    lastScriptRejectReasons.remove(rejectKey)
-                    return primary.url to primary.quality
                 }
-                is ScriptOutcome.Rejected ->
-                    rejections.add("${primary.scriptPath.substringAfterLast('/')}: ${primary.reason ?: "rejected"}")
-                ScriptOutcome.Unavailable -> {}
+            }
+            val pending = deferreds.mapIndexed { index, deferred -> index to deferred }.toMutableList()
+            val collected = mutableListOf<Pair<Int, Triple<String, String?, Boolean>>>()
+            try {
+                while (pending.isNotEmpty()) {
+                    val remainingMs = deadlineMs - System.currentTimeMillis()
+                    if (remainingMs <= 0L) break
+                    val finished = kotlinx.coroutines.withTimeoutOrNull(remainingMs) {
+                        kotlinx.coroutines.selects.select<Pair<Int, kotlinx.coroutines.Deferred<Triple<String, String?, Boolean>?>>> {
+                            pending.forEach { (index, deferred) -> deferred.onAwait { index to deferred } }
+                        }
+                    } ?: break
+                    pending.removeAll { it.first == finished.first }
+                    finished.second.getCompleted()?.let { collected.add(finished.first to it) }
+                }
+            } finally {
+                pending.forEach { it.second.cancel() }
+            }
+            collected.sortedBy { it.first }.map { it.second }
+        }
+        results.firstOrNull { it.third }?.let { hit ->
+            lastScriptRejectReasons.remove(rejectKey)
+            return hit.first to hit.second
+        }
+        for ((url, q) in results) {
+            if (bestSoFar == null || qualityRank(q) > qualityRank(bestSoFar!!.second)) {
+                bestSoFar = url to q
             }
         }
-        for (scriptPath in circuitFiltered) {
-            if (!supports(scriptPath) || scriptPath in tried) continue
-            tried.add(scriptPath)
-            when (val r = resolveViaSingleScript(scriptPath, song, quality)) {
-                is ScriptOutcome.Ok -> {
-                    lastScriptRejectReasons.remove(rejectKey)
-                    return r.url to r.quality
-                }
-                is ScriptOutcome.Rejected ->
-                    rejections.add("${r.scriptPath.substringAfterLast('/')}: ${r.reason ?: "rejected"}")
-                ScriptOutcome.Unavailable -> {}
-            }
-        }
+        if (bestSoFar != null) lastScriptRejectReasons.remove(rejectKey)
         if (rejections.isNotEmpty()) {
             lastScriptRejectReasons[rejectKey] = rejections.first()
             LxResolveDiag.log(
@@ -4509,26 +4651,12 @@ class LxMusicRepository @Inject constructor(
                 "rejections" to rejections.joinToString(" | "),
             )
         }
-        return null
-    }
-
-    private suspend fun tryScriptAtQuality(
-        scriptPath: String,
-        song: LxSong,
-        quality: String,
-    ): Pair<String, String?>? {
-        val url = runCatching { resolveMusicUrl(scriptPath, song, quality) }
-            .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
-            .getOrNull() ?: return null
-        if (streamUrlValidator?.invoke(url) == false) {
-            Timber.w("tryScriptAtQuality: rejected by security (${url.take(80)}) for ${song.source}/${song.songmid}")
-            return null
-        }
-        return url to inferScriptResultQuality(url, quality)
+        return bestSoFar
     }
 
     private val qualityFallbackNext = mapOf(
-        LxQualities.MASTER to LxQualities.ATMOS,
+        LxQualities.MASTER to LxQualities.ATMOS_PLUS,
+        LxQualities.ATMOS_PLUS to LxQualities.ATMOS,
         LxQualities.ATMOS to LxQualities.FLAC24,
         LxQualities.FLAC24 to LxQualities.FLAC,
         LxQualities.FLAC to LxQualities.Q320,

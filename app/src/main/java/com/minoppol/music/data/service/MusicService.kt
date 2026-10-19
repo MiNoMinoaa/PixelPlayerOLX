@@ -1423,6 +1423,28 @@ class MusicService : MediaSessionService() {
     private var consecutivePlaybackErrors = 0
     private val maxConsecutivePlaybackErrors = 5
 
+    private val lxDeadLinkSeenMediaIds = mutableMapOf<String, Int>()
+    @Volatile private var lxItemReachedReady = false
+
+    private fun isLxDeadLinkFirstError(item: MediaItem?, error: PlaybackException): Boolean {
+        val uri = item?.localConfiguration?.uri ?: return false
+        if (uri.scheme != "lxmusic") return false
+        if (!lxMusicRepository.hasActiveScript()) return false
+        var cause: Throwable? = error.cause
+        repeat(6) {
+            val c = cause ?: return false
+            if (c is androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException) {
+                return c.responseCode == 403 || c.responseCode == 404 ||
+                    c.responseCode == 410 || c.responseCode == 502
+            }
+            if (c is androidx.media3.exoplayer.source.UnrecognizedInputFormatException) {
+                return !lxItemReachedReady
+            }
+            cause = c.cause
+        }
+        return false
+    }
+
     private val playerListener = object : Player.Listener {
         override fun onVolumeChanged(volume: Float) {
             replayGainProcessor.onPlayerVolumeChanged(volume)
@@ -1444,6 +1466,7 @@ class MusicService : MediaSessionService() {
             }
 
             if (isPlaying) {
+                lxDeadLinkSeenMediaIds.clear()
                 replayGainProcessor.reapplyLastAppliedVolume(player)
             }
             requestWidgetFullUpdate(force = true)
@@ -1477,6 +1500,7 @@ class MusicService : MediaSessionService() {
             Timber.tag(TAG).d("Playback state changed: $playbackState")
             if (playbackState == Player.STATE_READY) {
                 consecutivePlaybackErrors = 0
+                lxItemReachedReady = true
             }
             if (playbackState == Player.STATE_ENDED) {
                 listeningStatsTracker.finalizeCurrentSession()
@@ -1557,6 +1581,12 @@ class MusicService : MediaSessionService() {
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            lxItemReachedReady = false
+            if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO ||
+                reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK
+            ) {
+                lxDeadLinkSeenMediaIds.clear()
+            }
             AdvancedPerformanceDiagnostics.recordEventIfEnabled(
                 type = AdvancedPerformanceDiagnostics.EventTypes.PLAYBACK,
                 name = "media_item_transition",
@@ -1632,6 +1662,19 @@ class MusicService : MediaSessionService() {
                     "code" to error.errorCodeName,
                     "message" to (error.message ?: error.javaClass.simpleName)
                 )
+            }
+            if (isLxDeadLinkFirstError(player.currentMediaItem, error)) {
+                val mediaId = player.currentMediaItem!!.mediaId
+                val seenCount = lxDeadLinkSeenMediaIds[mediaId] ?: 0
+                if (seenCount < 2) {
+                    lxDeadLinkSeenMediaIds[mediaId] = seenCount + 1
+                    Timber.tag(TAG).w(
+                        "LX dead link on %s (attempt %d), hold position for view-model re-resolve",
+                        mediaId,
+                        seenCount + 1,
+                    )
+                    return
+                }
             }
             if (player.playWhenReady &&
                 player.hasNextMediaItem() &&

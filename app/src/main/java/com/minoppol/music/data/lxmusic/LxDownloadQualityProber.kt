@@ -30,12 +30,13 @@ class LxDownloadQualityProber @Inject constructor(
         .retryOnConnectionFailure(false)
         .build()
 
-    private val cache = ConcurrentHashMap<String, ConcurrentHashMap<String, QualityProbe>>()
+    private val cache = android.util.LruCache<String, ConcurrentHashMap<String, QualityProbe>>(SONG_CACHE_SIZE)
+    private val remoteProbeCache = android.util.LruCache<String, RemoteProbe>(REMOTE_PROBE_CACHE_SIZE)
 
     private fun key(song: LxSong) = "${song.source}/${song.songmid}"
 
     fun cached(song: LxSong): Map<String, QualityProbe> =
-        cache[key(song)]
+        cache.get(key(song))
             ?.filterValues { it.availability == QualityAvailability.AVAILABLE }
             ?.toMap()
             .orEmpty()
@@ -43,17 +44,18 @@ class LxDownloadQualityProber @Inject constructor(
     suspend fun probe(
         song: LxSong,
         qualities: List<String>,
-        scripts: List<String>,
         onUpdate: (QualityProbe) -> Unit,
     ) {
-        val songCache = cache.getOrPut(key(song)) { ConcurrentHashMap() }
+        val songKey = key(song)
+        val songCache = cache.get(songKey)
+            ?: ConcurrentHashMap<String, QualityProbe>().also { cache.put(songKey, it) }
         for (quality in qualities) {
             val existing = songCache[quality]
             if (existing != null && existing.availability == QualityAvailability.AVAILABLE) {
                 onUpdate(existing)
                 continue
             }
-            val result = probeOne(song, quality, scripts)
+            val result = probeOne(song, quality)
             if (result.availability == QualityAvailability.AVAILABLE) {
                 songCache[quality] = result
             } else {
@@ -66,41 +68,41 @@ class LxDownloadQualityProber @Inject constructor(
     private suspend fun probeOne(
         song: LxSong,
         quality: String,
-        scripts: List<String>,
     ): QualityProbe {
-        for (assetPath in scripts) {
-            val url = withTimeoutOrNull(RESOLVE_TIMEOUT_MS) {
-                runCatching { repository.resolveMusicUrlStrict(assetPath, song, quality) }
-                    .getOrNull()
-            }?.takeIf { it.startsWith("http://", true) || it.startsWith("https://", true) }
-                ?: continue
+        val resolved = withTimeoutOrNull(RESOLVE_TIMEOUT_MS) {
+            runCatching { repository.resolveMusicUrlWithFallbackMeta(song, quality) }.getOrNull()
+        } ?: return QualityProbe(quality, QualityAvailability.UNAVAILABLE)
+        val url = resolved.url
+            .takeIf { it.startsWith("http://", true) || it.startsWith("https://", true) }
+            ?: return QualityProbe(quality, QualityAvailability.UNAVAILABLE)
 
-            val remote = runCatching { probeRemote(url) }.getOrNull() ?: RemoteProbe(null, null)
-            val provenFake = judge(
-                quality = quality,
-                totalBytes = remote.totalBytes,
-                head = remote.head,
-                fallbackDurationSec = song.interval,
-            ) == false
-            if (provenFake) {
-                Timber.d(
-                    "download probe: %s rejected as fake (bytes=%s, interval=%s, head=%s)",
-                    quality, remote.totalBytes, song.interval,
-                    remote.head?.let { runCatching { LxAudioHeadInspector.inspect(it) }.getOrNull() },
-                )
-                continue
-            }
-            val estimatedBytes = remote.totalBytes
-                ?: estimateBytes(quality, song.interval)
-            return QualityProbe(
-                quality = quality,
-                availability = QualityAvailability.AVAILABLE,
-                bytes = estimatedBytes,
-                bytesEstimated = remote.totalBytes == null && estimatedBytes != null,
-                assetPath = assetPath,
+        val remote = remoteProbeCache.get(url) ?: runCatching { probeRemote(url) }
+            .getOrNull()
+            .also { if (it != null) remoteProbeCache.put(url, it) }
+            ?: RemoteProbe(null, null)
+        val provenFake = judge(
+            quality = quality,
+            totalBytes = remote.totalBytes,
+            head = remote.head,
+            fallbackDurationSec = song.interval,
+        ) == false
+        if (provenFake) {
+            Timber.d(
+                "download probe: %s rejected as fake (bytes=%s, interval=%s, head=%s)",
+                quality, remote.totalBytes, song.interval,
+                remote.head?.let { runCatching { LxAudioHeadInspector.inspect(it) }.getOrNull() },
             )
+            return QualityProbe(quality, QualityAvailability.UNAVAILABLE)
         }
-        return QualityProbe(quality, QualityAvailability.UNAVAILABLE)
+        val estimatedBytes = remote.totalBytes
+            ?: estimateBytes(quality, song.interval)
+        return QualityProbe(
+            quality = quality,
+            availability = QualityAvailability.AVAILABLE,
+            bytes = estimatedBytes,
+            bytesEstimated = remote.totalBytes == null && estimatedBytes != null,
+            assetPath = repository.activeRuntimeScriptPathsOrdered(song.source).firstOrNull(),
+        )
     }
 
     private fun estimateBytes(quality: String, durationSec: Long): Long? {
@@ -111,6 +113,7 @@ class LxDownloadQualityProber @Inject constructor(
             LxQualities.FLAC -> 1_000_000L
             LxQualities.FLAC24 -> 3_000_000L
             LxQualities.ATMOS -> 2_000_000L
+            LxQualities.ATMOS_PLUS -> 3_000_000L
             LxQualities.MASTER -> 6_000_000L
             else -> 320_000L
         }
@@ -189,5 +192,7 @@ class LxDownloadQualityProber @Inject constructor(
     companion object {
         private const val RESOLVE_TIMEOUT_MS = 12_000L
         private const val HEAD_FETCH_BYTES = 262_143 // 256KB - 1
+        private const val REMOTE_PROBE_CACHE_SIZE = 32
+        private const val SONG_CACHE_SIZE = 32
     }
 }

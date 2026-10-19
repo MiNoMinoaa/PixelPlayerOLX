@@ -112,7 +112,7 @@ object LxAudioHeadInspector {
         LxQualities.Q128 -> 96_000
         LxQualities.Q320 -> 224_000
         LxQualities.FLAC -> 350_000
-        LxQualities.FLAC24, LxQualities.ATMOS, LxQualities.MASTER -> 700_000
+        LxQualities.FLAC24, LxQualities.ATMOS, LxQualities.ATMOS_PLUS, LxQualities.MASTER -> 700_000
         else -> 96_000
     }
 
