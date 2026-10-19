@@ -95,12 +95,13 @@ internal fun BoxScope.UnifiedPlayerMiniAndFullLayers(
                     val miniNavBarStyle by playerViewModel.navBarStyle.collectAsStateWithLifecycle()
                     val miniResolvePhase by playerViewModel.lxResolvePhase.collectAsStateWithLifecycle()
                     val miniPlaybackPosition by playerViewModel.currentPlaybackPosition.collectAsStateWithLifecycle()
+                    val miniLyricsSyncOffset by playerViewModel.currentSongLyricsSyncOffset.collectAsStateWithLifecycle()
                     val miniLyrics = infrequentPlayerState.lyrics
                     val miniPlayerLyricsOn by playerViewModel.miniPlayerLyricsEnabled.collectAsStateWithLifecycle()
-                    val miniCurrentLine = remember(miniLyrics, miniPlaybackPosition, miniPlayerLyricsOn) {
+                    val miniCurrentLine = remember(miniLyrics, miniPlaybackPosition, miniPlayerLyricsOn, miniLyricsSyncOffset) {
                         if (!miniPlayerLyricsOn) null
                         else miniLyrics?.synced?.let { lines ->
-                            val idx = resolveCurrentLineIndex(lines, miniPlaybackPosition.coerceAtLeast(0L))
+                            val idx = resolveCurrentLineIndex(lines, (miniPlaybackPosition + miniLyricsSyncOffset).coerceAtLeast(0L))
                             lines.getOrNull(idx)?.line?.takeIf { it.isNotBlank() }
                         }
                     }

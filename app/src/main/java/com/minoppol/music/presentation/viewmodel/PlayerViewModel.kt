@@ -2955,17 +2955,17 @@ class PlayerViewModel @Inject constructor(
                 viewModelScope.launch {
                     val currentSong = playbackStateHolder.stablePlayerState.value.currentSong
                     val playerItemId = runCatching { playerCtrl.currentMediaItem?.mediaId }.getOrNull()
-                    if (playerItemId != null && currentSong?.id != null && playerItemId != currentSong.id) {
+                    val isStaleError = playerItemId != null && currentSong?.id != null && playerItemId != currentSong.id
+                    if (isStaleError) {
                         Timber.w(
-                            "onPlayerError: stale error for item %s while current is %s, ignore",
+                            "onPlayerError: stale error for item %s while current is %s, skip dead-link retry only",
                             playerItemId,
                             currentSong.id
                         )
-                        return@launch
                     }
                     val isLxSource = currentSong
                         ?.contentUriString?.startsWith("lxmusic://") == true
-                    if (isLxSource && currentSong != null &&
+                    if (!isStaleError && isLxSource && currentSong != null &&
                         (deadLinkRetryCounts[currentSong.id] ?: 0) < 2 &&
                         isDeadLinkError(error) &&
                         lxMusicRepository.hasActiveScript()
@@ -3026,6 +3026,19 @@ class PlayerViewModel @Inject constructor(
                         context.getString(R.string.player_error_skipping)
                     }
                     _toastEvents.emit(msg)
+                    if (!isStaleError) {
+                        delay(700)
+                        val stillFailing = playerItemId != null &&
+                            playerCtrl.currentMediaItem?.mediaId == playerItemId
+                        if (stillFailing) {
+                            if (playerCtrl.hasNextMediaItem()) {
+                                playerCtrl.seekToNextMediaItem()
+                                playerCtrl.prepare()
+                            } else {
+                                playerCtrl.playWhenReady = false
+                            }
+                        }
+                    }
                 }
             }
 

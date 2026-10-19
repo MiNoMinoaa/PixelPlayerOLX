@@ -24,6 +24,7 @@ import androidx.annotation.CallSuper
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -1071,43 +1072,6 @@ class MainActivity : ComponentActivity() {
                                 !isMiniPlayerDismissing
                         )
 
-                        val dismissUndoBarSlice by remember {
-                            playerViewModel.playerUiState
-                                .map { state ->
-                                    DismissUndoBarSlice(
-                                        isVisible = state.showDismissUndoBar,
-                                        durationMillis = state.undoBarVisibleDuration
-                                    )
-                                }
-                                .distinctUntilChanged()
-                        }.collectAsStateWithLifecycle(initialValue = DismissUndoBarSlice())
-                        val onUndoDismissPlaylist = remember(playerViewModel) {
-                            { playerViewModel.undoDismissPlaylist() }
-                        }
-                        val onCloseDismissUndoBar = remember(playerViewModel) {
-                            { playerViewModel.hideDismissUndoBar() }
-                        }
-
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = dismissUndoBarSlice.isVisible,
-                            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                            exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(bottom = effectiveInnerPadding.calculateBottomPadding() + MiniPlayerBottomSpacer)
-                                .padding(horizontal = horizontalPadding)
-                        ) {
-                            DismissUndoBar(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(MiniPlayerHeight)
-                                    .padding(horizontal = 14.dp),
-                                onUndo = onUndoDismissPlaylist,
-                                onClose = onCloseDismissUndoBar,
-                                durationMillis = dismissUndoBarSlice.durationMillis
-                            )
-                        }
-
                         if (
                             !useNavigationRail &&
                             shouldRenderNavigationBar &&
@@ -1152,6 +1116,77 @@ class MainActivity : ComponentActivity() {
                                     onPlayPauseClick = { playerViewModel.playPause() },
                                     onSearchIconDoubleTap = onSearchIconDoubleTap,
                                     modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+
+                        val dismissUndoBarSlice by remember {
+                            playerViewModel.playerUiState
+                                .map { state ->
+                                    DismissUndoBarSlice(
+                                        isVisible = state.showDismissUndoBar,
+                                        durationMillis = state.undoBarVisibleDuration
+                                    )
+                                }
+                                .distinctUntilChanged()
+                        }.collectAsStateWithLifecycle(initialValue = DismissUndoBarSlice())
+                        val onUndoDismissPlaylist = remember(playerViewModel) {
+                            { playerViewModel.undoDismissPlaylist() }
+                        }
+                        val onCloseDismissUndoBar = remember(playerViewModel) {
+                            { playerViewModel.hideDismissUndoBar() }
+                        }
+
+                        val undoBarClearsMiniPlayer = showPlayerContentInitially && !shouldHideMiniPlayer
+                        val undoBarBottomPadding = if (undoBarClearsMiniPlayer) {
+                            bottomMargin + spacerDp + MiniPlayerHeight + 10.dp
+                        } else {
+                            effectiveInnerPadding.calculateBottomPadding() + MiniPlayerBottomSpacer + 10.dp
+                        }
+
+                        val undoBarSlidePx = with(density) { MiniPlayerHeight.toPx() }
+                        val undoBarOffset = remember { Animatable(1f) }
+                        var undoBarShown by remember { mutableStateOf(false) }
+
+                        LaunchedEffect(dismissUndoBarSlice.isVisible) {
+                            if (dismissUndoBarSlice.isVisible) {
+                                undoBarShown = true
+                                undoBarOffset.snapTo(1f)
+                                undoBarOffset.animateTo(
+                                    targetValue = 0f,
+                                    animationSpec = tween(
+                                        durationMillis = 260,
+                                        easing = LinearOutSlowInEasing
+                                    )
+                                )
+                            } else if (undoBarShown) {
+                                undoBarOffset.animateTo(
+                                    targetValue = -1f,
+                                    animationSpec = tween(durationMillis = 240)
+                                )
+                                undoBarShown = false
+                            }
+                        }
+
+                        if (undoBarShown) {
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .padding(bottom = undoBarBottomPadding)
+                                    .padding(horizontal = horizontalPadding)
+                                    .graphicsLayer {
+                                        clip = false
+                                        translationY = undoBarOffset.value * undoBarSlidePx
+                                    }
+                            ) {
+                                DismissUndoBar(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(MiniPlayerHeight)
+                                        .padding(horizontal = 14.dp),
+                                    onUndo = onUndoDismissPlaylist,
+                                    onClose = onCloseDismissUndoBar,
+                                    durationMillis = dismissUndoBarSlice.durationMillis
                                 )
                             }
                         }

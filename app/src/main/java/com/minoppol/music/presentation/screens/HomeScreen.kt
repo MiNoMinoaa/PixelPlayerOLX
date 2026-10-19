@@ -566,8 +566,14 @@ fun HomeScreen(
         ) {
             BetaInfoBottomSheet(
                 onCheckForUpdates = {
-                    showBetaInfoBottomSheet = false
                     appUpdateViewModel.checkForUpdatesManual(appVersionName)
+                    scope.launch {
+                        betaSheetState.hide()
+                    }.invokeOnCompletion {
+                        if (!betaSheetState.isVisible) {
+                            showBetaInfoBottomSheet = false
+                        }
+                    }
                 }
             )
         }
