@@ -4121,7 +4121,7 @@ class LxMusicRepository @Inject constructor(
 
         resolvedPlayCache.get(cacheKey)?.let { cached ->
             if (System.currentTimeMillis() < cached.expiresAt &&
-                qualityRank(cached.result.quality) >= qualityRank(effectiveQuality)
+                qualityRank(cached.result.quality) == qualityRank(effectiveQuality)
             ) {
                 LxResolveDiag.log(
                     "resolve_cache_hit",
