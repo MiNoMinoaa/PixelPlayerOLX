@@ -58,6 +58,48 @@ class LxScriptEngine @Inject constructor(
 
     private val eventWaiters = ConcurrentHashMap<String, CompletableDeferred<JsonElement>>()
 
+    private val scriptUpdatePrefs = context.getSharedPreferences(SCRIPT_UPDATE_PREFS, Context.MODE_PRIVATE)
+
+    private fun scriptIgnoreKey(assetPath: String, currentVersion: String): String = "$assetPath|$currentVersion"
+
+    private fun contentFingerprint(updateUrl: String?, log: String): String {
+        val raw = (updateUrl.orEmpty()) + "\u0001" + log
+        val md = MessageDigest.getInstance("MD5")
+        val bytes = md.digest(raw.toByteArray())
+        return bytes.joinToString("") { "%02x".format(it) }
+    }
+
+    fun ignoreScriptUpdate(assetPath: String, currentVersion: String, updateUrl: String?, log: String) {
+        val fp = contentFingerprint(updateUrl, log)
+        scriptUpdatePrefs.edit().putString(
+            scriptIgnoreKey(assetPath, currentVersion),
+            "$fp|${System.currentTimeMillis()}"
+        ).apply()
+    }
+
+    fun isScriptUpdateIgnored(assetPath: String, currentVersion: String, updateUrl: String?, log: String): Boolean {
+        val record = scriptUpdatePrefs.getString(scriptIgnoreKey(assetPath, currentVersion), null) ?: return false
+        val parts = record.split("|", limit = 2)
+        if (parts.size != 2) return false
+        val (fp, tsStr) = parts
+        val expected = contentFingerprint(updateUrl, log)
+        if (fp != expected) return false
+        val ts = tsStr.toLongOrNull() ?: return false
+        if (System.currentTimeMillis() - ts > SCRIPT_UPDATE_IGNORED_TTL_MS) return false
+        return true
+    }
+
+    fun clearScriptUpdateIgnore(assetPath: String) {
+        val editor = scriptUpdatePrefs.edit()
+        val toRemove = scriptUpdatePrefs.all.keys.filter { it.startsWith("$assetPath|") }
+        toRemove.forEach { editor.remove(it) }
+        editor.apply()
+    }
+
+    fun isAnyScriptUpdateIgnored(assetPath: String): Boolean {
+        return scriptUpdatePrefs.all.keys.any { it.startsWith("$assetPath|") }
+    }
+
     private class Runtime(
         val meta: LxScriptMeta,
         val key: String,
@@ -569,17 +611,21 @@ class LxScriptEngine @Inject constructor(
                 val log = json?.get("log")?.takeIf { it.isJsonPrimitive }?.asString ?: ""
                 val updateUrl = json?.get("updateUrl")?.takeIf { it.isJsonPrimitive }?.asString
                     ?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
-                Timber.d("LxScriptEngine[${runtime.meta.name}]: update alert: ${redactSensitive(log)}")
-                _updateAlerts.tryEmit(
-                    LxScriptUpdateAlert(
-                        scriptName = runtime.meta.name,
-                        version = runtime.meta.version,
-                        updateUrl = updateUrl,
-                        log = log,
-                        assetPath = runtime.meta.assetPath,
-                        isImported = runtime.meta.isImported,
+                if (!isScriptUpdateIgnored(runtime.meta.assetPath, runtime.meta.version, updateUrl, log)) {
+                    Timber.d("LxScriptEngine[${runtime.meta.name}]: update alert: ${redactSensitive(log)}")
+                    _updateAlerts.tryEmit(
+                        LxScriptUpdateAlert(
+                            scriptName = runtime.meta.name,
+                            version = runtime.meta.version,
+                            updateUrl = updateUrl,
+                            log = log,
+                            assetPath = runtime.meta.assetPath,
+                            isImported = runtime.meta.isImported,
+                        )
                     )
-                )
+                } else {
+                    Timber.d("LxScriptEngine[${runtime.meta.name}]: update alert ignored")
+                }
             }
             "log" -> Timber.d("LxScriptEngine[${runtime.meta.name}]: ${redactSensitive(dataJson)}")
             else -> Timber.d("LxScriptEngine[${runtime.meta.name}]: unknown action $action")
@@ -912,6 +958,8 @@ class LxScriptEngine @Inject constructor(
         const val MAX_RESPONSE_BODY_CHARS = 8_000_000
         const val MAX_BINARY_RESPONSE_BODY_BYTES = 256L * 1024
         const val MAX_JSON_FALLBACK_CHARS = 1_000_000
+        const val SCRIPT_UPDATE_PREFS = "lx_script_update_prefs"
+        const val SCRIPT_UPDATE_IGNORED_TTL_MS = 30L * 24 * 60 * 60 * 1000
 
         val cookieMarkers = listOf(
             "@wy_cookie", "@tx_cookie", "@kg_cookie", "@kw_cookie",

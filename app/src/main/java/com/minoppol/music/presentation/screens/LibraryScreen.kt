@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+﻿@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
 
 package com.minoppol.music.presentation.screens
 
@@ -87,8 +87,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -598,6 +598,9 @@ fun LibraryScreen(
         }
     }
 
+    val currentTab = tabTitles.getOrNull(currentTabIndex)?.toLibraryTabIdOrNull() ?: currentTabId
+    val currentTabTitle = currentTab.displayTitle()
+
     val hasSelectionInCurrentTab = when (currentTabId) {
         LibraryTabId.PLAYLISTS -> isPlaylistSelectionMode
         LibraryTabId.ALBUMS -> isAlbumSelectionMode
@@ -728,9 +731,6 @@ fun LibraryScreen(
     val gradientBrush = remember(gradientColors) {
         Brush.verticalGradient(colors = gradientColors)
     }
-
-    val currentTab = tabTitles.getOrNull(currentTabIndex)?.toLibraryTabIdOrNull() ?: currentTabId
-    val currentTabTitle = currentTab.displayTitle()
 
     val headerContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
 

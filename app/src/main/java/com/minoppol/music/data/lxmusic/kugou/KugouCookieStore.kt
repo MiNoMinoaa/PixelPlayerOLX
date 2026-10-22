@@ -138,6 +138,16 @@ class KugouCookieStore @Inject constructor(
         _vipTypeFlow.value = VIP_UNKNOWN
     }
 
+    fun clearAppLogin() {
+        prefs.edit()
+            .remove(KEY_APP_TOKEN)
+            .remove(KEY_APP_USERID)
+            .remove(KEY_APP_VIP_TYPE)
+            .apply()
+        _appTokenFlow.value = null
+        _appUseridFlow.value = null
+    }
+
     fun clear() {
         prefs.edit()
             .remove(KEY_COOKIE)
