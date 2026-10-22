@@ -97,6 +97,7 @@ import com.minoppol.music.presentation.components.subcomps.SelectionCountPill
 import com.minoppol.music.data.lxmusic.LxQualities
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
@@ -116,6 +117,7 @@ import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.UploadFile
 import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.runtime.Composable
@@ -1562,11 +1564,19 @@ fun LxMusicScreen(
 
                 Spacer(Modifier.height(12.dp))
 
+                var ignoredScriptPaths by remember { mutableStateOf<Set<String>>(emptySet()) }
+                LaunchedEffect(scripts) {
+                    ignoredScriptPaths = scripts.mapNotNull { meta ->
+                        meta.assetPath.takeIf { viewModel.isAnyScriptUpdateIgnored(it) }
+                    }.toSet()
+                }
+
                 scripts.forEachIndexed { index, meta ->
                     ScriptRow(
                         meta = meta,
                         isPreferred = activeScript == meta.assetPath,
                         isEnabled = meta.assetPath in runtimePaths,
+                        isUpdateIgnored = meta.assetPath in ignoredScriptPaths,
                         shape = when {
                             scripts.size == 1 -> RoundedCornerShape(24.dp)
                             index == 0 -> RoundedCornerShape(
@@ -1586,6 +1596,11 @@ fun LxMusicScreen(
                         onSetPreferred = { viewModel.makePreferred(meta.assetPath) },
                         onDelete = {
                             scriptToDelete = meta
+                        },
+                        onRestoreUpdate = {
+                            viewModel.clearScriptUpdateIgnore(meta.assetPath)
+                            ignoredScriptPaths -= meta.assetPath
+                            viewModel.emitToast(context.getString(R.string.lx_msg_script_update_restored))
                         },
                     )
                     if (index < scripts.size - 1) Spacer(Modifier.height(2.dp))
@@ -1782,6 +1797,20 @@ fun LxMusicScreen(
                             .size(42.dp),
                     ) {
                         Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.lx_desc_cancel))
+                    }
+                    FilledTonalIconButton(
+                        enabled = !scriptUpdateWorking,
+                        onClick = {
+                            viewModel.ignoreScriptUpdate(pendingUpdateAlert)
+                            scriptUpdateQueue = scriptUpdateQueue.drop(1)
+                            viewModel.emitToast(context.getString(R.string.lx_msg_script_update_ignored))
+                        },
+                        shape = lxDialogCancelShape,
+                        modifier = Modifier
+                            .shadow(2.dp, lxDialogCancelShape)
+                            .size(42.dp),
+                    ) {
+                        Icon(Icons.Rounded.Block, contentDescription = stringResource(R.string.lx_desc_ignore_version))
                     }
                     if (pendingUpdateAlert.updateUrl != null) {
                         FilledTonalIconButton(
@@ -2093,10 +2122,12 @@ private fun ScriptRow(
     meta: LxScriptMeta,
     isPreferred: Boolean,
     isEnabled: Boolean,
+    isUpdateIgnored: Boolean,
     shape: RoundedCornerShape,
     onToggle: (Boolean) -> Unit,
     onSetPreferred: () -> Unit,
     onDelete: () -> Unit,
+    onRestoreUpdate: () -> Unit,
 ) {
     val haptics = LocalHapticFeedback.current
     val containerColor = if (isPreferred) MaterialTheme.colorScheme.primaryContainer
@@ -2139,15 +2170,30 @@ private fun ScriptRow(
                 val detail = buildList {
                     if (meta.author.isNotBlank()) add(meta.author)
                     if (meta.version.isNotBlank()) add("v" + meta.version)
+                    if (isUpdateIgnored) add(stringResource(R.string.lx_desc_script_update_ignored_badge))
                 }.joinToString(" · ")
                 if (detail.isNotBlank()) {
                     Text(
                         text = detail,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (isPreferred) MaterialTheme.colorScheme.onPrimaryContainer
+                        color = if (isUpdateIgnored) MaterialTheme.colorScheme.outline
+                        else if (isPreferred) MaterialTheme.colorScheme.onPrimaryContainer
                         else MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            if (isUpdateIgnored) {
+                FilledTonalIconButton(
+                    onClick = onRestoreUpdate,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.size(36.dp),
+                ) {
+                    Icon(
+                        Icons.Rounded.Sync,
+                        contentDescription = stringResource(R.string.lx_desc_restore_update_prompt),
+                        modifier = Modifier.size(20.dp),
                     )
                 }
             }

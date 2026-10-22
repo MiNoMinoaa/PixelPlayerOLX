@@ -90,9 +90,13 @@ fun AppNavigation(
     floatingNavBarTransitionsActive = floatingNavBarStyleActive
 
     LaunchedEffect(Unit) {
-        startDestination = userPreferencesRepository.launchTabFlow
-            .first()
-            .toRoute()
+        val tab = userPreferencesRepository.launchTabFlow.first()
+        val showRecent = userPreferencesRepository.showRecentTabFlow.first()
+        startDestination = if (tab == LaunchTab.RECENTLY_PLAYED && !showRecent) {
+            Screen.Home.route
+        } else {
+            tab.toRoute()
+        }
     }
 
     startDestination?.let { initialRoute ->
@@ -702,6 +706,7 @@ private fun String.toRoute(): String = when (this) {
     LaunchTab.LX_MUSIC -> Screen.LxMusic.route
     LaunchTab.SEARCH -> Screen.Search.route
     LaunchTab.LIBRARY -> Screen.Library.route
+    LaunchTab.RECENTLY_PLAYED -> Screen.RecentlyPlayedTab.route
     else -> Screen.Home.route
 }
 

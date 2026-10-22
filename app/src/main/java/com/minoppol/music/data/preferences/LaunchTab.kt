@@ -5,4 +5,5 @@ object LaunchTab {
     const val LX_MUSIC = "LxMusic"
     const val SEARCH = "Search"
     const val LIBRARY = "Library"
+    const val RECENTLY_PLAYED = "RecentlyPlayed"
 }
