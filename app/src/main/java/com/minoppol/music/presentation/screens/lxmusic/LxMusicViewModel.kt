@@ -27,6 +27,7 @@ import com.minoppol.music.data.preferences.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -388,6 +389,33 @@ class LxMusicViewModel @Inject constructor(
                     Timber.w("Netease cookie invalidated by server, performing auto logout")
                     logoutNetease()
                     _toastMessage.tryEmit(context.getString(R.string.lx_msg_netease_login_expired))
+                }
+            }
+        }
+        viewModelScope.launch {
+            tencentCookieStore.cookieValidFlow.collect { valid ->
+                if (!valid && tencentCookieStore.hasCookie()) {
+                    Timber.w("Tencent cookie invalidated by server, performing auto logout")
+                    logoutTencent()
+                    _toastMessage.tryEmit(context.getString(R.string.lx_msg_login_expired))
+                }
+            }
+        }
+        viewModelScope.launch {
+            kuwoCookieStore.cookieValidFlow.collect { valid ->
+                if (!valid && kuwoCookieStore.hasCookie()) {
+                    Timber.w("Kuwo cookie invalidated by server, performing auto logout")
+                    logoutKuwo()
+                    _toastMessage.tryEmit(context.getString(R.string.lx_msg_login_expired))
+                }
+            }
+        }
+        viewModelScope.launch {
+            kugouCookieStore.cookieValidFlow.collect { valid ->
+                if (!valid && kugouCookieStore.loggedInFlow.value) {
+                    Timber.w("Kugou auth invalidated by server, performing auto logout")
+                    logoutKugou()
+                    _toastMessage.tryEmit(context.getString(R.string.lx_msg_login_expired))
                 }
             }
         }
@@ -1816,11 +1844,16 @@ class LxMusicViewModel @Inject constructor(
             val source = _searchAlbumPageState.value.source
             val (detail, songs) = when (source) {
                 LxSources.TENCENT -> repository.fetchTxAlbumDetail(albumId, _searchAlbumPageState.value.album?.name.orEmpty())
-                LxSources.KUGOU -> repository.fetchKgAlbumDetail(albumId)
+                LxSources.KUGOU -> {
+                    val r = repository.fetchKgAlbumDetail(albumId)
+                    Timber.i("loadSearchAlbumPage KUGOU albumId=$albumId detail=${r.first} detail?.name=${r.first?.name} songsCount=${r.second.size}")
+                    r
+                }
                 LxSources.KUWO -> repository.fetchKwAlbumDetail(albumId, _searchAlbumPageState.value.album?.name.orEmpty())
                 else -> repository.fetchNeteaseAlbumDetail(albumId)
             }
             val cur = _searchAlbumPageState.value
+            Timber.i("loadSearchAlbumPage albumId=$albumId curId=${cur.album?.id} curName=${cur.album?.name} willOverride=${detail != null}")
             if (cur.album?.id != albumId) return@launch
             _searchAlbumPageState.value = cur.copy(
                 album = detail ?: cur.album,
@@ -2786,7 +2819,34 @@ class LxMusicViewModel @Inject constructor(
                 pageSongs = songs,
                 error = loadError ?: if (songs.isEmpty()) context.getString(R.string.lx_error_no_content) else null,
             )
-            if (songs.isNotEmpty()) loadPicsForResults(songs)
+            if (songs.isNotEmpty()) {
+                loadPicsForResults(songs)
+                backfillKgAlbumNamesIfNeeded(songs)
+            }
+        }
+    }
+
+    private fun backfillKgAlbumNamesIfNeeded(songs: List<LxSong>) {
+        val needFill = songs.filter {
+            it.source == "kg" && it.albumName.isBlank() && !it.extraFields["albumId"].isNullOrBlank()
+        }.distinctBy { it.extraFields["albumId"] }
+        if (needFill.isEmpty()) return
+        viewModelScope.launch(Dispatchers.IO) {
+            val albumNames = mutableMapOf<String, String>()
+            for (song in needFill) {
+                val aid = song.extraFields["albumId"] ?: continue
+                if (albumNames.containsKey(aid)) continue
+                runCatching { repository.fetchKgAlbumDetail(aid).first?.name.orEmpty() }
+                    .getOrNull()?.takeIf { it.isNotBlank() }?.let { albumNames[aid] = it }
+            }
+            if (albumNames.isEmpty()) return@launch
+            val cur = _mineState.value
+            val merged = cur.pageSongs.map { s ->
+                val aid = s.extraFields["albumId"]
+                val fill = albumNames[aid]
+                if (s.source == "kg" && s.albumName.isBlank() && fill != null) s.copy(albumName = fill) else s
+            }
+            _mineState.value = cur.copy(pageSongs = merged)
         }
     }
 
@@ -3630,6 +3690,16 @@ class LxMusicViewModel @Inject constructor(
     val scriptUpdateAlerts
         get() = repository.scriptUpdateAlerts
 
+    fun ignoreScriptUpdate(alert: com.minoppol.music.data.lxmusic.LxScriptUpdateAlert) {
+        repository.ignoreScriptUpdate(alert.assetPath, alert.version, alert.updateUrl, alert.log)
+    }
+
+    fun clearScriptUpdateIgnore(assetPath: String) {
+        repository.clearScriptUpdateIgnore(assetPath)
+    }
+
+    fun isAnyScriptUpdateIgnored(assetPath: String) = repository.isAnyScriptUpdateIgnored(assetPath)
+
     fun updateScriptFromUrl(alert: com.minoppol.music.data.lxmusic.LxScriptUpdateAlert, onResult: (String?) -> Unit) {
         viewModelScope.launch {
             val url = alert.updateUrl
@@ -3639,6 +3709,7 @@ class LxMusicViewModel @Inject constructor(
             }
             val result = repository.updateScriptFromUrl(alert.assetPath, url)
             result.onSuccess {
+                repository.clearScriptUpdateIgnore(alert.assetPath)
                 _loadState.value = LoadState(loadedSources = emptyList())
                 emitToast(context.getString(R.string.lx_msg_script_updated))
                 onResult(null)

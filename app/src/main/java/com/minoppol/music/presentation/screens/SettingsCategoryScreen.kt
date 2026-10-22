@@ -891,6 +891,7 @@ fun SettingsCategoryScreen(
                                         LaunchTab.HOME to stringResource(R.string.tab_home),
                                         LaunchTab.LX_MUSIC to stringResource(R.string.tab_online),
                                         LaunchTab.LIBRARY to stringResource(R.string.tab_library),
+                                        LaunchTab.RECENTLY_PLAYED to stringResource(R.string.tab_recent),
                                         LaunchTab.SEARCH to stringResource(R.string.tab_search),
                                     ),
                                     selectedKey = uiState.launchTab,

@@ -423,8 +423,13 @@
     <string name="lx_title_import_from_url">Import source from URL</string>
     <string name="lx_desc_cancel">Cancel</string>
     <string name="lx_desc_import">Import</string>
+    <string name="lx_desc_ignore_version">Ignore this version</string>
+    <string name="lx_desc_restore_update_prompt">Restore update prompts</string>
+    <string name="lx_desc_script_update_ignored_badge">Updates ignored</string>
     <string name="lx_title_script_update">Source Update</string>
     <string name="lx_msg_script_updated">Source updated</string>
+    <string name="lx_msg_script_update_ignored">Update ignored for this version. A newer version will be shown.</string>
+    <string name="lx_msg_script_update_restored">Update prompts restored</string>
     <string name="lx_msg_update_to_browser">In-app update failed, opened in browser instead</string>
     <string name="lx_title_delete_script">Delete source script</string>
     <string name="lx_msg_delete_script_confirm">Are you sure you want to delete \"%1$s\"? This action cannot be undone.</string>

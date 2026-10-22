@@ -383,8 +383,13 @@
 <string name="lx_title_import_from_url">从 URL 导入音源</string>
 <string name="lx_desc_cancel">取消</string>
 <string name="lx_desc_import">导入</string>
+<string name="lx_desc_ignore_version">忽略此版本</string>
+<string name="lx_desc_restore_update_prompt">恢复更新提醒</string>
+<string name="lx_desc_script_update_ignored_badge">更新已忽略</string>
 <string name="lx_title_script_update">音源更新</string>
 <string name="lx_msg_script_updated">音源已更新</string>
+<string name="lx_msg_script_update_ignored">已忽略此版本的更新，有新版本时会再次提醒</string>
+<string name="lx_msg_script_update_restored">已恢复更新提醒</string>
 <string name="lx_msg_update_to_browser">应用内更新失败，已用浏览器打开</string>
 <string name="lx_title_delete_script">删除音源脚本</string>
 <string name="lx_msg_delete_script_confirm">确定要删除「%1$s」吗？此操作不可撤销。</string>

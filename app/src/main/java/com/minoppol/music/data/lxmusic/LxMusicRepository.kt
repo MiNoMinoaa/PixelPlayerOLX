@@ -3116,6 +3116,41 @@ class LxMusicRepository @Inject constructor(
 
     suspend fun fetchKgAlbumDetail(albumId: String): Pair<LxAlbum?, List<LxSong>> =
         withContext(Dispatchers.IO) {
+            val albumInfo = runCatching {
+                val url = "https://mobiles.kugou.com/api/v3/album/info?albumid=$albumId"
+                okHttpClient.newCall(
+                    Request.Builder().url(url)
+                        .header("User-Agent", "Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36")
+                        .get().build()
+                ).execute().use { resp ->
+                    if (!resp.isSuccessful) {
+                        Timber.w("fetchKgAlbumDetail album/info FAIL http=${resp.code}")
+                        return@use null
+                    }
+                    val body = resp.body?.string().orEmpty()
+                    Timber.i("fetchKgAlbumDetail album/info http=${resp.code} body=$body")
+                    val root = JsonParser.parseString(body).asJsonObject
+                    val data = root.getAsJsonObject("data")
+                    if (data == null) {
+                        Timber.w("fetchKgAlbumDetail album/info no data field, rootKeys=${root.keySet()}")
+                        return@use null
+                    }
+                    val name = jsonStr(data, "albumname") ?: jsonStr(data, "name")
+                    if (name == null) {
+                        Timber.w("fetchKgAlbumDetail album/info no name field, dataKeys=${data.keySet()}")
+                        return@use null
+                    }
+                    val pic = jsonStr(data, "imgurl")?.takeIf { it.isNotBlank() }
+                        ?.replace("{size}", "400")
+                        ?.let { if (it.startsWith("http://")) it.replace("http://", "https://") else it }
+                    val artistName = jsonStr(data, "singername")
+                    Timber.i("fetchKgAlbumDetail resolved albumId=$albumId name=$name pic=$pic artistName=$artistName")
+                    LxAlbum(id = albumId, name = decodeHtmlEntities(name), pic = pic, artistName = artistName)
+                }
+            }.getOrElse {
+                Timber.w(it, "fetchKgAlbumInfo failed albumId=$albumId")
+                null
+            }
             val url = "https://mobiles.kugou.com/api/v3/album/song?albumid=$albumId&page=1&pagesize=100"
             runCatching {
                 okHttpClient.newCall(
@@ -3123,7 +3158,7 @@ class LxMusicRepository @Inject constructor(
                         .header("User-Agent", "Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36")
                         .get().build()
                 ).execute().use { resp ->
-                    if (!resp.isSuccessful) return@use null to emptyList()
+                    if (!resp.isSuccessful) return@use albumInfo to emptyList()
                     val root = JsonParser.parseString(resp.body?.string().orEmpty()).asJsonObject
                     val dataEl = root.get("data")
                     val songArr = when {
@@ -3149,11 +3184,11 @@ class LxMusicRepository @Inject constructor(
                             )
                         }.getOrNull()
                     } ?: emptyList()
-                    null to songs
+                    albumInfo to songs
                 }
             }.getOrElse {
                 Timber.w(it, "fetchKgAlbumDetail failed albumId=$albumId")
-                null to emptyList()
+                albumInfo to emptyList()
             }
         }
 
@@ -5121,6 +5156,20 @@ class LxMusicRepository @Inject constructor(
 
     val scriptUpdateAlerts
         get() = engine.updateAlerts
+
+    fun ignoreScriptUpdate(assetPath: String, currentVersion: String, updateUrl: String?, log: String) {
+        engine.ignoreScriptUpdate(assetPath, currentVersion, updateUrl, log)
+    }
+
+    fun isScriptUpdateIgnored(assetPath: String, currentVersion: String, updateUrl: String?, log: String) =
+        engine.isScriptUpdateIgnored(assetPath, currentVersion, updateUrl, log)
+
+    fun clearScriptUpdateIgnore(assetPath: String) {
+        engine.clearScriptUpdateIgnore(assetPath)
+    }
+
+    fun isAnyScriptUpdateIgnored(assetPath: String) =
+        engine.isAnyScriptUpdateIgnored(assetPath)
 
     suspend fun importFromUrl(url: String): Result<LxScriptMeta> = withContext(Dispatchers.IO) {
         runCatching {
