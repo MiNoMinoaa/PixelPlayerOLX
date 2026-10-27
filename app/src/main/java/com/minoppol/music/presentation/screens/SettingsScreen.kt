@@ -43,6 +43,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CloudDownload
+import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -279,7 +280,7 @@ fun SettingsScreen(
                         it != SettingsCategory.DEVICE_CAPABILITIES
                     }
 
-                    val totalItems = mainCategories.size + 4
+                    val totalItems = mainCategories.size + 5
                     fun shapeFor(index: Int) =
                         when {
                             totalItems == 1 -> RoundedCornerShape(24.dp)
@@ -290,7 +291,7 @@ fun SettingsScreen(
 
                     var itemIndex = 0
 
-                    mainCategories.forEach { category ->
+                    for (category in mainCategories) {
                         val colors = getCategoryColors(category, isDark)
 
                         ExpressiveCategoryItem(
@@ -309,6 +310,21 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.height(2.dp))
                         }
                         itemIndex++
+
+                        if (category == SettingsCategory.PLAYBACK) {
+                            ExpressiveNavigationItem(
+                                title = stringResource(R.string.setcat_lyrics_title),
+                                subtitle = stringResource(R.string.setcat_lyrics_subtitle),
+                                iconPainter = painterResource(R.drawable.rounded_lyrics_24),
+                                colors = getCategoryColors(SettingsCategory.PLAYBACK, isDark),
+                                onClick = { navController.navigateSafely(Screen.LyricsSettings.createRoute()) },
+                                shape = shapeFor(itemIndex)
+                            )
+                            if (itemIndex < totalItems - 1) {
+                                Spacer(modifier = Modifier.height(2.dp))
+                            }
+                            itemIndex++
+                        }
                     }
 
                     ExpressiveNavigationItem(
@@ -505,6 +521,63 @@ fun ExpressiveNavigationItem(
             ) {
                 Icon(
                     imageVector = icon,
+                    contentDescription = null,
+                    tint = colors.second,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1
+                )
+                Text(
+                    text = subtitle,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+                    maxLines = 2
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ExpressiveNavigationItem(
+    title: String,
+    subtitle: String,
+    iconPainter: androidx.compose.ui.graphics.painter.Painter,
+    colors: Pair<Color, Color>,
+    onClick: () -> Unit,
+    shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(24.dp)
+) {
+    Surface(
+        onClick = onClick,
+        shape = shape,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        modifier = Modifier.fillMaxWidth().height(88.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(16.dp).fillMaxSize()
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(colors.first)
+            ) {
+                Icon(
+                    painter = iconPainter,
                     contentDescription = null,
                     tint = colors.second,
                     modifier = Modifier.size(24.dp)

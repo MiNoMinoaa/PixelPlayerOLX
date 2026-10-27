@@ -8,6 +8,8 @@ import androidx.media3.common.Player
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import com.minoppol.music.data.service.player.DualPlayerEngine
+import com.minoppol.music.data.preferences.PreviousButtonBehavior
+import com.minoppol.music.data.preferences.shouldRestartCurrentTrack
 import com.minoppol.music.data.preferences.UserPreferencesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -89,6 +91,14 @@ class PlaybackStateHolder @Inject constructor(
         appContext.getSystemService(Context.POWER_SERVICE) as PowerManager
     }
 
+    /** "Auto-play on skip" preference cached for synchronous reads. */
+    @Volatile
+    private var autoplayOnSkip: Boolean = true
+
+    /** Mirrors the "Previous button" preference. */
+    @Volatile
+    private var previousButtonBehavior: PreviousButtonBehavior = PreviousButtonBehavior.DEFAULT
+
     private fun clearColdStartSnapshot() {
         coldStartSnapshotMediaId = null
         coldStartSnapshotToken = null
@@ -150,6 +160,19 @@ class PlaybackStateHolder @Inject constructor(
                 _currentPosition.value == 0L
             ) {
                 _currentPosition.value = snapshotPositionMs
+            }
+        }
+        // Cache preferences for synchronous reads in skip/seek methods
+        scope?.launch {
+            launch {
+                userPreferencesRepository.autoplayOnSkipFlow.collect { enabled ->
+                    autoplayOnSkip = enabled
+                }
+            }
+            launch {
+                userPreferencesRepository.previousButtonBehaviorFlow.collect { behavior ->
+                    previousButtonBehavior = behavior
+                }
             }
         }
     }
@@ -370,18 +393,43 @@ class PlaybackStateHolder @Inject constructor(
 
     fun previousSong() {
         val controller = activeLocalPlayer()
-        if (controller.currentPosition > 10000) {
-            // Route the restart through seekTo() so the position override, the engine seek hint and
-            // the UI position are updated together; a bare controller.seekTo(0) left a stale
-            // override behind and the displayed position could lag the restart.
+        val behavior = previousButtonBehavior
+        val positionMs = controller.currentPosition
+        val hasPrevious = controller.hasPreviousMediaItem()
+        val mediaItemCount = controller.mediaItemCount
+        val currentIndex = controller.currentMediaItemIndex
+        Timber.tag(TAG).d(
+            "previousSong() called: behavior=%s, pos=%dms, hasPrevious=%s, itemCount=%d, currentIdx=%d",
+            behavior.storageKey, positionMs, hasPrevious, mediaItemCount, currentIndex
+        )
+        if (behavior.shouldRestartCurrentTrack(positionMs, hasPrevious)) {
+            Timber.tag(TAG).d("→ branching to restart current track (seekTo 0)")
             seekTo(0L)
         } else {
-            controller.seekToPrevious()
+            Timber.tag(TAG).d("→ branching to seekToPreviousMediaItem")
+            val wasPaused = !controller.playWhenReady
+            controller.seekToPreviousMediaItem()
+            resumeAfterSkip(controller, wasPaused)
         }
     }
 
     fun nextSong() {
-        activeLocalPlayer().seekToNext()
+        val controller = activeLocalPlayer()
+        val wasPaused = !controller.playWhenReady
+        // On the last item with repeat off the seek is a no-op; resuming there would only
+        // unpause the song the user tried to leave.
+        val hadNext = controller.hasNextMediaItem()
+        controller.seekToNext()
+        if (hadNext) resumeAfterSkip(controller, wasPaused)
+    }
+
+    /** Starts playback after a skip from a paused player when "Auto-play on skip" is on. */
+    private fun resumeAfterSkip(player: Player, wasPaused: Boolean) {
+        if (!wasPaused || !autoplayOnSkip) return
+        if (player.playbackState == Player.STATE_IDLE && player.mediaItemCount > 0) {
+            player.prepare()
+        }
+        player.play()
     }
 
     fun cycleRepeatMode() {

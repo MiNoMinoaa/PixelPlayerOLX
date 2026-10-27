@@ -62,6 +62,7 @@ import com.minoppol.music.presentation.screens.DuplicateSongsScreen
 import com.minoppol.music.presentation.screens.SettingsScreen
 import com.minoppol.music.presentation.screens.SettingsCategoryScreen
 import com.minoppol.music.presentation.screens.EqualizerScreen
+import com.minoppol.music.presentation.screens.LyricsSettingsScreen
 import com.minoppol.music.presentation.viewmodel.PlayerViewModel
 import com.minoppol.music.presentation.viewmodel.PlaylistViewModel
 import kotlinx.coroutines.flow.first
@@ -697,6 +698,23 @@ fun AppNavigation(
                     navController = navController,
                     playerViewModel = playerViewModel
                 )
+            }
+            composable(
+                route = Screen.LyricsSettings.route,
+                arguments = listOf(navArgument("highlightKey") { type = NavType.StringType; nullable = true; defaultValue = null }),
+                enterTransition = { enterTransition() },
+                exitTransition = { exitTransition() },
+                popEnterTransition = { popEnterTransition() },
+                popExitTransition = { popExitTransition() },
+            ) { backStackEntry ->
+                ScreenWrapper(navController = navController, playerViewModel = playerViewModel) {
+                    val highlightKey = backStackEntry.arguments?.getString("highlightKey")
+                    LyricsSettingsScreen(
+                        navController = navController,
+                        playerViewModel = playerViewModel,
+                        highlightKey = highlightKey
+                    )
+                }
             }
         }
     }

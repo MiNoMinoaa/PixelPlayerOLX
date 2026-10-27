@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="setcat_m3u_sync_section" tools:ignore="MissingTranslation">Playlist synchronization</string>
     <string name="setcat_m3u_sync_title" tools:ignore="MissingTranslation">Automatic M3U sync</string>
@@ -60,6 +60,10 @@
     <string name="toast_full_rescan_started">Full rescan started…</string>
     <string name="setcat_auto_scan_lrc_title">Auto-scan .lrc files</string>
     <string name="setcat_auto_scan_lrc_subtitle">Automatically scan and assign .lrc files in the same folder during library sync.</string>
+    <string name="setcat_folder_album_art_title">Use folder cover images</string>
+    <string name="setcat_folder_album_art_subtitle">Use cover.jpg, folder.jpg or a similar image from a song\'s own folder as its album art, in preference to embedded artwork. Shared folders such as Music, Downloads, DCIM and Pictures are ignored. Artist folders are also checked for artist.jpg, band.jpg and PNG variants. Manually chosen artist photos take priority.</string>
+    <string name="setcat_folder_album_art_permission_required">Full photo access is required to read album and artist images from your music folders.</string>
+    <string name="setcat_folder_album_art_refreshing">Refreshing artwork…</string>
     <string name="setcat_online_services">Optional online services</string>
     <string name="setcat_external_lyrics_title">Online lyrics from LRCLIB</string>
     <string name="setcat_external_lyrics_subtitle">Allow searches and manual fetches from lrclib.net when lyrics are missing locally.</string>
@@ -126,6 +130,16 @@
     <string name="setcat_collage_pattern_desc">Choose the shape arrangement for the Your Mix collage.</string>
     <string name="setcat_auto_rotate_patterns_title">Auto-Rotate Patterns</string>
     <string name="setcat_auto_rotate_patterns_subtitle">Cycle through collage patterns each time you visit Home.</string>
+    <string name="collage_pattern_cosmic_swirl">Cosmic Swirl</string>
+    <string name="collage_pattern_honeycomb_groove">Honeycomb Groove</string>
+    <string name="collage_pattern_vinyl_stack">Vinyl Stack</string>
+    <string name="collage_pattern_pixel_mosaic">Pixel Mosaic</string>
+    <string name="collage_pattern_stardust_scatter">Stardust Scatter</string>
+    <string name="collage_pattern_soft_orbit">Soft Orbit</string>
+    <string name="collage_pattern_arrow_fanfare">Arrow Fanfare</string>
+    <string name="collage_pattern_sunny_bloom">Sunny Bloom</string>
+    <string name="collage_pattern_pixel_cookie">Pixel Cookie</string>
+    <string name="collage_pattern_heart_garden">Heart Garden</string>
     <string name="setcat_navigation_bar">Navigation Bar</string>
     <string name="setcat_navbar_style_label">NavBar Style</string>
     <string name="setcat_navbar_style_desc">Choose the appearance for the navigation bar.</string>
@@ -163,6 +177,11 @@
     <string name="setcat_keep_playing_label">Keep playing after closing</string>
     <string name="setcat_keep_playing_desc">If off, removing the app from recents will stop playback.</string>
     <string name="setcat_keep_screen_awake_title" tools:ignore="MissingTranslation">Keep screen awake while playing</string>
+
+    <!-- Battery Optimization -->
+    <string name="setcat_battery_optimization_title">Battery Optimization</string>
+    <string name="setcat_battery_optimization_subtitle">Disable battery optimization to prevent playback interruptions.</string>
+    <string name="setcat_battery_optimization_ignored_subtitle">Already exempted — playback will not be interrupted.</string>
     <string name="setcat_keep_screen_awake_subtitle" tools:ignore="MissingTranslation">Prevents the screen from sleeping while music is actively playing and the app is visible.</string>
     <string name="setcat_replaygain_section">Volume Normalization (ReplayGain)</string>
     <string name="setcat_replaygain_enable_title">Enable ReplayGain</string>
@@ -209,6 +228,10 @@
     <string name="setcat_haptics">Haptics</string>
     <string name="setcat_haptic_feedback_title">Haptic feedback</string>
     <string name="setcat_haptic_feedback_subtitle">Enable vibration feedback across the app.</string>
+
+    <!-- Skip Behavior -->
+    <string name="setcat_autoplay_on_skip_title">Resume playback on skip</string>
+    <string name="setcat_autoplay_on_skip_subtitle">When paused, automatically resume playback after skipping to the next or previous song.</string>
 
 
     <string name="setcat_create_backup">Create Backup</string>
@@ -317,4 +340,41 @@
     <string name="cd_remove_from_history">Remove from history</string>
     <string name="cd_clear_search">Clear search</string>
     <string name="backup_history_modules_line">%1$d modules · v%2$s · schema v%3$d</string>
-</resources>
+
+    <!-- Lyrics Settings -->
+    <string name="setcat_lyrics_title">Lyrics</string>
+    <string name="setcat_lyrics_subtitle">Font size, source priority and more</string>
+    <string name="setcat_lyrics_readability_section">Readability &amp; Animation</string>
+    <string name="setcat_lyrics_player_section">Player Lyrics</string>
+    <string name="setcat_lyrics_font_size_title">Lyrics page font size</string>
+    <string name="setcat_lyrics_font_size_subtitle">Adjust the font size of the full lyrics page.</string>
+    <string name="setcat_lyrics_font_size_value">%.1f sp</string>
+    <string name="lyrics_word_highlight_enabled_title">Word-by-word highlight</string>
+    <string name="lyrics_word_highlight_enabled_subtitle">When disabled only the whole current line is highlighted.</string>
+    <string name="lyrics_highlight_style_title">Word highlight style</string>
+    <string name="lyrics_highlight_style_subtitle">Choose how the active lyric word is highlighted.</string>
+    <string name="lyrics_highlight_style_wipe">Wipe</string>
+    <string name="lyrics_highlight_style_wipe_desc">Highlight expands from left to right.</string>
+    <string name="lyrics_highlight_style_fade">Fade</string>
+    <string name="lyrics_highlight_style_fade_desc">Highlight fades in softly.</string>
+    <string name="lyrics_highlight_style_classic">Classic</string>
+    <string name="lyrics_highlight_style_classic_desc">Traditional bold-word highlight.</string>
+    <string name="lyrics_duet_layout_title">Duet layout</string>
+    <string name="lyrics_duet_layout_subtitle">Show duet lyrics side by side when available.</string>
+    <string name="lyrics_background_vocals_title">Background vocals</string>
+    <string name="lyrics_background_vocals_subtitle">Display background vocal lines when available.</string>
+    <string name="setcat_lyrics_blur_requires_animated">Requires animated lyrics to be enabled.</string>
+    <!-- Previous Button Behavior -->
+    <string name="setcat_playback_behavior">Playback</string>
+    <string name="setcat_previous_button_title">Previous button</string>
+    <string name="setcat_previous_button_description">Choose whether previous restarts the current song or goes straight to the previous one.</string>
+    <string name="setcat_previous_button_restart_track">Restart track</string>
+    <string name="setcat_previous_button_restart_track_description">After the first few seconds, previous starts the song over. Press it again to go back.</string>
+    <string name="setcat_previous_button_previous_track">Previous track</string>
+    <string name="setcat_previous_button_previous_track_description">Previous always goes back a song, wherever you are in the current one.</string>
+
+    <!-- Battery Optimization -->
+    <string name="setcat_toast_battery_already_disabled">Battery optimization is already disabled</string>
+    <string name="setcat_toast_battery_settings_unavailable">Could not open battery settings</string>    <!-- Mini Player Swipe -->
+    <string name="setcat_mini_player_swipe_to_skip_title">Swipe to skip tracks</string>
+    <string name="setcat_mini_player_swipe_to_skip_subtitle">Swipe the mini player left or right to go to the next or previous song. Turn off if you only want the full dismiss gesture.</string></resources>

@@ -262,6 +262,14 @@ Backslash (\) can be used to escape character delimiters.</string>
     <string name="presentation_batch_g_genre_sort_album">Album</string>
     <string name="presentation_batch_g_genre_sort_title_opt">Title</string>
     <string name="presentation_batch_g_cd_selected">Selected</string>
+
+    <!-- Audio Output -->
+    <string name="player_audio_output_title">Audio Output</string>
+    <string name="player_audio_output_this_phone">This Phone</string>
+    <string name="player_audio_output_wired">Wired Headphones</string>
+    <string name="player_audio_output_unknown_device">Unknown Device</string>
+    <string name="player_audio_output_more_devices">More Devices</string>
+    <string name="player_audio_output_more_devices_subtitle">Open system output switcher or Bluetooth settings</string>
     <string name="presentation_batch_g_changelog_title">Changelog</string>
     <string name="presentation_batch_g_changelog_view_github">View on GitHub</string>
     <string name="presentation_batch_g_presets_saved_title">Saved Presets</string>
