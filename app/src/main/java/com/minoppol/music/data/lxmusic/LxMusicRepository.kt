@@ -5097,29 +5097,23 @@ class LxMusicRepository @Inject constructor(
         } ?: return null
         val id = candidate.get("id")?.asString ?: return null
         val accessKey = candidate.get("accesskey")?.asString ?: return null
-        val fmt = if (candidate.get("krctype")?.asInt == 1 &&
-            (candidate.get("contenttype")?.asInt ?: 0) != 1
-        ) "krc" else "lrc"
 
-        // KRC：XOR+zlib 加密，解出 [start,dur]<off,dur,0> 逐字文本
-        if (fmt == "krc") {
-            val krcConversion = runCatching {
-                downloadKugouLyricBytes(id, accessKey, headers, fmt = "krc")
-                    ?.let { LxLyricDecoders.decodeKrcBytes(it) }
-                    ?.takeIf { looksLikeKrcText(it) }
-                    ?.let { LxLyricDecoders.convertKrc(it) }
-            }.getOrNull()
-            if (krcConversion != null) {
-                Timber.i("fetchKugouLyric: krc wordLrc_len=${krcConversion.wordLrc?.length ?: 0}")
-                return LxLyricResult(
-                    lyric = krcConversion.lrc,
-                    tlyric = krcConversion.translationLrc,
-                    rlyric = krcConversion.romanizationLrc,
-                    lxlyric = krcConversion.wordLrc,
-                )
-            }
-            Timber.w("fetchKugouLyric: KRC decode failed for id=$id, falling back to LRC")
+        val krcConversion = runCatching {
+            downloadKugouLyricBytes(id, accessKey, headers, fmt = "krc")
+                ?.let { LxLyricDecoders.decodeKrcBytes(it) }
+                ?.takeIf { looksLikeKrcText(it) }
+                ?.let { LxLyricDecoders.convertKrc(it) }
+        }.getOrNull()
+        if (krcConversion != null) {
+            Timber.i("fetchKugouLyric: krc wordLrc_len=${krcConversion.wordLrc?.length ?: 0}")
+            return LxLyricResult(
+                lyric = krcConversion.lrc,
+                tlyric = krcConversion.translationLrc,
+                rlyric = krcConversion.romanizationLrc,
+                lxlyric = krcConversion.wordLrc,
+            )
         }
+        Timber.w("fetchKugouLyric: KRC decode failed for id=$id, falling back to LRC")
 
         val lrcContent = runCatching {
             downloadKugouLyricBytes(id, accessKey, headers, fmt = "lrc")
