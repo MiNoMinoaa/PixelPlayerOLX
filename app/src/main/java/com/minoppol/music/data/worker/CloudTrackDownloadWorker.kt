@@ -548,7 +548,13 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
                 }
             }.getOrNull()
         }
-        val lyrics = runCatching { lxMusicRepository.fetchLyric(lxSong)?.lyric }.getOrNull()
+        val lyricResult = runCatching { lxMusicRepository.fetchLyric(lxSong) }.getOrNull()
+        val wordLyrics = lyricResult?.lxlyric?.takeIf { it.isNotBlank() }
+        val translation = lyricResult?.tlyric?.takeIf { it.isNotBlank() }
+        val lyrics = wordLyrics
+            ?: lyricResult?.lyric?.takeIf { it.isNotBlank() }?.let { lrc ->
+                if (translation != null) lrc + "\n" + translation else lrc
+            }
         tagWriter.writeTags(
             file = file,
             title = lxSong.name,
