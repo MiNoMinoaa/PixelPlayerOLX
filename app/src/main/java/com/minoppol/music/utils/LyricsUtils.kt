@@ -651,9 +651,10 @@ object LyricsUtils {
     private val VOICE2_LABEL_KEYWORDS = setOf("女", "女声", "female", "woman", "v2", "voice2", "vocal2", "主唱女")
 
     private val KUGOU_LINE_REGEX = Pattern.compile("^\\[(\\d+),(\\d+)](.*)$")
-    private val KUGOU_WORD_PATTERN = Pattern.compile("<(\\d+),(\\d+),(\\d+)>([^<]*)")
+    private val KUGOU_WORD_PATTERN = Pattern.compile("<(\\d+),(\\d+)(?:,\\d+)?>([^<]*)")
     private val KUGOU_TUPLE_WORD_REGEX = Regex("\\((\\d+),(\\d+)(?:,\\d+)?\\)([^()]*)")
     private val TUPLE_LINE_HEAD = Regex("^\\(\\d+,\\d+")
+    private val KUGOU_RESIDUE_TAG_REGEX = Regex("<[^<>]*>")
 
     private fun splitVoicePrefix(text: String): Pair<Int?, String> {
         val match = LRC_VOICE_PREFIX_REGEX.find(text) ?: return null to text
@@ -971,12 +972,21 @@ object LyricsUtils {
             var previousEndsWithSpace = true
             if (hasAngleTags) {
                 angleMatcher.reset()
+                val firstTagStart = if (angleMatcher.find()) angleMatcher.start() else -1
+                angleMatcher.reset()
+                if (firstTagStart > 0) {
+                    val lead = body.substring(0, firstTagStart).trim()
+                    if (lead.isNotEmpty()) {
+                        words.add(SyncedWord(time = lineStartMs.toInt(), word = lead, startsNewWord = true))
+                        previousEndsWithSpace = body[firstTagStart - 1].isWhitespace()
+                    }
+                }
                 while (angleMatcher.find()) {
                     val wordOffsetMs = angleMatcher.group(1)?.toLongOrNull() ?: 0L
-                    val rawText = angleMatcher.group(4) ?: ""
+                    val rawText = angleMatcher.group(3) ?: ""
 
                     val startsNew = previousEndsWithSpace || rawText.firstOrNull()?.isWhitespace() == true
-                    val wordText = rawText.trim()
+                    val wordText = rawText.replace(KUGOU_RESIDUE_TAG_REGEX, "").replace("$", "").trim()
                     previousEndsWithSpace = rawText.lastOrNull()?.isWhitespace() == true
 
                     if (wordText.isEmpty()) continue
@@ -995,7 +1005,7 @@ object LyricsUtils {
                     val rawText = m.groupValues[3]
 
                     val startsNew = previousEndsWithSpace || rawText.firstOrNull()?.isWhitespace() == true
-                    val wordText = rawText.trim()
+                    val wordText = rawText.replace(KUGOU_RESIDUE_TAG_REGEX, "").replace("$", "").trim()
                     previousEndsWithSpace = rawText.lastOrNull()?.isWhitespace() == true
 
                     if (wordText.isEmpty()) continue
@@ -1010,8 +1020,10 @@ object LyricsUtils {
                 }
             }
 
-            val plainText = KUGOU_WORD_PATTERN.toRegex().replace(body) { it.groupValues[4] }
+            val plainText = KUGOU_WORD_PATTERN.toRegex().replace(body) { it.groupValues[3] }
                 .let { KUGOU_TUPLE_WORD_REGEX.replace(it) { m -> m.groupValues[3] } }
+                .replace(KUGOU_RESIDUE_TAG_REGEX, "")
+                .replace("$", "")
                 .trim()
             if (plainText.isEmpty() && words.isEmpty()) continue
 
