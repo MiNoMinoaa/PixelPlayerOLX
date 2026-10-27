@@ -234,6 +234,7 @@ class PlayerViewModelTest {
             mockk(relaxed = true),
             mockk(relaxed = true),
             mockk(relaxed = true),
+            mockk(relaxed = true),
             mockk(relaxed = true)
         )
     }
