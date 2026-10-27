@@ -161,6 +161,31 @@ class LxLyricDecodersTest {
         assertThat(conversion.translationLrc!!).contains("[00:04.000]再见")
     }
 
+    @Test
+    fun `convertYrc keeps untagged leading text of each line`() {
+        val legacy = "[71060,300]第一(71360,180,0)句\n[72000,300]第二(72300,180,0)句\n"
+        val converted = LxLyricDecoders.convertYrc(legacy)!!
+        assertThat(converted).contains("[01:11.060]<01:11.060>第一<01:11.360>句")
+        assertThat(converted).contains("[01:12.000]<01:12.000>第二<01:12.300>句")
+    }
+
+    @Test
+    fun `convertKrc strips non numeric tags and dollar separators`() {
+        val krc = "[1000,2000]<0,300,0>你<R:abc>$<300,300,0>好\n"
+        val conversion = LxLyricDecoders.convertKrc(krc)!!
+        assertThat(conversion.lrc).contains("[00:01.000]你好")
+        assertThat(conversion.lrc).doesNotContain("<R:")
+        assertThat(conversion.lrc).doesNotContain("$")
+    }
+
+    @Test
+    fun `convertKuwoLrcx splits three field word tags`() {
+        val lrcx = "[kuwo:17]\n[00:01.00]你好<10,4,0>世界<14,4,0>啊\n"
+        val converted = LxLyricDecoders.convertKuwoLrcx(lrcx)!!
+        assertThat(converted).doesNotContain("<10,4,0>")
+        assertThat(converted).contains("<00:00.007>世界")
+    }
+
     // ------------------------------------------------------------------
     // Kuwo LRCx decode + conversion
     // ------------------------------------------------------------------

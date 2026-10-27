@@ -87,19 +87,23 @@ object LxLyricDecoders {
     }
 
     private fun zlibInflate(data: ByteArray): ByteArray {
-        val inflater = Inflater()
-        inflater.setInput(data)
         val out = ByteArrayOutputStream(data.size * 4)
         val buf = ByteArray(4096)
-        while (!inflater.finished()) {
-            val n = inflater.inflate(buf)
-            if (n == 0) {
-                if (inflater.needsInput() || inflater.needsDictionary()) break
-                if (inflater.needsInput() && !inflater.finished()) break
+        val inflater = Inflater()
+        inflater.setInput(data)
+        try {
+            while (!inflater.finished()) {
+                val n = inflater.inflate(buf)
+                if (n > 0) {
+                    out.write(buf, 0, n)
+                } else if (inflater.needsInput() || inflater.needsDictionary()) {
+                    break
+                }
             }
-            out.write(buf, 0, n)
+        } catch (_: java.util.zip.DataFormatException) {
+        } finally {
+            inflater.end()
         }
-        inflater.end()
         return out.toByteArray()
     }
 
@@ -495,6 +499,7 @@ object LxLyricDecoders {
     private val KRC_WORD = Regex("<(\\d+),(\\d+)(?:,\\d+)?>([^<]*)")
     private val QRC_LINE = KRC_LINE
     private val QRC_WORD = Regex("\\((\\d+),(\\d+)(?:,\\d+)?\\)([^()]*)(?=<\\d+,|\\(|$)")
+    private val KRC_RESIDUE = Regex("<[^<>]*>")
 
     /**
      * KRC text: `[start,dur]<off,dur,0>word…`, word offsets relative to line start.
@@ -546,14 +551,22 @@ object LxLyricDecoders {
             val startMs = m.groupValues[1].toLongOrNull() ?: continue
             val rest = m.groupValues[3]
             // plain line: strip word tags
-            val plain = KRC_WORD.replace(rest) { it.groupValues[3] }.trim()
+            val plain = KRC_WORD.replace(rest) { it.groupValues[3] }
+                .let { KRC_RESIDUE.replace(it, "") }
+                .replace("$", "")
+                .trim()
             lrcLines.add("${msTag(startMs)}$plain")
             lineStartsMs.add(startMs)
             // word line: absolute timestamps in <mm:ss.mmm> tags
             val words = mutableListOf<WordToken>()
+            val firstMatch = KRC_WORD.find(rest)
+            if (firstMatch != null) {
+                val lead = rest.substring(0, firstMatch.range.first).trim()
+                if (lead.isNotEmpty()) words.add(WordToken(startMs, lead))
+            }
             KRC_WORD.findAll(rest).forEach { wm ->
                 val off = wm.groupValues[1].toLongOrNull() ?: 0L
-                val w = wm.groupValues[3].trim()
+                val w = wm.groupValues[3].let { KRC_RESIDUE.replace(it, "") }.replace("$", "").trim()
                 if (w.isNotEmpty()) words.add(WordToken(startMs + off, w))
             }
             if (words.isNotEmpty()) {
@@ -668,25 +681,34 @@ object LxLyricDecoders {
             val startMs = m.groupValues[1].toLongOrNull() ?: continue
             val rest = m.groupValues[3]
             sawTupleLine = true
-            // Leading voice marker before the first word tag, e.g. "(男)" or "v1:".
-            val leadMatch = Regex("^\\s*(?:\\(|\\[|\\{)([^()\\[\\]{}]{1,8})(?:\\)|\\]|})").find(rest)
+            val leadMatch = Regex("^\\s*(?:\\(|\\[|\\{)(?![\\d,]+(?:\\)|\\]|}))([^()\\[\\]{}]{1,8})(?:\\)|\\]|})").find(rest)
                 ?: Regex("^\\s*v(\\d{1,4})\\s*:").find(rest)
             val voiceLead = leadMatch?.value?.trim()
-            // plain line: strip word tags
-            val angleWords = KRC_WORD.findAll(rest).map { wm ->
-                WordToken(startMs + (wm.groupValues[1].toLongOrNull() ?: 0L), wm.groupValues[3].trim())
-            }.filter { it.text.isNotEmpty() }.toList()
-            val words = if (angleWords.isNotEmpty()) {
-                angleWords
-            } else {
-                QRC_WORD.findAll(rest).map { wm ->
-                    WordToken(wm.groupValues[1].toLongOrNull() ?: startMs, wm.groupValues[3].trim())
-                }.filter { it.text.isNotEmpty() }.toList()
+            val body = if (leadMatch != null) rest.substring(leadMatch.range.last + 1) else rest
+            val angleMatches = KRC_WORD.findAll(body).toList()
+            val parenMatches = if (angleMatches.isEmpty()) QRC_WORD.findAll(body).toList() else emptyList()
+            val firstTag = angleMatches.firstOrNull() ?: parenMatches.firstOrNull()
+            val words = mutableListOf<WordToken>()
+            if (firstTag != null) {
+                val lead = body.substring(0, firstTag.range.first).trim()
+                if (lead.isNotEmpty()) words.add(WordToken(startMs, lead))
             }
-            var plain = KRC_WORD.replace(rest) { it.groupValues[3] }
+            if (angleMatches.isNotEmpty()) {
+                angleMatches.forEach { wm ->
+                    val w = wm.groupValues[3].trim()
+                    if (w.isNotEmpty()) words.add(WordToken(startMs + (wm.groupValues[1].toLongOrNull() ?: 0L), w))
+                }
+            } else {
+                parenMatches.forEach { wm ->
+                    val w = wm.groupValues[3].trim()
+                    if (w.isNotEmpty()) words.add(WordToken(wm.groupValues[1].toLongOrNull() ?: startMs, w))
+                }
+            }
+            val plain = KRC_WORD.replace(body) { it.groupValues[3] }
                 .let { QRC_WORD.replace(it) { m2 -> m2.groupValues[3] } }
+                .let { KRC_RESIDUE.replace(it, "") }
+                .replace("$", "")
                 .trim()
-            if (voiceLead != null) plain = plain.removePrefix(voiceLead).trim()
             if (plain.isEmpty() && words.isEmpty()) continue
             val sb = StringBuilder(msTag(startMs))
             if (voiceLead != null && voiceLead.isNotEmpty()) sb.append(voiceLead)
@@ -753,7 +775,7 @@ object LxLyricDecoders {
                 out.add(timeTag + body)
                 continue
             }
-            val pieces = body.split(Regex("(?=<-?\\d+,-?\\d+>)")).filter { it.isNotEmpty() }
+            val pieces = body.split(Regex("(?=<-?\\d+,-?\\d+(?:,-?\\d+)?>)")).filter { it.isNotEmpty() }
             val kwWords = mutableListOf<KwWord>()
             var leadingText: String? = null
             for (piece in pieces) {

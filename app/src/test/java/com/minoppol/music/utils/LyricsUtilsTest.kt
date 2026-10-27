@@ -68,6 +68,18 @@ class LyricsUtilsTest {
     }
 
     @Test
+    fun parseLyrics_kugouKeepsUntaggedLeadingWordAndStripsResidueTags() {
+        val krc = "[1000,2000]第一<0,300,0>句<R:x>$<300,300,0>啊\n"
+        val synced = requireNotNull(LyricsUtils.parseLyrics(krc).synced)
+
+        assertEquals("第一句啊", synced[0].line)
+        assertEquals(3, synced[0].words?.size)
+        assertEquals("第一", synced[0].words!![0].word)
+        assertEquals(1_000, synced[0].words!![0].time)
+        assertEquals("句", synced[0].words!![1].word)
+    }
+
+    @Test
     fun parseLyrics_handlesBomAtStartOfSyncedLine() {
         val lrc = "\uFEFF[00:03.80]Time is standing still\n[00:09.86]Tracing my body"
 
