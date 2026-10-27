@@ -10,9 +10,15 @@ import androidx.compose.animation.core.animateFloatAsState
 import android.app.Activity
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import android.os.SystemClock
 import android.text.format.Formatter
 import android.widget.Toast
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.minoppol.music.utils.folderArtworkPermissions
+import com.minoppol.music.utils.isIgnoringBatteryOptimizations
+import com.minoppol.music.utils.openBatteryOptimizationSettings
+import com.minoppol.music.data.preferences.PreviousButtonBehavior
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -177,7 +183,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
 @androidx.annotation.OptIn(UnstableApi::class)
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, com.google.accompanist.permissions.ExperimentalPermissionsApi::class)
 @Composable
 fun SettingsCategoryScreen(
     categoryId: String,
@@ -206,6 +212,34 @@ fun SettingsCategoryScreen(
     val syncProgress by settingsViewModel.syncProgress.collectAsStateWithLifecycle()
     val dataTransferProgress by settingsViewModel.dataTransferProgress.collectAsStateWithLifecycle()
     val m3uSyncState by m3uSyncViewModel.state.collectAsStateWithLifecycle()
+    val useFolderAlbumArt by settingsViewModel.useFolderAlbumArt.collectAsStateWithLifecycle()
+
+    val folderArtRefreshingMessage = stringResource(R.string.setcat_folder_album_art_refreshing)
+    val folderArtPermissionMessage =
+        stringResource(R.string.setcat_folder_album_art_permission_required)
+    val enableFolderAlbumArt: () -> Unit = {
+        settingsViewModel.setUseFolderAlbumArt(true)
+        Toast.makeText(context, folderArtRefreshingMessage, Toast.LENGTH_SHORT).show()
+    }
+    val folderArtPermissions = remember {
+        folderArtworkPermissions(Build.VERSION.SDK_INT)
+    }
+    val imagesPermissionState = rememberMultiplePermissionsState(folderArtPermissions) { grants ->
+        if (grants[folderArtPermissions.first()] == true) {
+            enableFolderAlbumArt()
+        } else {
+            Toast.makeText(context, folderArtPermissionMessage, Toast.LENGTH_LONG).show()
+        }
+    }
+    val hasImagesPermission = imagesPermissionState.allPermissionsGranted
+    val onFolderAlbumArtToggled: (Boolean) -> Unit = { enabled ->
+        when {
+            !enabled -> settingsViewModel.setUseFolderAlbumArt(false)
+            hasImagesPermission -> enableFolderAlbumArt()
+            else -> imagesPermissionState.launchMultiplePermissionRequest()
+        }
+    }
+
     val paletteRegenerateTargets by playerViewModel.paletteRegenerationTargets.collectAsStateWithLifecycle()
     val explorerRoot = settingsViewModel.explorerRoot()
 
@@ -495,12 +529,12 @@ fun SettingsCategoryScreen(
                                 )
                                 }
                                 SwitchSettingItem(
-                                    title = stringResource(R.string.setcat_auto_scan_lrc_title),
-                                    subtitle = stringResource(R.string.setcat_auto_scan_lrc_subtitle),
-                                    checked = uiState.autoScanLrcFiles,
-                                    onCheckedChange = { settingsViewModel.setAutoScanLrcFiles(it) },
+                                    title = stringResource(R.string.setcat_folder_album_art_title),
+                                    subtitle = stringResource(R.string.setcat_folder_album_art_subtitle),
+                                    checked = useFolderAlbumArt && hasImagesPermission,
+                                    onCheckedChange = onFolderAlbumArtToggled,
                                     leadingIcon = { Icon(Icons.Outlined.Folder, null, tint = MaterialTheme.colorScheme.secondary) },
-                                    modifier = Modifier.settingHighlight("item_library_auto_scan_lrc", highlightKey)
+                                    modifier = Modifier.settingHighlight("item_library_folder_album_art", highlightKey)
                                 )
                                 SettingsItem(
                                     title = stringResource(R.string.setcat_find_duplicates_title),
@@ -584,14 +618,6 @@ fun SettingsCategoryScreen(
 
                             SettingsSubsection(title = stringResource(R.string.setcat_online_services)) {
                                 SwitchSettingItem(
-                                    title = stringResource(R.string.setcat_external_lyrics_title),
-                                    subtitle = stringResource(R.string.setcat_external_lyrics_subtitle),
-                                    checked = uiState.externalLyricsEnabled,
-                                    onCheckedChange = { settingsViewModel.setExternalLyricsEnabled(it) },
-                                    leadingIcon = { Icon(painterResource(R.drawable.rounded_lyrics_24), null, tint = MaterialTheme.colorScheme.secondary) },
-                                    modifier = Modifier.settingHighlight("item_library_external_lyrics", highlightKey)
-                                )
-                                SwitchSettingItem(
                                     title = stringResource(R.string.setcat_external_artist_images_title),
                                     subtitle = stringResource(R.string.setcat_external_artist_images_subtitle),
                                     checked = uiState.externalArtistImagesEnabled,
@@ -599,81 +625,6 @@ fun SettingsCategoryScreen(
                                     leadingIcon = { Icon(painterResource(R.drawable.rounded_artist_24), null, tint = MaterialTheme.colorScheme.secondary) },
                                     modifier = Modifier.settingHighlight("item_library_external_artist_images", highlightKey)
                                 )
-                                SwitchSettingItem(
-                                    title = stringResource(R.string.setcat_notification_lyrics_title),
-                                    subtitle = stringResource(R.string.setcat_notification_lyrics_subtitle),
-                                    checked = uiState.notificationLyricsEnabled,
-                                    onCheckedChange = { settingsViewModel.setNotificationLyricsEnabled(it) },
-                                    leadingIcon = { Icon(painterResource(R.drawable.rounded_music_note_24), null, tint = MaterialTheme.colorScheme.secondary) },
-                                    modifier = Modifier.settingHighlight("item_library_notification_lyrics", highlightKey)
-                                )
-                            }
-
-                            SettingsSubsection(
-                                title = stringResource(R.string.setcat_lyrics_management),
-                                addBottomSpace = false
-                            ) {
-                                ThemeSelectorItem(
-                                    label = stringResource(R.string.setcat_lyrics_source_priority_label),
-                                    description = stringResource(R.string.setcat_lyrics_source_priority_desc),
-                                    options = mapOf(
-                                        LyricsSourcePreference.EMBEDDED_FIRST.name to stringResource(R.string.setcat_lyrics_embedded_first),
-                                        LyricsSourcePreference.API_FIRST.name to stringResource(R.string.setcat_lyrics_online_first),
-                                        LyricsSourcePreference.LOCAL_FIRST.name to stringResource(R.string.setcat_lyrics_local_first)
-                                    ),
-                                    selectedKey = uiState.lyricsSourcePreference.name,
-                                    onSelectionChanged = { key ->
-                                        settingsViewModel.setLyricsSourcePreference(
-                                            LyricsSourcePreference.fromName(key)
-                                        )
-                                    },
-                                    leadingIcon = { Icon(painterResource(R.drawable.rounded_lyrics_24), null, tint = MaterialTheme.colorScheme.secondary) },
-                                    modifier = Modifier.settingHighlight("item_library_lyrics_source_priority", highlightKey)
-                                )
-                                SettingsItem(
-                                    title = stringResource(R.string.setcat_reset_imported_lyrics_title),
-                                    subtitle = stringResource(R.string.setcat_reset_imported_lyrics_subtitle),
-                                    leadingIcon = { Icon(Icons.Outlined.ClearAll, null, tint = MaterialTheme.colorScheme.secondary) },
-                                    modifier = Modifier.settingHighlight("item_library_reset_imported_lyrics", highlightKey),
-                                    onClick = { showClearLyricsDialog = true }
-                                )
-                                SwitchSettingItem(
-                                    title = stringResource(R.string.setcat_mini_player_lyrics_title),
-                                    subtitle = stringResource(R.string.setcat_mini_player_lyrics_subtitle),
-                                    checked = uiState.miniPlayerLyricsEnabled,
-                                    onCheckedChange = { settingsViewModel.setMiniPlayerLyricsEnabled(it) },
-                                    leadingIcon = { Icon(painterResource(R.drawable.rounded_lyrics_24), null, tint = MaterialTheme.colorScheme.secondary) },
-                                    modifier = Modifier.settingHighlight("item_library_mini_player_lyrics", highlightKey)
-                                )
-                                SwitchSettingItem(
-                                    title = stringResource(R.string.setcat_in_player_lyrics_title),
-                                    subtitle = stringResource(R.string.setcat_in_player_lyrics_subtitle),
-                                    checked = uiState.inPlayerLyricsEnabled,
-                                    onCheckedChange = { settingsViewModel.setInPlayerLyricsEnabled(it) },
-                                    leadingIcon = { Icon(painterResource(R.drawable.rounded_lyrics_24), null, tint = MaterialTheme.colorScheme.secondary) },
-                                    modifier = Modifier.settingHighlight("item_library_in_player_lyrics", highlightKey)
-                                )
-                                if (uiState.inPlayerLyricsEnabled) {
-                                    ThemeSelectorItem(
-                                        label = stringResource(R.string.setcat_in_player_lyrics_size_label),
-                                        description = stringResource(R.string.setcat_in_player_lyrics_size_desc),
-                                        options = mapOf(
-                                            "14" to "14",
-                                            "16" to "16",
-                                            "18" to "18",
-                                            "20" to "20",
-                                            "22" to "22",
-                                            "24" to "24",
-                                            "28" to "28"
-                                        ),
-                                        selectedKey = uiState.inPlayerLyricsFontSize.toString(),
-                                        onSelectionChanged = { key ->
-                                            settingsViewModel.setInPlayerLyricsFontSize(key.toInt())
-                                        },
-                                        leadingIcon = { Icon(painterResource(R.drawable.rounded_lyrics_24), null, tint = MaterialTheme.colorScheme.secondary) },
-                                        modifier = Modifier.settingHighlight("item_library_in_player_lyrics_size", highlightKey)
-                                    )
-                                }
                             }
 
                         }
@@ -770,7 +721,7 @@ fun SettingsCategoryScreen(
                                 ThemeSelectorItem(
                                     label = stringResource(R.string.setcat_collage_pattern_label),
                                     description = stringResource(R.string.setcat_collage_pattern_desc),
-                                    options = CollagePattern.entries.associate { it.storageKey to it.label },
+                                    options = CollagePattern.entries.associate { it.storageKey to stringResource(it.labelRes) },
                                     selectedKey = uiState.collagePattern.storageKey,
                                     onSelectionChanged = { key ->
                                         settingsViewModel.setCollagePattern(CollagePattern.fromStorageKey(key))
@@ -924,6 +875,29 @@ fun SettingsCategoryScreen(
                                     leadingIcon = { Icon(Icons.Rounded.MusicNote, null, tint = MaterialTheme.colorScheme.secondary) },
                                     modifier = Modifier.settingHighlight("item_playback_keep_playing", highlightKey)
                                 )
+
+                                val context = LocalContext.current
+                                SettingsItem(
+                                    title = stringResource(R.string.setcat_battery_optimization_title),
+                                    subtitle = stringResource(R.string.setcat_battery_optimization_subtitle),
+                                    leadingIcon = { Icon(painterResource(R.drawable.rounded_all_inclusive_24), null, tint = MaterialTheme.colorScheme.secondary) },
+                                    modifier = Modifier.settingHighlight("item_playback_battery_optimization", highlightKey),
+                                    onClick = {
+                                        when {
+                                            isIgnoringBatteryOptimizations(context) -> Toast.makeText(
+                                                context,
+                                                context.getString(R.string.setcat_toast_battery_already_disabled),
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            !openBatteryOptimizationSettings(context) -> Toast.makeText(
+                                                context,
+                                                context.getString(R.string.setcat_toast_battery_settings_unavailable),
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                )
+
                                 SwitchSettingItem(
                                     title = stringResource(R.string.setcat_keep_screen_awake_title),
                                     subtitle = stringResource(R.string.setcat_keep_screen_awake_subtitle),
@@ -1096,6 +1070,29 @@ fun SettingsCategoryScreen(
                                 )
                             }
 
+                            SettingsSubsection(title = stringResource(R.string.setcat_lyrics_title)) {
+                                SettingsItem(
+                                    title = stringResource(R.string.setcat_lyrics_title),
+                                    subtitle = stringResource(R.string.setcat_lyrics_subtitle),
+                                    leadingIcon = {
+                                        Icon(
+                                            painterResource(R.drawable.rounded_lyrics_24),
+                                            null,
+                                            tint = MaterialTheme.colorScheme.secondary
+                                        )
+                                    },
+                                    trailingIcon = {
+                                        Icon(
+                                            Icons.Rounded.ChevronRight,
+                                            stringResource(R.string.cd_open),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    },
+                                    modifier = Modifier.settingHighlight("item_playback_lyrics_subscreen", highlightKey),
+                                    onClick = { navController.navigateSafely(Screen.LyricsSettings.createRoute()) }
+                                )
+                            }
+
                         }
                         SettingsCategory.BEHAVIOR -> {
                             SettingsSubsection(
@@ -1126,6 +1123,50 @@ fun SettingsCategoryScreen(
                                     onCheckedChange = { settingsViewModel.setTapBackgroundClosesPlayer(it) },
                                     leadingIcon = { Icon(painterResource(R.drawable.rounded_touch_app_24), null, tint = MaterialTheme.colorScheme.secondary) },
                                     modifier = Modifier.settingHighlight("item_behavior_tap_bg_closes", highlightKey)
+                                )
+                                SwitchSettingItem(
+                                    title = stringResource(R.string.setcat_mini_player_swipe_to_skip_title),
+                                    subtitle = stringResource(R.string.setcat_mini_player_swipe_to_skip_subtitle),
+                                    checked = uiState.miniPlayerSwipeToSkip,
+                                    onCheckedChange = { settingsViewModel.setMiniPlayerSwipeToSkip(it) },
+                                    leadingIcon = { Icon(painterResource(R.drawable.rounded_skip_next_24), null, tint = MaterialTheme.colorScheme.secondary) },
+                                    modifier = Modifier.settingHighlight("item_behavior_mini_swipe_skip", highlightKey)
+                                )
+                            }
+                            SettingsSubsection(
+                                title = stringResource(R.string.setcat_playback_behavior)
+                            ) {
+                                SwitchSettingItem(
+                                    title = stringResource(R.string.setcat_autoplay_on_skip_title),
+                                    subtitle = stringResource(R.string.setcat_autoplay_on_skip_subtitle),
+                                    checked = uiState.autoplayOnSkip,
+                                    onCheckedChange = { settingsViewModel.setAutoplayOnSkip(it) },
+                                    leadingIcon = { Icon(painterResource(R.drawable.rounded_play_arrow_24), null, tint = MaterialTheme.colorScheme.secondary) },
+                                    modifier = Modifier.settingHighlight("item_behavior_autoplay_skip", highlightKey)
+                                )
+                                ThemeSelectorItem(
+                                    label = stringResource(R.string.setcat_previous_button_title),
+                                    description = stringResource(R.string.setcat_previous_button_description),
+                                    options = linkedMapOf(
+                                        PreviousButtonBehavior.RESTART_TRACK.storageKey to
+                                            stringResource(R.string.setcat_previous_button_restart_track),
+                                        PreviousButtonBehavior.PREVIOUS_TRACK.storageKey to
+                                            stringResource(R.string.setcat_previous_button_previous_track)
+                                    ),
+                                    optionDescriptions = mapOf(
+                                        PreviousButtonBehavior.RESTART_TRACK.storageKey to
+                                            stringResource(R.string.setcat_previous_button_restart_track_description),
+                                        PreviousButtonBehavior.PREVIOUS_TRACK.storageKey to
+                                            stringResource(R.string.setcat_previous_button_previous_track_description)
+                                    ),
+                                    selectedKey = uiState.previousButtonBehavior.storageKey,
+                                    onSelectionChanged = { key ->
+                                        settingsViewModel.setPreviousButtonBehavior(
+                                            PreviousButtonBehavior.fromStorageKey(key)
+                                        )
+                                    },
+                                    leadingIcon = { Icon(painterResource(R.drawable.rounded_skip_previous_24), null, tint = MaterialTheme.colorScheme.secondary) },
+                                    modifier = Modifier.settingHighlight("item_behavior_previous_button", highlightKey)
                                 )
                             }
                             SettingsSubsection(

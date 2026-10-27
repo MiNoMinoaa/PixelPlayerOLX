@@ -114,6 +114,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.Cloud
+import androidx.compose.material.icons.rounded.Headphones
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.minoppol.music.presentation.viewmodel.AudioBookmarksViewModel
 import androidx.compose.runtime.derivedStateOf
@@ -139,6 +140,8 @@ import com.minoppol.music.presentation.components.scoped.rememberSmoothProgress
 import com.minoppol.music.presentation.components.subcomps.FetchLyricsDialog
 import com.minoppol.music.presentation.screens.lxmusic.LxMusicViewModel
 import com.minoppol.music.presentation.viewmodel.LyricsSearchUiState
+import com.minoppol.music.presentation.viewmodel.AudioOutputStateHolder
+import com.minoppol.music.presentation.components.player.AudioOutputBottomSheet
 import com.minoppol.music.presentation.viewmodel.PlaybackOrigin
 import com.minoppol.music.presentation.viewmodel.PlayerSheetState
 import com.minoppol.music.presentation.viewmodel.PlayerViewModel
@@ -258,6 +261,9 @@ fun FullPlayerContent(
     var showArtistPicker by rememberSaveable { mutableStateOf(false) }
     var showSaveBookmarkDialog by rememberSaveable { mutableStateOf(false) }
     val bookmarksViewModel: AudioBookmarksViewModel = hiltViewModel()
+    val audioOutputStateHolder: AudioOutputStateHolder = hiltViewModel()
+    var showAudioOutputSheet by rememberSaveable { mutableStateOf(false) }
+    val audioOutputSheetState = rememberModalSheetState()
     val lxMusicViewModel: LxMusicViewModel = hiltViewModel(
         viewModelStoreOwner = LocalContext.current as androidx.activity.ComponentActivity
     )
@@ -394,6 +400,14 @@ fun FullPlayerContent(
                 }
             )
         }
+    }
+
+    if (showAudioOutputSheet) {
+        AudioOutputBottomSheet(
+            sheetState = audioOutputSheetState,
+            onDismiss = { showAudioOutputSheet = false },
+            stateHolder = audioOutputStateHolder
+        )
     }
 
     if (showSaveBookmarkDialog) {
@@ -856,6 +870,20 @@ fun FullPlayerContent(
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(CircleShape)
+                                    .background(playerOnAccentColor.copy(alpha = 0.7f))
+                                    .clickable { showAudioOutputSheet = true },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Headphones,
+                                    contentDescription = stringResource(R.string.player_audio_output_title),
+                                    tint = playerAccentColor
+                                )
+                            }
                             Box(
                                 modifier = Modifier
                                     .size(42.dp)

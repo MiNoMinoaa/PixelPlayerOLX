@@ -248,6 +248,18 @@ class ColorSchemeProcessor @Inject constructor(
         }
     }
 
+    suspend fun invalidateLocalArtworkSchemes() {
+        processingMutex.withLock {
+            memoryCache.snapshot().keys
+                .filter(LocalArtworkUri::isLocalArtworkUri)
+                .forEach { memoryCache.remove(it) }
+            clearExtractedColorCache()
+            withContext(Dispatchers.IO) {
+                albumArtThemeDao.deleteLocalArtworkThemes()
+            }
+        }
+    }
+
     private fun removeUriFromMemoryCache(uri: String) {
         val prefix = "$uri$CACHE_KEY_SEPARATOR"
         memoryCache.snapshot().keys

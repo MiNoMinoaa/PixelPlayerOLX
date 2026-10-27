@@ -45,6 +45,7 @@ import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat
 import net.sourceforge.pinyin4j.format.HanyuPinyinToneType
 import com.minoppol.music.data.model.Lyrics
 import com.minoppol.music.data.model.SyncedLine
+import com.minoppol.music.data.model.BackgroundVocals
 import com.minoppol.music.data.model.SyncedWord
 import kotlinx.coroutines.flow.Flow
 import timber.log.Timber
@@ -630,8 +631,63 @@ object LyricsUtils {
     private val TRANSLATION_CREDIT_REGEX = Regex("^\\s*by\\s*[:：].+", RegexOption.IGNORE_CASE)
     private val LRC_METADATA_PATTERN = Pattern.compile("^\\[[a-zA-Z]+:.*]$")
 
+    private val LRC_BACKGROUND_LINE_REGEX = Regex("^\\[bg:(.*)]$", RegexOption.IGNORE_CASE)
+    private val LRC_VOICE_PREFIX_REGEX = Regex(
+        "^(<\\d{2}:\\d{2}[.:]\\d{2,3}>)?\\s*v(\\d{1,4})\\s*:\\s*",
+        RegexOption.IGNORE_CASE
+    )
+    private val LRC_BRACKET_VOICE_REGEX = Regex(
+        """^(<\d{2}:\d{2}[.:]\d{2,3}>)?\s*(?:\(|\[|\{)([^()\[\]{}]+)(?:\)|\]|\})\s*""",
+        RegexOption.IGNORE_CASE
+    )
+    private val GROUP_VOICE_LABEL_KEYWORDS = setOf(
+        "合", "合唱", "群", "全体", "大合唱", "全体合", "全员", "大合",
+        "all", "chorus", "choir", "group", "ensemble",
+    )
+    private val HARMONY_LABEL_KEYWORDS = setOf(
+        "和声", "伴唱", "bg", "harmony", "backing", "background",
+    )
+    private val VOICE1_LABEL_KEYWORDS = setOf("男", "男声", "male", "man", "v1", "voice1", "vocal1", "主", "主唱男")
+    private val VOICE2_LABEL_KEYWORDS = setOf("女", "女声", "female", "woman", "v2", "voice2", "vocal2", "主唱女")
+
     private val KUGOU_LINE_REGEX = Pattern.compile("^\\[(\\d+),(\\d+)](.*)$")
     private val KUGOU_WORD_PATTERN = Pattern.compile("<(\\d+),(\\d+),(\\d+)>([^<]*)")
+
+    private fun splitVoicePrefix(text: String): Pair<Int?, String> {
+        val match = LRC_VOICE_PREFIX_REGEX.find(text) ?: return null to text
+        val voice = match.groupValues[2].toIntOrNull()
+        val remaining = text.removeRange(match.range).trim()
+        return voice to remaining
+    }
+
+    private fun splitBracketVoiceLabel(
+        text: String,
+        seenBracketLabels: MutableMap<String, Int>,
+        assignNextVoice: () -> Int,
+    ): Triple<Int?, BackgroundVocals?, String> {
+        val match = LRC_BRACKET_VOICE_REGEX.find(text) ?: return Triple(null, null, text)
+        val label = match.groupValues[2].trim().lowercase()
+        val remaining = text.removeRange(match.range).trim()
+
+        val isHarmony = HARMONY_LABEL_KEYWORDS.any { label.contains(it.lowercase()) }
+        val background = if (isHarmony) BackgroundVocals(remaining) else null
+
+        val voice = when {
+            GROUP_VOICE_LABEL_KEYWORDS.any { label.contains(it.lowercase()) } -> 1_000
+            VOICE1_LABEL_KEYWORDS.any { label.contains(it.lowercase()) } -> 1
+            VOICE2_LABEL_KEYWORDS.any { label.contains(it.lowercase()) } -> 2
+            else -> run {
+                val embeddedNumber = Regex("""(\d{1,4})""").find(label)?.groupValues?.get(1)?.toIntOrNull()
+                if (embeddedNumber != null) {
+                    embeddedNumber
+                } else {
+                    seenBracketLabels.getOrPut(label) { assignNextVoice() }
+                }
+            }
+        }
+
+        return Triple(voice, background, remaining)
+    }
 
     /**
      * Parses a String containing lyrics in LRC or plain-text format.
@@ -659,10 +715,26 @@ object LyricsUtils {
         val syncedLines = mutableListOf<SyncedLine>()
         val plainLines = mutableListOf<String>()
         var isSynced = false
+        val seenBracketLabels = mutableMapOf<String, Int>()
+        var nextBracketVoice = 3
 
         lyricsText.lines().forEach { rawLine ->
             val line = sanitizeLrcLine(rawLine)
-            if (line.isEmpty() || LRC_METADATA_PATTERN.matcher(line).matches()) return@forEach
+            if (line.isEmpty()) return@forEach
+
+            val backgroundMatch = LRC_BACKGROUND_LINE_REGEX.matchEntire(line)
+            if (backgroundMatch != null) {
+                val previous = syncedLines.lastOrNull()
+                if (previous != null) {
+                    val bgText = backgroundMatch.groupValues[1].trim()
+                    syncedLines[syncedLines.lastIndex] = previous.copy(
+                        background = BackgroundVocals(text = bgText)
+                    )
+                }
+                return@forEach
+            }
+
+            if (LRC_METADATA_PATTERN.matcher(line).matches()) return@forEach
 
             val lineMatcher = LRC_LINE_REGEX.matcher(line)
             if (lineMatcher.matches()) {
@@ -671,7 +743,16 @@ object LyricsUtils {
                 val seconds = lineMatcher.group(2)?.toLong() ?: 0
                 val fraction = lineMatcher.group(3)?.toLong() ?: 0
                 val textWithTags = stripFormatCharacters(lineMatcher.group(4)?.trim() ?: "")
-                val text = stripLrcTimestamps(textWithTags)
+                val (enhancedVoice, afterEnhanced) = splitVoicePrefix(textWithTags)
+                val (voice, textForStrip) = if (enhancedVoice != null) {
+                    enhancedVoice to afterEnhanced
+                } else {
+                    val (bracketVoice, _, bracketText) = splitBracketVoiceLabel(textWithTags, seenBracketLabels) {
+                        nextBracketVoice++
+                    }
+                    bracketVoice to bracketText
+                }
+                val text = stripLrcTimestamps(textForStrip)
 
                 val millis = if (lineMatcher.group(3)?.length == 2) fraction * 10 else fraction
                 val lineTimestamp = minutes * 60 * 1000 + seconds * 1000 + millis
@@ -733,12 +814,12 @@ object LyricsUtils {
                     }
 
                     if (words.isNotEmpty()) {
-                        syncedLines.add(SyncedLine(lineTimestamp.toInt(), displayText, words))
+                        syncedLines.add(SyncedLine(lineTimestamp.toInt(), displayText, words, voice = voice))
                     } else {
-                        syncedLines.add(SyncedLine(lineTimestamp.toInt(), displayText))
+                        syncedLines.add(SyncedLine(lineTimestamp.toInt(), displayText, voice = voice))
                     }
                 } else {
-                    syncedLines.add(SyncedLine(lineTimestamp.toInt(), text))
+                    syncedLines.add(SyncedLine(lineTimestamp.toInt(), text, voice = voice))
                 }
             } else {
                 val stripped = stripLrcTimestamps(stripFormatCharacters(line))

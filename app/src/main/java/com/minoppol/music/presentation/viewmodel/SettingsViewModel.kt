@@ -19,6 +19,7 @@ import com.minoppol.music.data.preferences.AppLanguage
 import com.minoppol.music.data.preferences.AppThemeMode
 import com.minoppol.music.data.preferences.CarouselStyle
 import com.minoppol.music.data.preferences.LibraryNavigationMode
+import com.minoppol.music.data.preferences.PreviousButtonBehavior
 import com.minoppol.music.data.preferences.ThemePreference
 import com.minoppol.music.data.preferences.UserPreferencesRepository
 import com.minoppol.music.data.preferences.AlbumArtQuality
@@ -45,6 +46,7 @@ import javax.inject.Inject
 import com.minoppol.music.R
 import com.minoppol.music.data.preferences.NavBarStyle
 import com.minoppol.music.data.preferences.LaunchTab
+import com.minoppol.music.data.preferences.LyricsWordHighlightStyle
 import com.minoppol.music.data.service.player.HiFiCapabilityChecker
 import com.minoppol.music.utils.AppLocaleManager
 import java.io.File
@@ -74,6 +76,9 @@ data class SettingsUiState(
     val launchTab: String = LaunchTab.HOME,
     val keepPlayingInBackground: Boolean = true,
     val keepScreenAwakeWhilePlaying: Boolean = false,
+    val autoplayOnSkip: Boolean = true,
+    val previousButtonBehavior: PreviousButtonBehavior = PreviousButtonBehavior.DEFAULT,
+    val miniPlayerSwipeToSkip: Boolean = true,
     val resumeOnHeadsetReconnect: Boolean = false,
     val showQueueHistory: Boolean = true,
     val isCrossfadeEnabled: Boolean = false,
@@ -104,6 +109,11 @@ data class SettingsUiState(
     val useAnimatedLyrics: Boolean = false,
     val animatedLyricsBlurEnabled: Boolean = true,
     val animatedLyricsBlurStrength: Float = 2.5f,
+    val lyricsFontSizeSp: Float = 16f,
+    val lyricsWordHighlightStyle: LyricsWordHighlightStyle = LyricsWordHighlightStyle.WIPE,
+    val lyricsWordHighlightEnabled: Boolean = true,
+    val lyricsDuetLayoutEnabled: Boolean = false,
+    val showLyricsBackgroundVocals: Boolean = false,
     val backupInfoDismissed: Boolean = false,
     val isDataTransferInProgress: Boolean = false,
     val restorePlan: RestorePlan? = null,
@@ -194,6 +204,7 @@ class SettingsViewModel @Inject constructor(
     private val lyricsRepository: LyricsRepository,
     private val musicRepository: MusicRepository,
     private val backupManager: BackupManager,
+    private val folderArtworkSettingsCoordinator: com.minoppol.music.utils.FolderArtworkSettingsCoordinator,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -415,6 +426,24 @@ class SettingsViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            userPreferencesRepository.autoplayOnSkipFlow.collect { enabled ->
+                _uiState.update { it.copy(autoplayOnSkip = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.previousButtonBehaviorFlow.collect { behavior ->
+                _uiState.update { it.copy(previousButtonBehavior = behavior) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.miniPlayerSwipeToSkipFlow.collect { enabled ->
+                _uiState.update { it.copy(miniPlayerSwipeToSkip = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
             userPreferencesRepository.fullPlayerLoadingTweaksFlow.collect { tweaks ->
                 _uiState.update { it.copy(fullPlayerLoadingTweaks = tweaks) }
             }
@@ -423,6 +452,36 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.useAnimatedLyricsFlow.collect { enabled ->
                 _uiState.update { it.copy(useAnimatedLyrics = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.lyricsFontSizeSpFlow.collect { size ->
+                _uiState.update { it.copy(lyricsFontSizeSp = size) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.lyricsWordHighlightStyleFlow.collect { style ->
+                _uiState.update { it.copy(lyricsWordHighlightStyle = style) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.lyricsWordHighlightEnabledFlow.collect { enabled ->
+                _uiState.update { it.copy(lyricsWordHighlightEnabled = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.lyricsDuetLayoutFlow.collect { enabled ->
+                _uiState.update { it.copy(lyricsDuetLayoutEnabled = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.showLyricsBackgroundVocalsFlow.collect { enabled ->
+                _uiState.update { it.copy(showLyricsBackgroundVocals = enabled) }
             }
         }
 
@@ -713,6 +772,24 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun setAutoplayOnSkip(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setAutoplayOnSkip(enabled)
+        }
+    }
+
+    fun setPreviousButtonBehavior(behavior: PreviousButtonBehavior) {
+        viewModelScope.launch {
+            userPreferencesRepository.setPreviousButtonBehavior(behavior)
+        }
+    }
+
+    fun setMiniPlayerSwipeToSkip(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setMiniPlayerSwipeToSkip(enabled)
+        }
+    }
+
     fun setResumeOnHeadsetReconnect(enabled: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setResumeOnHeadsetReconnect(enabled)
@@ -912,6 +989,36 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun setLyricsFontSize(size: Float) {
+        viewModelScope.launch {
+            userPreferencesRepository.setLyricsFontSizeSp(size)
+        }
+    }
+
+    fun setLyricsWordHighlightStyle(style: LyricsWordHighlightStyle) {
+        viewModelScope.launch {
+            userPreferencesRepository.setLyricsWordHighlightStyle(style)
+        }
+    }
+
+    fun setLyricsWordHighlightEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setLyricsWordHighlightEnabled(enabled)
+        }
+    }
+
+    fun setLyricsDuetLayoutEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setLyricsDuetLayout(enabled)
+        }
+    }
+
+    fun setShowLyricsBackgroundVocals(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setShowLyricsBackgroundVocals(enabled)
+        }
+    }
+
     fun refreshLibrary() {
         viewModelScope.launch {
             if (isSyncing.value) return@launch
@@ -1009,6 +1116,9 @@ class SettingsViewModel @Inject constructor(
     val tapBackgroundClosesPlayer: StateFlow<Boolean> = userPreferencesRepository.tapBackgroundClosesPlayerFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
+    val useFolderAlbumArt: StateFlow<Boolean> = userPreferencesRepository.useFolderAlbumArtFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
     fun setAlbumArtQuality(quality: AlbumArtQuality) {
         viewModelScope.launch {
             userPreferencesRepository.setAlbumArtQuality(quality)
@@ -1019,6 +1129,12 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.setAlbumArtCacheLimitMb(limitMb)
             com.minoppol.music.utils.AlbumArtCacheManager.configuredCacheLimitMb = limitMb.toLong()
+        }
+    }
+
+    fun setUseFolderAlbumArt(enabled: Boolean) {
+        viewModelScope.launch {
+            folderArtworkSettingsCoordinator.setEnabled(enabled)
         }
     }
 

@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -141,6 +142,8 @@ constructor(
         val JELLYFIN_SELECTED_LIBRARY_IDS =
                 stringSetPreferencesKey("jellyfin_selected_library_ids")
         val FOLDER_BACK_GESTURE_NAVIGATION = booleanPreferencesKey("folder_back_gesture_navigation")
+        val USE_FOLDER_ALBUM_ART = booleanPreferencesKey("use_folder_album_art")
+        val FOLDER_ALBUM_ART_CACHE_STATE = booleanPreferencesKey("folder_album_art_cache_state")
         val USE_SMOOTH_CORNERS = booleanPreferencesKey("use_smooth_corners")
         val KEEP_PLAYING_IN_BACKGROUND = booleanPreferencesKey("keep_playing_in_background")
         val KEEP_SCREEN_AWAKE_WHILE_PLAYING =
@@ -148,6 +151,9 @@ constructor(
         val IS_CROSSFADE_ENABLED = booleanPreferencesKey("is_crossfade_enabled")
         val AUDIO_OUTPUT_MODE = stringPreferencesKey("audio_output_mode_v1")
         val SMART_CROSSFADE_ENABLED = booleanPreferencesKey("smart_crossfade_enabled")
+        val AUTOPLAY_ON_SKIP = booleanPreferencesKey("autoplay_on_skip")
+        val PREVIOUS_BUTTON_BEHAVIOR = stringPreferencesKey("previous_button_behavior")
+        val MINI_PLAYER_SWIPE_TO_SKIP = booleanPreferencesKey("mini_player_swipe_to_skip")
         val HI_FI_MODE_ENABLED = booleanPreferencesKey("hi_fi_mode_enabled")
         val CROSSFADE_DURATION = intPreferencesKey("crossfade_duration")
         val PLAYBACK_SPEED = androidx.datastore.preferences.core.floatPreferencesKey("playback_speed")
@@ -234,6 +240,12 @@ constructor(
         val USE_ANIMATED_LYRICS = booleanPreferencesKey("use_animated_lyrics")
         val ANIMATED_LYRICS_BLUR_ENABLED = booleanPreferencesKey("animated_lyrics_blur_enabled")
         val ANIMATED_LYRICS_BLUR_STRENGTH = androidx.datastore.preferences.core.floatPreferencesKey("animated_lyrics_blur_strength")
+
+        val LYRICS_FONT_SIZE = floatPreferencesKey("lyrics_font_size_sp")
+        val LYRICS_WORD_HIGHLIGHT_STYLE = stringPreferencesKey("lyrics_word_highlight_style")
+        val LYRICS_WORD_HIGHLIGHT_ENABLED = booleanPreferencesKey("lyrics_word_highlight_enabled")
+        val LYRICS_DUET_LAYOUT = booleanPreferencesKey("lyrics_duet_layout")
+        val SHOW_LYRICS_BACKGROUND_VOCALS = booleanPreferencesKey("show_lyrics_background_vocals")
 
         val IS_GENRE_GRID_VIEW = booleanPreferencesKey("is_genre_grid_view")
 
@@ -974,6 +986,21 @@ constructor(
                 preferences[PreferencesKeys.KEEP_SCREEN_AWAKE_WHILE_PLAYING] ?: false
             }.distinctUntilChanged()
 
+    val autoplayOnSkipFlow: Flow<Boolean> =
+            dataStore.data.map { preferences ->
+                preferences[PreferencesKeys.AUTOPLAY_ON_SKIP] ?: true
+            }.distinctUntilChanged()
+
+    val previousButtonBehaviorFlow: Flow<PreviousButtonBehavior> =
+            dataStore.data.map { preferences ->
+                PreviousButtonBehavior.fromStorageKey(preferences[PreferencesKeys.PREVIOUS_BUTTON_BEHAVIOR])
+            }.distinctUntilChanged()
+
+    val miniPlayerSwipeToSkipFlow: Flow<Boolean> =
+            dataStore.data.map { preferences ->
+                preferences[PreferencesKeys.MINI_PLAYER_SWIPE_TO_SKIP] ?: true
+            }.distinctUntilChanged()
+
     val resumeOnHeadsetReconnectFlow: Flow<Boolean> =
             dataStore.data.map { preferences ->
                 preferences[PreferencesKeys.RESUME_ON_HEADSET_RECONNECT] ?: false
@@ -1378,6 +1405,12 @@ constructor(
 
         const val DEFAULT_PLAYBACK_CACHE_LIMIT_MB = 1024
         const val DEFAULT_DOWNLOAD_MAX_THREADS = 3
+
+        fun readUseFolderAlbumArtBlocking(context: Context): Boolean = kotlinx.coroutines.runBlocking {
+            runCatching {
+                context.applicationContext.dataStore.data.first()[PreferencesKeys.USE_FOLDER_ALBUM_ART]
+            }.getOrNull() ?: false
+        }
     }
 
     val navBarCornerRadiusFlow: Flow<Int> =
@@ -1518,6 +1551,24 @@ constructor(
         }
     }
 
+    suspend fun setAutoplayOnSkip(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.AUTOPLAY_ON_SKIP] = enabled
+        }
+    }
+
+    suspend fun setPreviousButtonBehavior(behavior: PreviousButtonBehavior) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.PREVIOUS_BUTTON_BEHAVIOR] = behavior.storageKey
+        }
+    }
+
+    suspend fun setMiniPlayerSwipeToSkip(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.MINI_PLAYER_SWIPE_TO_SKIP] = enabled
+        }
+    }
+
     suspend fun setResumeOnHeadsetReconnect(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.RESUME_ON_HEADSET_RECONNECT] = enabled
@@ -1639,6 +1690,63 @@ constructor(
         }
     }
 
+    val lyricsFontSizeSpFlow: Flow<Float> = dataStore.data
+        .map { preferences ->
+            (preferences[PreferencesKeys.LYRICS_FONT_SIZE] ?: 16f)
+                .coerceIn(MIN_LYRICS_FONT_SIZE_SP, MAX_LYRICS_FONT_SIZE_SP)
+        }
+
+    suspend fun setLyricsFontSizeSp(size: Float) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.LYRICS_FONT_SIZE] =
+                size.coerceIn(MIN_LYRICS_FONT_SIZE_SP, MAX_LYRICS_FONT_SIZE_SP)
+        }
+    }
+
+    val lyricsWordHighlightStyleFlow: Flow<LyricsWordHighlightStyle> = dataStore.data
+        .map { preferences ->
+            LyricsWordHighlightStyle.fromStorage(preferences[PreferencesKeys.LYRICS_WORD_HIGHLIGHT_STYLE])
+        }
+
+    suspend fun setLyricsWordHighlightStyle(style: LyricsWordHighlightStyle) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.LYRICS_WORD_HIGHLIGHT_STYLE] = style.storageValue
+        }
+    }
+
+    val lyricsWordHighlightEnabledFlow: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.LYRICS_WORD_HIGHLIGHT_ENABLED] ?: true
+        }
+
+    suspend fun setLyricsWordHighlightEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.LYRICS_WORD_HIGHLIGHT_ENABLED] = enabled
+        }
+    }
+
+    val lyricsDuetLayoutFlow: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.LYRICS_DUET_LAYOUT] ?: false
+        }
+
+    suspend fun setLyricsDuetLayout(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.LYRICS_DUET_LAYOUT] = enabled
+        }
+    }
+
+    val showLyricsBackgroundVocalsFlow: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.SHOW_LYRICS_BACKGROUND_VOCALS] ?: false
+        }
+
+    suspend fun setShowLyricsBackgroundVocals(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.SHOW_LYRICS_BACKGROUND_VOCALS] = enabled
+        }
+    }
+
     val libraryTabsOrderFlow: Flow<String?> = dataStore.data
         .map { preferences ->
             preferences[PreferencesKeys.LIBRARY_TABS_ORDER]
@@ -1743,6 +1851,28 @@ constructor(
     suspend fun setUseSmoothCorners(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.USE_SMOOTH_CORNERS] = enabled
+        }
+    }
+
+    val useFolderAlbumArtFlow: Flow<Boolean> =
+        dataStore.data.map { preferences ->
+            preferences[PreferencesKeys.USE_FOLDER_ALBUM_ART] ?: false
+        }.distinctUntilChanged()
+
+    suspend fun setUseFolderAlbumArt(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.USE_FOLDER_ALBUM_ART] = enabled
+        }
+    }
+
+    val folderAlbumArtCacheStateFlow: Flow<Boolean?> =
+        dataStore.data.map { preferences ->
+            preferences[PreferencesKeys.FOLDER_ALBUM_ART_CACHE_STATE]
+        }
+
+    suspend fun setFolderAlbumArtCacheState(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.FOLDER_ALBUM_ART_CACHE_STATE] = enabled
         }
     }
 

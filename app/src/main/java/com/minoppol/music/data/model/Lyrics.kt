@@ -16,12 +16,21 @@ data class SyncedLine(
     val line: String,
     val words: List<SyncedWord>? = null,
     val translation: String? = null,
-    val romanization: String? = null
+    val romanization: String? = null,
+    val voice: Int? = null,
+    val background: BackgroundVocals? = null
+)
+
+@Serializable
+data class BackgroundVocals(
+    val text: String,
+    val words: List<SyncedWord>? = null
 )
 
 @Serializable
 data class SyncedWord(
     val time: Int,
     val word: String,
-    val startsNewWord: Boolean = true
+    val startsNewWord: Boolean = true,
+    val endTime: Int? = null
 )

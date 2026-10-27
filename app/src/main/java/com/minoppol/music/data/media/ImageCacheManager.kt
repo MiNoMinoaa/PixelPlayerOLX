@@ -13,6 +13,13 @@ class ImageCacheManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     @OptIn(ExperimentalCoilApi::class)
+    fun clearAllCoverArtCaches() {
+        val imageLoader = context.imageLoader
+        imageLoader.memoryCache?.clear()
+        imageLoader.diskCache?.clear()
+    }
+
+    @OptIn(ExperimentalCoilApi::class)
     fun invalidateCoverArtCaches(vararg uriStrings: String?) {
         val imageLoader = context.imageLoader
         val memoryCache = imageLoader.memoryCache

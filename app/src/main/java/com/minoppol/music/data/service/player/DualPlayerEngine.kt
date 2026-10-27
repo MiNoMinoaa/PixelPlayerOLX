@@ -1655,6 +1655,13 @@ class DualPlayerEngine @Inject constructor(
         }
     }
 
+    fun setPreferredAudioDevice(device: android.media.AudioDeviceInfo?) {
+        if (::playerA.isInitialized) {
+            playerA.setPreferredAudioDevice(device)
+        }
+        playerB?.setPreferredAudioDevice(device)
+    }
+
     fun release() {
         invalidateActiveTransition()
         preResolutionJob?.cancel()

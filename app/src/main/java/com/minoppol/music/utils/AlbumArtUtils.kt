@@ -19,6 +19,10 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlin.math.roundToInt
 
 object AlbumArtUtils {
@@ -36,7 +40,32 @@ object AlbumArtUtils {
     // background on first access (one-time migration for art cached before bounding existed).
     private const val OVERSIZED_CACHED_ART_BYTES = 900L * 1024
 
+    private const val MAX_EXTERNAL_ART_BYTES = 20L * 1024 * 1024
+
+    @Volatile
+    private var folderAlbumArtPreference: Boolean? = null
+
+    fun setFolderAlbumArtPreference(enabled: Boolean) {
+        folderAlbumArtPreference = enabled
+    }
+
+    fun folderAlbumArtPreferenceOrNull(): Boolean? = folderAlbumArtPreference
+
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val artworkCacheWriteLock = Any()
+    private val artworkCacheGeneration = AtomicLong()
+    private val _artworkCacheVersion = MutableStateFlow(0L)
+    val artworkCacheVersion = _artworkCacheVersion.asStateFlow()
+
+    internal fun notifyArtworkCacheInvalidated() {
+        _artworkCacheVersion.update { it + 1L }
+    }
+
+    internal fun bumpArtworkCacheGeneration() {
+        synchronized(artworkCacheWriteLock) {
+            artworkCacheGeneration.incrementAndGet()
+        }
+    }
     // Tracks cache files currently being shrunk so rapid repeated loads of the same oversized
     // cover don't read the large blob into memory more than once concurrently.
     private val artworkShrinkInFlight = ConcurrentHashMap.newKeySet<String>()
@@ -281,6 +310,27 @@ object AlbumArtUtils {
         val normalized = directoryName.trim().lowercase()
         if (normalized.isBlank()) return false
         return normalized !in genericMixedDirectoryNames
+    }
+
+    internal fun isFolderAlbumArtEnabled(appContext: Context): Boolean {
+        val preferred = folderAlbumArtPreference
+            ?: com.minoppol.music.data.preferences.UserPreferencesRepository.readUseFolderAlbumArtBlocking(appContext)
+                .also { folderAlbumArtPreference = it }
+        return preferred && canReadImageFiles(appContext)
+    }
+
+    @android.annotation.SuppressLint("InlinedApi")
+    internal fun canReadImageFiles(
+        appContext: Context,
+        sdkInt: Int = android.os.Build.VERSION.SDK_INT
+    ): Boolean {
+        val permission = if (sdkInt >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            android.Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            android.Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+        return androidx.core.content.ContextCompat.checkSelfPermission(appContext, permission) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED
     }
 
     /**

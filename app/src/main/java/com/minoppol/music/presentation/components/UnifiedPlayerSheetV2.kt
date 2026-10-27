@@ -415,12 +415,14 @@ fun UnifiedPlayerSheetV2(
     )
 
     val hapticFeedback = LocalHapticFeedback.current
+    val miniPlayerSwipeToSkip by playerViewModel.miniPlayerSwipeToSkip.collectAsStateWithLifecycle()
     val miniDismissGestureHandler = rememberMiniPlayerDismissGestureHandler(
         scope = scope,
         density = density,
         hapticFeedback = hapticFeedback,
         offsetAnimatable = offsetAnimatable,
         screenWidthPx = screenWidthPx,
+        swipeToSkipEnabled = { miniPlayerSwipeToSkip },
         onDismissPlaylistAndShowUndo = { playerViewModel.dismissPlaylistAndShowUndo() },
         onDismissStarted = { playerViewModel.setMiniPlayerDismissing(true) },
         onDismissDirection = { sign -> playerViewModel.setDockExitDirectionSign(sign) },
