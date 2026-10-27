@@ -52,9 +52,9 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 private val SystemSplashIconSize = 288.dp
 
-private const val GlyphSettledScale = 0.6f
+private const val GlyphSettledScale = 0.196f
 
-private const val ContainerToGlyph = 0.725f
+private const val ContainerToGlyph = 1.85f
 private const val HaloToContainer = 1.24f
 
 private const val SystemSplashWaitTimeoutMs = 700L
@@ -274,10 +274,6 @@ private fun rememberSplashGlyph(): SplashGlyph {
         val bodyBounds = android.graphics.RectF().also { paths[0].computeBounds(it, true) }
         val noteBounds = android.graphics.RectF().also { paths[1].computeBounds(it, true) }
         val all = android.graphics.RectF(bodyBounds).apply { union(noteBounds) }
-        arrow?.let { a ->
-            val aBounds = android.graphics.RectF().also { paths[2].computeBounds(it, true) }
-            all.union(aBounds)
-        }
         SplashGlyph(
             body = body,
             note = note,
