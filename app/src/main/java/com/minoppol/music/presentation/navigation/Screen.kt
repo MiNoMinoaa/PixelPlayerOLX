@@ -86,4 +86,9 @@ sealed class Screen(val route: String) {
         fun createRoute(songId: String) = "audio_bookmarks/${Uri.encode(songId)}"
     }
 
+    object LyricsSettings : Screen("lyrics_settings?highlightKey={highlightKey}") {
+        fun createRoute(highlightKey: String? = null) =
+            if (highlightKey != null) "lyrics_settings?highlightKey=$highlightKey" else "lyrics_settings"
+    }
+
 }

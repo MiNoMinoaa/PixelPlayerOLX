@@ -87,16 +87,17 @@ object SettingsRegistry {
                 keywordsStatic = listOf("m3u", "playlist", "sync now", "reconcile")
             ),
             SettingSpec(
-                id = "library_auto_scan_lrc",
-                itemKey = "item_library_auto_scan_lrc",
-                titleRes = R.string.setcat_auto_scan_lrc_title,
-                subtitleRes = R.string.setcat_auto_scan_lrc_subtitle,
+                id = "library_folder_album_art",
+                itemKey = "item_library_folder_album_art",
+                titleRes = R.string.setcat_folder_album_art_title,
+                subtitleRes = R.string.setcat_folder_album_art_subtitle,
                 category = SettingsCategory.LIBRARY,
                 subscreenRoute = Screen.SettingsCategory.createRoute("library"),
-                type = SettingType.SWITCH,
-                keywordsStatic = listOf("lrc", "lyrics", "file", "scan"),
-                getValue = { it.autoScanLrcFiles },
-                onToggle = { viewModel, checked -> viewModel.setAutoScanLrcFiles(checked) }
+                type = SettingType.NAVIGABLE_CARD,
+                keywordsStatic = listOf(
+                    "cover", "cover.jpg", "folder.jpg", "album art", "artwork", "image", "folder",
+                    "artist", "artist.jpg", "artist.png", "band.jpg", "band.png", "artist photo"
+                )
             ),
             SettingSpec(
                 id = "library_find_duplicates",
@@ -109,64 +110,6 @@ object SettingsRegistry {
                 keywordsStatic = listOf("duplicate", "cleanup", "copies", "same song")
             ),
             SettingSpec(
-                id = "library_external_lyrics",
-                itemKey = "item_library_external_lyrics",
-                titleRes = R.string.setcat_external_lyrics_title,
-                subtitleRes = R.string.setcat_external_lyrics_subtitle,
-                category = SettingsCategory.LIBRARY,
-                subscreenRoute = Screen.SettingsCategory.createRoute("library"),
-                type = SettingType.SWITCH,
-                keywordsStatic = listOf("lrclib", "online lyrics", "fetch", "internet", "download lyrics"),
-                getValue = { it.externalLyricsEnabled },
-                onToggle = { viewModel, checked -> viewModel.setExternalLyricsEnabled(checked) }
-            ),
-            SettingSpec(
-                id = "library_notification_lyrics",
-                itemKey = "item_library_notification_lyrics",
-                titleRes = R.string.setcat_notification_lyrics_title,
-                subtitleRes = R.string.setcat_notification_lyrics_subtitle,
-                category = SettingsCategory.LIBRARY,
-                subscreenRoute = Screen.SettingsCategory.createRoute("library"),
-                type = SettingType.SWITCH,
-                keywordsStatic = listOf("notification", "status bar", "lyrics", "通知栏", "状态栏", "歌词"),
-                getValue = { it.notificationLyricsEnabled },
-                onToggle = { viewModel, checked -> viewModel.setNotificationLyricsEnabled(checked) }
-            ),
-            SettingSpec(
-                id = "library_mini_player_lyrics",
-                itemKey = "item_library_mini_player_lyrics",
-                titleRes = R.string.setcat_mini_player_lyrics_title,
-                subtitleRes = R.string.setcat_mini_player_lyrics_subtitle,
-                category = SettingsCategory.LIBRARY,
-                subscreenRoute = Screen.SettingsCategory.createRoute("library"),
-                type = SettingType.SWITCH,
-                keywordsStatic = listOf("mini player", "lyrics", "迷你", "播放器", "歌词"),
-                getValue = { it.miniPlayerLyricsEnabled },
-                onToggle = { viewModel, checked -> viewModel.setMiniPlayerLyricsEnabled(checked) }
-            ),
-            SettingSpec(
-                id = "library_in_player_lyrics",
-                itemKey = "item_library_in_player_lyrics",
-                titleRes = R.string.setcat_in_player_lyrics_title,
-                subtitleRes = R.string.setcat_in_player_lyrics_subtitle,
-                category = SettingsCategory.LIBRARY,
-                subscreenRoute = Screen.SettingsCategory.createRoute("library"),
-                type = SettingType.SWITCH,
-                keywordsStatic = listOf("in player", "lyrics", "播放页", "歌词"),
-                getValue = { it.inPlayerLyricsEnabled },
-                onToggle = { viewModel, checked -> viewModel.setInPlayerLyricsEnabled(checked) }
-            ),
-            SettingSpec(
-                id = "library_in_player_lyrics_size",
-                itemKey = "item_library_in_player_lyrics_size",
-                titleRes = R.string.setcat_in_player_lyrics_size_label,
-                subtitleRes = R.string.setcat_in_player_lyrics_size_desc,
-                category = SettingsCategory.LIBRARY,
-                subscreenRoute = Screen.SettingsCategory.createRoute("library"),
-                type = SettingType.NAVIGABLE_CARD,
-                keywordsStatic = listOf("lyrics", "font", "size", "歌词", "字体", "大小")
-            ),
-            SettingSpec(
                 id = "library_external_artist_images",
                 itemKey = "item_library_external_artist_images",
                 titleRes = R.string.setcat_external_artist_images_title,
@@ -177,26 +120,6 @@ object SettingsRegistry {
                 keywordsStatic = listOf("deezer", "artist image", "artwork", "photos", "pictures"),
                 getValue = { it.externalArtistImagesEnabled },
                 onToggle = { viewModel, checked -> viewModel.setExternalArtistImagesEnabled(checked) }
-            ),
-            SettingSpec(
-                id = "library_lyrics_source_priority",
-                itemKey = "item_library_lyrics_source_priority",
-                titleRes = R.string.setcat_lyrics_source_priority_label,
-                subtitleRes = R.string.setcat_lyrics_source_priority_desc,
-                category = SettingsCategory.LIBRARY,
-                subscreenRoute = Screen.SettingsCategory.createRoute("library"),
-                type = SettingType.NAVIGABLE_CARD,
-                keywordsStatic = listOf("lyrics source", "embedded", "online", "priority", "lrc")
-            ),
-            SettingSpec(
-                id = "library_reset_imported_lyrics",
-                itemKey = "item_library_reset_imported_lyrics",
-                titleRes = R.string.setcat_reset_imported_lyrics_title,
-                subtitleRes = R.string.setcat_reset_imported_lyrics_subtitle,
-                category = SettingsCategory.LIBRARY,
-                subscreenRoute = Screen.SettingsCategory.createRoute("library"),
-                type = SettingType.NAVIGABLE_CARD,
-                keywordsStatic = listOf("reset lyrics", "clear", "remove", "delete lyrics")
             ),
 
             // --- ACCOUNTS (grouped under Library) ---
@@ -595,6 +518,16 @@ object SettingsRegistry {
                 getValue = { it.lxBoardShowPlayAllFab },
                 onToggle = { viewModel, checked -> viewModel.setLxBoardShowPlayAllFab(checked) }
             ),
+            SettingSpec(
+                id = "playback_lyrics_subscreen",
+                itemKey = "item_playback_lyrics_subscreen",
+                titleRes = R.string.setcat_lyrics_title,
+                subtitleRes = R.string.setcat_lyrics_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.LyricsSettings.createRoute(),
+                type = SettingType.NAVIGABLE_CARD,
+                keywordsStatic = listOf("lyrics", "歌词", "notification", "mini player", "font", "blur", "highlight")
+            ),
 
             // --- BEHAVIOR CATEGORY ---
             SettingSpec(
@@ -632,6 +565,18 @@ object SettingsRegistry {
                 keywordsStatic = listOf("vibration", "haptic", "feedback", "buzz"),
                 getValue = { it.hapticsEnabled },
                 onToggle = { viewModel, checked -> viewModel.setHapticsEnabled(checked) }
+            ),
+            SettingSpec(
+                id = "behavior_autoplay_skip",
+                itemKey = "item_behavior_autoplay_skip",
+                titleRes = R.string.setcat_autoplay_on_skip_title,
+                subtitleRes = R.string.setcat_autoplay_on_skip_subtitle,
+                category = SettingsCategory.BEHAVIOR,
+                subscreenRoute = Screen.SettingsCategory.createRoute("behavior"),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf("autoplay", "auto play", "skip", "next song", "previous song", "paused", "resume"),
+                getValue = { it.autoplayOnSkip },
+                onToggle = { viewModel, checked -> viewModel.setAutoplayOnSkip(checked) }
             ),
 
             // --- BACKUP & RESTORE CATEGORY ---

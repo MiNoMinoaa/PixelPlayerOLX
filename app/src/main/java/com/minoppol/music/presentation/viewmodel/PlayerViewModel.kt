@@ -614,6 +614,13 @@ class PlayerViewModel @Inject constructor(
             initialValue = true
         )
 
+    val miniPlayerSwipeToSkip: StateFlow<Boolean> = userPreferencesRepository.miniPlayerSwipeToSkipFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = true
+        )
+
     val currentSongLyricsSyncOffset: StateFlow<Int> = lyricsStateHolder.currentSongSyncOffset
 
     val lyricsSourcePreference: StateFlow<LyricsSourcePreference> = userPreferencesRepository.lyricsSourcePreferenceFlow

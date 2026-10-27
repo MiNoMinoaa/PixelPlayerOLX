@@ -54,7 +54,8 @@ internal fun resolveMiniPlayerGestureOutcome(
     velocityX: Float,
     screenWidthPx: Float,
     density: Float,
-    layoutDirection: LayoutDirection
+    layoutDirection: LayoutDirection,
+    swipeToSkipEnabled: Boolean = true
 ): MiniPlayerGestureOutcome {
     val absoluteDistance = abs(displacementX)
     if (
@@ -68,10 +69,10 @@ internal fun resolveMiniPlayerGestureOutcome(
         }
     }
 
+    // Skip-to-track disabled: anything short of a full dismiss snaps back
+    if (!swipeToSkipEnabled) return MiniPlayerGestureOutcome.None
+
     val safeDensity = density.coerceAtLeast(0.1f)
-    if (absoluteDistance > MINI_PLAYER_SKIP_MAX_DISTANCE_DP * safeDensity) {
-        return MiniPlayerGestureOutcome.None
-    }
     val crossedDistanceThreshold = absoluteDistance >= MINI_PLAYER_SKIP_DISTANCE_DP * safeDensity
     val crossedFlingThreshold =
         absoluteDistance >= MINI_PLAYER_FLING_MIN_DISTANCE_DP * safeDensity &&
@@ -101,6 +102,7 @@ internal class MiniPlayerDismissGestureHandler(
     private val offsetAnimatable: Animatable<Float, AnimationVector1D>,
     private val screenWidthPx: Float,
     private val layoutDirection: LayoutDirection,
+    private val swipeToSkipEnabled: () -> Boolean,
     private val onDismissPlaylistAndShowUndo: () -> Unit,
     private val onDismissStarted: () -> Unit = {},
     private val onDismissDirection: (Float) -> Unit = {},
@@ -181,7 +183,8 @@ internal class MiniPlayerDismissGestureHandler(
             velocityX = velocityX,
             screenWidthPx = screenWidthPx,
             density = density.density,
-            layoutDirection = layoutDirection
+            layoutDirection = layoutDirection,
+            swipeToSkipEnabled = swipeToSkipEnabled()
         )
         dragPhase = MiniDismissDragPhase.IDLE
         offsetJob?.cancel()
@@ -260,6 +263,7 @@ internal fun rememberMiniPlayerDismissGestureHandler(
     hapticFeedback: HapticFeedback,
     offsetAnimatable: Animatable<Float, AnimationVector1D>,
     screenWidthPx: Float,
+    swipeToSkipEnabled: () -> Boolean,
     onDismissPlaylistAndShowUndo: () -> Unit,
     onDismissStarted: () -> Unit,
     onDismissDirection: (Float) -> Unit,
@@ -280,6 +284,7 @@ internal fun rememberMiniPlayerDismissGestureHandler(
             offsetAnimatable = offsetAnimatable,
             screenWidthPx = screenWidthPx,
             layoutDirection = layoutDirection,
+            swipeToSkipEnabled = swipeToSkipEnabled,
             onDismissPlaylistAndShowUndo = { onDismissPlaylistAndShowUndoState.value() },
             onDismissStarted = { onDismissStartedState.value() },
             onDismissDirection = { sign -> onDismissDirectionState.value(sign) },

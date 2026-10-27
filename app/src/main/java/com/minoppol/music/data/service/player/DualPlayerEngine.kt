@@ -1655,6 +1655,14 @@ class DualPlayerEngine @Inject constructor(
         }
     }
 
+    /** Applies the user's chosen audio output device to both active ExoPlayer instances. */
+    fun setPreferredAudioDevice(device: android.media.AudioDeviceInfo?) {
+        if (::playerA.isInitialized) {
+            playerA.setPreferredAudioDevice(device)
+        }
+        playerB?.setPreferredAudioDevice(device)
+    }
+
     fun release() {
         invalidateActiveTransition()
         preResolutionJob?.cancel()

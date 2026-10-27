@@ -4944,13 +4944,16 @@ class LxMusicRepository @Inject constructor(
 
     // 歌词走各平台直连接口，不经过脚本
     suspend fun fetchLyric(song: LxSong): LxLyricResult? = withContext(Dispatchers.IO) {
-        when (song.source) {
+        Timber.i("fetchLyric songmid=${song.songmid} source=${song.source} title=${song.name}")
+        val result = when (song.source) {
             "wy" -> fetchNeteaseLyric(song.songmid)
             "tx" -> fetchQqLyric(song.songmid)
             "kg" -> fetchKugouLyric(song)
             "kw" -> fetchKuwoLyric(song.songmid)
             else -> null
         }
+        Timber.i("fetchLyric result: lyric_len=${result?.lyric?.length ?: 0} lxlyric_len=${result?.lxlyric?.length ?: 0}")
+        result
     }
 
     private suspend fun fetchQqLyric(songmid: String): LxLyricResult? {
@@ -5011,21 +5014,37 @@ class LxMusicRepository @Inject constructor(
         val krctype = candidate.get("krctype")?.asInt ?: 0
         if (krctype == 1) return null
 
-        val downloadUrl = "https://lyrics.kugou.com/download?ver=1&client=pc&id=$id&accesskey=$accessKey&fmt=lrc&charset=utf8"
+        // KRC is XOR+LZMA encrypted binary (not UTF-8 text), skip for now; use LRC.
+        val lrcContent = runCatching {
+            downloadKugouLyricContent(id, accessKey, headers, fmt = "lrc")
+        }.getOrNull()
+        if (lrcContent.isNullOrBlank()) return null
+        return LxLyricResult(lyric = lrcContent)
+    }
+
+    private fun downloadKugouLyricContent(
+        id: String,
+        accessKey: String,
+        headers: Map<String, String>,
+        fmt: String,
+    ): String? {
+        val url = "https://lyrics.kugou.com/download?ver=1&client=pc&id=$id&accesskey=$accessKey&fmt=$fmt&charset=utf8"
         return runCatching {
-            okHttpClient.newCall(
-                Request.Builder().url(downloadUrl).apply { headers.forEach { (k, v) -> header(k, v) } }.get().build()
-            ).execute().use { resp ->
+            val req = Request.Builder().url(url).apply {
+                headers.forEach { (k, v) -> header(k, v) }
+            }.get().build()
+            okHttpClient.newCall(req).execute().use { resp ->
                 if (!resp.isSuccessful) return@use null
-                val root = JsonParser.parseString(resp.body?.string().orEmpty()).asJsonObject
+                val raw = resp.body?.string().orEmpty()
+                Timber.i("downloadKugouLyricContent fmt=$fmt raw_len=${raw.length} raw_preview=${raw.take(200)}")
+                val root = JsonParser.parseString(raw).asJsonObject
                 val content = root.get("content")?.asString ?: return@use null
-                val lyric = String(android.util.Base64.decode(content, android.util.Base64.DEFAULT), Charsets.UTF_8)
-                lyric.takeIf { it.isNotBlank() }?.let { LxLyricResult(lyric = it) }
+                Timber.i("downloadKugouLyricContent fmt=$fmt content_len=${content.length} content_preview=${content.take(80)}")
+                val bytes = android.util.Base64.decode(content, android.util.Base64.DEFAULT)
+                Timber.i("downloadKugouLyricContent fmt=$fmt decoded_bytes=${bytes.size} first_bytes=${bytes.take(16).joinToString(",")}")
+                String(bytes, Charsets.UTF_8)
             }
-        }.getOrElse {
-            Timber.w(it, "fetchKugouLyric download failed for ${song.songmid}")
-            null
-        }
+        }.getOrNull()
     }
 
     private suspend fun fetchKuwoLyric(songmid: String): LxLyricResult? {
@@ -5089,11 +5108,29 @@ class LxMusicRepository @Inject constructor(
                         Timber.w("fetchNeteaseLyricV1: bad code=$code for songmid=$songmid (attempt=$attempt)")
                         return@use null
                     }
+                    // DEBUG: print all API keys to see what's actually available for word-timed lyrics.
+                    val allKeys = root.keySet().sorted()
+                    Timber.i("fetchNeteaseLyricV1: API keys=$allKeys songmid=$songmid")
+                    allKeys.forEach { key ->
+                        val sub = root.get(key)
+                        val subKeys = if (sub?.isJsonObject == true) sub.asJsonObject.keySet().sorted() else null
+                        if (subKeys != null) Timber.i("fetchNeteaseLyricV1: $key sub-keys=$subKeys")
+                    }
                     val lyric = root.getAsJsonObject("lrc")?.get("lyric")?.asString
                     if (lyric.isNullOrBlank()) return@use null
                     val tlyric = root.getAsJsonObject("tlyric")?.get("lyric")?.asString
                     val rlyric = root.getAsJsonObject("romalrc")?.get("lyric")?.asString
-                    LxLyricResult(lyric = lyric, tlyric = tlyric, rlyric = rlyric)
+                    val hlyric = root.getAsJsonObject("hlyric")?.get("lyric")?.asString
+                        ?.takeIf { it.isNotBlank() }
+                    val hrom = root.getAsJsonObject("hrom")?.get("lyric")?.asString
+                        ?.takeIf { it.isNotBlank() }
+                    Timber.i("fetchNeteaseLyricV1: lrc_len=${lyric.length} hlyric=${hlyric?.length ?: 0} hrom=${hrom?.length ?: 0} songmid=$songmid")
+                    LxLyricResult(
+                        lyric = lyric,
+                        tlyric = tlyric,
+                        rlyric = rlyric,
+                        lxlyric = hlyric ?: hrom
+                    )
                 }
             }.getOrElse {
                 Timber.w(it, "fetchNeteaseLyricV1 failed for songmid=$songmid (attempt=$attempt)")
@@ -5125,7 +5162,17 @@ class LxMusicRepository @Inject constructor(
                 val tlyric = root.getAsJsonObject("tlyric")?.get("lyric")?.asString
                 val rlyric = root.getAsJsonObject("romalrc")?.get("lyric")?.asString
                     ?: root.getAsJsonObject("rlyric")?.get("lyric")?.asString
-                LxLyricResult(lyric = lyric, tlyric = tlyric, rlyric = rlyric)
+                // Legacy API may also expose hlyric / hrom for word-timed lines.
+                val hlyric = root.getAsJsonObject("hlyric")?.get("lyric")?.asString
+                    ?.takeIf { it.isNotBlank() }
+                val hrom = root.getAsJsonObject("hrom")?.get("lyric")?.asString
+                    ?.takeIf { it.isNotBlank() }
+                LxLyricResult(
+                    lyric = lyric,
+                    tlyric = tlyric,
+                    rlyric = rlyric,
+                    lxlyric = hlyric ?: hrom
+                )
             }
         }.getOrElse {
             Timber.w(it, "fetchNeteaseLyricLegacy failed for songmid=$songmid")
