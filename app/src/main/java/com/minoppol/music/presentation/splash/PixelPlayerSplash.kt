@@ -54,7 +54,7 @@ private val SystemSplashIconSize = 288.dp
 
 private const val GlyphSettledScale = 0.6f
 
-private const val ContainerToGlyph = 1.85f
+private const val ContainerToGlyph = 0.725f
 private const val HaloToContainer = 1.24f
 
 private const val SystemSplashWaitTimeoutMs = 700L
