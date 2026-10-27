@@ -5106,10 +5106,10 @@ class LxMusicRepository @Inject constructor(
             val krcConversion = runCatching {
                 downloadKugouLyricBytes(id, accessKey, headers, fmt = "krc")
                     ?.let { LxLyricDecoders.decodeKrcBytes(it) }
+                    ?.takeIf { looksLikeKrcText(it) }
                     ?.let { LxLyricDecoders.convertKrc(it) }
             }.getOrNull()
             if (krcConversion != null) {
-                // translationLrc/romanizationLrc 已按主歌词行时间戳打好标签
                 Timber.i("fetchKugouLyric: krc wordLrc_len=${krcConversion.wordLrc?.length ?: 0}")
                 return LxLyricResult(
                     lyric = krcConversion.lrc,
@@ -5123,10 +5123,21 @@ class LxMusicRepository @Inject constructor(
 
         val lrcContent = runCatching {
             downloadKugouLyricBytes(id, accessKey, headers, fmt = "lrc")
-                ?.let { String(it, Charsets.UTF_8) }
+                ?.let { decodeKugouText(it) }
         }.getOrNull()
         if (lrcContent.isNullOrBlank()) return null
         return LxLyricResult(lyric = lrcContent)
+    }
+
+    private fun looksLikeKrcText(text: String): Boolean {
+        val tupleLines = text.lineSequence().count { it.trim().matches(Regex("^\\[\\d+,\\d+]")) }
+        return tupleLines >= 3 && text.contains(Regex("<\\d+,\\d+"))
+    }
+
+    private fun decodeKugouText(bytes: ByteArray): String {
+        val utf8 = String(bytes, Charsets.UTF_8)
+        if (utf8.indexOf('\uFFFD') < 0) return utf8
+        return runCatching { String(bytes, charset("GBK")) }.getOrDefault(utf8)
     }
 
     private fun downloadKugouLyricBytes(
