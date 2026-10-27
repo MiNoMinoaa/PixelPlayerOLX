@@ -83,13 +83,20 @@ internal fun parseBestEmbeddedLyricsField(propertyMap: Map<String, Array<String>
 private data class LyricsData(
     val plainLyrics: String?,
     val syncedLyrics: String?,
-    val wordByWordLyrics: String? = null
+    val wordByWordLyrics: String? = null,
+    val version: Int = 0
 ) {
     fun hasLyrics(): Boolean =
         !plainLyrics.isNullOrBlank() ||
             !syncedLyrics.isNullOrBlank() ||
             !wordByWordLyrics.isNullOrBlank()
+
+    fun isCurrentVersion(): Boolean = version >= CURRENT_LYRICS_CACHE_VERSION
 }
+
+private const val CURRENT_LYRICS_CACHE_VERSION = 2
+
+private val STORED_TUPLE_RESIDUE = Regex("\\(\\d+,\\d+(?:,\\d+)?\\)")
 
 private data class RemoteSearchStrategy(
     val name: String,
@@ -971,7 +978,8 @@ class LyricsRepositoryImpl @Inject constructor(
             val lyricsData = LyricsData(
                 plainLyrics = lyrics.plain?.joinToString("\n"),
                 syncedLyrics = lyrics.synced?.joinToString("\n") { "[${formatTimestamp(it.time)}]${it.line}" },
-                wordByWordLyrics = wordByWordLyrics
+                wordByWordLyrics = wordByWordLyrics,
+                version = CURRENT_LYRICS_CACHE_VERSION
             )
 
             val file = File(lyricsDir, fileName)
@@ -1142,7 +1150,13 @@ class LyricsRepositoryImpl @Inject constructor(
         val parsedLyrics = LyricsUtils.parseLyrics(rawLyrics)
         return parsedLyrics
             .takeIf { it.isValid() }
+            ?.takeIf { !hasStoredTupleResidue(it) }
             ?.copy(areFromRemote = false)
+    }
+
+    private fun hasStoredTupleResidue(lyrics: Lyrics): Boolean {
+        val synced = lyrics.synced ?: return false
+        return synced.any { line -> STORED_TUPLE_RESIDUE.containsMatchIn(line.line) }
     }
 
     private fun lyricsToRawContent(lyrics: Lyrics): String? {
@@ -1170,7 +1184,13 @@ class LyricsRepositoryImpl @Inject constructor(
         if (!file.exists()) return null
 
         val json = file.readText()
-        return gson.fromJson(json, LyricsData::class.java)
+        val data = gson.fromJson(json, LyricsData::class.java)
+        if (data != null && data.hasLyrics() && !data.isCurrentVersion()) {
+            file.delete()
+            Timber.tag(TAG).d("Stale lyrics cache (version ${data.version}) discarded: ${file.absolutePath}")
+            return null
+        }
+        return data
     }
 
     override suspend fun fetchFromRemote(song: Song): Result<Pair<Lyrics, String>> = withContext(Dispatchers.IO) {
