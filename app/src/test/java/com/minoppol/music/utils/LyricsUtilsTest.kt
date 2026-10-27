@@ -53,6 +53,21 @@ class LyricsUtilsTest {
     }
 
     @Test
+    fun parseLyrics_kugouPathStripsParenWordTagsAndKeepsVoiceLabel() {
+        // 真实 KRC/旧式元组行：[起始ms,行时长](绝对ms,词长,0)词 — 时间戳必须是绝对值，
+        // 否则会被当作 [mm:ss] 行。若 (71060,170,0) 漏进正文说明括号词标签没被剥离。
+        val krc = "[71060,170](男)(71060,170,0)啊\n[71230,180](71230,180,0)哦\n"
+        val synced = requireNotNull(LyricsUtils.parseLyrics(krc).synced)
+
+        assertEquals(71_060, synced[0].time)
+        assertEquals("啊", synced[0].line)
+        assertEquals(1, synced[0].voice)           // (男) → v1，且标签不进正文
+        assertEquals(71_230, synced[1].time)
+        assertEquals("哦", synced[1].line)
+        assertNull(synced[1].voice)
+    }
+
+    @Test
     fun parseLyrics_handlesBomAtStartOfSyncedLine() {
         val lrc = "\uFEFF[00:03.80]Time is standing still\n[00:09.86]Tracing my body"
 
