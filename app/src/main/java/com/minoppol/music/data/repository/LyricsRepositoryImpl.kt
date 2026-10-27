@@ -410,14 +410,31 @@ class LyricsRepositoryImpl @Inject constructor(
     }
 
     private fun buildLxLyrics(result: LxLyricResult, source: String): Lyrics? {
-        val base = LyricsUtils.parseLyrics(result.lxlyric?.takeIf { it.isNotBlank() } ?: result.lyric)
+        val wordText = result.lxlyric?.takeIf { it.isNotBlank() }
+        val base = LyricsUtils.parseLyrics(wordText ?: result.lyric)
         if (!base.isValid()) return null
-        val synced = base.synced
+        // 逐字文本(YRC/QRC/KRC)通常不带 (男)/(女)/{合唱}/[和声] 声部标记，
+        // 行级 lrc 里常有：按时间戳（±500ms 容差）把 voice/background 合并进逐字行。
+        var synced = base.synced?.takeIf { it.isNotEmpty() }
+        if (wordText != null && synced != null && !result.lyric.isNullOrBlank()) {
+            val donors = runCatching {
+                LyricsUtils.parseLyrics(result.lyric).synced
+                    ?.filter { it.voice != null || it.background != null }
+                    .orEmpty()
+            }.getOrDefault(emptyList())
+            if (donors.isNotEmpty()) {
+                synced = synced.map { line ->
+                    if (line.voice != null || line.background != null) return@map line
+                    val donor = matchLineByTime(donors, line.time) ?: return@map line
+                    line.copy(voice = donor.voice, background = donor.background)
+                }
+            }
+        }
         if (synced.isNullOrEmpty()) return base.copy(areFromRemote = true, remoteSource = source)
         val translationMap = result.tlyric?.takeIf { it.isNotBlank() }?.let { buildLrcTimeMap(it) }
         val romanizationMap = result.rlyric?.takeIf { it.isNotBlank() }?.let { buildLrcTimeMap(it) }
         if (translationMap == null && romanizationMap == null) {
-            return base.copy(areFromRemote = true, remoteSource = source)
+            return base.copy(synced = synced, areFromRemote = true, remoteSource = source)
         }
         val merged = synced.map { line ->
             val tr = translationMap?.let { matchLrcByTime(it, line.time) }
@@ -432,6 +449,19 @@ class LyricsRepositoryImpl @Inject constructor(
             }
         }
         return Lyrics(synced = merged, plain = plainVersion, areFromRemote = true, remoteSource = source)
+    }
+
+    private fun matchLineByTime(lines: List<SyncedLine>, time: Int, toleranceMs: Int = 500): SyncedLine? {
+        var best: SyncedLine? = null
+        var bestDelta = Int.MAX_VALUE
+        for (l in lines) {
+            val delta = abs(l.time - time)
+            if (delta < bestDelta) {
+                bestDelta = delta
+                best = l
+            }
+        }
+        return best?.takeIf { bestDelta <= toleranceMs }
     }
 
     private fun buildLrcTimeMap(lrc: String): Map<Int, String> {

@@ -9,6 +9,50 @@ import org.junit.Test
 class LyricsUtilsTest {
 
     @Test
+    fun parseLyrics_assignsVoicesFromBracketLabels() {
+        // (男) 女声 [合唱] {和声} — any bracket pair at line start counts, content flexible
+        val lrc = "[00:01.00](男)第一句\n[00:02.00](女)第二句\n[00:03.00][合唱]第三句\n[00:04.00]{和声}第四句"
+        val synced = requireNotNull(LyricsUtils.parseLyrics(lrc).synced)
+
+        assertEquals(1, synced[0].voice)               // 男 → v1
+        assertEquals(2, synced[1].voice)               // 女 → v2
+        assertEquals(1_000, synced[2].voice)           // 合唱 → group (centered)
+        assertEquals(3, synced[3].voice)               // 和声 → assigned voice…
+        assertNotNull(synced[3].background)            // …plus harmony marker
+        assertEquals("第一句", synced[0].line)         // label text stripped
+        assertEquals("第四句", synced[3].line)
+    }
+
+    @Test
+    fun parseLyrics_assignsStableVoicesToUnknownBracketLabels() {
+        val lrc = "[00:01.00](张三)一句\n[00:02.00](李四)二句\n[00:03.00](张三)三句"
+        val synced = requireNotNull(LyricsUtils.parseLyrics(lrc).synced)
+
+        assertEquals(3, synced[0].voice)
+        assertEquals(4, synced[1].voice)
+        assertEquals(synced[0].voice, synced[2].voice)  // same label → same voice
+    }
+
+    @Test
+    fun parseLyrics_wordTimedLineKeepsVoiceFromLeadingBracketLabel() {
+        val lrc = "[00:01.00](男)<00:01.00>第<00:01.50>一句"
+        val synced = requireNotNull(LyricsUtils.parseLyrics(lrc).synced)
+
+        assertEquals(1, synced[0].voice)
+        assertEquals(2, synced[0].words?.size)
+        assertEquals("第一句", synced[0].line)
+    }
+
+    @Test
+    fun parseLyrics_doesNotTreatMidLineParenthesesAsVoiceLabel() {
+        val lrc = "[00:01.00]普通歌词 (live版)"
+        val synced = requireNotNull(LyricsUtils.parseLyrics(lrc).synced)
+
+        assertNull(synced[0].voice)
+        assertEquals("普通歌词 (live版)", synced[0].line)
+    }
+
+    @Test
     fun parseLyrics_handlesBomAtStartOfSyncedLine() {
         val lrc = "\uFEFF[00:03.80]Time is standing still\n[00:09.86]Tracing my body"
 
