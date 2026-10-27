@@ -200,6 +200,8 @@ class MainActivity : ComponentActivity() {
     private val requestAllFilesAccessLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { _ ->
     }
 
+    private val systemSplashGone = mutableStateOf(false)
+
     @CallSuper
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(AppLocaleManager.wrapContext(newBase))
@@ -261,7 +263,23 @@ class MainActivity : ComponentActivity() {
 
         splashScreen.setKeepOnScreenCondition { false }
 
+        val SYSTEM_SPLASH_HANDOFF_MS = 200L
         val isBenchmarkMode = intent.getBooleanExtra("is_benchmark", false)
+        val playAnimatedSplash = savedInstanceState == null &&
+            !isBenchmarkMode &&
+            android.provider.Settings.Global.getFloat(contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0f
+        if (playAnimatedSplash) {
+            splashScreen.setOnExitAnimationListener { provider ->
+                provider.view.animate()
+                    .alpha(0f)
+                    .setDuration(SYSTEM_SPLASH_HANDOFF_MS)
+                    .withEndAction {
+                        provider.remove()
+                        systemSplashGone.value = true
+                    }
+                    .start()
+            }
+        }
         val shouldBenchmarkRebuildDatabase =
             isBenchmarkMode && intent.getBooleanExtra("benchmark_rebuild_database", false)
         Timber.tag("PixelPlayerBenchmark").i(
@@ -373,48 +391,58 @@ class MainActivity : ComponentActivity() {
                     animationSpec = tween(600, easing = LinearOutSlowInEasing),
                     label = "AppContentAlpha"
                 )
+                var showAnimatedSplash by remember { mutableStateOf(playAnimatedSplash) }
 
                 LaunchedEffect(Unit) {
                     delay(100)
                     contentVisible = true
                 }
 
-                Surface(
-                    modifier = Modifier.fillMaxSize().graphicsLayer { alpha = contentAlpha }, 
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    if (showSetupScreen == null) {
-                        SetupGateLoadingScreen()
-                    } else {
-                        AnimatedContent(
-                            targetState = showSetupScreen,
-                            transitionSpec = {
-                                if (targetState) {
-                                    fadeIn(animationSpec = tween(400)) togetherWith fadeOut(animationSpec = tween(400))
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize().graphicsLayer { alpha = contentAlpha }, 
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        if (showSetupScreen == null) {
+                            SetupGateLoadingScreen()
+                        } else {
+                            AnimatedContent(
+                                targetState = showSetupScreen,
+                                transitionSpec = {
+                                    if (targetState) {
+                                        fadeIn(animationSpec = tween(400)) togetherWith fadeOut(animationSpec = tween(400))
+                                    } else {
+                                        scaleIn(initialScale = 0.95f, animationSpec = tween(450)) + fadeIn(animationSpec = tween(450)) togetherWith
+                                                slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(450)) + fadeOut(animationSpec = tween(450))
+                                    }
+                                },
+                                label = "SetupTransition"
+                            ) { shouldShowSetup ->
+                                if (shouldShowSetup) {
+                                    SetupScreen(onSetupComplete = {
+                                    })
                                 } else {
-                                    scaleIn(initialScale = 0.95f, animationSpec = tween(450)) + fadeIn(animationSpec = tween(450)) togetherWith
-                                            slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(450)) + fadeOut(animationSpec = tween(450))
+                                    MainAppContent(playerViewModel, mainViewModel)
                                 }
-                            },
-                            label = "SetupTransition"
-                        ) { shouldShowSetup ->
-                            if (shouldShowSetup) {
-                                SetupScreen(onSetupComplete = {
-                                })
-                            } else {
-                                MainAppContent(playerViewModel, mainViewModel)
                             }
+                        }
+
+                        if (showCrashReportDialog && crashLogData != null) {
+                            CrashReportDialog(
+                                crashLog = crashLogData!!,
+                                onDismiss = {
+                                    CrashHandler.clearCrashLog()
+                                    crashLogData = null
+                                    showCrashReportDialog = false
+                                }
+                            )
                         }
                     }
 
-                    if (showCrashReportDialog && crashLogData != null) {
-                        CrashReportDialog(
-                            crashLog = crashLogData!!,
-                            onDismiss = {
-                                CrashHandler.clearCrashLog()
-                                crashLogData = null
-                                showCrashReportDialog = false
-                            }
+                    if (showAnimatedSplash) {
+                        com.minoppol.music.presentation.splash.PixelPlayerSplash(
+                            systemSplashGone = systemSplashGone.value,
+                            onFinished = { showAnimatedSplash = false }
                         )
                     }
                 }
