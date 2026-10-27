@@ -766,14 +766,21 @@ object LyricsUtils {
                 val textWithTags = stripFormatCharacters(lineMatcher.group(4)?.trim() ?: "")
                 // Step 1: try Enhanced-LRC vN: prefix (e.g. "v1: 你好", "<00:01.00>v2: 世界").
                 val (enhancedVoice, afterEnhanced) = splitVoicePrefix(textWithTags)
-                val (voice, textForStrip) = if (enhancedVoice != null) {
-                    enhancedVoice to afterEnhanced
+                val voice: Int?
+                val lineBackground: BackgroundVocals?
+                val textForStrip: String
+                if (enhancedVoice != null) {
+                    voice = enhancedVoice
+                    lineBackground = null
+                    textForStrip = afterEnhanced
                 } else {
-                    // Step 2: fall back to bracket-style label "(男)", "[女]", "{合唱}".
-                    val (bracketVoice, _, bracketText) = splitBracketVoiceLabel(textWithTags, seenBracketLabels) {
+                    // Step 2: fall back to bracket-style label "(男)", "[女]", "{合唱}", "{和声}".
+                    val (bracketVoice, bracketBg, bracketText) = splitBracketVoiceLabel(textWithTags, seenBracketLabels) {
                         nextBracketVoice++
                     }
-                    bracketVoice to bracketText
+                    voice = bracketVoice
+                    lineBackground = bracketBg
+                    textForStrip = bracketText
                 }
                 val text = stripLrcTimestamps(textForStrip)
 
@@ -837,12 +844,12 @@ object LyricsUtils {
                     }
 
                     if (words.isNotEmpty()) {
-                        syncedLines.add(SyncedLine(lineTimestamp.toInt(), displayText, words, voice = voice))
+                        syncedLines.add(SyncedLine(lineTimestamp.toInt(), displayText, words, voice = voice, background = lineBackground))
                     } else {
-                        syncedLines.add(SyncedLine(lineTimestamp.toInt(), displayText, voice = voice))
+                        syncedLines.add(SyncedLine(lineTimestamp.toInt(), displayText, voice = voice, background = lineBackground))
                     }
                 } else {
-                    syncedLines.add(SyncedLine(lineTimestamp.toInt(), text, voice = voice))
+                    syncedLines.add(SyncedLine(lineTimestamp.toInt(), text, voice = voice, background = lineBackground))
                 }
             } else {
                 val stripped = stripLrcTimestamps(stripFormatCharacters(line))
