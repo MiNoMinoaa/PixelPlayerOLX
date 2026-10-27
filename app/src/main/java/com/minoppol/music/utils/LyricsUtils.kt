@@ -652,6 +652,8 @@ object LyricsUtils {
 
     private val KUGOU_LINE_REGEX = Pattern.compile("^\\[(\\d+),(\\d+)](.*)$")
     private val KUGOU_WORD_PATTERN = Pattern.compile("<(\\d+),(\\d+),(\\d+)>([^<]*)")
+    private val KUGOU_TUPLE_WORD_REGEX = Regex("\\((\\d+),(\\d+)(?:,\\d+)?\\)([^()]*)")
+    private val TUPLE_LINE_HEAD = Regex("^\\(\\d+,\\d+")
 
     private fun splitVoicePrefix(text: String): Pair<Int?, String> {
         val match = LRC_VOICE_PREFIX_REGEX.find(text) ?: return null to text
@@ -929,6 +931,8 @@ object LyricsUtils {
             ?.toLongOrNull() ?: 0L
 
         val syncedLines = mutableListOf<SyncedLine>()
+        val seenBracketLabels = mutableMapOf<String, Int>()
+        var nextBracketVoice = 3
 
         for (raw in text.lines()) {
             val line = raw.trim()
@@ -938,39 +942,86 @@ object LyricsUtils {
             if (!headerMatcher.matches()) continue
             val lineStartMs = (headerMatcher.group(1)?.toLongOrNull() ?: continue) + globalOffsetMs
             if (lineStartMs <= 999L && globalOffsetMs == 0L) continue
-            val body = headerMatcher.group(3) ?: ""
+            val bodyRaw = headerMatcher.group(3) ?: ""
 
-            val words = mutableListOf<SyncedWord>()
-            val wordMatcher = KUGOU_WORD_PATTERN.matcher(body)
-            var previousEndsWithSpace = true
-
-            while (wordMatcher.find()) {
-                val wordOffsetMs = wordMatcher.group(1)?.toLongOrNull() ?: 0L
-                val rawText = wordMatcher.group(4) ?: ""
-
-                val startsNew = previousEndsWithSpace || rawText.firstOrNull()?.isWhitespace() == true
-                val wordText = rawText.trim()
-                previousEndsWithSpace = rawText.lastOrNull()?.isWhitespace() == true
-
-                if (wordText.isEmpty()) continue
-
-                words.add(
-                    SyncedWord(
-                        time = (lineStartMs + wordOffsetMs).toInt(),
-                        word = wordText,
-                        startsNewWord = startsNew
-                    )
-                )
+            val isTupleHead = TUPLE_LINE_HEAD.containsMatchIn(bodyRaw)
+            val (enhancedVoice, afterEnhanced) = if (isTupleHead) null to bodyRaw else splitVoicePrefix(bodyRaw)
+            val voice: Int?
+            val lineBackground: BackgroundVocals?
+            val body: String
+            if (isTupleHead && enhancedVoice == null) {
+                voice = null
+                lineBackground = null
+                body = bodyRaw
+            } else if (enhancedVoice != null) {
+                voice = enhancedVoice
+                lineBackground = null
+                body = afterEnhanced
+            } else {
+                val (bracketVoice, bracketBg, bracketText) =
+                    splitBracketVoiceLabel(bodyRaw, seenBracketLabels) { nextBracketVoice++ }
+                voice = bracketVoice
+                lineBackground = bracketBg
+                body = bracketText
             }
 
-            val plainText = KUGOU_WORD_PATTERN.toRegex().replace(body) { it.groupValues[4] }.trim()
+            val words = mutableListOf<SyncedWord>()
+            val angleMatcher = KUGOU_WORD_PATTERN.matcher(body)
+            val hasAngleTags = angleMatcher.find()
+            var previousEndsWithSpace = true
+            if (hasAngleTags) {
+                angleMatcher.reset()
+                while (angleMatcher.find()) {
+                    val wordOffsetMs = angleMatcher.group(1)?.toLongOrNull() ?: 0L
+                    val rawText = angleMatcher.group(4) ?: ""
+
+                    val startsNew = previousEndsWithSpace || rawText.firstOrNull()?.isWhitespace() == true
+                    val wordText = rawText.trim()
+                    previousEndsWithSpace = rawText.lastOrNull()?.isWhitespace() == true
+
+                    if (wordText.isEmpty()) continue
+
+                    words.add(
+                        SyncedWord(
+                            time = (lineStartMs + wordOffsetMs).toInt(),
+                            word = wordText,
+                            startsNewWord = startsNew
+                        )
+                    )
+                }
+            } else {
+                for (m in KUGOU_TUPLE_WORD_REGEX.findAll(body)) {
+                    val absMs = m.groupValues[1].toLongOrNull() ?: lineStartMs
+                    val rawText = m.groupValues[3]
+
+                    val startsNew = previousEndsWithSpace || rawText.firstOrNull()?.isWhitespace() == true
+                    val wordText = rawText.trim()
+                    previousEndsWithSpace = rawText.lastOrNull()?.isWhitespace() == true
+
+                    if (wordText.isEmpty()) continue
+
+                    words.add(
+                        SyncedWord(
+                            time = absMs.toInt(),
+                            word = wordText,
+                            startsNewWord = startsNew
+                        )
+                    )
+                }
+            }
+
+            val plainText = KUGOU_WORD_PATTERN.toRegex().replace(body) { it.groupValues[4] }
+                .let { KUGOU_TUPLE_WORD_REGEX.replace(it) { m -> m.groupValues[3] } }
+                .trim()
             if (plainText.isEmpty() && words.isEmpty()) continue
 
             syncedLines.add(
                 SyncedLine(
                     time = lineStartMs.toInt(),
                     line = plainText,
-                    words = words.takeIf { it.isNotEmpty() }
+                    words = words.takeIf { it.isNotEmpty() },
+                    voice = voice,
+                    background = lineBackground
                 )
             )
         }

@@ -52,6 +52,19 @@ class LyricsUtilsTest {
     }
 
     @Test
+    fun parseLyrics_kugouPathStripsParenWordTagsAndKeepsVoiceLabel() {
+        val krc = "[71060,170](男)(71060,170,0)啊\n[71230,180](71230,180,0)哦\n"
+        val synced = requireNotNull(LyricsUtils.parseLyrics(krc).synced)
+
+        assertEquals(71_060, synced[0].time)
+        assertEquals("啊", synced[0].line)
+        assertEquals(1, synced[0].voice)
+        assertEquals(71_230, synced[1].time)
+        assertEquals("哦", synced[1].line)
+        assertNull(synced[1].voice)
+    }
+
+    @Test
     fun parseLyrics_handlesBomAtStartOfSyncedLine() {
         val lrc = "\uFEFF[00:03.80]Test line one\n[00:09.86]Test line two"
 
