@@ -4947,7 +4947,7 @@ class LxMusicRepository @Inject constructor(
         Timber.i("fetchLyric songmid=${song.songmid} source=${song.source} title=${song.name}")
         val result = when (song.source) {
             "wy" -> fetchNeteaseLyric(song.songmid)
-            "tx" -> fetchQqLyric(song.songmid)
+            "tx" -> fetchQqLyric(song)
             "kg" -> fetchKugouLyric(song)
             "kw" -> fetchKuwoLyric(song.songmid)
             else -> null
@@ -4956,7 +4956,93 @@ class LxMusicRepository @Inject constructor(
         result
     }
 
-    private suspend fun fetchQqLyric(songmid: String): LxLyricResult? {
+    // tx: songmid → numeric songId cache (GetPlayLyricInfo needs the numeric id)
+    private val txSongIdCache = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    private suspend fun fetchTxNumericSongId(songmid: String): String? {
+        txSongIdCache[songmid]?.let { return it }
+        val payload = """{"comm":{"ct":"19","cv":"1859","uin":"0"},"req":{"module":"music.pf_song_detail_svr","method":"get_song_detail_yqq","param":{"song_type":0,"song_mid":"$songmid"}}}"""
+        return runCatching {
+            okHttpClient.newCall(
+                Request.Builder().url("https://u.y.qq.com/cgi-bin/musicu.fcg")
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36")
+                    .header("Referer", "https://y.qq.com/")
+                    .post(payload.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull()))
+                    .build()
+            ).execute().use { resp ->
+                if (!resp.isSuccessful) return@use null
+                val root = JsonParser.parseString(resp.body?.string().orEmpty()).asJsonObject
+                if (root.get("code")?.takeIf { it.isJsonPrimitive }?.asInt != 0) return@use null
+                val req = root.getAsJsonObject("req") ?: return@use null
+                if (req.get("code")?.takeIf { it.isJsonPrimitive }?.asInt != 0) return@use null
+                val track = req.getAsJsonObject("data")?.getAsJsonObject("track_info") ?: return@use null
+                val id = track.get("id")?.takeIf { it.isJsonPrimitive }?.asString
+                    ?: track.get("id")?.takeIf { it.isJsonPrimitive }?.asLong?.toString()
+                if (!id.isNullOrBlank()) txSongIdCache[songmid] = id
+                id
+            }
+        }.getOrNull()
+    }
+
+    /**
+     * QQ 歌词：优先走 musicu.fcg GetPlayLyricInfo（QRC 逐字 + 翻译 + 音译），
+     * 失败回退旧的 fcg_query_lyric_new.fcg 行级接口。
+     */
+    private suspend fun fetchQqLyric(song: LxSong): LxLyricResult? {
+        val songmid = song.songmid
+        fetchQqLyricV2(songmid)?.let { return it }
+        return fetchQqLyricLegacy(songmid)
+    }
+
+    private suspend fun fetchQqLyricV2(songmid: String): LxLyricResult? {
+        val songId = fetchTxNumericSongId(songmid) ?: return null
+        val payload = """{"comm":{"ct":"19","cv":"1859","uin":"0"},"req":{"method":"GetPlayLyricInfo","module":"music.musichallSong.PlayLyricInfo","param":{"format":"json","crypt":1,"ct":19,"cv":1873,"interval":0,"lrc_t":0,"qrc":1,"qrc_t":0,"roma":1,"roma_t":0,"songID":$songId,"trans":1,"trans_t":0,"type":-1}}}"""
+        return runCatching {
+            okHttpClient.newCall(
+                Request.Builder().url("https://u.y.qq.com/cgi-bin/musicu.fcg")
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36")
+                    .header("Referer", "https://y.qq.com/")
+                    .post(payload.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull()))
+                    .build()
+            ).execute().use { resp ->
+                if (!resp.isSuccessful) return@use null
+                val root = JsonParser.parseString(resp.body?.string().orEmpty()).asJsonObject
+                if (root.get("code")?.takeIf { it.isJsonPrimitive }?.asInt != 0) return@use null
+                val req = root.getAsJsonObject("req") ?: return@use null
+                if (req.get("code")?.takeIf { it.isJsonPrimitive }?.asInt != 0) return@use null
+                val data = req.getAsJsonObject("data") ?: return@use null
+                val qrcHex = data.get("lyric")?.takeIf { it.isJsonPrimitive }?.asString
+                    ?.takeIf { it.isNotBlank() }
+                val transHex = data.get("trans")?.takeIf { it.isJsonPrimitive }?.asString
+                    ?.takeIf { it.isNotBlank() }
+                val romaHex = data.get("roma")?.takeIf { it.isJsonPrimitive }?.asString
+                    ?.takeIf { it.isNotBlank() }
+                if (qrcHex == null) return@use null
+
+                val qrcText = LxLyricDecoders.decodeQrc(qrcHex)
+                Timber.i("fetchQqLyricV2: qrc_decoded_len=${qrcText?.length ?: 0} songmid=$songmid")
+                val qrcLrc = qrcText?.let { LxLyricDecoders.convertQrc(it) }
+                if (qrcLrc == null) return@use null
+
+                val transLrc = transHex?.let { LxLyricDecoders.decodeQrc(it) }
+                    ?.let { LxLyricDecoders.convertQrc(it) }
+                    ?.let { LxLyricDecoders.fixTimeTag(qrcLrc, it) }
+                    ?.let { LxLyricDecoders.stripWordTags(it) }
+                val romaLrc = romaHex?.let { LxLyricDecoders.decodeQrc(it) }
+                    ?.let { LxLyricDecoders.convertQrc(it) }
+                    ?.let { LxLyricDecoders.fixTimeTag(qrcLrc, it) }
+                    ?.let { LxLyricDecoders.stripWordTags(it) }
+                // 行级 lrc（去掉逐字标签）供离线保存用
+                val lineLrc = LxLyricDecoders.stripWordTags(qrcLrc)
+                LxLyricResult(lyric = lineLrc, tlyric = transLrc, rlyric = romaLrc, lxlyric = qrcLrc)
+            }
+        }.getOrElse {
+            Timber.w(it, "fetchQqLyricV2 failed for songmid=$songmid")
+            null
+        }
+    }
+
+    private suspend fun fetchQqLyricLegacy(songmid: String): LxLyricResult? {
         val url = "https://c.y.qq.com/lyric/fcgi-bin/fcg_query_lyric_new.fcg?songmid=$songmid" +
             "&g_tk=5381&loginUin=0&hostUin=0&format=json&inCharset=utf8&outCharset=utf-8&platform=yqq"
         val req = Request.Builder().url(url)
@@ -5002,32 +5088,53 @@ class LxMusicRepository @Inject constructor(
                     if (!resp.isSuccessful) return@use null
                     val root = JsonParser.parseString(resp.body?.string().orEmpty()).asJsonObject
                     val candidates = root.getAsJsonArray("candidates") ?: return@use null
-                    candidates.firstOrNull { it.asJsonObject.get("krctype")?.asInt == 0 }
-                        ?: candidates.firstOrNull { it.asJsonObject.get("krctype")?.asInt != 1 }
-                }?.asJsonObject
+                    // lx-music: 第一个候选，krctype==1 且 contenttype!=1 → KRC 逐字，否则 LRC
+                    candidates.firstOrNull()?.asJsonObject
+                }
         }.getOrElse {
             Timber.w(it, "fetchKugouLyric search failed for ${song.songmid}")
             null
         } ?: return null
         val id = candidate.get("id")?.asString ?: return null
         val accessKey = candidate.get("accesskey")?.asString ?: return null
-        val krctype = candidate.get("krctype")?.asInt ?: 0
-        if (krctype == 1) return null
+        val fmt = if (candidate.get("krctype")?.asInt == 1 &&
+            (candidate.get("contenttype")?.asInt ?: 0) != 1
+        ) "krc" else "lrc"
 
-        // KRC is XOR+LZMA encrypted binary (not UTF-8 text), skip for now; use LRC.
+        // KRC：XOR+zlib 加密，解出 [start,dur]<off,dur,0> 逐字文本
+        if (fmt == "krc") {
+            val krcConversion = runCatching {
+                downloadKugouLyricBytes(id, accessKey, headers, fmt = "krc")
+                    ?.let { LxLyricDecoders.decodeKrcBytes(it) }
+                    ?.let { LxLyricDecoders.convertKrc(it) }
+            }.getOrNull()
+            if (krcConversion != null) {
+                // translationLrc/romanizationLrc 已按主歌词行时间戳打好标签
+                Timber.i("fetchKugouLyric: krc wordLrc_len=${krcConversion.wordLrc?.length ?: 0}")
+                return LxLyricResult(
+                    lyric = krcConversion.lrc,
+                    tlyric = krcConversion.translationLrc,
+                    rlyric = krcConversion.romanizationLrc,
+                    lxlyric = krcConversion.wordLrc,
+                )
+            }
+            Timber.w("fetchKugouLyric: KRC decode failed for id=$id, falling back to LRC")
+        }
+
         val lrcContent = runCatching {
-            downloadKugouLyricContent(id, accessKey, headers, fmt = "lrc")
+            downloadKugouLyricBytes(id, accessKey, headers, fmt = "lrc")
+                ?.let { String(it, Charsets.UTF_8) }
         }.getOrNull()
         if (lrcContent.isNullOrBlank()) return null
         return LxLyricResult(lyric = lrcContent)
     }
 
-    private fun downloadKugouLyricContent(
+    private fun downloadKugouLyricBytes(
         id: String,
         accessKey: String,
         headers: Map<String, String>,
         fmt: String,
-    ): String? {
+    ): ByteArray? {
         val url = "https://lyrics.kugou.com/download?ver=1&client=pc&id=$id&accesskey=$accessKey&fmt=$fmt&charset=utf8"
         return runCatching {
             val req = Request.Builder().url(url).apply {
@@ -5036,18 +5143,80 @@ class LxMusicRepository @Inject constructor(
             okHttpClient.newCall(req).execute().use { resp ->
                 if (!resp.isSuccessful) return@use null
                 val raw = resp.body?.string().orEmpty()
-                Timber.i("downloadKugouLyricContent fmt=$fmt raw_len=${raw.length} raw_preview=${raw.take(200)}")
                 val root = JsonParser.parseString(raw).asJsonObject
                 val content = root.get("content")?.asString ?: return@use null
-                Timber.i("downloadKugouLyricContent fmt=$fmt content_len=${content.length} content_preview=${content.take(80)}")
-                val bytes = android.util.Base64.decode(content, android.util.Base64.DEFAULT)
-                Timber.i("downloadKugouLyricContent fmt=$fmt decoded_bytes=${bytes.size} first_bytes=${bytes.take(16).joinToString(",")}")
-                String(bytes, Charsets.UTF_8)
+                // lrc 与 krc 都是 base64 载荷：krc 解出来是二进制（XOR+zlib），
+                // 不能按 UTF-8 转字符串，这里统一返回原始字节。
+                LxLyricDecoders.base64DecodeBytes(content)
             }
         }.getOrNull()
     }
 
+    /**
+     * 酷我歌词：优先 mlyric.kuwo.cn/mobi.s lrcx=1（zlib+XOR 逐字），
+     * 失败回退 m.kuwo.cn H5 行级接口。
+     */
     private suspend fun fetchKuwoLyric(songmid: String): LxLyricResult? {
+        fetchKuwoLyricV2(songmid)?.let { return it }
+        return fetchKuwoLyricH5(songmid)
+    }
+
+    private suspend fun fetchKuwoLyricV2(songmid: String): LxLyricResult? {
+        val rid = songmid.removePrefix("MUSIC_")
+        val url = "http://mlyric.kuwo.cn/mobi.s?f=web&type=lyric&lrcx=1&rid=$rid&encode=utf8"
+        return runCatching {
+            okHttpClient.newCall(Request.Builder().url(url).get().build()).execute().use { resp ->
+                if (!resp.isSuccessful) return@use null
+                val raw = resp.body?.bytes() ?: return@use null
+                val lrcxText = LxLyricDecoders.decodeKuwoLrcx(raw, isLrcx = true) ?: return@use null
+                val converted = LxLyricDecoders.convertKuwoLrcx(lrcxText) ?: return@use null
+                Timber.i("fetchKuwoLyricV2: lrcx converted len=${converted.length} rid=$rid")
+                // 拆出主歌词与翻译：kw 的 lrcx 文本里翻译行与主行同时间戳出现两次，
+                // 与 lx 的 sortLrcArr 逻辑一致 —— 时间重复的第一行是主行，第二行是翻译。
+                val triple = splitKuwoDuplicatedLines(converted)
+                LxLyricResult(lyric = triple.first, tlyric = triple.second, lxlyric = converted)
+            }
+        }.getOrElse {
+            Timber.w(it, "fetchKuwoLyricV2 failed for songmid=$songmid")
+            null
+        }
+    }
+
+    /** kw lrclist 里同时间戳的两行 = 主行 + 翻译；返回 (主行lrc, 翻译lrc)。 */
+    private fun splitKuwoDuplicatedLines(lrc: String): Pair<String, String> {
+        val seen = LinkedHashMap<Long, String>()
+        val main = StringBuilder()
+        val trans = StringBuilder()
+        val timeRegex = Regex("^\\[([\\d:.]+)]")
+        for (line in lrc.lines()) {
+            val m = timeRegex.find(line) ?: run {
+                if (line.isNotBlank()) main.appendLine(line)
+                continue
+            }
+            val ms = LxLyricDecoders.run {
+                // reuse timeToMs via public API: compute inline instead
+                var t = m.groupValues[1]
+                if (!t.contains('.')) t += ".0"
+                val arr = t.split(Regex(":|\\.")).toMutableList()
+                while (arr.size < 3) arr.add(0, "0")
+                val min = arr[0].toLongOrNull() ?: 0L
+                val sec = arr[1].toLongOrNull() ?: 0L
+                var frac = arr[2].toLongOrNull() ?: 0L
+                if (arr[2].length == 1) frac *= 100 else if (arr[2].length == 2) frac *= 10
+                min * 3600000 + sec * 1000 + frac
+            }
+            if (ms in seen) {
+                // 第二次出现同时间戳 → 翻译行（去掉逐字标签）
+                trans.appendLine(line.replace(Regex("<\\d{2}:\\d{2}[.:]\\d{2,3}>"), ""))
+            } else {
+                seen[ms] = line
+                main.appendLine(line)
+            }
+        }
+        return main.trim().toString() to trans.trim().toString()
+    }
+
+    private suspend fun fetchKuwoLyricH5(songmid: String): LxLyricResult? {
         val rid = songmid.removePrefix("MUSIC_")
         val url = "http://m.kuwo.cn/newh5/singles/songinfoandlrc?musicId=$rid"
         val req = Request.Builder().url(url)
@@ -5120,16 +5289,37 @@ class LxMusicRepository @Inject constructor(
                     if (lyric.isNullOrBlank()) return@use null
                     val tlyric = root.getAsJsonObject("tlyric")?.get("lyric")?.asString
                     val rlyric = root.getAsJsonObject("romalrc")?.get("lyric")?.asString
-                    val hlyric = root.getAsJsonObject("hlyric")?.get("lyric")?.asString
+                    // YRC 逐字：JSON 行 {"t":ms,"c":[{"tx":..}]}，转成绝对时间增强 LRC
+                    val yrcRaw = root.getAsJsonObject("yrc")?.get("lyric")?.asString
                         ?.takeIf { it.isNotBlank() }
-                    val hrom = root.getAsJsonObject("hrom")?.get("lyric")?.asString
+                    val ytlrcRaw = root.getAsJsonObject("ytlrc")?.get("lyric")?.asString
                         ?.takeIf { it.isNotBlank() }
-                    Timber.i("fetchNeteaseLyricV1: lrc_len=${lyric.length} hlyric=${hlyric?.length ?: 0} hrom=${hrom?.length ?: 0} songmid=$songmid")
+                    val yromalrcRaw = root.getAsJsonObject("yromalrc")?.get("lyric")?.asString
+                        ?.takeIf { it.isNotBlank() }
+                    Timber.i("fetchNeteaseLyricV1: lrc_len=${lyric.length} yrc_len=${yrcRaw?.length ?: 0} songmid=$songmid")
+
+                    if (yrcRaw != null) {
+                        val yrcLrc = LxLyricDecoders.convertYrc(yrcRaw)
+                        if (yrcLrc != null) {
+                            val ytlrc = ytlrcRaw?.let { LxLyricDecoders.convertYrc(it) }
+                                ?.let { LxLyricDecoders.fixTimeTag(yrcLrc, it) }
+                                ?.let { LxLyricDecoders.stripWordTags(it) }
+                            val yromalrc = yromalrcRaw?.let { LxLyricDecoders.convertYrc(it) }
+                                ?.let { LxLyricDecoders.fixTimeTag(yrcLrc, it) }
+                                ?.let { LxLyricDecoders.stripWordTags(it) }
+                            return@use LxLyricResult(
+                                lyric = LxLyricDecoders.fixColonFraction(lyric),
+                                tlyric = ytlrc ?: tlyric?.let { LxLyricDecoders.fixColonFraction(it) },
+                                rlyric = yromalrc ?: rlyric,
+                                lxlyric = yrcLrc,
+                            )
+                        }
+                        Timber.w("fetchNeteaseLyricV1: YRC present but conversion failed for songmid=$songmid")
+                    }
                     LxLyricResult(
-                        lyric = lyric,
-                        tlyric = tlyric,
+                        lyric = LxLyricDecoders.fixColonFraction(lyric),
+                        tlyric = tlyric?.let { LxLyricDecoders.fixColonFraction(it) },
                         rlyric = rlyric,
-                        lxlyric = hlyric ?: hrom
                     )
                 }
             }.getOrElse {
@@ -5162,16 +5352,22 @@ class LxMusicRepository @Inject constructor(
                 val tlyric = root.getAsJsonObject("tlyric")?.get("lyric")?.asString
                 val rlyric = root.getAsJsonObject("romalrc")?.get("lyric")?.asString
                     ?: root.getAsJsonObject("rlyric")?.get("lyric")?.asString
-                // Legacy API may also expose hlyric / hrom for word-timed lines.
-                val hlyric = root.getAsJsonObject("hlyric")?.get("lyric")?.asString
+                // Legacy API may also expose yrc for word-timed lines.
+                val yrcRaw = root.getAsJsonObject("yrc")?.get("lyric")?.asString
                     ?.takeIf { it.isNotBlank() }
-                val hrom = root.getAsJsonObject("hrom")?.get("lyric")?.asString
-                    ?.takeIf { it.isNotBlank() }
+                val yrcLrc = yrcRaw?.let { LxLyricDecoders.convertYrc(it) }
+                if (yrcLrc != null) {
+                    return@use LxLyricResult(
+                        lyric = LxLyricDecoders.fixColonFraction(lyric),
+                        tlyric = tlyric?.let { LxLyricDecoders.fixColonFraction(it) },
+                        rlyric = rlyric,
+                        lxlyric = yrcLrc,
+                    )
+                }
                 LxLyricResult(
-                    lyric = lyric,
-                    tlyric = tlyric,
+                    lyric = LxLyricDecoders.fixColonFraction(lyric),
+                    tlyric = tlyric?.let { LxLyricDecoders.fixColonFraction(it) },
                     rlyric = rlyric,
-                    lxlyric = hlyric ?: hrom
                 )
             }
         }.getOrElse {

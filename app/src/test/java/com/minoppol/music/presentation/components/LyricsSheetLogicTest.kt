@@ -171,65 +171,60 @@ class LyricsSheetLogicTest {
     }
 
     @Test
-    fun resolveWordVisualStates_tracksFastConsecutiveWordsWithoutLeavingPreviousWordsDim() {
+    fun resolveClusterHighlightFrame_tracksFastConsecutiveWords() {
         val words = listOf(
             SyncedWord(time = 1_000, word = "one"),
             SyncedWord(time = 1_050, word = "two"),
             SyncedWord(time = 1_100, word = "three")
         )
 
-        val states = resolveWordVisualStates(
+        val frame = resolveClusterHighlightFrame(
             words = words,
             positionMs = 1_075,
-            lineStartTimeMs = 1_000,
-            lineEndTimeMs = 1_200
+            nextClusterStartMs = null,
+            lineEndMs = 1_200
         )
 
-        assertEquals(
-            listOf(LyricWordPhase.Completed, LyricWordPhase.Active, LyricWordPhase.Future),
-            states.map { it.phase }
-        )
-        assertEquals(0.5f, states[1].progress, 0.001f)
+        // "two" is the syllable being sung; 25ms into its 50ms span.
+        assertEquals(1, frame.syllableIndex)
+        assertEquals(0.5f, frame.fraction, 0.001f)
     }
 
     @Test
-    fun resolveWordVisualStates_usesLastDuplicateTimestampAsActiveWord() {
+    fun resolveClusterHighlightFrame_usesLastDuplicateTimestampAsActiveWord() {
         val words = listOf(
             SyncedWord(time = 2_000, word = "first"),
             SyncedWord(time = 2_000, word = "second"),
             SyncedWord(time = 2_100, word = "third")
         )
 
-        val states = resolveWordVisualStates(
+        val frame = resolveClusterHighlightFrame(
             words = words,
             positionMs = 2_000,
-            lineStartTimeMs = 2_000,
-            lineEndTimeMs = 2_200
+            nextClusterStartMs = null,
+            lineEndMs = 2_200
         )
 
-        assertEquals(LyricWordPhase.Completed, states[0].phase)
-        assertEquals(LyricWordPhase.Active, states[1].phase)
-        assertEquals(LyricWordPhase.Future, states[2].phase)
-        assertEquals(0f, states[1].progress, 0f)
+        assertEquals(1, frame.syllableIndex)
+        assertEquals(0f, frame.fraction, 0f)
     }
 
     @Test
-    fun resolveWordVisualStates_zeroLengthLineStaysInactiveWithoutThrowing() {
-        val states = resolveWordVisualStates(
+    fun resolveClusterHighlightFrame_zeroLengthLineSingsInstantly() {
+        val frame = resolveClusterHighlightFrame(
             words = listOf(SyncedWord(time = 2_000, word = "instant")),
             positionMs = 2_000,
-            lineStartTimeMs = 2_000,
-            lineEndTimeMs = 2_000
+            nextClusterStartMs = null,
+            lineEndMs = 2_000
         )
 
-        assertEquals(
-            listOf(LyricWordVisualState(LyricWordPhase.Future, 0f)),
-            states
-        )
+        // normalizeWordEndTime guarantees at least +1ms, so the word is active at 0 progress.
+        assertEquals(0, frame.syllableIndex)
+        assertEquals(0f, frame.fraction, 0f)
     }
 
     @Test
-    fun resolveWordVisualStates_accumulatesEveryCompletedWord() {
+    fun resolveClusterHighlightFrame_accumulatesCompletedWords() {
         val words = listOf(
             SyncedWord(time = 3_000, word = "we"),
             SyncedWord(time = 3_200, word = "keep"),
@@ -237,51 +232,41 @@ class LyricsSheetLogicTest {
             SyncedWord(time = 3_600, word = "lit")
         )
 
-        val states = resolveWordVisualStates(
+        val frame = resolveClusterHighlightFrame(
             words = words,
             positionMs = 3_500,
-            lineStartTimeMs = 3_000,
-            lineEndTimeMs = 3_800
+            nextClusterStartMs = null,
+            lineEndMs = 3_800
         )
 
-        assertEquals(
-            listOf(
-                LyricWordPhase.Completed,
-                LyricWordPhase.Completed,
-                LyricWordPhase.Active,
-                LyricWordPhase.Future
-            ),
-            states.map { it.phase }
-        )
-        assertEquals(listOf(1f, 1f, 0.5f, 0f), states.map { it.progress })
+        // "these" (index 2) is active; earlier words completed by index alone.
+        assertEquals(2, frame.syllableIndex)
+        assertEquals(0.5f, frame.fraction, 0.001f)
     }
 
     @Test
-    fun resolveWordScale_reducedMotionKeepsEveryPhaseAtStableSize() {
-        val states = listOf(
-            LyricWordVisualState(LyricWordPhase.Future, 0f),
-            LyricWordVisualState(LyricWordPhase.Active, 0.35f),
-            LyricWordVisualState(LyricWordPhase.Completed, 1f)
+    fun resolveWordEmphasisScale_reducedMotionKeepsStableSize() {
+        val scale = resolveWordEmphasisScale(
+            positionMs = 4_050,
+            wordStartMs = 4_000,
+            wordEndMs = 4_500,
+            motionEnabled = false
         )
 
-        assertTrue(states.all { resolveWordScale(it, motionEnabled = false) == 1f })
+        assertEquals(1f, scale, 0f)
     }
 
     @Test
-    fun resolveWordVisualStates_longWordEmphasisSettlesWithinBoundedTime() {
-        val states = resolveWordVisualStates(
-            words = listOf(
-                SyncedWord(time = 4_000, word = "long"),
-                SyncedWord(time = 6_000, word = "word")
-            ),
+    fun resolveWordEmphasisScale_longWordSettlesWithinBoundedTime() {
+        val scale = resolveWordEmphasisScale(
             positionMs = 4_300,
-            lineStartTimeMs = 4_000,
-            lineEndTimeMs = 6_500
+            wordStartMs = 4_000,
+            wordEndMs = 6_000,
+            motionEnabled = true
         )
 
-        assertEquals(LyricWordPhase.Active, states[0].phase)
-        assertEquals(1f, states[0].progress, 0f)
-        assertEquals(1f, resolveWordScale(states[0], motionEnabled = true), 0f)
+        // 300ms > MAX_WORD_EMPHASIS_DURATION_MS (240ms) → settled back to 1x.
+        assertEquals(1f, scale, 0f)
     }
 
     @Test
