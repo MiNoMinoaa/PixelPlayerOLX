@@ -589,10 +589,17 @@ object LxLyricDecoders {
     )
 
     /**
-     * YRC text (Netease): lines are JSON `{"t":ms,"c":[{"tx":"word"},…]}`.
-     * Returns Enhanced LRC where each word carries an absolute timestamp.
+     * YRC text (Netease) has two server shapes:
+     *  - newer songs: JSON lines `{"t":ms,"c":[{"tx":"word","t":absMs},…]}`
+     *  - legacy songs: tuple lines `[absStartMs,lineDurMs](absWordMs,wordDurMs,flag)word…`
+     * Both normalize to Enhanced LRC with absolute <mm:ss.mmm> word tags.
      */
     fun convertYrc(ylrcText: String): String? {
+        val hasJsonLines = ylrcText.lineSequence().any { it.trim().startsWith("{") }
+        if (!hasJsonLines) {
+            // Legacy tuple YRC — same shape as QRC (absolute paren tags).
+            return convertTupleText(ylrcText)
+        }
         val out = mutableListOf<String>()
         for (raw in ylrcText.lines()) {
             val line = raw.trim()
@@ -634,14 +641,25 @@ object LxLyricDecoders {
         var text = qrcText.trim()
         text = Regex("^[\\s\\S]*?LyricContent=\"").replace(text, "")
         text = Regex("\"/>[\\s\\S]*$").replace(text, "")
-        text = text.replace("\r", "")
+        return convertTupleText(text)
+    }
 
+    /**
+     * Shared tuple-line parser for QRC and legacy-YRC: `[startMs,durMs]` headed lines
+     * whose words carry ABSOLUTE `(absMs,dur[,flag])` tags (or relative `<off,dur[,0]>`
+     * KRC tags). Voice markers like `(男)`/`v1:` at the line head survive as bracket
+     * text so the LRC parser can still assign a duet voice.
+     */
+    private fun convertTupleText(sourceText: String): String? {
+        val text = sourceText.replace("\r", "")
         val out = mutableListOf<String>()
+        var sawTupleLine = false
         for (raw in text.lines()) {
             val line = raw.trim()
             if (line.isEmpty()) continue
             if (line.startsWith("[offset") || line.startsWith("[ti:") || line.startsWith("[ar:") ||
-                line.startsWith("[al:") || line.startsWith("[by:")
+                line.startsWith("[al:") || line.startsWith("[by:") || line.startsWith("[hash:") ||
+                line.startsWith("[language:") || line.startsWith("[kuwo:") || line.startsWith("[ver:")
             ) {
                 out.add(line)
                 continue
@@ -649,6 +667,12 @@ object LxLyricDecoders {
             val m = KRC_LINE.find(line) ?: continue
             val startMs = m.groupValues[1].toLongOrNull() ?: continue
             val rest = m.groupValues[3]
+            sawTupleLine = true
+            // Leading voice marker before the first word tag, e.g. "(男)" or "v1:".
+            val leadMatch = Regex("^\\s*(?:\\(|\\[|\\{)([^()\\[\\]{}]{1,8})(?:\\)|\\]|})").find(rest)
+                ?: Regex("^\\s*v(\\d{1,4})\\s*:").find(rest)
+            val voiceLead = leadMatch?.value?.trim()
+            // plain line: strip word tags
             val angleWords = KRC_WORD.findAll(rest).map { wm ->
                 WordToken(startMs + (wm.groupValues[1].toLongOrNull() ?: 0L), wm.groupValues[3].trim())
             }.filter { it.text.isNotEmpty() }.toList()
@@ -659,11 +683,13 @@ object LxLyricDecoders {
                     WordToken(wm.groupValues[1].toLongOrNull() ?: startMs, wm.groupValues[3].trim())
                 }.filter { it.text.isNotEmpty() }.toList()
             }
-            val plain = KRC_WORD.replace(rest) { it.groupValues[3] }
+            var plain = KRC_WORD.replace(rest) { it.groupValues[3] }
                 .let { QRC_WORD.replace(it) { m2 -> m2.groupValues[3] } }
                 .trim()
+            if (voiceLead != null) plain = plain.removePrefix(voiceLead).trim()
             if (plain.isEmpty() && words.isEmpty()) continue
             val sb = StringBuilder(msTag(startMs))
+            if (voiceLead != null && voiceLead.isNotEmpty()) sb.append(voiceLead)
             if (words.isNotEmpty()) {
                 words.forEach { sb.append(wordTag(it.startMs)).append(it.text) }
             } else {
@@ -671,7 +697,8 @@ object LxLyricDecoders {
             }
             out.add(sb.toString())
         }
-        return if (out.isEmpty()) null else out.joinToString("\n")
+        if (out.isEmpty() || !sawTupleLine) return null
+        return out.joinToString("\n")
     }
 
     /**

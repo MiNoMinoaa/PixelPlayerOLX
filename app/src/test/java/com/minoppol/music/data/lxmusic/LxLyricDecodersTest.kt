@@ -95,6 +95,26 @@ class LxLyricDecodersTest {
         assertThat(LxLyricDecoders.convertYrc("not json at all")).isNull()
     }
 
+    @Test
+    fun `convertYrc handles legacy tuple lines without leaking ms tags into text`() {
+        // Regression: 网易云旧式 YRC 是 [absStartMs,lineDurMs](absWordMs,wordDurMs,flag)词
+        val legacy = "[71060,170](71060,170,0)啊\n[71230,180](71230,180,0)哦\n"
+        val converted = LxLyricDecoders.convertYrc(legacy)!!
+        assertThat(converted).contains("[01:11.060]<01:11.060>啊")
+        assertThat(converted).contains("[01:11.230]<01:11.230>哦")
+        assertThat(converted).doesNotContain("(71060")
+        assertThat(converted).doesNotContain("71060,170,0")
+    }
+
+    @Test
+    fun `convertYrc keeps voice marker from legacy tuple lines`() {
+        val legacy = "[71060,170](男)(71060,170,0)啊(71230,100,0)耶\n"
+        val converted = LxLyricDecoders.convertYrc(legacy)!!
+        assertThat(converted).startsWith("[01:11.060](男)")
+        assertThat(converted).contains("<01:11.060>啊<01:11.230>耶")
+        assertThat(converted).doesNotContain(",170,0)")
+    }
+
     // ------------------------------------------------------------------
     // KRC decode + conversion
     // ------------------------------------------------------------------
