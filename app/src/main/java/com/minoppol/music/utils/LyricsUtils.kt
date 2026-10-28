@@ -642,7 +642,7 @@ object LyricsUtils {
     // "<00:01.00>(label)", "[label]", "{label}", "(V2)", "<00:05.00>[label]".
     // Using alternation instead of character classes to avoid raw-string backslash pitfalls.
     private val LRC_BRACKET_VOICE_REGEX = Regex(
-        """^(<\d{1,3}:\d{1,2}[.:]\d{1,3}>)?\s*(?:\(|\[|\{)([^()\[\]{}]+)(?:\)|\]|\})\s*""",
+        """^(<\d{1,3}:\d{1,2}[.:]\d{1,3}>)?\s*(?:\(|\[|\{|【|（)([^()\[\]{}【】（）]+)(?:\)|\]|\}|】|）)\s*""",
         RegexOption.IGNORE_CASE
     )
     // Labels that definitely mean a group / chorus and should be centered in duet layout.
