@@ -1,10 +1,15 @@
 package com.minoppol.music.presentation.viewmodel
 
 import android.content.Context
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.minoppol.music.R
+import com.minoppol.music.data.preferences.UserPreferencesRepository
 import com.minoppol.music.data.update.AppUpdateChecker
 import com.minoppol.music.data.update.AppUpdateInfo
+import com.minoppol.music.data.update.AppUpdateInstaller
 import com.minoppol.music.data.update.UpdateCheckResult
+import com.minoppol.music.data.update.UpdateInstallStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -13,19 +18,22 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import javax.inject.Inject
 
 @HiltViewModel
 class AppUpdateViewModel @Inject constructor(
     private val updateChecker: AppUpdateChecker,
+    private val updateInstaller: AppUpdateInstaller,
+    private val userPreferencesRepository: UserPreferencesRepository,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _updateInfo = MutableStateFlow<AppUpdateInfo?>(null)
     val updateInfo: StateFlow<AppUpdateInfo?> = _updateInfo.asStateFlow()
+
+    val installStatus: StateFlow<UpdateInstallStatus> = updateInstaller.status
 
     private val _toast = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val toast: SharedFlow<String> = _toast.asSharedFlow()
@@ -39,11 +47,14 @@ class AppUpdateViewModel @Inject constructor(
         if (checking) return
         checking = true
         viewModelScope.launch {
-            val result = updateChecker.checkForUpdate(currentVersion)
-            checking = false
-            if (result is UpdateCheckResult.UpdateAvailable) {
-                _updateInfo.value = result.info
+            val enabled = userPreferencesRepository.autoCheckUpdatesFlow.first()
+            if (enabled) {
+                val result = updateChecker.checkForUpdate(currentVersion)
+                if (result is UpdateCheckResult.UpdateAvailable) {
+                    _updateInfo.value = result.info
+                }
             }
+            checking = false
         }
     }
 
@@ -73,4 +84,26 @@ class AppUpdateViewModel @Inject constructor(
     fun dismissUpdate() {
         _updateInfo.value = null
     }
+
+    fun startInstall() {
+        _updateInfo.value?.let { updateInstaller.startDownload(it) }
+    }
+
+    fun stopInstall() {
+        updateInstaller.cancel()
+    }
+
+    fun resumeInstall() {
+        updateInstaller.resumeInstall()
+    }
+
+    fun openInstallConfirmation() {
+        updateInstaller.openPendingConfirmation()
+    }
+
+    fun dismissInstallError() {
+        updateInstaller.dismiss()
+    }
+
+    fun canRequestPackageInstalls(): Boolean = updateInstaller.canRequestPackageInstalls()
 }

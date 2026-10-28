@@ -123,6 +123,7 @@ constructor(
         val SHOW_SEARCH_TAB = booleanPreferencesKey("show_search_tab")
         val SHOW_RECENT_TAB = booleanPreferencesKey("show_recent_tab")
         val SPLASH_ANIMATION_ENABLED = booleanPreferencesKey("splash_animation_enabled")
+        val AUTO_CHECK_UPDATES = booleanPreferencesKey("auto_check_updates")
         val LX_BOARD_INCLUDE_QUEUE = booleanPreferencesKey("lx_board_include_queue")
         val LX_BOARD_SHOW_SHUFFLE_FAB = booleanPreferencesKey("lx_board_show_shuffle_fab")
         val LX_BOARD_SHOW_PLAY_ALL_FAB = booleanPreferencesKey("lx_board_show_play_all_fab")
@@ -1485,6 +1486,17 @@ constructor(
     suspend fun setSplashAnimationEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.SPLASH_ANIMATION_ENABLED] = enabled
+        }
+    }
+
+    val autoCheckUpdatesFlow: Flow<Boolean> =
+            dataStore.data.map { preferences ->
+                preferences[PreferencesKeys.AUTO_CHECK_UPDATES] ?: true
+            }
+
+    suspend fun setAutoCheckUpdates(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.AUTO_CHECK_UPDATES] = enabled
         }
     }
 

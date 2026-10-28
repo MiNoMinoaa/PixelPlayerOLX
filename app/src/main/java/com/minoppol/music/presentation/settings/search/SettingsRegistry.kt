@@ -718,6 +718,16 @@ object SettingsRegistry {
 
             // --- ABOUT ---
             SettingSpec(
+                id = "updates_page",
+                itemKey = "item_updates_page",
+                titleRes = R.string.settings_updates_row_title,
+                subtitleRes = R.string.settings_updates_row_subtitle,
+                category = SettingsCategory.ABOUT,
+                subscreenRoute = Screen.Updates.createRoute(),
+                type = SettingType.NAVIGABLE_CARD,
+                keywordsStatic = listOf("update", "version", "upgrade", "check", "更新", "升级", "版本")
+            ),
+            SettingSpec(
                 id = "about_app",
                 itemKey = "item_about_app",
                 titleRes = R.string.setcat_about_pixelplayer_title,
@@ -726,6 +736,18 @@ object SettingsRegistry {
                 subscreenRoute = Screen.SettingsCategory.createRoute("about"),
                 type = SettingType.NAVIGABLE_CARD,
                 keywordsStatic = listOf("version", "credits", "about", "info", "app")
+            ),
+            SettingSpec(
+                id = "about_auto_check_updates",
+                itemKey = "item_about_auto_check_updates",
+                titleRes = R.string.setcat_auto_check_updates_title,
+                subtitleRes = R.string.setcat_auto_check_updates_subtitle,
+                category = SettingsCategory.ABOUT,
+                subscreenRoute = Screen.Updates.createRoute(),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf("update", "check", "auto", "version", "startup", "更新"),
+                getValue = { it.autoCheckUpdates },
+                onToggle = { viewModel, checked -> viewModel.setAutoCheckUpdates(checked) }
             )
         )
     }

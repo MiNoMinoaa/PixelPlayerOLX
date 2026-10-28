@@ -69,6 +69,7 @@ data class SettingsUiState(
     val showSearchTab: Boolean = true,
     val showRecentTab: Boolean = true,
     val splashAnimationEnabled: Boolean = true,
+    val autoCheckUpdates: Boolean = true,
     val lxBoardIncludeQueue: Boolean = true,
     val lxBoardShowShuffleFab: Boolean = true,
     val lxBoardShowPlayAllFab: Boolean = true,
@@ -171,6 +172,7 @@ private sealed interface SettingsUiUpdate {
         val showSearchTab: Boolean,
         val showRecentTab: Boolean,
         val splashAnimationEnabled: Boolean,
+        val autoCheckUpdates: Boolean,
         val lxBoardIncludeQueue: Boolean,
         val lxBoardShowShuffleFab: Boolean,
         val lxBoardShowPlayAllFab: Boolean
@@ -297,7 +299,8 @@ class SettingsViewModel @Inject constructor(
                 userPreferencesRepository.lxBoardIncludeQueueFlow,
                 userPreferencesRepository.lxBoardShowShuffleFabFlow,
                 userPreferencesRepository.lxBoardShowPlayAllFabFlow,
-                userPreferencesRepository.splashAnimationEnabledFlow
+                userPreferencesRepository.splashAnimationEnabledFlow,
+                userPreferencesRepository.autoCheckUpdatesFlow
             ) { values ->
                 SettingsUiUpdate.Group1(
                     appRebrandDialogShown = values[0] as Boolean,
@@ -319,7 +322,8 @@ class SettingsViewModel @Inject constructor(
                     lxBoardIncludeQueue = values[16] as Boolean,
                     lxBoardShowShuffleFab = values[17] as Boolean,
                     lxBoardShowPlayAllFab = values[18] as Boolean,
-                    splashAnimationEnabled = values[19] as Boolean
+                    splashAnimationEnabled = values[19] as Boolean,
+                    autoCheckUpdates = values[20] as Boolean
                 )
             }.collect { update ->
                 _uiState.update { state ->
@@ -343,7 +347,8 @@ class SettingsViewModel @Inject constructor(
                         lxBoardIncludeQueue = update.lxBoardIncludeQueue,
                         lxBoardShowShuffleFab = update.lxBoardShowShuffleFab,
                         lxBoardShowPlayAllFab = update.lxBoardShowPlayAllFab,
-                        splashAnimationEnabled = update.splashAnimationEnabled
+                        splashAnimationEnabled = update.splashAnimationEnabled,
+                        autoCheckUpdates = update.autoCheckUpdates
                     )
                 }
             }
@@ -726,6 +731,12 @@ class SettingsViewModel @Inject constructor(
     fun setSplashAnimationEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setSplashAnimationEnabled(enabled)
+        }
+    }
+
+    fun setAutoCheckUpdates(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setAutoCheckUpdates(enabled)
         }
     }
 

@@ -38,6 +38,7 @@ import com.minoppol.music.presentation.screens.AlbumDetailScreen
 import com.minoppol.music.presentation.screens.AudioBookmarkFolderScreen
 import com.minoppol.music.presentation.screens.AudioBookmarksScreen
 import com.minoppol.music.presentation.screens.CloudDownloadsScreen
+import com.minoppol.music.presentation.screens.UpdatesScreen
 import com.minoppol.music.presentation.screens.AccountsScreen
 import com.minoppol.music.presentation.screens.ArtistDetailScreen
 import com.minoppol.music.presentation.screens.ArtistSettingsScreen
@@ -713,6 +714,22 @@ fun AppNavigation(
                         navController = navController,
                         playerViewModel = playerViewModel,
                         highlightKey = highlightKey
+                    )
+                }
+            }
+            composable(
+                route = Screen.Updates.route,
+                arguments = listOf(navArgument("highlightKey") { type = NavType.StringType; nullable = true; defaultValue = null }),
+                enterTransition = { enterTransition() },
+                exitTransition = { exitTransition() },
+                popEnterTransition = { popEnterTransition() },
+                popExitTransition = { popExitTransition() },
+            ) { backStackEntry ->
+                ScreenWrapper(navController = navController, playerViewModel = playerViewModel) {
+                    val highlightKey = backStackEntry.arguments?.getString("highlightKey")
+                    UpdatesScreen(
+                        highlightKey = highlightKey,
+                        onBack = { navController.popBackStack() }
                     )
                 }
             }

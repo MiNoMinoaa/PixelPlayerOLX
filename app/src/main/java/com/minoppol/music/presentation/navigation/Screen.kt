@@ -91,4 +91,9 @@ sealed class Screen(val route: String) {
             if (highlightKey != null) "lyrics_settings?highlightKey=$highlightKey" else "lyrics_settings"
     }
 
+    object Updates : Screen("updates?highlightKey={highlightKey}") {
+        fun createRoute(highlightKey: String? = null) =
+            if (highlightKey != null) "updates?highlightKey=$highlightKey" else "updates"
+    }
+
 }
