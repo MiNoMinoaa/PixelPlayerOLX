@@ -63,6 +63,32 @@ class LyricsRepositoryImplTest {
     }
 
     @Test
+    fun buildLxLyrics_exactTimestampBeatsEarlierFuzzyMatchForFirstLyricLine() {
+        val repository = LyricsRepositoryImpl(
+            context = mockk<Context>(relaxed = true),
+            lrcLibApiService = mockk<LrcLibApiService>(relaxed = true),
+            lyricsDao = mockk<LyricsDao>(relaxed = true),
+            okHttpClient = mockk<OkHttpClient>(relaxed = true),
+            userPreferencesRepository = userPreferencesRepository(),
+            lxMusicRepository = mockk(relaxed = true)
+        )
+        val lyric = "[00:00.00]哈一\n[00:00.21]哈二\n[00:00.42]哈三\n[00:00.63]哈四\n[00:00.851]哈五机密集"
+        val tlyric = "[00:00.851]哈五机密集译文"
+
+        val lyrics = repository.buildLxLyrics(
+            LxLyricResult(lyric = lyric, tlyric = tlyric),
+            source = "wy"
+        )
+
+        val synced = lyrics!!.synced!!
+        assertThat(synced).hasSize(5)
+        assertThat(synced[2].line).isEqualTo("哈三")
+        assertThat(synced[2].translation).isNull()
+        assertThat(synced[4].line).isEqualTo("哈五机密集")
+        assertThat(synced[4].translation).isEqualTo("哈五机密集译文")
+    }
+
+    @Test
     fun getLyrics_returnsSongLyricsBeforeNeedingStorageRead() = runTest {
         val repository = LyricsRepositoryImpl(
             context = mockk<Context>(relaxed = true),
