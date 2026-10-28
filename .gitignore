@@ -50,3 +50,6 @@ markdown.xml
 graphify-out/
 
 /app/src/main/java/com/minoppol/music/data/lxmusic/LxPrivateAccountExtension.kt
+
+# Real copyrighted lyric payloads kept local for regression tests (tests skip when absent)
+app/src/test/resources/realpayloads/

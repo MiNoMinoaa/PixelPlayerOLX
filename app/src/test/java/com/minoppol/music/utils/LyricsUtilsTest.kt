@@ -10,14 +10,14 @@ class LyricsUtilsTest {
 
     @Test
     fun parseLyrics_assignsVoicesFromBracketLabels() {
-        // (男) 女声 [合唱] {和声} — any bracket pair at line start counts, content flexible
+        // Any bracket pair at line start counts as a voice label, content flexible
         val lrc = "[00:01.00](男)第一句\n[00:02.00](女)第二句\n[00:03.00][合唱]第三句\n[00:04.00]{和声}第四句"
         val synced = requireNotNull(LyricsUtils.parseLyrics(lrc).synced)
 
-        assertEquals(1, synced[0].voice)               // 男 → v1
-        assertEquals(2, synced[1].voice)               // 女 → v2
-        assertEquals(1_000, synced[2].voice)           // 合唱 → group (centered)
-        assertEquals(3, synced[3].voice)               // 和声 → assigned voice…
+        assertEquals(1, synced[0].voice)               // male label → v1
+        assertEquals(2, synced[1].voice)               // female label → v2
+        assertEquals(1_000, synced[2].voice)           // chorus label → group (centered)
+        assertEquals(3, synced[3].voice)               // harmony label → assigned voice…
         assertNotNull(synced[3].background)            // …plus harmony marker
         assertEquals("第一句", synced[0].line)         // label text stripped
         assertEquals("第四句", synced[3].line)
@@ -54,14 +54,15 @@ class LyricsUtilsTest {
 
     @Test
     fun parseLyrics_kugouPathStripsParenWordTagsAndKeepsVoiceLabel() {
-        // 真实 KRC/旧式元组行：[起始ms,行时长](绝对ms,词长,0)词 — 时间戳必须是绝对值，
-        // 否则会被当作 [mm:ss] 行。若 (71060,170,0) 漏进正文说明括号词标签没被剥离。
+        // Real KRC / legacy tuple line: [startMs,lineDurMs](absWordMs,wordDurMs,0)word —
+        // timestamps must be absolute or the line reads as [mm:ss]; (71060,170,0)
+        // leaking into the text would mean paren word tags were not stripped.
         val krc = "[71060,170](男)(71060,170,0)啊\n[71230,180](71230,180,0)哦\n"
         val synced = requireNotNull(LyricsUtils.parseLyrics(krc).synced)
 
         assertEquals(71_060, synced[0].time)
         assertEquals("啊", synced[0].line)
-        assertEquals(1, synced[0].voice)           // (男) → v1，且标签不进正文
+        assertEquals(1, synced[0].voice)           // voice label → v1, label stays out of the text
         assertEquals(71_230, synced[1].time)
         assertEquals("哦", synced[1].line)
         assertNull(synced[1].voice)
@@ -484,5 +485,26 @@ class LyricsUtilsTest {
             "[00:10.00]Hello world\n[00:10.00]你好世界\n[00:10.00]by: translator",
             lrc
         )
+    }
+
+    @Test
+    fun parseLyrics_acceptsSingleDigitMinuteSecondAndFractionFields() {
+        val parsed = LyricsUtils.parseLyrics("[1:2.3]<1:2.3>你<1:2.9>好")
+        val synced = parsed.synced!!
+        assertEquals(1, synced.size)
+        assertEquals(62_300, synced[0].time)
+        assertEquals(2, synced[0].words!!.size)
+        assertEquals(62_300, synced[0].words!![0].time)
+        assertEquals(62_900, synced[0].words!![1].time)
+    }
+
+    @Test
+    fun parseLyrics_trimsStandaloneSpaceTokensFromWordTimedLineText() {
+        val parsed = LyricsUtils.parseLyrics("[00:10.00]<00:10.00> <00:10.05>I<00:10.15> want")
+        val synced = parsed.synced!!
+
+        assertEquals("I want", synced[0].line)
+        assertEquals(listOf("I", "want"), synced[0].words!!.map { it.word })
+        assertTrue(synced[0].words!!.all { it.startsNewWord })
     }
 }

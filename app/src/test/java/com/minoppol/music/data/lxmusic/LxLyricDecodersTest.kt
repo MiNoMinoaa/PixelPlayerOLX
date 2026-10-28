@@ -97,7 +97,7 @@ class LxLyricDecodersTest {
 
     @Test
     fun `convertYrc handles legacy tuple lines without leaking ms tags into text`() {
-        // Regression: 网易云旧式 YRC 是 [absStartMs,lineDurMs](absWordMs,wordDurMs,flag)词
+        // Regression: legacy netease YRC is [absStartMs,lineDurMs](absWordMs,wordDurMs,flag)word
         val legacy = "[71060,170](71060,170,0)啊\n[71230,180](71230,180,0)哦\n"
         val converted = LxLyricDecoders.convertYrc(legacy)!!
         assertThat(converted).contains("[01:11.060]<01:11.060>啊")
@@ -183,7 +183,7 @@ class LxLyricDecodersTest {
         val lrcx = "[kuwo:17]\n[00:01.00]你好<10,4,0>世界<14,4,0>啊\n"
         val converted = LxLyricDecoders.convertKuwoLrcx(lrcx)!!
         assertThat(converted).doesNotContain("<10,4,0>")
-        assertThat(converted).contains("<00:00.007>世界")
+        assertThat(converted).contains("<00:01.007>世界")
     }
 
     // ------------------------------------------------------------------
@@ -219,9 +219,9 @@ class LxLyricDecodersTest {
         val decoded = LxLyricDecoders.decodeKuwoLrcx(response, isLrcx = true)!!
         assertThat(decoded).contains("[kuwo:17]")
         val converted = LxLyricDecoders.convertKuwoLrcx(decoded)!!
-        // start=(10+4)/2=7ms, end=|10-4|/10+7=7ms → word at <00:00.007>
+        // start=(10+4)/2=7ms relative to line start 1000ms → word at <00:01.007>
         assertThat(converted).contains("[ti:test]")
-        assertThat(converted).contains("[00:01.00]你好<00:00.007>世界")
+        assertThat(converted).contains("[00:01.00]你好<00:01.007>世界")
     }
 
     // ------------------------------------------------------------------
@@ -240,5 +240,311 @@ class LxLyricDecodersTest {
     fun `fixColonFraction rewrites colon fractions`() {
         assertThat(LxLyricDecoders.fixColonFraction("[00:12:34]词"))
             .isEqualTo("[00:12.34]词")
+    }
+
+    @Test
+    fun `convertKuwoLrcx produces word tags for all lines`() {
+        val lrcx = "[kuwo:17]\n[00:01.00]你好<10,4>世界<14,4>啊\n[00:03.00]测试<10,4>二<14,4>行\n"
+        val converted = LxLyricDecoders.convertKuwoLrcx(lrcx)!!
+        assertThat(converted).contains("[00:01.00]你好<00:01.007>世界")
+        assertThat(converted).contains("[00:03.00]测试<00:03.007>二")
+    }
+
+    @Test
+    fun `convertKuwoLrcx adds line start to relative word times`() {
+        // real kuwo payload shape: [kuwo:023] → octal 19 → offset1=1, offset2=9
+        val lrcx = "[kuwo:023]\n[ver:v1.0]\n[00:01.784]<1305,-1305>曲：<1522,-1232>熊<1911,-1321>磊\n"
+        val converted = LxLyricDecoders.convertKuwoLrcx(lrcx)!!
+        assertThat(converted).contains("[00:01.784]<00:01.784>曲：<00:01.929>熊<00:02.079>磊")
+    }
+
+    @Test
+    fun `splitKuwoTranslationLines pairs bilingual lines with their preceding main line`() {
+        val lrc = listOf(
+            "[ti:Lemon]",
+            "[00:00.000]<00:00.000>Lemon <00:00.000>- <00:00.000>米<00:00.000>津<00:00.000>玄<00:00.000>師",
+            "[00:01.547]<00:01.547>夢<00:01.713>な<00:01.969>ら<00:02.559>ば",
+            "[00:02.880]<00:02.880>如<00:02.880>果<00:02.880>只<00:02.880>是<00:02.880>一<00:02.880>场<00:02.880>梦",
+            "[00:02.880]<00:02.880>ど<00:03.440>れ<00:03.576>ほ",
+            "[00:06.882]<00:06.882>那<00:06.882>该<00:06.882>有<00:06.882>多<00:06.882>好",
+            "[00:06.882]<00:06.882>未<00:08.234>だ<00:08.936>に",
+        ).joinToString("\n")
+        val split = LxLyricDecoders.splitKuwoTranslationLines(lrc)
+        assertThat(split.wordLrc).contains("[00:01.547]<00:01.547>夢")
+        assertThat(split.wordLrc).contains("[00:02.880]<00:02.880>ど")
+        assertThat(split.wordLrc).contains("[00:06.882]<00:06.882>未")
+        assertThat(split.wordLrc).doesNotContain("[00:00.000]")
+        assertThat(split.wordLrc).contains("[ti:Lemon]")
+        assertThat(LxLyricDecoders.stripWordTags(split.wordLrc)).doesNotContain("如果")
+        assertThat(LxLyricDecoders.stripWordTags(split.wordLrc)).doesNotContain("那该")
+        assertThat(split.plainLrc).contains("[00:01.547]夢")
+        assertThat(split.plainLrc).doesNotContain("<")
+        assertThat(split.translationLrc).contains("[00:01.547]如果只是一场梦")
+        assertThat(split.translationLrc).contains("[00:02.880]那该有多好")
+        assertThat(split.translationLrc).doesNotContain("[00:06.882]")
+    }
+
+    @Test
+    fun `splitKuwoTranslationLines falls back to all main when no line has real word timing`() {
+        val lrc = listOf(
+            "[00:01.000]<00:01.000>一<00:01.000>句",
+            "[00:02.000]<00:02.000>两<00:02.000>句",
+        ).joinToString("\n")
+        val split = LxLyricDecoders.splitKuwoTranslationLines(lrc)
+        assertThat(split.wordLrc).isEqualTo(lrc)
+        assertThat(split.translationLrc).isEmpty()
+    }
+
+    @Test
+    fun `splitKuwoTranslationLines drops blank spacer lines from both outputs`() {
+        val lrc = listOf(
+            "[00:01.547]<00:01.547>夢<00:01.713>な<00:01.969>ら",
+            "[00:02.880]<00:02.880> <00:02.880> <00:02.880> ",
+            "[00:02.880]<00:02.880>ど<00:03.440>れ",
+        ).joinToString("\n")
+        val split = LxLyricDecoders.splitKuwoTranslationLines(lrc)
+        assertThat(split.wordLrc).contains("[00:02.880]<00:02.880>ど")
+        assertThat(split.wordLrc.lines()).hasSize(2)
+        assertThat(split.translationLrc).isEmpty()
+    }
+
+    // ------------------------------------------------------------------
+    // Real server payloads (src/test/resources/realpayloads) — regression
+    // tests for the on-device symptom fixes. Expectations are derived from
+    // the payloads themselves, not hand-copied content.
+    // ------------------------------------------------------------------
+
+    private fun realPayload(name: String): String {
+        val resource = javaClass.classLoader.getResource("realpayloads/$name")
+        org.junit.jupiter.api.Assumptions.assumeTrue(
+            resource != null,
+            "real payload fixture not present (kept local, not committed): $name"
+        )
+        return resource!!.readText()
+    }
+
+    @Test
+    fun `convertQrc on real QQ payload yields lines parseLyrics restores as word-timed`() {
+        val qrc = realPayload("qq_qrc_decoded.txt")
+        val converted = LxLyricDecoders.convertQrc(qrc)!!
+        val parsed = com.minoppol.music.utils.LyricsUtils.parseLyrics(converted)
+        assertThat(parsed.synced.isNullOrEmpty()).isFalse()
+        val synced = parsed.synced!!
+        val withWords = synced.filter { !it.words.isNullOrEmpty() }
+        assertThat(withWords).isNotEmpty()
+        // every converted QRC line's first word starts exactly at the line time
+        withWords.forEach { line ->
+            assertThat(line.words!!.first().time).isEqualTo(line.time)
+            assertThat(line.line.isNotBlank()).isTrue()
+        }
+        // the XML envelope must be gone
+        assertThat(converted).doesNotContain("LyricContent")
+    }
+
+    @Test
+    fun `extractQrcLyricContent keeps plain LRC and strips the XML envelope`() {
+        val plain = "[00:00.000]hello\n[00:02.000]world\n"
+        assertThat(LxLyricDecoders.extractQrcLyricContent(plain)).isEqualTo(plain.trim())
+        val enveloped = "<QrcInfos>\"LyricContent=\"[00:00.000]hi\"/>tail"
+        val extracted = LxLyricDecoders.extractQrcLyricContent(enveloped)
+        assertThat(extracted).doesNotContain("LyricContent")
+        assertThat(extracted).contains("[00:00.000]hi")
+    }
+
+    @Test
+    fun `decodeKrcBytes and convertKrc on real kg payload yield word-timed lyrics`() {
+        val krcBase64 = realPayload("kg_krc_content.txt").trim()
+        val decoded = LxLyricDecoders.decodeKrc(krcBase64)
+        assertThat(decoded).isNotNull()
+        val conversion = LxLyricDecoders.convertKrc(decoded!!)!!
+        assertThat(conversion.wordLrc).isNotEmpty()
+        val parsed = com.minoppol.music.utils.LyricsUtils.parseLyrics(conversion.wordLrc)
+        assertThat(parsed.synced.isNullOrEmpty()).isFalse()
+        val synced = parsed.synced!!
+        val withWords = synced.filter { !it.words.isNullOrEmpty() }
+        assertThat(withWords).isNotEmpty()
+        withWords.forEach { line ->
+            assertThat(line.words!!.first().time).isEqualTo(line.time)
+        }
+    }
+
+    @Test
+    fun `splitKuwoTranslationLines on real kuwo Lemon payload pairs translation with its own main line`() {
+        val lrcx = realPayload("kuwo_lemon_lrcx.txt")
+        val converted = LxLyricDecoders.convertKuwoLrcx(lrcx)!!
+        val split = LxLyricDecoders.splitKuwoTranslationLines(converted)
+        assertThat(split.translationLrc).contains("[00:01.547]如果只是一场梦")
+        assertThat(split.translationLrc).contains("[00:02.880]那该有多好")
+        assertThat(LxLyricDecoders.stripWordTags(split.wordLrc)).doesNotContain("如果只是一场梦")
+        val parsed = com.minoppol.music.utils.LyricsUtils.parseLyrics(split.wordLrc)
+        val synced = parsed.synced!!
+        val withWords = synced.filter { !it.words.isNullOrEmpty() }
+        assertThat(withWords.size).isGreaterThan(10)
+        assertThat(split.translationLrc.lines().size).isGreaterThan(10)
+    }
+
+    @Test
+    fun `splitKuwoTranslationLines on real kuwo Something Just Like This payload keeps minute two word times`() {
+        val lrcx = realPayload("kuwo_sjlt_lrcx.txt")
+        val converted = LxLyricDecoders.convertKuwoLrcx(lrcx)!!
+        assertThat(converted).doesNotContain("<120:")
+        assertThat(converted).doesNotContain("<180:")
+        val split = LxLyricDecoders.splitKuwoTranslationLines(converted)
+        assertThat(split.translationLrc).contains("[01:59.708]我想要的不过是这些")
+        assertThat(split.translationLrc).contains("[02:37.694]你想去往何方")
+        assertThat(LxLyricDecoders.stripWordTags(split.wordLrc)).doesNotContain("我想要的不过是这些")
+        val parsed = com.minoppol.music.utils.LyricsUtils.parseLyrics(split.wordLrc)
+        val synced = parsed.synced!!
+        val withWords = synced.filter { !it.words.isNullOrEmpty() }
+        assertThat(withWords.size).isGreaterThan(60)
+        assertThat(split.translationLrc.lines().size).isGreaterThan(50)
+        val minuteTwo = synced.filter { it.time in 120_000..180_000 }
+        assertThat(minuteTwo).isNotEmpty()
+        minuteTwo.forEach { line ->
+            assertThat(line.line).doesNotContain("<")
+            if (!line.words.isNullOrEmpty()) {
+                assertThat(line.words!!.first().time).isEqualTo(line.time)
+            }
+        }
+    }
+
+    @Test
+    fun `normalizeNeteaseLrcField converts mixed JSON+LRC payload to plain LRC`() {
+        val mixed = realPayload("wy_mixed_json_lrc.txt")
+        assertThat(mixed.lineSequence().any { it.trim().startsWith("{") }).isTrue()
+        val normalized = LxLyricDecoders.normalizeNeteaseLrcField(mixed)!!
+        assertThat(normalized.lineSequence().none { it.trim().startsWith("{") }).isTrue()
+        val parsed = com.minoppol.music.utils.LyricsUtils.parseLyrics(normalized)
+        assertThat(parsed.synced.isNullOrEmpty()).isFalse()
+        assertThat(parsed.synced).isNotNull()
+    }
+
+    @Test
+    fun `normalizeNeteaseLrcField keeps plain LRC unchanged`() {
+        val plain = "[00:00.000]a\n[00:01.000]b\n"
+        assertThat(LxLyricDecoders.normalizeNeteaseLrcField(plain)).isEqualTo(plain)
+        assertThat(LxLyricDecoders.normalizeNeteaseLrcField("")).isEqualTo("")
+        assertThat(LxLyricDecoders.normalizeNeteaseLrcField(null)).isNull()
+    }
+
+    @Test
+    fun `convertYrc on real WY tuple payload yields word-timed lines`() {
+        val yrc = realPayload("wy_yrc_tuple.txt")
+        val converted = LxLyricDecoders.convertYrc(yrc)!!
+        val parsed = com.minoppol.music.utils.LyricsUtils.parseLyrics(converted)
+        assertThat(parsed.synced.isNullOrEmpty()).isFalse()
+        val withWords = parsed.synced!!.filter { !it.words.isNullOrEmpty() }
+        assertThat(withWords).isNotEmpty()
+        withWords.forEach { line ->
+            assertThat(line.words!!.first().time).isEqualTo(line.time)
+        }
+    }
+
+    @Test
+    fun `convertQrc keeps standalone space tokens as word boundaries`() {
+        val qrc = "[0,2250]晴(0,160)天(160,160) (320,160)周(480,160) (640,160)杰(800,160)"
+        val converted = LxLyricDecoders.convertQrc(qrc)!!
+        assertThat(converted).contains("<00:00.160>天 ")
+        assertThat(converted).contains("<00:00.480>周 ")
+        val parsed = com.minoppol.music.utils.LyricsUtils.parseLyrics(converted)
+        val line = parsed.synced!!.first()
+        assertThat(line.words!!.map { it.word }).containsExactly("晴", "天", "周", "杰").inOrder()
+        assertThat(line.line).isEqualTo("晴天 周 杰")
+    }
+
+    @Test
+    fun `convertKrc keeps standalone space tokens as word boundaries`() {
+        val krc = "[0,2000]<0,400,0>Look<400,80,0> <480,400,0>at<880,80,0> <960,400,0>the"
+        val conversion = LxLyricDecoders.convertKrc(krc)!!
+        assertThat(conversion.wordLrc).contains("<00:00.000>Look ")
+        assertThat(conversion.wordLrc).contains("<00:00.480>at ")
+        val parsed = com.minoppol.music.utils.LyricsUtils.parseLyrics(conversion.wordLrc)
+        val line = parsed.synced!!.first()
+        assertThat(line.words!!.map { it.word }).containsExactly("Look", "at", "the").inOrder()
+        assertThat(line.line).isEqualTo("Look at the")
+    }
+
+    @Test
+    fun `convertYrc keeps spaces between legacy tuple words`() {
+        val legacy = "[71060,1700](71060,300,0)Look(71360,80,0) (71440,300,0)at(71740,80,0) (71820,300,0)the"
+        val converted = LxLyricDecoders.convertYrc(legacy)!!
+        assertThat(converted).contains("<01:11.060>Look ")
+        assertThat(converted).contains("<01:11.440>at ")
+        val parsed = com.minoppol.music.utils.LyricsUtils.parseLyrics(converted)
+        val line = parsed.synced!!.first()
+        assertThat(line.words!!.map { it.word }).containsExactly("Look", "at", "the").inOrder()
+        assertThat(line.line).isEqualTo("Look at the")
+    }
+
+    @Test
+    fun `parseLyrics restores the wordByWord cache format losslessly`() {
+        // mirrors LyricsRepositoryImpl.toWordByWordLrc: `[mm:ss.xx]` line tag,
+        // `<mm:ss.xx>` word tags, a single space separating words that start new words
+        fun stamp(timeMs: Int): String = "%02d:%02d.%02d".format(timeMs / 60000, timeMs / 1000 % 60, timeMs % 1000 / 10)
+        val lines = listOf(
+            10700 to listOf("hello " to 10700, "world" to 11230),
+            23450 to listOf("你好" to 23450),
+        )
+        val serialized = lines.joinToString("\n") { (lineTime, words) ->
+            val body = words.joinToString("") { (text, wordTime) -> "<${stamp(wordTime)}>$text" }
+            "[${stamp(lineTime)}]$body"
+        }
+        val parsed = com.minoppol.music.utils.LyricsUtils.parseLyrics(serialized)
+        assertThat(parsed.synced.isNullOrEmpty()).isFalse()
+        val synced = parsed.synced!!
+        assertThat(synced).hasSize(lines.size)
+        lines.zip(synced).forEach { (lineWords, line) ->
+            val (lineTime, words) = lineWords
+            assertThat(line.time).isEqualTo(lineTime)
+            assertThat(line.words!!).hasSize(words.size)
+            words.map { it.first.trim() }.zip(line.words!!).forEach { (expected, restored) ->
+                assertThat(restored.word).isEqualTo(expected)
+            }
+            words.map { it.second }.zip(line.words!!).forEach { (expectedTime, restored) ->
+                assertThat(restored.time).isEqualTo(expectedTime)
+            }
+        }
+    }
+
+    @Test
+    fun `convertKuwoLrcx keeps minute-two word times on the song timeline`() {
+        val lrcx = listOf(
+            "[kuwo:052]",
+            "[02:09.117]<0,0>我<0,0>想<0,0>要",
+            "[02:09.117]<370,-370>I <1182,298>want <2796,452>something <4648,3288>just <6494,4162>like <8758,6562>this",
+        ).joinToString("\n")
+        val converted = LxLyricDecoders.convertKuwoLrcx(lrcx)!!
+        assertThat(converted).contains("[02:09.117]<02:09.117>我<02:09.117>想<02:09.117>要")
+        assertThat(converted).contains(
+            "[02:09.117]<02:09.117>I <02:09.302>want <02:09.523>something " +
+                "<02:10.109>just <02:10.449>like <02:11.032>this"
+        )
+        assertThat(converted).doesNotContain("120:")
+    }
+
+    @Test
+    fun `splitKuwoTranslationLines pairs minute-two chinese with its preceding main`() {
+        val lrc = listOf(
+            "[02:09.117]<02:09.117>I <02:09.302>want <02:09.523>something",
+            "[02:18.168]<02:18.168>我<02:18.168>想<02:18.168>要",
+            "[02:18.168]<02:18.168>Oh <02:18.340>I <02:18.554>want",
+            "[02:21.189]<02:21.189>的<02:21.189>不<02:21.189>过",
+            "[02:21.189]<02:21.189>Doo <02:21.558>doo",
+        ).joinToString("\n")
+        val split = LxLyricDecoders.splitKuwoTranslationLines(lrc)
+        assertThat(split.wordLrc).contains("[02:09.117]<02:09.117>I ")
+        assertThat(split.wordLrc).contains("[02:18.168]<02:18.168>Oh ")
+        assertThat(LxLyricDecoders.stripWordTags(split.wordLrc)).doesNotContain("我")
+        assertThat(split.translationLrc).contains("[02:09.117]我想要")
+        assertThat(split.translationLrc).contains("[02:18.168]的不过")
+        assertThat(split.translationLrc).doesNotContain("120:")
+    }
+
+    @Test
+    fun `fixTimeTag aligns minute-two target to source`() {
+        val source = "[02:09.117]<02:09.117>I <02:09.302>want"
+        val target = "[02:09.2]我想要的不过是这些"
+        val fixed = LxLyricDecoders.fixTimeTag(source, target)
+        assertThat(fixed).isEqualTo("[02:09.117]我想要的不过是这些")
     }
 }

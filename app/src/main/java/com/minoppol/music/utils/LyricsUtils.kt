@@ -623,11 +623,11 @@ private fun String.capitalizeFirstLetter(): String {
 
 object LyricsUtils {
 
-    private val LRC_LINE_REGEX = Pattern.compile("^\\[(\\d{2}):(\\d{2})[.:](\\d{2,3})](.*)$")
-    private val LRC_WORD_REGEX = Pattern.compile("<(\\d{2}):(\\d{2})[.:](\\d{2,3})>([^<]*)")
-    private val LRC_WORD_TAG_REGEX = Regex("<\\d{2}:\\d{2}[.:]\\d{2,3}>")
-    private val LRC_WORD_SPLIT_REGEX = Regex("(?=<\\d{2}:\\d{2}[.:]\\d{2,3}>)")
-    private val LRC_TIMESTAMP_TAG_REGEX = Regex("\\[\\d{1,2}:\\d{2}(?:[.:]\\d{1,3})?]")
+    private val LRC_LINE_REGEX = Pattern.compile("^\\[(\\d{1,3}):(\\d{1,2})[.:](\\d{1,3})](.*)$")
+    private val LRC_WORD_REGEX = Pattern.compile("<(\\d{1,3}):(\\d{1,2})[.:](\\d{1,3})>([^<]*)")
+    private val LRC_WORD_TAG_REGEX = Regex("<\\d{1,3}:\\d{1,2}[.:]\\d{1,3}>")
+    private val LRC_WORD_SPLIT_REGEX = Regex("(?=<\\d{1,3}:\\d{1,2}[.:]\\d{1,3}>)")
+    private val LRC_TIMESTAMP_TAG_REGEX = Regex("\\[\\d{1,3}:\\d{1,2}(?:[.:]\\d{1,3})?]")
     private val TRANSLATION_CREDIT_REGEX = Regex("^\\s*by\\s*[:：].+", RegexOption.IGNORE_CASE)
     private val LRC_METADATA_PATTERN = Pattern.compile("^\\[[a-zA-Z]+:.*]$")
 
@@ -635,14 +635,14 @@ object LyricsUtils {
     private val LRC_BACKGROUND_LINE_REGEX = Regex("^\\[bg:(.*)]$", RegexOption.IGNORE_CASE)
     // Enhanced-LRC singer prefix, before or right after the first word tag: "v1: Hi", "<00:01.00>v2:Hi".
     private val LRC_VOICE_PREFIX_REGEX = Regex(
-        "^(<\\d{2}:\\d{2}[.:]\\d{2,3}>)?\\s*v(\\d{1,4})\\s*:\\s*",
+        "^(<\\d{1,3}:\\d{1,2}[.:]\\d{1,3}>)?\\s*v(\\d{1,4})\\s*:\\s*",
         RegexOption.IGNORE_CASE
     )
     // Bracket voice label at the start of the line, before any word timestamps:
-    // "<00:01.00>(男)", "[女]", "{合唱}", "(V2)", "<00:05.00>[和声]".
+    // "<00:01.00>(label)", "[label]", "{label}", "(V2)", "<00:05.00>[label]".
     // Using alternation instead of character classes to avoid raw-string backslash pitfalls.
     private val LRC_BRACKET_VOICE_REGEX = Regex(
-        """^(<\d{2}:\d{2}[.:]\d{2,3}>)?\s*(?:\(|\[|\{)([^()\[\]{}]+)(?:\)|\]|\})\s*""",
+        """^(<\d{1,3}:\d{1,2}[.:]\d{1,3}>)?\s*(?:\(|\[|\{)([^()\[\]{}]+)(?:\)|\]|\})\s*""",
         RegexOption.IGNORE_CASE
     )
     // Labels that definitely mean a group / chorus and should be centered in duet layout.
@@ -663,7 +663,7 @@ object LyricsUtils {
     // Legacy tuple word tags: (absStartMs,durMs[,flag])word — QRC / old-netease YRC.
     private val KUGOU_TUPLE_WORD_REGEX = Regex("\\((\\d+),(\\d+)(?:,\\d+)?\\)([^()]*)")
     // A line starting with such a tuple must not have its leading "(71060,170,0)"
-    // mistaken for a (男)-style voice label.
+    // mistaken for a bracket voice label.
     private val TUPLE_LINE_HEAD = Regex("^\\(\\d+,\\d+")
     private val KUGOU_RESIDUE_TAG_REGEX = Regex("<[^<>]*>")
 
@@ -676,7 +676,8 @@ object LyricsUtils {
     }
 
     /**
-     * Splits a bracket-style voice label like "(男)", "[女]", "{合唱}", or "<00:01.00>(和声)".
+     * Splits a bracket-style voice label (singer-role text in any bracket pair),
+     * optionally preceded by a word timestamp, e.g. "<00:01.00>(label)".
      * Returns [voice] for duet layout alignment, and optionally a [background] marker for harmony lines.
      * The [seenBracketLabels] map lets us assign a deterministic voice number to novel labels;
      * [assignNextVoice] is invoked (once per new label) to get the next candidate voice.
@@ -770,7 +771,7 @@ object LyricsUtils {
                 val seconds = lineMatcher.group(2)?.toLong() ?: 0
                 val fraction = lineMatcher.group(3)?.toLong() ?: 0
                 val textWithTags = stripFormatCharacters(lineMatcher.group(4)?.trim() ?: "")
-                // Step 1: try Enhanced-LRC vN: prefix (e.g. "v1: 你好", "<00:01.00>v2: 世界").
+                // Step 1: try Enhanced-LRC vN: prefix (e.g. "v1: text", "<00:01.00>v2: text").
                 val (enhancedVoice, afterEnhanced) = splitVoicePrefix(textWithTags)
                 val voice: Int?
                 val lineBackground: BackgroundVocals?
@@ -780,7 +781,7 @@ object LyricsUtils {
                     lineBackground = null
                     textForStrip = afterEnhanced
                 } else {
-                    // Step 2: fall back to bracket-style label "(男)", "[女]", "{合唱}", "{和声}".
+                    // Step 2: fall back to bracket-style singer-role labels (any bracket pair).
                     val (bracketVoice, bracketBg, bracketText) = splitBracketVoiceLabel(textWithTags, seenBracketLabels) {
                         nextBracketVoice++
                     }
@@ -790,13 +791,17 @@ object LyricsUtils {
                 }
                 val text = stripLrcTimestamps(textForStrip)
 
-                val millis = if (lineMatcher.group(3)?.length == 2) fraction * 10 else fraction
+                val millis = when (lineMatcher.group(3)?.length) {
+                    1 -> fraction * 100
+                    2 -> fraction * 10
+                    else -> fraction
+                }
                 val lineTimestamp = minutes * 60 * 1000 + seconds * 1000 + millis
 
                 if (text.contains(LRC_WORD_TAG_REGEX)) {
                     val words = mutableListOf<SyncedWord>()
                     val parts = text.split(LRC_WORD_SPLIT_REGEX)
-                    val displayText = LRC_WORD_TAG_REGEX.replace(text, "")
+                    val displayText = LRC_WORD_TAG_REGEX.replace(text, "").trim()
                     var pendingWordBoundary = false
 
                     for (part in parts) {
@@ -817,7 +822,11 @@ object LyricsUtils {
                                 timedWordTextRaw.firstOrNull()?.isWhitespace() == true
                             val timedWordText = timedWordTextRaw.trim()
                             pendingWordBoundary = timedWordTextRaw.lastOrNull()?.isWhitespace() == true
-                            val wordMillis = if (wordMatcher.group(3)?.length == 2) wordFraction * 10 else wordFraction
+                            val wordMillis = when (wordMatcher.group(3)?.length) {
+                                1 -> wordFraction * 100
+                                2 -> wordFraction * 10
+                                else -> wordFraction
+                            }
                             val wordTimestamp = wordMinutes * 60 * 1000 + wordSeconds * 1000 + wordMillis
                             if (timedWordText.isNotEmpty()) {
                                 words.add(
@@ -958,7 +967,7 @@ object LyricsUtils {
             ?.toLongOrNull() ?: 0L
 
         val syncedLines = mutableListOf<SyncedLine>()
-        // Voice markers on KRC lines: "(男)<0,300,0>…", "[女]…", "v2:<0,300,0>…".
+        // Voice markers on KRC lines: "(label)<0,300,0>…", "[label]…", "v2:<0,300,0>…".
         val seenBracketLabels = mutableMapOf<String, Int>()
         var nextBracketVoice = 3
 
@@ -973,7 +982,7 @@ object LyricsUtils {
             val bodyRaw = headerMatcher.group(3) ?: ""
 
             // strip leading voice marker before the word tags.
-            // "(71060,170,0)…" tuple tags must not be mistaken for a "(男)" label.
+            // "(71060,170,0)…" tuple tags must not be mistaken for a voice label.
             val isTupleHead = TUPLE_LINE_HEAD.containsMatchIn(bodyRaw)
             val (enhancedVoice, afterEnhanced) = if (isTupleHead) null to bodyRaw else splitVoicePrefix(bodyRaw)
             val voice: Int?

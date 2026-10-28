@@ -548,7 +548,6 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
                 }
             }.getOrNull()
         }
-        // 优先嵌入逐字（增强 LRC），否则行级 LRC；翻译拼接在后面（解析端 pairTranslationLines 会用同时间戳配对）
         val lyricResult = runCatching { lxMusicRepository.fetchLyric(lxSong) }.getOrNull()
         val wordLyrics = lyricResult?.lxlyric?.takeIf { it.isNotBlank() }
         val translation = lyricResult?.tlyric?.takeIf { it.isNotBlank() }
