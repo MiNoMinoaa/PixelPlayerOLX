@@ -84,17 +84,31 @@ private data class LyricsData(
     val plainLyrics: String?,
     val syncedLyrics: String?,
     val wordByWordLyrics: String? = null,
+    /** Full structured lyrics (words/translation/romanization/voice/background) for lossless replay. */
+    val fullLyrics: Lyrics? = null,
+    val fetchedAtMillis: Long = 0L,
     val version: Int = 0
 ) {
     fun hasLyrics(): Boolean =
-        !plainLyrics.isNullOrBlank() ||
+        fullLyrics?.isValid() == true ||
+            !plainLyrics.isNullOrBlank() ||
             !syncedLyrics.isNullOrBlank() ||
             !wordByWordLyrics.isNullOrBlank()
 
     fun isCurrentVersion(): Boolean = version >= CURRENT_LYRICS_CACHE_VERSION
+
+    /**
+     * Remote-fetched JSON caches revalidate after [REMOTE_LYRICS_STALE_MS]; a missing
+     * timestamp (pre-v3 file) is treated as stale so it refreshes once.
+     */
+    fun isRemoteCacheStale(nowMillis: Long): Boolean =
+        version >= CURRENT_LYRICS_CACHE_VERSION &&
+            (fetchedAtMillis <= 0L || nowMillis - fetchedAtMillis > REMOTE_LYRICS_STALE_MS)
 }
 
-private const val CURRENT_LYRICS_CACHE_VERSION = 2
+private const val CURRENT_LYRICS_CACHE_VERSION = 3
+private const val REMOTE_LYRICS_STALE_MS: Long = 7L * 24L * 60L * 60L * 1000L
+private const val MAX_JSON_CACHE_FILES = 500
 
 private val STORED_TUPLE_RESIDUE = Regex("\\(\\d+,\\d+(?:,\\d+)?\\)")
 
@@ -356,7 +370,7 @@ class LyricsRepositoryImpl @Inject constructor(
         }
 
         if (!forceRefresh) {
-            loadStoredLyrics(song, cacheKey, includeMemoryCache = false)?.let { stored ->
+            loadStoredLyrics(song, cacheKey, includeMemoryCache = false, allowStaleRemoteJson = false)?.let { stored ->
                 lyricsCache.put(cacheKey, stored.first)
                 Timber.tag(TAG).d("===== RETURNING STORED LYRICS WITHOUT REMOTE FETCH =====")
                 return@withContext stored.first
@@ -413,6 +427,11 @@ class LyricsRepositoryImpl @Inject constructor(
         }
 
         Timber.tag(TAG).d("No lyrics found from any source for: ${song.displayArtist} - ${song.title}")
+        loadStoredLyrics(song, cacheKey, includeMemoryCache = true)?.let { stale ->
+            lyricsCache.put(cacheKey, stale.first)
+            Timber.tag(TAG).d("Returning stale remote lyrics after all sources failed")
+            return@withContext stale.first
+        }
         return@withContext null
     }
 
@@ -420,8 +439,6 @@ class LyricsRepositoryImpl @Inject constructor(
         val wordText = result.lxlyric?.takeIf { it.isNotBlank() }
         val base = LyricsUtils.parseLyrics(wordText ?: result.lyric)
         if (!base.isValid()) return null
-        // 逐字文本(YRC/QRC/KRC)通常不带 (男)/(女)/{合唱}/[和声] 声部标记，
-        // 行级 lrc 里常有：按时间戳（±500ms 容差）把 voice/background 合并进逐字行。
         var synced = base.synced?.takeIf { it.isNotEmpty() }
         if (wordText != null && synced != null && !result.lyric.isNullOrBlank()) {
             val donors = runCatching {
@@ -519,7 +536,7 @@ class LyricsRepositoryImpl @Inject constructor(
      * Fetches lyrics from LRCLIB API with rate limiting (matching Rhythm)
      */
     private suspend fun fetchLyricsFromAPI(song: Song): Lyrics? = withContext(Dispatchers.IO) {
-        val cachedJson = loadLocalLyricsJson(song)
+        val cachedJson = loadLocalLyricsJson(song, allowStaleRemoteJson = false)
         if (cachedJson != null) {
             Timber.tag(TAG).d("===== LOADED LYRICS FROM JSON DISK CACHE =====")
             return@withContext cachedJson
@@ -979,25 +996,39 @@ class LyricsRepositoryImpl @Inject constructor(
                 plainLyrics = lyrics.plain?.joinToString("\n"),
                 syncedLyrics = lyrics.synced?.joinToString("\n") { "[${formatTimestamp(it.time)}]${it.line}" },
                 wordByWordLyrics = wordByWordLyrics,
+                fullLyrics = lyrics,
+                fetchedAtMillis = System.currentTimeMillis(),
                 version = CURRENT_LYRICS_CACHE_VERSION
             )
 
             val file = File(lyricsDir, fileName)
             val json = gson.toJson(lyricsData)
             file.writeText(json)
+            pruneLyricsJsonCache(lyricsDir)
             Timber.tag(TAG).d("Saved lyrics to JSON cache: ${file.absolutePath}")
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Error saving lyrics to JSON cache: ${e.message}")
         }
     }
 
+    private fun pruneLyricsJsonCache(lyricsDir: File) {
+        val files = lyricsDir.listFiles() ?: return
+        if (files.size <= MAX_JSON_CACHE_FILES) return
+        files.sortedBy { it.lastModified() }
+            .take(files.size - MAX_JSON_CACHE_FILES)
+            .forEach { it.delete() }
+    }
+
     /**
      * Load lyrics from JSON disk cache (matching Rhythm)
      */
-    private suspend fun loadLocalLyricsJson(song: Song): Lyrics? {
+    private suspend fun loadLocalLyricsJson(song: Song, allowStaleRemoteJson: Boolean = true): Lyrics? {
         try {
             val data = readLyricsJsonCache(song) ?: return null
+            if (!allowStaleRemoteJson && data.isRemoteCacheStale(System.currentTimeMillis())) return null
             if (data.hasLyrics()) {
+                val full = data.fullLyrics?.takeIf { it.isValid() }
+                if (full != null) return full
                 val rawLyrics = data.wordByWordLyrics ?: data.syncedLyrics ?: data.plainLyrics
                 val parsed = LyricsUtils.parseLyrics(rawLyrics)
                 if (parsed.isValid()) {
@@ -1109,7 +1140,8 @@ class LyricsRepositoryImpl @Inject constructor(
     private suspend fun loadStoredLyrics(
         song: Song,
         cacheKey: String,
-        includeMemoryCache: Boolean
+        includeMemoryCache: Boolean,
+        allowStaleRemoteJson: Boolean = true
     ): Pair<Lyrics, String>? = withContext(Dispatchers.IO) {
         song.lyrics
             ?.trim()
@@ -1128,7 +1160,14 @@ class LyricsRepositoryImpl @Inject constructor(
 
         readLyricsJsonCache(song)
             ?.takeIf { it.hasLyrics() }
+            ?.takeIf { allowStaleRemoteJson || !it.isRemoteCacheStale(System.currentTimeMillis()) }
             ?.let { data ->
+                data.fullLyrics?.takeIf { it.isValid() }?.let { full ->
+                    val raw = lyricsToRawContent(full)
+                    if (!raw.isNullOrBlank()) {
+                        return@withContext full to raw
+                    }
+                }
                 val rawLyrics = data.wordByWordLyrics ?: data.syncedLyrics ?: data.plainLyrics
                 if (!rawLyrics.isNullOrBlank()) {
                     parseStoredLyrics(rawLyrics)?.let { return@withContext it to rawLyrics }

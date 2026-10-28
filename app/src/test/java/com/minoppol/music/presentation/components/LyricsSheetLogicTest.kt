@@ -298,4 +298,32 @@ class LyricsSheetLogicTest {
 
         assertEquals(0L, seekPosition)
     }
+
+    @Test
+    fun buildLyricClusters_rendersWordBoundariesAsSpaces() {
+        val words = listOf(
+            SyncedWord(time = 0, word = "I", startsNewWord = true),
+            SyncedWord(time = 120, word = "want", startsNewWord = true),
+            SyncedWord(time = 240, word = "something", startsNewWord = true)
+        )
+
+        val clusters = buildLyricClusters(words)!!
+
+        assertEquals("I want something", clusters.joinToString("") { it.text })
+    }
+
+    @Test
+    fun buildLyricClusters_keepsContiguousSyllablesGluedAndSingleClusterUntouched() {
+        val words = listOf(
+            SyncedWord(time = 0, word = "你", startsNewWord = true),
+            SyncedWord(time = 120, word = "好", startsNewWord = false),
+            SyncedWord(time = 240, word = "世", startsNewWord = false),
+            SyncedWord(time = 360, word = "界", startsNewWord = false)
+        )
+
+        val clusters = buildLyricClusters(words)!!
+
+        assertEquals(1, clusters.size)
+        assertEquals("你好世界", clusters[0].text)
+    }
 }

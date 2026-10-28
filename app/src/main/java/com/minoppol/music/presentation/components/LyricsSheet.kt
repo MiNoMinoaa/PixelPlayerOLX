@@ -1734,7 +1734,7 @@ fun PlainLyricsLine(
 private val LeadingTagRegex = Regex("^v\\d+:\\s*", RegexOption.IGNORE_CASE)
 
 internal fun sanitizeLyricLineText(raw: String): String =
-    LyricsUtils.stripLrcTimestamps(raw).replace(LeadingTagRegex, "").trimStart()
+    LyricsUtils.stripLrcTimestamps(raw).replace(LeadingTagRegex, "").trim()
 
 
 
