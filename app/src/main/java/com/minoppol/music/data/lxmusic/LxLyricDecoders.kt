@@ -23,7 +23,7 @@ object LxLyricDecoders {
         for (i in out.indices) {
             out[i] = (payload[i + 4].toInt() xor KRC_KEY[i % 16].toInt()).toByte()
         }
-        String(zlibInflate(out), Charsets.UTF_8)
+        String(zlibInflateLenient(out), Charsets.UTF_8)
     }.getOrNull()
 
     fun decodeKrc(base64Content: String): String? =
@@ -36,7 +36,7 @@ object LxLyricDecoders {
         if (head != "tp=content") return null
         val sep = indexOfBytes(rawResponse, byteArrayOf('\r'.code.toByte(), '\n'.code.toByte(), '\r'.code.toByte(), '\n'.code.toByte()))
         if (sep < 0) return null
-        val inflated = zlibInflate(rawResponse.copyOfRange(sep + 4, rawResponse.size))
+        val inflated = zlibInflateLenient(rawResponse.copyOfRange(sep + 4, rawResponse.size))
         if (!isLrcx) return String(inflated, Charsets.UTF_8)
         val b64 = B64_DECODER.decode(inflated)
         val out = ByteArray(b64.size)
@@ -452,9 +452,19 @@ object LxLyricDecoders {
 
     private val KRC_LINE = Regex("^\\[(\\d+),(\\d+)](.*)$")
     private val KRC_WORD = Regex("<(\\d+),(\\d+)(?:,\\d+)?>([^<]*)")
-    private val QRC_LINE = KRC_LINE
-    private val QRC_WORD = Regex("\\((\\d+),(\\d+)(?:,\\d+)?\\)([^()]*)(?=<\\d+,|\\(|$)")
     private val KRC_RESIDUE = Regex("<[^<>]*>")
+    private val PAREN_TAG = Regex("\\((\\d+),(\\d+)(?:,\\d+)?\\)")
+    private val BRACKET_ONLY = Regex("^[()\\[\\]{}]+$")
+
+    private fun trailingSpaceOf(raw: String): String =
+        if (raw.lastOrNull()?.isWhitespace() == true) " " else ""
+
+    private fun appendSpaceToLast(words: MutableList<WordToken>) {
+        val last = words.lastOrNull() ?: return
+        if (last.text.isNotEmpty() && !last.text.last().isWhitespace()) {
+            words[words.lastIndex] = last.copy(text = last.text + " ")
+        }
+    }
 
     fun convertKrc(krcText: String): KrcConversion? {
         val text = krcText.replace("\r", "")
@@ -514,8 +524,13 @@ object LxLyricDecoders {
             }
             KRC_WORD.findAll(rest).forEach { wm ->
                 val off = wm.groupValues[1].toLongOrNull() ?: 0L
-                val w = wm.groupValues[3].let { KRC_RESIDUE.replace(it, "") }.replace("$", "").trim()
-                if (w.isNotEmpty()) words.add(WordToken(startMs + off, w))
+                val raw = wm.groupValues[3].let { KRC_RESIDUE.replace(it, "") }.replace("$", "")
+                val w = raw.trim()
+                if (w.isNotEmpty()) {
+                    words.add(WordToken(startMs + off, w + trailingSpaceOf(raw)))
+                } else if (raw.isNotEmpty()) {
+                    appendSpaceToLast(words)
+                }
             }
             if (words.isNotEmpty()) {
                 hasWords = true
@@ -584,11 +599,21 @@ object LxLyricDecoders {
         return if (out.isEmpty()) null else out.joinToString("\n")
     }
 
-    fun convertQrc(qrcText: String): String? {
+    fun convertQrc(qrcText: String): String? = convertTupleText(extractQrcLyricContent(qrcText))
+
+    fun extractQrcLyricContent(qrcText: String): String {
         var text = qrcText.trim()
-        text = Regex("^[\\s\\S]*?LyricContent=\"").replace(text, "")
-        text = Regex("\"/>[\\s\\S]*$").replace(text, "")
-        return convertTupleText(text)
+        if (text.contains("LyricContent=\"")) {
+            text = Regex("^[\\s\\S]*?LyricContent=\"").replace(text, "")
+            text = Regex("\"/>[\\s\\S]*$").replace(text, "")
+        }
+        return text
+    }
+
+    fun normalizeNeteaseLrcField(raw: String?): String? {
+        if (raw.isNullOrBlank()) return raw
+        if (raw.lineSequence().none { it.trim().startsWith("{") }) return raw
+        return convertYrc(raw) ?: raw
     }
 
     private fun convertTupleText(sourceText: String): String? {
@@ -609,31 +634,76 @@ object LxLyricDecoders {
             val startMs = m.groupValues[1].toLongOrNull() ?: continue
             val rest = m.groupValues[3]
             sawTupleLine = true
-            val leadMatch = Regex("^\\s*(?:\\(|\\[|\\{)(?![\\d,]+(?:\\)|\\]|}))([^()\\[\\]{}]{1,8})(?:\\)|\\]|})").find(rest)
+            val leadMatch = Regex("^\\s*(?:\\(|\\[|\\{)(?![\\d,]+(?:\\)|\\]|\\}))([^()\\[\\]{}]{1,8})(?:\\)|\\]|\\})").find(rest)
                 ?: Regex("^\\s*v(\\d{1,4})\\s*:").find(rest)
             val voiceLead = leadMatch?.value?.trim()
             val body = if (leadMatch != null) rest.substring(leadMatch.range.last + 1) else rest
+
             val angleMatches = KRC_WORD.findAll(body).toList()
-            val parenMatches = if (angleMatches.isEmpty()) QRC_WORD.findAll(body).toList() else emptyList()
-            val firstTag = angleMatches.firstOrNull() ?: parenMatches.firstOrNull()
             val words = mutableListOf<WordToken>()
-            if (firstTag != null) {
-                val lead = body.substring(0, firstTag.range.first).trim()
-                if (lead.isNotEmpty()) words.add(WordToken(startMs, lead))
-            }
+
             if (angleMatches.isNotEmpty()) {
-                angleMatches.forEach { wm ->
-                    val w = wm.groupValues[3].trim()
-                    if (w.isNotEmpty()) words.add(WordToken(startMs + (wm.groupValues[1].toLongOrNull() ?: 0L), w))
+                if (angleMatches.first().range.first > 0) {
+                    val lead = body.substring(0, angleMatches.first().range.first).trim()
+                    if (lead.isNotEmpty()) words.add(WordToken(startMs, lead))
                 }
-            } else {
-                parenMatches.forEach { wm ->
-                    val w = wm.groupValues[3].trim()
-                    if (w.isNotEmpty()) words.add(WordToken(wm.groupValues[1].toLongOrNull() ?: startMs, w))
+                angleMatches.forEach { wm ->
+                    val raw = wm.groupValues[3]
+                    val w = raw.trim()
+                    if (w.isNotEmpty()) {
+                        words.add(WordToken(startMs + (wm.groupValues[1].toLongOrNull() ?: 0L), w + trailingSpaceOf(raw)))
+                    } else if (raw.isNotEmpty()) {
+                        appendSpaceToLast(words)
+                    }
+                }
+            } else if (PAREN_TAG.containsMatchIn(body)) {
+                val tagMatches = PAREN_TAG.findAll(body).toList()
+                val trailing = body.substring(tagMatches.last().range.last + 1).trim()
+                if (trailing.isNotEmpty() && !BRACKET_ONLY.matches(trailing)) {
+                    if (tagMatches.first().range.first > 0) {
+                        val lead = body.substring(0, tagMatches.first().range.first).trim()
+                        if (lead.isNotEmpty() && !BRACKET_ONLY.matches(lead)) words.add(WordToken(startMs, lead))
+                    }
+                    for (i in tagMatches.indices) {
+                        val tm = tagMatches[i]
+                        val tagAbsMs = tm.groupValues[1].toLongOrNull() ?: startMs
+                        val nextStart = if (i + 1 < tagMatches.size) tagMatches[i + 1].range.first else body.length
+                        if (tm.range.last + 1 < nextStart) {
+                            val raw = body.substring(tm.range.last + 1, nextStart)
+                            val w = raw.trim()
+                            if (w.isNotEmpty() && !BRACKET_ONLY.matches(w)) {
+                                words.add(WordToken(tagAbsMs, w + trailingSpaceOf(raw)))
+                            } else if (w.isEmpty() && raw.isNotEmpty()) {
+                                appendSpaceToLast(words)
+                            }
+                        }
+                    }
+                } else {
+                    var prevEnd = 0
+                    for (tm in tagMatches) {
+                        val tagAbsMs = tm.groupValues[1].toLongOrNull() ?: startMs
+                        if (tm.range.first > prevEnd) {
+                            val raw = body.substring(prevEnd, tm.range.first)
+                            val between = raw.trim()
+                            if (between.isNotEmpty() && !BRACKET_ONLY.matches(between)) {
+                                words.add(WordToken(tagAbsMs, between + trailingSpaceOf(raw)))
+                            } else if (between.isEmpty() && raw.isNotEmpty()) {
+                                appendSpaceToLast(words)
+                            }
+                        }
+                        prevEnd = tm.range.last + 1
+                    }
+                    if (prevEnd < body.length) {
+                        val tail = body.substring(prevEnd).trim()
+                        if (tail.isNotEmpty() && !BRACKET_ONLY.matches(tail)) {
+                            words.add(WordToken(startMs, tail))
+                        }
+                    }
                 }
             }
+
             val plain = KRC_WORD.replace(body) { it.groupValues[3] }
-                .let { QRC_WORD.replace(it) { m2 -> m2.groupValues[3] } }
+                .let { PAREN_TAG.replace(it, "") }
                 .let { KRC_RESIDUE.replace(it, "") }
                 .replace("$", "")
                 .trim()
@@ -691,6 +761,7 @@ object LxLyricDecoders {
         for (line in rawLines) {
             val hm = lineHeader.find(line) ?: continue
             val timeTag = hm.groupValues[1]
+            val lineStartMs = timeToMs(timeTag.removeSurrounding("[", "]"))
             val body = line.removeRange(hm.range).trim()
             if (body.isEmpty()) continue
             if (!wordTimeAll.containsMatchIn(body)) {
@@ -709,8 +780,8 @@ object LxLyricDecoders {
                 val a = tm.groupValues[1].toLongOrNull() ?: continue
                 val b = tm.groupValues[2].toLongOrNull() ?: continue
                 val w = piece.removeRange(tm.range)
-                var start = abs((a + b) / (offset1 * 2))
-                val end = abs((a - b) / (offset2 * 2)) + start
+                var start = lineStartMs + abs((a + b) / (offset1 * 2))
+                val end = lineStartMs + abs((a - b) / (offset2 * 2)) + (start - lineStartMs)
                 kwWords.lastOrNull()?.let { prev ->
                     if (start < prev.endMs) {
                         prev.endMs = start
@@ -732,20 +803,90 @@ object LxLyricDecoders {
         return (if (tags.isEmpty()) out else tags + out).joinToString("\n")
     }
 
+    data class KuwoLyricSplit(val wordLrc: String, val plainLrc: String, val translationLrc: String)
+
+    fun splitKuwoTranslationLines(lrc: String): KuwoLyricSplit {
+        val lineHeader = Regex("^(\\[\\d{1,2}:\\d{1,2}(?:[.:]\\d{1,4})?])")
+        val wordTag = Regex("<\\d{1,3}:\\d{1,2}[.:]\\d{2,3}>")
+
+        data class KwLine(
+            val startMs: Long,
+            val raw: String,
+            val text: String,
+            val allTagsAtStart: Boolean,
+            val tagCount: Int,
+        )
+
+        val headers = mutableListOf<String>()
+        val parsed = mutableListOf<KwLine>()
+        for (raw in lrc.lines()) {
+            val line = raw.trim()
+            if (line.isEmpty()) continue
+            val hm = lineHeader.find(line) ?: run {
+                headers.add(line)
+                continue
+            }
+            val startMs = timeToMs(hm.groupValues[1].removeSurrounding("[", "]"))
+            val body = line.removeRange(hm.range)
+            val tags = wordTag.findAll(body)
+                .map { timeToMs(it.value.removeSurrounding("<", ">")) }
+                .toList()
+            parsed.add(
+                KwLine(
+                    startMs = startMs,
+                    raw = line,
+                    text = body.replace(wordTag, "").trim(),
+                    allTagsAtStart = tags.isNotEmpty() && tags.all { it == startMs },
+                    tagCount = tags.size,
+                )
+            )
+        }
+
+        val nonEmptyCount = parsed.count { it.text.isNotEmpty() }
+        val mains = mutableListOf<KwLine>()
+        val transByMainIndex = LinkedHashMap<Int, MutableList<KwLine>>()
+        for (p in parsed) {
+            if (p.text.isEmpty()) continue
+            val isTranslation = p.allTagsAtStart && p.tagCount >= 2
+            if (isTranslation) {
+                if (mains.isEmpty()) continue
+                transByMainIndex.getOrPut(mains.size - 1) { mutableListOf() }.add(p)
+            } else {
+                mains.add(p)
+            }
+        }
+
+        if (mains.isEmpty() || mains.size * 4 < nonEmptyCount) {
+            return KuwoLyricSplit(lrc, stripWordTags(lrc), "")
+        }
+
+        val wordLrc = (headers + mains.map { it.raw }).joinToString("\n")
+        val translation = StringBuilder()
+        for ((index, lines) in transByMainIndex) {
+            val owner = mains[index]
+            val text = lines.map { it.text }.filter { it.isNotBlank() }.joinToString(" ")
+            if (text.isNotEmpty()) translation.appendLine(msTag(owner.startMs) + text)
+        }
+        return KuwoLyricSplit(wordLrc, stripWordTags(wordLrc), translation.trim().toString())
+    }
+
 
     private val LRC_TIME = Regex("\\[([\\d:.]+)]")
 
     private fun timeToMs(time: String): Long {
         var t = time
         if (!t.contains('.')) t += ".0"
-        val arr = t.split(Regex(":|\\.")).toMutableList()
-        while (arr.size < 3) arr.add(0, "0")
-        val m = arr[0].toLongOrNull() ?: 0L
-        val s = arr[1].toLongOrNull() ?: 0L
-        var ms = arr[2].toLongOrNull() ?: 0L
-        if (arr[2].length == 1) ms *= 100
-        else if (arr[2].length == 2) ms *= 10
-        return m * 3600000 + s * 1000 + ms
+        val arr = t.split(Regex(":|\\."))
+        val ms = (arr.last().toLongOrNull() ?: 0L) * when (arr.last().length) {
+            1 -> 100L
+            2 -> 10L
+            else -> 1L
+        }
+        val hms = arr.dropLast(1)
+        val s = hms.lastOrNull()?.toLongOrNull() ?: 0L
+        val m = if (hms.size >= 2) hms[hms.size - 2].toLongOrNull() ?: 0L else 0L
+        val h = if (hms.size >= 3) hms[hms.size - 3].toLongOrNull() ?: 0L else 0L
+        return h * 3600000 + m * 60000 + s * 1000 + ms
     }
 
     fun fixTimeTag(sourceLrc: String, targetLrc: String): String {
@@ -775,7 +916,7 @@ object LxLyricDecoders {
     }
 
     fun stripWordTags(lrc: String): String =
-        lrc.replace(Regex("<\\d{2}:\\d{2}[.:]\\d{2,3}>"), "")
+        lrc.replace(Regex("<\\d{1,3}:\\d{1,2}[.:]\\d{2,3}>"), "")
 
     fun fixColonFraction(lrc: String): String =
         lrc.replace(Regex("\\[(\\d{2}:\\d{2}):(\\d{2})]"), "[$1.$2]")

@@ -46,13 +46,14 @@ internal class LyricClusterText(
     fun syllableEnd(index: Int): Int = syllableStarts.getOrNull(index + 1) ?: text.length
 }
 
-internal fun buildClusterText(words: List<SyncedWord>): LyricClusterText {
+internal fun buildClusterText(words: List<SyncedWord>, appendTrailingSpace: Boolean = false): LyricClusterText {
     val starts = IntArray(words.size)
     val text = buildString {
         words.forEachIndexed { index, word ->
             starts[index] = length
             append(word.word)
         }
+        if (appendTrailingSpace) append(' ')
     }
     return LyricClusterText(words = words, text = text, syllableStarts = starts)
 }
@@ -95,7 +96,11 @@ internal fun buildLyricClusters(words: List<SyncedWord>?): List<LyricClusterText
         ?.let(::sanitizeSyncedWords)
         ?.takeIf { it.isNotEmpty() }
         ?.let(::clusterSyncedWords)
-        ?.map { buildClusterText(it.words) }
+        ?.let { clusters ->
+            clusters.mapIndexed { index, cluster ->
+                buildClusterText(cluster.words, appendTrailingSpace = index < clusters.lastIndex)
+            }
+        }
 
 internal enum class LyricWordPhase {
     Future,
@@ -319,7 +324,12 @@ private fun LyricWordCluster(
         Modifier
     }
 
-    Box(modifier = emphasisModifier, contentAlignment = Alignment.Center) {
+    val clusterAlignment = when (textAlign) {
+        TextAlign.Left, TextAlign.Start -> Alignment.CenterStart
+        TextAlign.Right, TextAlign.End -> Alignment.CenterEnd
+        else -> Alignment.Center
+    }
+    Box(modifier = emphasisModifier, contentAlignment = clusterAlignment) {
         if (reserveBoldWidth) {
             Text(
                 text = cluster.text,

@@ -482,4 +482,25 @@ class LyricsUtilsTest {
             lrc
         )
     }
+
+    @Test
+    fun parseLyrics_acceptsSingleDigitMinuteSecondAndFractionFields() {
+        val parsed = LyricsUtils.parseLyrics("[1:2.3]<1:2.3>你<1:2.9>好")
+        val synced = parsed.synced!!
+        assertEquals(1, synced.size)
+        assertEquals(62_300, synced[0].time)
+        assertEquals(2, synced[0].words!!.size)
+        assertEquals(62_300, synced[0].words!![0].time)
+        assertEquals(62_900, synced[0].words!![1].time)
+    }
+
+    @Test
+    fun parseLyrics_trimsStandaloneSpaceTokensFromWordTimedLineText() {
+        val parsed = LyricsUtils.parseLyrics("[00:10.00]<00:10.00> <00:10.05>I<00:10.15> want")
+        val synced = parsed.synced!!
+
+        assertEquals("I want", synced[0].line)
+        assertEquals(listOf("I", "want"), synced[0].words!!.map { it.word })
+        assertTrue(synced[0].words!!.all { it.startsNewWord })
+    }
 }

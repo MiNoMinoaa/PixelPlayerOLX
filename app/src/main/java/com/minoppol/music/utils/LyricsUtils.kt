@@ -623,21 +623,21 @@ private fun String.capitalizeFirstLetter(): String {
 
 object LyricsUtils {
 
-    private val LRC_LINE_REGEX = Pattern.compile("^\\[(\\d{2}):(\\d{2})[.:](\\d{2,3})](.*)$")
-    private val LRC_WORD_REGEX = Pattern.compile("<(\\d{2}):(\\d{2})[.:](\\d{2,3})>([^<]*)")
-    private val LRC_WORD_TAG_REGEX = Regex("<\\d{2}:\\d{2}[.:]\\d{2,3}>")
-    private val LRC_WORD_SPLIT_REGEX = Regex("(?=<\\d{2}:\\d{2}[.:]\\d{2,3}>)")
-    private val LRC_TIMESTAMP_TAG_REGEX = Regex("\\[\\d{1,2}:\\d{2}(?:[.:]\\d{1,3})?]")
+    private val LRC_LINE_REGEX = Pattern.compile("^\\[(\\d{1,3}):(\\d{1,2})[.:](\\d{1,3})](.*)$")
+    private val LRC_WORD_REGEX = Pattern.compile("<(\\d{1,3}):(\\d{1,2})[.:](\\d{1,3})>([^<]*)")
+    private val LRC_WORD_TAG_REGEX = Regex("<\\d{1,3}:\\d{1,2}[.:]\\d{1,3}>")
+    private val LRC_WORD_SPLIT_REGEX = Regex("(?=<\\d{1,3}:\\d{1,2}[.:]\\d{1,3}>)")
+    private val LRC_TIMESTAMP_TAG_REGEX = Regex("\\[\\d{1,3}:\\d{1,2}(?:[.:]\\d{1,3})?]")
     private val TRANSLATION_CREDIT_REGEX = Regex("^\\s*by\\s*[:：].+", RegexOption.IGNORE_CASE)
     private val LRC_METADATA_PATTERN = Pattern.compile("^\\[[a-zA-Z]+:.*]$")
 
     private val LRC_BACKGROUND_LINE_REGEX = Regex("^\\[bg:(.*)]$", RegexOption.IGNORE_CASE)
     private val LRC_VOICE_PREFIX_REGEX = Regex(
-        "^(<\\d{2}:\\d{2}[.:]\\d{2,3}>)?\\s*v(\\d{1,4})\\s*:\\s*",
+        "^(<\\d{1,3}:\\d{1,2}[.:]\\d{1,3}>)?\\s*v(\\d{1,4})\\s*:\\s*",
         RegexOption.IGNORE_CASE
     )
     private val LRC_BRACKET_VOICE_REGEX = Regex(
-        """^(<\d{2}:\d{2}[.:]\d{2,3}>)?\s*(?:\(|\[|\{)([^()\[\]{}]+)(?:\)|\]|\})\s*""",
+        """^(<\d{1,3}:\d{1,2}[.:]\d{1,3}>)?\s*(?:\(|\[|\{)([^()\[\]{}]+)(?:\)|\]|\})\s*""",
         RegexOption.IGNORE_CASE
     )
     private val GROUP_VOICE_LABEL_KEYWORDS = setOf(
@@ -764,13 +764,17 @@ object LyricsUtils {
                 }
                 val text = stripLrcTimestamps(textForStrip)
 
-                val millis = if (lineMatcher.group(3)?.length == 2) fraction * 10 else fraction
+                val millis = when (lineMatcher.group(3)?.length) {
+                    1 -> fraction * 100
+                    2 -> fraction * 10
+                    else -> fraction
+                }
                 val lineTimestamp = minutes * 60 * 1000 + seconds * 1000 + millis
 
                 if (text.contains(LRC_WORD_TAG_REGEX)) {
                     val words = mutableListOf<SyncedWord>()
                     val parts = text.split(LRC_WORD_SPLIT_REGEX)
-                    val displayText = LRC_WORD_TAG_REGEX.replace(text, "")
+                    val displayText = LRC_WORD_TAG_REGEX.replace(text, "").trim()
                     var pendingWordBoundary = false
 
                     for (part in parts) {
@@ -791,7 +795,11 @@ object LyricsUtils {
                                 timedWordTextRaw.firstOrNull()?.isWhitespace() == true
                             val timedWordText = timedWordTextRaw.trim()
                             pendingWordBoundary = timedWordTextRaw.lastOrNull()?.isWhitespace() == true
-                            val wordMillis = if (wordMatcher.group(3)?.length == 2) wordFraction * 10 else wordFraction
+                            val wordMillis = when (wordMatcher.group(3)?.length) {
+                                1 -> wordFraction * 100
+                                2 -> wordFraction * 10
+                                else -> wordFraction
+                            }
                             val wordTimestamp = wordMinutes * 60 * 1000 + wordSeconds * 1000 + wordMillis
                             if (timedWordText.isNotEmpty()) {
                                 words.add(

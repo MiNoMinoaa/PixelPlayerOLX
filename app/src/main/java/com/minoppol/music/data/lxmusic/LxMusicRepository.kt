@@ -4961,7 +4961,10 @@ class LxMusicRepository @Inject constructor(
                 val track = req.getAsJsonObject("data")?.getAsJsonObject("track_info") ?: return@use null
                 val id = track.get("id")?.takeIf { it.isJsonPrimitive }?.asString
                     ?: track.get("id")?.takeIf { it.isJsonPrimitive }?.asLong?.toString()
-                if (!id.isNullOrBlank()) txSongIdCache[songmid] = id
+                if (!id.isNullOrBlank()) {
+                    if (txSongIdCache.size >= 2000) txSongIdCache.clear()
+                    txSongIdCache[songmid] = id
+                }
                 id
             }
         }.getOrNull()
@@ -5004,11 +5007,11 @@ class LxMusicRepository @Inject constructor(
                 if (qrcLrc == null) return@use null
 
                 val transLrc = transHex?.let { LxLyricDecoders.decodeQrc(it) }
-                    ?.let { LxLyricDecoders.convertQrc(it) }
+                    ?.let { LxLyricDecoders.convertQrc(it) ?: LxLyricDecoders.extractQrcLyricContent(it) }
                     ?.let { LxLyricDecoders.fixTimeTag(qrcLrc, it) }
                     ?.let { LxLyricDecoders.stripWordTags(it) }
                 val romaLrc = romaHex?.let { LxLyricDecoders.decodeQrc(it) }
-                    ?.let { LxLyricDecoders.convertQrc(it) }
+                    ?.let { LxLyricDecoders.convertQrc(it) ?: LxLyricDecoders.extractQrcLyricContent(it) }
                     ?.let { LxLyricDecoders.fixTimeTag(qrcLrc, it) }
                     ?.let { LxLyricDecoders.stripWordTags(it) }
                 val lineLrc = LxLyricDecoders.stripWordTags(qrcLrc)
@@ -5066,7 +5069,13 @@ class LxMusicRepository @Inject constructor(
                     if (!resp.isSuccessful) return@use null
                     val root = JsonParser.parseString(resp.body?.string().orEmpty()).asJsonObject
                     val candidates = root.getAsJsonArray("candidates") ?: return@use null
-                    candidates.firstOrNull()?.asJsonObject
+                    candidates.asSequence().mapNotNull { runCatching { it.asJsonObject }.getOrNull() }
+                        .firstOrNull { obj ->
+                            val krctype = obj.get("krctype")?.takeIf { it.isJsonPrimitive }?.asInt
+                            val contenttype = obj.get("contenttype")?.takeIf { it.isJsonPrimitive }?.asInt
+                            krctype == 1 && contenttype != 1
+                        }
+                        ?: candidates.firstOrNull()?.asJsonObject
                 }
         }.getOrElse {
             Timber.w(it, "fetchKugouLyric search failed for ${song.songmid}")
@@ -5074,13 +5083,18 @@ class LxMusicRepository @Inject constructor(
         } ?: return null
         val id = candidate.get("id")?.asString ?: return null
         val accessKey = candidate.get("accesskey")?.asString ?: return null
+        val isTranslationKrc = candidate.get("contenttype")?.takeIf { it.isJsonPrimitive }?.asInt == 1
 
-        val krcConversion = runCatching {
-            downloadKugouLyricBytes(id, accessKey, headers, fmt = "krc")
-                ?.let { LxLyricDecoders.decodeKrcBytes(it) }
-                ?.takeIf { looksLikeKrcText(it) }
-                ?.let { LxLyricDecoders.convertKrc(it) }
-        }.getOrNull()
+        val krcConversion = if (isTranslationKrc) {
+            null
+        } else {
+            runCatching {
+                downloadKugouLyricBytes(id, accessKey, headers, fmt = "krc")
+                    ?.let { LxLyricDecoders.decodeKrcBytes(it) }
+                    ?.takeIf { looksLikeKrcText(it) }
+                    ?.let { LxLyricDecoders.convertKrc(it) }
+            }.getOrNull()
+        }
         if (krcConversion != null) {
             Timber.i("fetchKugouLyric: krc wordLrc_len=${krcConversion.wordLrc?.length ?: 0}")
             return LxLyricResult(
@@ -5101,7 +5115,8 @@ class LxMusicRepository @Inject constructor(
     }
 
     private fun looksLikeKrcText(text: String): Boolean {
-        val tupleLines = text.lineSequence().count { it.trim().matches(Regex("^\\[\\d+,\\d+]")) }
+        val tupleHeader = Regex("^\\[\\d+,\\d+]")
+        val tupleLines = text.lineSequence().count { tupleHeader.containsMatchIn(it.trim()) }
         return tupleLines >= 3 && text.contains(Regex("<\\d+,\\d+"))
     }
 
@@ -5147,44 +5162,13 @@ class LxMusicRepository @Inject constructor(
                 val lrcxText = LxLyricDecoders.decodeKuwoLrcx(raw, isLrcx = true) ?: return@use null
                 val converted = LxLyricDecoders.convertKuwoLrcx(lrcxText) ?: return@use null
                 Timber.i("fetchKuwoLyricV2: lrcx converted len=${converted.length} rid=$rid")
-                val triple = splitKuwoDuplicatedLines(converted)
-                LxLyricResult(lyric = triple.first, tlyric = triple.second, lxlyric = converted)
+                val split = LxLyricDecoders.splitKuwoTranslationLines(converted)
+                LxLyricResult(lyric = split.plainLrc, tlyric = split.translationLrc, lxlyric = split.wordLrc)
             }
         }.getOrElse {
             Timber.w(it, "fetchKuwoLyricV2 failed for songmid=$songmid")
             null
         }
-    }
-
-    private fun splitKuwoDuplicatedLines(lrc: String): Pair<String, String> {
-        val seen = LinkedHashMap<Long, String>()
-        val main = StringBuilder()
-        val trans = StringBuilder()
-        val timeRegex = Regex("^\\[([\\d:.]+)]")
-        for (line in lrc.lines()) {
-            val m = timeRegex.find(line) ?: run {
-                if (line.isNotBlank()) main.appendLine(line)
-                continue
-            }
-            val ms = LxLyricDecoders.run {
-                var t = m.groupValues[1]
-                if (!t.contains('.')) t += ".0"
-                val arr = t.split(Regex(":|\\.")).toMutableList()
-                while (arr.size < 3) arr.add(0, "0")
-                val min = arr[0].toLongOrNull() ?: 0L
-                val sec = arr[1].toLongOrNull() ?: 0L
-                var frac = arr[2].toLongOrNull() ?: 0L
-                if (arr[2].length == 1) frac *= 100 else if (arr[2].length == 2) frac *= 10
-                min * 3600000 + sec * 1000 + frac
-            }
-            if (ms in seen) {
-                trans.appendLine(line.replace(Regex("<\\d{2}:\\d{2}[.:]\\d{2,3}>"), ""))
-            } else {
-                seen[ms] = line
-                main.appendLine(line)
-            }
-        }
-        return main.trim().toString() to trans.trim().toString()
     }
 
     private suspend fun fetchKuwoLyricH5(songmid: String): LxLyricResult? {
@@ -5248,24 +5232,20 @@ class LxMusicRepository @Inject constructor(
                         Timber.w("fetchNeteaseLyricV1: bad code=$code for songmid=$songmid (attempt=$attempt)")
                         return@use null
                     }
-                    val allKeys = root.keySet().sorted()
-                    Timber.i("fetchNeteaseLyricV1: API keys=$allKeys songmid=$songmid")
-                    allKeys.forEach { key ->
-                        val sub = root.get(key)
-                        val subKeys = if (sub?.isJsonObject == true) sub.asJsonObject.keySet().sorted() else null
-                        if (subKeys != null) Timber.i("fetchNeteaseLyricV1: $key sub-keys=$subKeys")
-                    }
                     val lyric = root.getAsJsonObject("lrc")?.get("lyric")?.asString
+                        ?.let { LxLyricDecoders.normalizeNeteaseLrcField(it) }
                     if (lyric.isNullOrBlank()) return@use null
                     val tlyric = root.getAsJsonObject("tlyric")?.get("lyric")?.asString
+                        ?.let { LxLyricDecoders.normalizeNeteaseLrcField(it) }
                     val rlyric = root.getAsJsonObject("romalrc")?.get("lyric")?.asString
+                        ?.let { LxLyricDecoders.normalizeNeteaseLrcField(it) }
                     val yrcRaw = root.getAsJsonObject("yrc")?.get("lyric")?.asString
                         ?.takeIf { it.isNotBlank() }
                     val ytlrcRaw = root.getAsJsonObject("ytlrc")?.get("lyric")?.asString
                         ?.takeIf { it.isNotBlank() }
                     val yromalrcRaw = root.getAsJsonObject("yromalrc")?.get("lyric")?.asString
                         ?.takeIf { it.isNotBlank() }
-                    Timber.i("fetchNeteaseLyricV1: lrc_len=${lyric.length} yrc_len=${yrcRaw?.length ?: 0} songmid=$songmid")
+                    Timber.i("fetchNeteaseLyricV1: lrc_len=${lyric.length} yrc_len=${yrcRaw?.length ?: 0} yromalrc_len=${yromalrcRaw?.length ?: 0} songmid=$songmid")
 
                     if (yrcRaw != null) {
                         val yrcLrc = LxLyricDecoders.convertYrc(yrcRaw)
@@ -5276,6 +5256,7 @@ class LxMusicRepository @Inject constructor(
                             val yromalrc = yromalrcRaw?.let { LxLyricDecoders.convertYrc(it) }
                                 ?.let { LxLyricDecoders.fixTimeTag(yrcLrc, it) }
                                 ?.let { LxLyricDecoders.stripWordTags(it) }
+                                ?: yromalrcRaw?.let { LxLyricDecoders.fixColonFraction(it) }
                             return@use LxLyricResult(
                                 lyric = LxLyricDecoders.fixColonFraction(lyric),
                                 tlyric = ytlrc ?: tlyric?.let { LxLyricDecoders.fixColonFraction(it) },
@@ -5317,10 +5298,13 @@ class LxMusicRepository @Inject constructor(
                     return@use null
                 }
                 val lyric = root.getAsJsonObject("lrc")?.get("lyric")?.asString
+                    ?.let { LxLyricDecoders.normalizeNeteaseLrcField(it) }
                 if (lyric.isNullOrBlank()) return@use null
                 val tlyric = root.getAsJsonObject("tlyric")?.get("lyric")?.asString
-                val rlyric = root.getAsJsonObject("romalrc")?.get("lyric")?.asString
-                    ?: root.getAsJsonObject("rlyric")?.get("lyric")?.asString
+                    ?.let { LxLyricDecoders.normalizeNeteaseLrcField(it) }
+                val rlyric = (root.getAsJsonObject("romalrc")?.get("lyric")?.asString
+                    ?: root.getAsJsonObject("rlyric")?.get("lyric")?.asString)
+                    ?.let { LxLyricDecoders.normalizeNeteaseLrcField(it) }
                 val yrcRaw = root.getAsJsonObject("yrc")?.get("lyric")?.asString
                     ?.takeIf { it.isNotBlank() }
                 val yrcLrc = yrcRaw?.let { LxLyricDecoders.convertYrc(it) }
