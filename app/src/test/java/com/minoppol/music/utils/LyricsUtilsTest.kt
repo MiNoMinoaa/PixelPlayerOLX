@@ -1,6 +1,7 @@
 package com.minoppol.music.utils
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -64,6 +65,17 @@ class LyricsUtilsTest {
         assertEquals(1, synced[0].voice)
         assertEquals(2, synced[0].words?.size)
         assertEquals("男：第一句", synced[0].line)
+    }
+
+    @Test
+    fun parseLyrics_bracketWrappedWordTimedLineIsNotAVoiceLabel() {
+        val lrc = "[00:10.776]<00:10.776>【<00:11.015>哈<00:11.254>机<00:11.493>密<00:13.883>集】"
+        val synced = requireNotNull(LyricsUtils.parseLyrics(lrc).synced)
+
+        assertNull(synced[0].voice)
+        assertTrue(synced[0].words.orEmpty().size >= 4)
+        assertTrue(synced[0].line.startsWith("【"))
+        assertFalse(synced[0].line.contains("<"))
     }
 
     @Test
