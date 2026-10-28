@@ -222,34 +222,34 @@ class LxLyricDecodersTest {
 
     @Test
     fun `convertKuwoLrcx adds line start to relative word times`() {
-        assertThat(converted).contains("[00:01.784]<00:01.784>词：<00:01.929>哈<00:02.079>密")
+        val lrcx = "[kuwo:023]\n[ver:v1.0]\n[00:01.784]<1305,-1305>词：<1522,-1232>哈<1911,-1321>密\n"
         val converted = LxLyricDecoders.convertKuwoLrcx(lrcx)!!
-            "[ti:Test Song]",
+        assertThat(converted).contains("[00:01.784]<00:01.784>词：<00:01.929>哈<00:02.079>密")
     }
 
     @Test
     fun `splitKuwoTranslationLines pairs bilingual lines with their preceding main line`() {
         val lrc = listOf(
+            "[ti:Test Song]",
             "[00:00.000]<00:00.000>哈<00:00.000>机<00:00.000>密<00:00.000>集",
             "[00:01.547]<00:01.547>あ<00:01.713>い<00:01.969>う<00:02.559>え",
             "[00:02.880]<00:02.880>哈<00:02.880>机<00:02.880>密<00:02.880>密<00:02.880>集<00:02.880>哈",
-            "[00:02.880]<00:02.880>如<00:02.880>果<00:02.880>只<00:02.880>是<00:02.880>一<00:02.880>场<00:02.880>梦",
-            "[00:02.880]<00:02.880>ど<00:03.440>れ<00:03.576>ほ",
-            "[00:06.882]<00:06.882>那<00:06.882>该<00:06.882>有<00:06.882>多<00:06.882>好",
-        assertThat(split.wordLrc).contains("[00:01.547]<00:01.547>あ")
+            "[00:02.880]<00:02.880>か<00:03.440>き<00:03.576>く",
+            "[00:06.882]<00:06.882>密<00:06.882>集<00:06.882>哈<00:06.882>机",
+            "[00:06.882]<00:06.882>さ<00:08.234>し<00:08.936>す",
         ).joinToString("\n")
         val split = LxLyricDecoders.splitKuwoTranslationLines(lrc)
+        assertThat(split.wordLrc).contains("[00:01.547]<00:01.547>あ")
         assertThat(split.wordLrc).contains("[00:02.880]<00:02.880>か")
-        assertThat(split.wordLrc).contains("[00:02.880]<00:02.880>ど")
-        assertThat(split.wordLrc).contains("[00:06.882]<00:06.882>未")
+        assertThat(split.wordLrc).contains("[00:06.882]<00:06.882>さ")
         assertThat(split.wordLrc).doesNotContain("[00:00.000]")
+        assertThat(split.wordLrc).contains("[ti:Test Song]")
         assertThat(LxLyricDecoders.stripWordTags(split.wordLrc)).doesNotContain("哈")
         assertThat(LxLyricDecoders.stripWordTags(split.wordLrc)).doesNotContain("密")
         assertThat(split.plainLrc).contains("[00:01.547]あ")
-        assertThat(split.translationLrc).contains("[00:01.547]哈机密密集哈")
         assertThat(split.plainLrc).doesNotContain("<")
+        assertThat(split.translationLrc).contains("[00:01.547]哈机密密集哈")
         assertThat(split.translationLrc).contains("[00:02.880]密集哈机")
-
         assertThat(split.translationLrc).doesNotContain("[00:06.882]")
     }
 
@@ -269,10 +269,10 @@ class LxLyricDecodersTest {
         val lrc = listOf(
             "[00:01.547]<00:01.547>あ<00:01.713>い<00:01.969>う",
             "[00:02.880]<00:02.880> <00:02.880> <00:02.880> ",
-            "[00:02.880]<00:02.880>ど<00:03.440>れ",
+            "[00:02.880]<00:02.880>か<00:03.440>き",
         ).joinToString("\n")
         val split = LxLyricDecoders.splitKuwoTranslationLines(lrc)
-        assertThat(split.wordLrc).contains("[00:02.880]<00:02.880>ど")
+        assertThat(split.wordLrc).contains("[00:02.880]<00:02.880>か")
         assertThat(split.wordLrc.lines()).hasSize(2)
         assertThat(split.translationLrc).isEmpty()
     }
@@ -335,9 +335,12 @@ class LxLyricDecodersTest {
         val lrcx = realPayload("kuwo_jp_bilingual_lrcx.txt")
         val converted = LxLyricDecoders.convertKuwoLrcx(lrcx)!!
         val split = LxLyricDecoders.splitKuwoTranslationLines(converted)
-        assertThat(split.translationLrc).contains("[00:02.880]密集哈机")
-
+        val translationLines = split.translationLrc.lines()
+        assertThat(translationLines.any { it.startsWith("[00:01.547]") && it.isNotBlank() }).isTrue()
         assertThat(translationLines.any { it.startsWith("[00:02.880]") && it.isNotBlank() }).isTrue()
+        val mainLines = LxLyricDecoders.stripWordTags(split.wordLrc).lines()
+        assertThat(mainLines.first { it.startsWith("[00:01.547]") }.any { it.code in 0x3041..0x3096 }).isTrue()
+        assertThat(mainLines.count { it.startsWith("[00:01.547]") }).isEqualTo(1)
         val parsed = com.minoppol.music.utils.LyricsUtils.parseLyrics(split.wordLrc)
         val synced = parsed.synced!!
         val withWords = synced.filter { !it.words.isNullOrEmpty() }
@@ -355,6 +358,8 @@ class LxLyricDecodersTest {
         assertThat(split.translationLrc.lines().any { it.startsWith("[01:59.708]") }).isTrue()
         assertThat(split.translationLrc.lines().any { it.startsWith("[02:37.694]") }).isTrue()
         val mainLines = LxLyricDecoders.stripWordTags(split.wordLrc).lines()
+        assertThat(mainLines.first { it.startsWith("[01:59.708]") }.none { it.code in 0x4E00..0x9FFF }).isTrue()
+        assertThat(mainLines.count { it.startsWith("[01:59.708]") }).isEqualTo(1)
         val parsed = com.minoppol.music.utils.LyricsUtils.parseLyrics(split.wordLrc)
         val synced = parsed.synced!!
         val withWords = synced.filter { !it.words.isNullOrEmpty() }
@@ -406,7 +411,7 @@ class LxLyricDecodersTest {
     fun `convertQrc keeps standalone space tokens as word boundaries`() {
         val qrc = "[0,2250]哈(0,160)机(160,160) (320,160)密(480,160) (640,160)集(800,160)"
         val converted = LxLyricDecoders.convertQrc(qrc)!!
-        assertThat(converted).contains("<00:00.160>天 ")
+        assertThat(converted).contains("<00:00.160>机 ")
         assertThat(converted).contains("<00:00.480>密 ")
         val parsed = com.minoppol.music.utils.LyricsUtils.parseLyrics(converted)
         val line = parsed.synced!!.first()
@@ -486,15 +491,15 @@ class LxLyricDecodersTest {
     fun `splitKuwoTranslationLines pairs minute-two chinese with its preceding main`() {
         val lrc = listOf(
             "[02:09.117]<02:09.117>I <02:09.302>want <02:09.523>something",
-            "[02:18.168]<02:18.168>我<02:18.168>想<02:18.168>要",
+            "[02:18.168]<02:18.168>哈<02:18.168>机<02:18.168>密",
             "[02:18.168]<02:18.168>Oh <02:18.340>I <02:18.554>want",
-            "[02:21.189]<02:21.189>的<02:21.189>不<02:21.189>过",
+            "[02:21.189]<02:21.189>密<02:21.189>集<02:21.189>哈",
             "[02:21.189]<02:21.189>Doo <02:21.558>doo",
         ).joinToString("\n")
         val split = LxLyricDecoders.splitKuwoTranslationLines(lrc)
         assertThat(split.wordLrc).contains("[02:09.117]<02:09.117>I ")
         assertThat(split.wordLrc).contains("[02:18.168]<02:18.168>Oh ")
-        assertThat(LxLyricDecoders.stripWordTags(split.wordLrc)).doesNotContain("我")
+        assertThat(LxLyricDecoders.stripWordTags(split.wordLrc)).doesNotContain("哈")
         assertThat(split.translationLrc).contains("[02:09.117]哈机密")
         assertThat(split.translationLrc).contains("[02:18.168]密集哈")
         assertThat(split.translationLrc).doesNotContain("120:")

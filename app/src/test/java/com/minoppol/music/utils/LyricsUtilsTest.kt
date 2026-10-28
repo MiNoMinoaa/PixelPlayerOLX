@@ -18,8 +18,8 @@ class LyricsUtilsTest {
         assertEquals(1_000, synced[2].voice)
         assertEquals(3, synced[3].voice)
         assertNotNull(synced[3].background)
-        assertEquals("第一句", synced[0].line)
-        assertEquals("第四句", synced[3].line)
+        assertEquals("男：第一句", synced[0].line)
+        assertEquals("和声：第四句", synced[3].line)
     }
 
     @Test
@@ -43,7 +43,7 @@ class LyricsUtilsTest {
         assertEquals(3, synced[3].voice)
         assertEquals(4, synced[4].voice)
         assertEquals(synced[3].voice, synced[5].voice)
-        assertEquals("第四句", synced[3].line)
+        assertEquals("甲：第四句", synced[3].line)
     }
 
     @Test
@@ -62,7 +62,30 @@ class LyricsUtilsTest {
 
         assertEquals(1, synced[0].voice)
         assertEquals(2, synced[0].words?.size)
-        assertEquals("第一句", synced[0].line)
+        assertEquals("男：第一句", synced[0].line)
+    }
+
+    @Test
+    fun parseLyrics_carriesVoiceForwardThroughUnlabeledLines() {
+        val lrc = "[00:01.00]【甲】第一句\n[00:02.00]第二句\n[00:03.00]第三句\n[00:04.00]【乙】第四句\n[00:05.00]第五句"
+        val synced = requireNotNull(LyricsUtils.parseLyrics(lrc).synced)
+
+        assertEquals(3, synced[0].voice)
+        assertEquals(3, synced[1].voice)
+        assertEquals(3, synced[2].voice)
+        assertEquals(4, synced[3].voice)
+        assertEquals(4, synced[4].voice)
+        assertEquals("第二句", synced[1].line)
+    }
+
+    @Test
+    fun parseLyrics_stripsKnownMidLineVoiceLabelsFromText() {
+        val lrc = "[00:01.00]【甲】第一部分中间【合】结束\n[00:02.00]【合】内容\n[00:03.00]普通（live版）"
+        val synced = requireNotNull(LyricsUtils.parseLyrics(lrc).synced)
+
+        assertEquals("甲：第一部分中间结束", synced[0].line)
+        assertEquals("合：内容", synced[1].line)
+        assertEquals("普通（live版）", synced[2].line)
     }
 
     @Test
@@ -80,7 +103,7 @@ class LyricsUtilsTest {
         val synced = requireNotNull(LyricsUtils.parseLyrics(krc).synced)
 
         assertEquals(71_060, synced[0].time)
-        assertEquals("啊", synced[0].line)
+        assertEquals("男：啊", synced[0].line)
         assertEquals(1, synced[0].voice)
         assertEquals(71_230, synced[1].time)
         assertEquals("哦", synced[1].line)
@@ -525,5 +548,89 @@ class LyricsUtilsTest {
         assertEquals("I want", synced[0].line)
         assertEquals(listOf("I", "want"), synced[0].words!!.map { it.word })
         assertTrue(synced[0].words!!.all { it.startsNewWord })
+    }
+    @Test
+    fun parseLyrics_treatsStandaloneVoiceCueLinesAsSectionSwitches() {
+        val lrc = listOf(
+            "[00:10.63]男：",
+            "[00:12.08]哈机密密集哈",
+            "[00:16.48]密集哈机密集哈",
+            "[00:30.87]女：",
+            "[00:32.10]哈机密密集哈机密",
+            "[01:36.51]合：",
+            "[01:40.00]哈机密 密集哈机密",
+        ).joinToString("\n")
+        val synced = LyricsUtils.parseLyrics(lrc).synced!!
+
+        assertEquals(4, synced.size)
+        assertEquals(1, synced[0].voice)
+        assertEquals("哈机密密集哈", synced[0].line)
+        assertEquals(1, synced[1].voice)
+        assertEquals(2, synced[2].voice)
+        assertEquals("哈机密密集哈机密", synced[2].line)
+        assertEquals(1_000, synced[3].voice)
+        assertEquals("哈机密 密集哈机密", synced[3].line)
+    }
+
+    @Test
+    fun parseLyrics_dropsWordTimedStandaloneVoiceCueLines() {
+        val lrc = "[00:10.63]<00:10.63>男<00:10.87>：\n[00:12.08]<00:12.08>哈<00:12.60>机密密集哈"
+        val synced = LyricsUtils.parseLyrics(lrc).synced!!
+
+        assertEquals(1, synced.size)
+        assertEquals(1, synced[0].voice)
+        assertEquals("哈机密密集哈", synced[0].line)
+        assertEquals(2, synced[0].words!!.size)
+    }
+
+    @Test
+    fun parseLyrics_mapsInlineBareKeywordPrefixToVoice() {
+        val lrc = "[00:10.00]男：哈机密密集哈\n[00:20.00]女：密集哈机密集哈"
+        val synced = LyricsUtils.parseLyrics(lrc).synced!!
+
+        assertEquals(2, synced.size)
+        assertEquals(1, synced[0].voice)
+        assertEquals("男：哈机密密集哈", synced[0].line)
+        assertEquals(2, synced[1].voice)
+        assertEquals("女：密集哈机密集哈", synced[1].line)
+    }
+
+    @Test
+    fun parseLyrics_assignsStableVoicesToNovelStandaloneSingerCues() {
+        val lrc = listOf(
+            "[00:01.00]张三：",
+            "[00:02.00]哈机密密集哈",
+            "[00:03.00]李四：",
+            "[00:04.00]密集哈机密集哈",
+        ).joinToString("\n")
+        val synced = LyricsUtils.parseLyrics(lrc).synced!!
+
+        assertEquals(2, synced.size)
+        assertEquals("哈机密密集哈", synced[0].line)
+        assertEquals("密集哈机密集哈", synced[1].line)
+        assertNotNull(synced[0].voice)
+        assertNotNull(synced[1].voice)
+        assertTrue(synced[0].voice != synced[1].voice)
+        assertEquals(synced[0].voice, synced[0].voice)
+    }
+
+    @Test
+    fun parseLyrics_keepsPlainSingleWordLinesWithoutColon() {
+        val synced = LyricsUtils.parseLyrics("[00:01.00]嗯\n[00:02.00]哦").synced!!
+
+        assertEquals(2, synced.size)
+        assertEquals("嗯", synced[0].line)
+        assertEquals("哦", synced[1].line)
+        assertNull(synced[0].voice)
+        assertNull(synced[1].voice)
+    }
+
+    @Test
+    fun parseLyrics_kugouPathDropsStandaloneVoiceCueLines() {
+        val synced = LyricsUtils.parseLyrics("[1000,5000]男：\n[7000,3000]哈机密密集哈").synced!!
+
+        assertEquals(1, synced.size)
+        assertEquals(1, synced[0].voice)
+        assertEquals("哈机密密集哈", synced[0].line)
     }
 }

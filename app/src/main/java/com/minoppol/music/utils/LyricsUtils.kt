@@ -663,13 +663,24 @@ object LyricsUtils {
         return voice to remaining
     }
 
+    private data class BracketVoiceInfo(
+        val voice: Int?,
+        val background: BackgroundVocals?,
+        val label: String,
+        val text: String,
+    )
+
     private fun splitBracketVoiceLabel(
         text: String,
         seenBracketLabels: MutableMap<String, Int>,
         assignNextVoice: () -> Int,
-    ): Triple<Int?, BackgroundVocals?, String> {
-        val match = LRC_BRACKET_VOICE_REGEX.find(text) ?: return Triple(null, null, text)
-        val label = match.groupValues[2].trim().lowercase()
+    ): BracketVoiceInfo {
+        val match = LRC_BRACKET_VOICE_REGEX.find(text) ?: return BracketVoiceInfo(null, null, "", text)
+        val rawLabel = match.groupValues[2].trim()
+        if (rawLabel.matches(Regex("""\d{1,3}:\d{1,2}([.:]\d{1,3})?"""))) {
+            return BracketVoiceInfo(null, null, "", text)
+        }
+        val label = rawLabel.lowercase()
         val remaining = text.removeRange(match.range).trim()
 
         val isHarmony = HARMONY_LABEL_KEYWORDS.any { label.contains(it.lowercase()) }
@@ -689,7 +700,153 @@ object LyricsUtils {
             }
         }
 
-        return Triple(voice, background, remaining)
+        return BracketVoiceInfo(voice, background, rawLabel, remaining)
+    }
+
+    private fun String.withSingerPrefix(label: String): String {
+        if (label.isEmpty()) return this
+        val colon = if (label.any { it > '\u2E80' }) "：" else ": "
+        return "$label$colon$this"
+    }
+
+    internal fun applyVoiceCarryForward(lines: List<SyncedLine>): List<SyncedLine> {
+        var carried: Int? = null
+        return lines.map { line ->
+            val voice = line.voice
+            when {
+                voice != null -> {
+                    carried = voice
+                    line
+                }
+                carried != null && line.line.isNotBlank() -> line.copy(voice = carried)
+                else -> line
+            }
+        }
+    }
+
+    internal fun applyVoiceCarryForwardFromStandaloneCues(lines: List<SyncedLine>): List<SyncedLine> {
+        var carried: Int? = null
+        return lines.map { line ->
+            val isStandaloneCue = line.voice != null && line.line.isBlank() && line.words.isNullOrEmpty()
+            when {
+                isStandaloneCue -> {
+                    carried = line.voice
+                    line
+                }
+                line.voice != null -> {
+                    carried = null
+                    line
+                }
+                carried != null && line.line.isNotBlank() -> line.copy(voice = carried)
+                else -> line
+            }
+        }
+    }
+
+    private val STANDALONE_VOICE_LABEL_REGEX = Regex("""^([^：:(){}\[\]【】（）]{1,10})[:：]$""")
+
+    private val BARE_VOICE_PREFIX_REGEX = Regex(
+        """^(""" + (GROUP_VOICE_LABEL_KEYWORDS + VOICE1_LABEL_KEYWORDS + VOICE2_LABEL_KEYWORDS + HARMONY_LABEL_KEYWORDS)
+            .sortedByDescending { it.length }
+            .joinToString("|") { Regex.escape(it) } + """)[:：]""",
+        RegexOption.IGNORE_CASE,
+    )
+
+    internal fun standaloneVoiceLabelOf(text: String): String? {
+        val bare = text.trim()
+        if (bare.isEmpty()) return null
+        val match = STANDALONE_VOICE_LABEL_REGEX.matchEntire(bare) ?: return null
+        return match.groupValues[1]
+    }
+
+    private fun matchBareVoiceLabel(
+        text: String,
+        seenBracketLabels: MutableMap<String, Int>,
+        assignNextVoice: () -> Int,
+    ): Pair<Int?, String> {
+        val bare = LRC_WORD_TAG_REGEX.replace(text, "").trim()
+        if (bare.isEmpty()) return null to text
+        val standalone = standaloneVoiceLabelOf(bare)
+        if (standalone != null) {
+            return voiceNumberForLabel(standalone, seenBracketLabels, assignNextVoice) to ""
+        }
+        val inline = BARE_VOICE_PREFIX_REGEX.find(bare) ?: return null to text
+        if (inline.range.last + 1 >= bare.length) return null to text
+        return voiceNumberForLabel(inline.groupValues[1], seenBracketLabels, assignNextVoice) to text
+    }
+
+    private fun voiceNumberForLabel(
+        label: String,
+        seenBracketLabels: MutableMap<String, Int>,
+        assignNextVoice: () -> Int,
+    ): Int {
+        val lower = label.lowercase()
+        return when {
+            GROUP_VOICE_LABEL_KEYWORDS.any { lower.contains(it.lowercase()) } -> 1_000
+            VOICE1_LABEL_KEYWORDS.any { lower.contains(it.lowercase()) } -> 1
+            VOICE2_LABEL_KEYWORDS.any { lower.contains(it.lowercase()) } -> 2
+            else -> seenBracketLabels.getOrPut(lower) { assignNextVoice() }
+        }
+    }
+
+    internal fun dropStandaloneVoiceLabelLines(lines: List<SyncedLine>): List<SyncedLine> =
+        lines.filterNot { line ->
+            line.voice != null && line.line.isBlank() && line.words.isNullOrEmpty()
+        }
+
+    private fun collectKnownVoiceLabels(seenLabels: Set<String>): Set<String> =
+        (seenLabels +
+            GROUP_VOICE_LABEL_KEYWORDS +
+            HARMONY_LABEL_KEYWORDS +
+            VOICE1_LABEL_KEYWORDS +
+            VOICE2_LABEL_KEYWORDS).map { it.lowercase() }.toSet()
+
+    private fun stripKnownMidLineVoiceLabels(
+        lines: List<SyncedLine>,
+        knownLabels: Set<String>,
+    ): List<SyncedLine> {
+        if (knownLabels.isEmpty()) return lines
+
+        fun clean(text: String): String {
+            var cleaned = text
+            for (label in knownLabels) {
+                cleaned = cleaned.replace("【$label】", "", ignoreCase = true)
+                cleaned = cleaned.replace("（$label）", "", ignoreCase = true)
+            }
+            if (cleaned != text) {
+                while (cleaned.contains("  ")) cleaned = cleaned.replace("  ", " ")
+                cleaned = cleaned.trim()
+            }
+            return cleaned
+        }
+
+        return lines.map { line ->
+            val cleanedWords = line.words?.let { words ->
+                var droppedBoundary = false
+                words.mapNotNull { word ->
+                    val cleaned = clean(word.word)
+                    if (cleaned.isEmpty()) {
+                        if (word.startsNewWord) droppedBoundary = true
+                        null
+                    } else if (droppedBoundary) {
+                        droppedBoundary = false
+                        word.copy(word = cleaned, startsNewWord = true)
+                    } else {
+                        word.copy(word = cleaned)
+                    }
+                }
+            }
+            val cleanedLine = clean(line.line)
+            if (cleanedLine == line.line && cleanedWords == line.words) {
+                line
+            } else {
+                line.copy(
+                    line = cleanedLine,
+                    words = cleanedWords,
+                    background = line.background?.let { it.copy(text = clean(it.text)) },
+                )
+            }
+        }
     }
 
     /**
@@ -750,17 +907,28 @@ object LyricsUtils {
                 val voice: Int?
                 val lineBackground: BackgroundVocals?
                 val textForStrip: String
+                val singerLabel: String
                 if (enhancedVoice != null) {
                     voice = enhancedVoice
                     lineBackground = null
                     textForStrip = afterEnhanced
+                    singerLabel = ""
                 } else {
-                    val (bracketVoice, bracketBg, bracketText) = splitBracketVoiceLabel(textWithTags, seenBracketLabels) {
-                        nextBracketVoice++
+                    val bareVoice = matchBareVoiceLabel(textWithTags, seenBracketLabels) { nextBracketVoice++ }
+                    if (bareVoice.first != null) {
+                        voice = bareVoice.first
+                        lineBackground = null
+                        textForStrip = bareVoice.second
+                        singerLabel = ""
+                    } else {
+                        val bracket = splitBracketVoiceLabel(textWithTags, seenBracketLabels) {
+                            nextBracketVoice++
+                        }
+                        voice = bracket.voice
+                        lineBackground = bracket.background
+                        textForStrip = bracket.text
+                        singerLabel = bracket.label
                     }
-                    voice = bracketVoice
-                    lineBackground = bracketBg
-                    textForStrip = bracketText
                 }
                 val text = stripLrcTimestamps(textForStrip)
 
@@ -774,7 +942,7 @@ object LyricsUtils {
                 if (text.contains(LRC_WORD_TAG_REGEX)) {
                     val words = mutableListOf<SyncedWord>()
                     val parts = text.split(LRC_WORD_SPLIT_REGEX)
-                    val displayText = LRC_WORD_TAG_REGEX.replace(text, "").trim()
+                    val displayText = LRC_WORD_TAG_REGEX.replace(text, "").trim().withSingerPrefix(singerLabel)
                     var pendingWordBoundary = false
 
                     for (part in parts) {
@@ -837,7 +1005,7 @@ object LyricsUtils {
                         syncedLines.add(SyncedLine(lineTimestamp.toInt(), displayText, voice = voice, background = lineBackground))
                     }
                 } else {
-                    syncedLines.add(SyncedLine(lineTimestamp.toInt(), text, voice = voice, background = lineBackground))
+                    syncedLines.add(SyncedLine(lineTimestamp.toInt(), text.withSingerPrefix(singerLabel), voice = voice, background = lineBackground))
                 }
             } else {
                 val stripped = stripLrcTimestamps(stripFormatCharacters(line))
@@ -863,7 +1031,11 @@ object LyricsUtils {
 
         return if (isSynced && syncedLines.isNotEmpty()) {
             val sortedSyncedLines = syncedLines.sortedBy { it.time }
-            val pairedLines = pairTranslationLines(sortedSyncedLines).map { line ->
+            val pairedLines = pairTranslationLines(sortedSyncedLines)
+                .let(::applyVoiceCarryForward)
+                .let(::dropStandaloneVoiceLabelLines)
+                .let { stripKnownMidLineVoiceLabels(it, collectKnownVoiceLabels(seenBracketLabels.keys)) }
+                .map { line ->
 
                 val romanized = when {
                     MultiLangRomanizer.isJapanese(line.line, entireLyricsHasKana) -> MultiLangRomanizer.romanizeJapanese(line.line)
@@ -958,20 +1130,32 @@ object LyricsUtils {
             val voice: Int?
             val lineBackground: BackgroundVocals?
             val body: String
+            val kugouLabel: String
             if (isTupleHead && enhancedVoice == null) {
                 voice = null
                 lineBackground = null
                 body = bodyRaw
+                kugouLabel = ""
             } else if (enhancedVoice != null) {
                 voice = enhancedVoice
                 lineBackground = null
                 body = afterEnhanced
+                kugouLabel = ""
             } else {
-                val (bracketVoice, bracketBg, bracketText) =
-                    splitBracketVoiceLabel(bodyRaw, seenBracketLabels) { nextBracketVoice++ }
-                voice = bracketVoice
-                lineBackground = bracketBg
-                body = bracketText
+                val bareVoice = matchBareVoiceLabel(bodyRaw, seenBracketLabels) { nextBracketVoice++ }
+                if (bareVoice.first != null) {
+                    voice = bareVoice.first
+                    lineBackground = null
+                    body = bareVoice.second
+                    kugouLabel = ""
+                } else {
+                    val bracket =
+                        splitBracketVoiceLabel(bodyRaw, seenBracketLabels) { nextBracketVoice++ }
+                    voice = bracket.voice
+                    lineBackground = bracket.background
+                    body = bracket.text
+                    kugouLabel = bracket.label
+                }
             }
 
             val words = mutableListOf<SyncedWord>()
@@ -1033,12 +1217,12 @@ object LyricsUtils {
                 .replace(KUGOU_RESIDUE_TAG_REGEX, "")
                 .replace("$", "")
                 .trim()
-            if (plainText.isEmpty() && words.isEmpty()) continue
+            if (plainText.isEmpty() && words.isEmpty() && voice == null) continue
 
             syncedLines.add(
                 SyncedLine(
                     time = lineStartMs.toInt(),
-                    line = plainText,
+                    line = plainText.withSingerPrefix(kugouLabel),
                     words = words.takeIf { it.isNotEmpty() },
                     voice = voice,
                     background = lineBackground
@@ -1050,6 +1234,9 @@ object LyricsUtils {
 
         val sorted = syncedLines.sortedBy { it.time }
         val paired = pairTranslationLines(sorted)
+            .let(::applyVoiceCarryForwardFromStandaloneCues)
+            .let(::dropStandaloneVoiceLabelLines)
+            .let { stripKnownMidLineVoiceLabels(it, collectKnownVoiceLabels(seenBracketLabels.keys)) }
         val plainVersion = paired.map { it.line }
         return Lyrics(synced = paired, plain = plainVersion, areFromRemote = false)
     }
