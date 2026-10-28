@@ -17,10 +17,14 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import okhttp3.OkHttpClient
 import java.io.File
-import java.nio.file.Files
+import java.nio.file.Path
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 
 class LyricsRepositoryImplTest {
+
+    @TempDir
+    lateinit var tempDir: Path
 
     @Test
     fun getLyrics_returnsSongLyricsBeforeNeedingStorageRead() = runTest {
@@ -146,7 +150,7 @@ class LyricsRepositoryImplTest {
         val lyricsDao = mockk<LyricsDao>(relaxed = true)
         coEvery { lyricsDao.getLyrics(105L) } returns null
         val repository = LyricsRepositoryImpl(
-            context = testContext(),
+            context = testContext(tempDir.toFile()),
             lrcLibApiService = apiService,
             lyricsDao = lyricsDao,
             okHttpClient = mockk<OkHttpClient>(relaxed = true),
@@ -183,7 +187,7 @@ class LyricsRepositoryImplTest {
         coEvery { apiService.getLyrics(any(), any(), any(), any()) } returns null
 
         val repository = LyricsRepositoryImpl(
-            context = testContext(),
+            context = testContext(tempDir.toFile()),
             lrcLibApiService = apiService,
             lyricsDao = lyricsDao,
             okHttpClient = mockk<OkHttpClient>(relaxed = true),
@@ -217,7 +221,7 @@ class LyricsRepositoryImplTest {
         coEvery { apiService.getLyrics(any(), any(), any(), any()) } returns originalSongLyrics
 
         val repository = LyricsRepositoryImpl(
-            context = testContext(),
+            context = testContext(tempDir.toFile()),
             lrcLibApiService = apiService,
             lyricsDao = lyricsDao,
             okHttpClient = mockk<OkHttpClient>(relaxed = true),
@@ -251,7 +255,7 @@ class LyricsRepositoryImplTest {
         coEvery { apiService.searchLyrics(any(), any(), any(), any()) } returns arrayOf(remixLyrics)
 
         val repository = LyricsRepositoryImpl(
-            context = testContext(),
+            context = testContext(tempDir.toFile()),
             lrcLibApiService = apiService,
             lyricsDao = lyricsDao,
             okHttpClient = mockk<OkHttpClient>(relaxed = true),
@@ -300,7 +304,7 @@ class LyricsRepositoryImplTest {
         coEvery { apiService.searchLyrics(any(), any(), any(), any()) } returns arrayOf(wordSynced)
 
         val repository = LyricsRepositoryImpl(
-            context = testContext(),
+            context = testContext(tempDir.toFile()),
             lrcLibApiService = apiService,
             lyricsDao = lyricsDao,
             okHttpClient = mockk<OkHttpClient>(relaxed = true),
@@ -340,7 +344,7 @@ class LyricsRepositoryImplTest {
         coEvery { apiService.searchLyrics(any(), any(), any(), any()) } returns arrayOf(lyrics)
 
         val repository = LyricsRepositoryImpl(
-            context = testContext(),
+            context = testContext(tempDir.toFile()),
             lrcLibApiService = apiService,
             lyricsDao = lyricsDao,
             okHttpClient = mockk<OkHttpClient>(relaxed = true),
@@ -361,7 +365,7 @@ class LyricsRepositoryImplTest {
         coVerify(exactly = 1) { lyricsDao.insert(any()) }
     }
 
-    private fun testContext(filesDir: File = Files.createTempDirectory("pixelplayer-lyrics-test").toFile()): Context {
+    private fun testContext(filesDir: File): Context {
         return mockk<Context>(relaxed = true) {
             every { this@mockk.filesDir } returns filesDir
         }
