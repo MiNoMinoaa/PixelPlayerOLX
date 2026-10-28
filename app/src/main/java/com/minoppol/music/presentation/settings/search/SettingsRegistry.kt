@@ -327,16 +327,16 @@ object SettingsRegistry {
                 keywordsStatic = listOf("corner radius", "rounded", "navbar", "roundness")
             ),
             SettingSpec(
-                id = "appearance_immersive_lyrics",
-                itemKey = "item_appearance_immersive_lyrics",
-                titleRes = R.string.setcat_immersive_lyrics_title,
-                subtitleRes = R.string.setcat_immersive_lyrics_subtitle,
+                id = "appearance_splash_animation",
+                itemKey = "item_appearance_splash_animation",
+                titleRes = R.string.setcat_splash_animation_title,
+                subtitleRes = R.string.setcat_splash_animation_subtitle,
                 category = SettingsCategory.APPEARANCE,
                 subscreenRoute = Screen.SettingsCategory.createRoute("appearance"),
                 type = SettingType.SWITCH,
-                keywordsStatic = listOf("immersive", "lyrics", "fullscreen", "auto hide", "controls"),
-                getValue = { it.immersiveLyricsEnabled },
-                onToggle = { viewModel, checked -> viewModel.setImmersiveLyricsEnabled(checked) }
+                keywordsStatic = listOf("splash", "startup", "launch", "animation", "intro"),
+                getValue = { it.splashAnimationEnabled },
+                onToggle = { viewModel, checked -> viewModel.setSplashAnimationEnabled(checked) }
             ),
             SettingSpec(
                 id = "appearance_default_tab",
@@ -527,6 +527,18 @@ object SettingsRegistry {
                 subscreenRoute = Screen.LyricsSettings.createRoute(),
                 type = SettingType.NAVIGABLE_CARD,
                 keywordsStatic = listOf("lyrics", "歌词", "notification", "mini player", "font", "blur", "highlight")
+            ),
+            SettingSpec(
+                id = "lyrics_immersive_mode",
+                itemKey = "item_lyrics_immersive_mode",
+                titleRes = R.string.setcat_immersive_lyrics_title,
+                subtitleRes = R.string.setcat_immersive_lyrics_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.LyricsSettings.createRoute(),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf("immersive", "lyrics", "fullscreen", "auto hide", "controls"),
+                getValue = { it.immersiveLyricsEnabled },
+                onToggle = { viewModel, checked -> viewModel.setImmersiveLyricsEnabled(checked) }
             ),
 
             // --- BEHAVIOR CATEGORY ---

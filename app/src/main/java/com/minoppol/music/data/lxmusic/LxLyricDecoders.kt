@@ -496,6 +496,7 @@ object LxLyricDecoders {
     /** Matches `[start,dur]`-headed lines; word tags are `<off,dur[,f]>` (relative) or `(abs,dur[,f])` (absolute). */
     private val KRC_LINE = Regex("^\\[(\\d+),(\\d+)](.*)$")
     private val KRC_WORD = Regex("<(\\d+),(\\d+)(?:,\\d+)?>([^<]*)")
+    private val RAW_TUPLE_LINE_HEAD = Regex("^\\[\\d+,\\d+]")
     private val KRC_RESIDUE = Regex("<[^<>]*>")
     private val PAREN_TAG = Regex("\\((\\d+),(\\d+)(?:,\\d+)?\\)")
     private val BRACKET_ONLY = Regex("^[()\\[\\]{}]+$")
@@ -632,7 +633,8 @@ object LxLyricDecoders {
             val line = raw.trim()
             if (line.isEmpty()) continue
             if (line.startsWith("[")) {
-                out.add(line)
+                val asTupleLine = if (RAW_TUPLE_LINE_HEAD.containsMatchIn(line)) convertTupleText(line) else null
+                out.add(asTupleLine ?: line)
                 continue
             }
             if (!line.startsWith("{")) continue

@@ -91,6 +91,21 @@ class LxLyricDecodersTest {
     }
 
     @Test
+    fun `convertYrc converts raw tuple lines inside json payloads`() {
+        // Regression: mixed payloads carry JSON credits lines plus raw
+        // [startMs,durMs](absMs,durMs,flag)word song lines; the tuple lines
+        // must not pass through unconverted.
+        val yrc = listOf(
+            """{"t":0,"c":[{"tx":"词: "},{"tx":"哈机密"}]}""",
+            "[5000,1000](5000,200,0)哈(5200,200,0)机密密集哈",
+        ).joinToString("\n")
+        val converted = LxLyricDecoders.convertYrc(yrc)!!
+        assertThat(converted).contains("[00:00.000]<00:00.000>词: <00:00.000>哈机密")
+        assertThat(converted).contains("[00:05.000]<00:05.000>哈<00:05.200>机密密集哈")
+        assertThat(converted).doesNotContain("(5000,200,0)")
+    }
+
+    @Test
     fun `convertYrc returns null for garbage`() {
         assertThat(LxLyricDecoders.convertYrc("not json at all")).isNull()
     }
