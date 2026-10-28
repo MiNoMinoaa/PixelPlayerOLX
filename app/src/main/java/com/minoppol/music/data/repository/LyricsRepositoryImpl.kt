@@ -435,7 +435,7 @@ class LyricsRepositoryImpl @Inject constructor(
         return@withContext null
     }
 
-    private fun buildLxLyrics(result: LxLyricResult, source: String): Lyrics? {
+    internal fun buildLxLyrics(result: LxLyricResult, source: String): Lyrics? {
         val wordText = result.lxlyric?.takeIf { it.isNotBlank() }
         val base = LyricsUtils.parseLyrics(wordText ?: result.lyric)
         if (!base.isValid()) return null
@@ -460,10 +460,16 @@ class LyricsRepositoryImpl @Inject constructor(
         if (translationMap == null && romanizationMap == null) {
             return base.copy(synced = synced, areFromRemote = true, remoteSource = source)
         }
+        val translationPool = translationMap?.let { LinkedHashMap(it) }
+        val romanizationPool = romanizationMap?.let { LinkedHashMap(it) }
         val merged = synced.map { line ->
-            val tr = translationMap?.let { matchLrcByTime(it, line.time) }
-            val rm = romanizationMap?.let { matchLrcByTime(it, line.time) } ?: line.romanization
-            line.copy(translation = tr ?: line.translation, romanization = rm)
+            if (line.line.isBlank()) {
+                line.copy(translation = null, romanization = null)
+            } else {
+                val tr = translationPool?.let { matchAndConsumeLrcEntry(it, line.time) } ?: line.translation
+                val rm = romanizationPool?.let { matchAndConsumeLrcEntry(it, line.time) } ?: line.romanization
+                line.copy(translation = tr, romanization = rm)
+            }
         }
         val plainVersion = merged.map { line ->
             buildString {
@@ -507,18 +513,22 @@ class LyricsRepositoryImpl @Inject constructor(
         return map
     }
 
-    private fun matchLrcByTime(map: Map<Int, String>, time: Int, toleranceMs: Int = 500): String? {
-        map[time]?.let { return it }
+    private fun matchAndConsumeLrcEntry(
+        pool: LinkedHashMap<Int, String>,
+        time: Int,
+        toleranceMs: Int = 500
+    ): String? {
+        pool[time]?.let { return pool.remove(time) }
         var bestKey: Int? = null
         var bestDelta = Int.MAX_VALUE
-        for (key in map.keys) {
+        for (key in pool.keys) {
             val delta = abs(key - time)
             if (delta < bestDelta) {
                 bestDelta = delta
                 bestKey = key
             }
         }
-        return bestKey?.takeIf { bestDelta <= toleranceMs }?.let { map[it] }
+        return bestKey?.takeIf { bestDelta <= toleranceMs }?.let { pool.remove(it) }
     }
 
     override suspend fun getStoredLyrics(song: Song): Pair<Lyrics, String>? = withContext(Dispatchers.IO) {

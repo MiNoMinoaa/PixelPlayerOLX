@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="setcat_m3u_sync_section">播放列表同步</string>
     <string name="setcat_m3u_sync_title">自动 M3U 文件同步</string>
@@ -336,9 +336,9 @@
     <string name="setcat_lyrics_font_size_title">歌词页字体大小</string>
     <string name="setcat_lyrics_font_size_subtitle">调整全屏歌词页的字体大小。</string>
     <string name="setcat_lyrics_font_size_value">%.1f sp</string>
-    <string name="lyrics_word_highlight_enabled_title">单词高亮</string>
+    <string name="lyrics_word_highlight_enabled_title">单词高亮（逐字歌词）</string>
     <string name="lyrics_word_highlight_enabled_subtitle">关闭后仅当前行整行高亮。</string>
-    <string name="lyrics_highlight_style_title">单词高亮样式</string>
+    <string name="lyrics_highlight_style_title">单词高亮（逐字歌词）样式</string>
     <string name="lyrics_highlight_style_subtitle">选择当前活跃歌词单词的高亮方式。</string>
     <string name="lyrics_highlight_style_wipe">擦除式</string>
     <string name="lyrics_highlight_style_wipe_desc">高亮从左到右展开。</string>

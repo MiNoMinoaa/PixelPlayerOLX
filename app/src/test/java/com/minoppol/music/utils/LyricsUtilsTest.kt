@@ -19,8 +19,8 @@ class LyricsUtilsTest {
         assertEquals(1_000, synced[2].voice)           // chorus label → group (centered)
         assertEquals(3, synced[3].voice)               // harmony label → assigned voice…
         assertNotNull(synced[3].background)            // …plus harmony marker
-        assertEquals("第一句", synced[0].line)         // label text stripped
-        assertEquals("第四句", synced[3].line)
+        assertEquals("男：第一句", synced[0].line)   // label kept as name prefix, brackets stripped
+        assertEquals("和声：第四句", synced[3].line)
     }
 
     @Test
@@ -35,7 +35,7 @@ class LyricsUtilsTest {
 
     @Test
     fun parseLyrics_assignsVoicesFromFullwidthAndCjkBracketLabels() {
-        val lrc = "[00:01.00]（男）第一句\n[00:02.00]（女）第二句\n[00:03.00]【合】第三句\n[00:04.00]【疚】第四句\n[00:05.00]【汐】第五句\n[00:06.00]【疚】第六句"
+        val lrc = "[00:01.00]（男）第一句\n[00:02.00]（女）第二句\n[00:03.00]【合】第三句\n[00:04.00]【甲】第四句\n[00:05.00]【乙】第五句\n[00:06.00]【甲】第六句"
         val synced = requireNotNull(LyricsUtils.parseLyrics(lrc).synced)
 
         assertEquals(1, synced[0].voice)
@@ -44,16 +44,16 @@ class LyricsUtilsTest {
         assertEquals(3, synced[3].voice)
         assertEquals(4, synced[4].voice)
         assertEquals(synced[3].voice, synced[5].voice)
-        assertEquals("第四句", synced[3].line)
+        assertEquals("甲：第四句", synced[3].line)
     }
 
     @Test
     fun parseLyrics_doesNotTreatCjkTitleBracketsAsVoiceLabel() {
-        val lrc = "[00:01.00]《逆行星》"
+        val lrc = "[00:01.00]《歌名》"
         val synced = requireNotNull(LyricsUtils.parseLyrics(lrc).synced)
 
         assertNull(synced[0].voice)
-        assertEquals("《逆行星》", synced[0].line)
+        assertEquals("《歌名》", synced[0].line)
     }
 
     @Test
@@ -63,7 +63,30 @@ class LyricsUtilsTest {
 
         assertEquals(1, synced[0].voice)
         assertEquals(2, synced[0].words?.size)
-        assertEquals("第一句", synced[0].line)
+        assertEquals("男：第一句", synced[0].line)
+    }
+
+    @Test
+    fun parseLyrics_carriesVoiceForwardThroughUnlabeledLines() {
+        val lrc = "[00:01.00]【甲】第一句\n[00:02.00]第二句\n[00:03.00]第三句\n[00:04.00]【乙】第四句\n[00:05.00]第五句"
+        val synced = requireNotNull(LyricsUtils.parseLyrics(lrc).synced)
+
+        assertEquals(3, synced[0].voice)
+        assertEquals(3, synced[1].voice)
+        assertEquals(3, synced[2].voice)
+        assertEquals(4, synced[3].voice)
+        assertEquals(4, synced[4].voice)
+        assertEquals("第二句", synced[1].line)
+    }
+
+    @Test
+    fun parseLyrics_stripsKnownMidLineVoiceLabelsFromText() {
+        val lrc = "[00:01.00]【甲】第一部分中间【合】结束\n[00:02.00]【合】内容\n[00:03.00]普通（live版）"
+        val synced = requireNotNull(LyricsUtils.parseLyrics(lrc).synced)
+
+        assertEquals("甲：第一部分中间结束", synced[0].line)
+        assertEquals("合：内容", synced[1].line)
+        assertEquals("普通（live版）", synced[2].line)
     }
 
     @Test
@@ -84,8 +107,8 @@ class LyricsUtilsTest {
         val synced = requireNotNull(LyricsUtils.parseLyrics(krc).synced)
 
         assertEquals(71_060, synced[0].time)
-        assertEquals("啊", synced[0].line)
-        assertEquals(1, synced[0].voice)           // voice label → v1, label stays out of the text
+        assertEquals("男：啊", synced[0].line)
+        assertEquals(1, synced[0].voice)           // voice label → v1, label kept as text prefix
         assertEquals(71_230, synced[1].time)
         assertEquals("哦", synced[1].line)
         assertNull(synced[1].voice)
@@ -105,7 +128,7 @@ class LyricsUtilsTest {
 
     @Test
     fun parseLyrics_handlesBomAtStartOfSyncedLine() {
-        val lrc = "\uFEFF[00:03.80]Time is standing still\n[00:09.86]Tracing my body"
+        val lrc = "\uFEFF[00:03.80]Test line one\n[00:09.86]Test line two"
 
         val lyrics = LyricsUtils.parseLyrics(lrc)
         val synced = lyrics.synced
@@ -114,66 +137,66 @@ class LyricsUtilsTest {
         val syncedLines = requireNotNull(synced)
         assertEquals(2, syncedLines.size)
         assertEquals(3_800, syncedLines[0].time)
-        assertEquals("Time is standing still", syncedLines[0].line)
+        assertEquals("Test line one", syncedLines[0].line)
         assertEquals(9_860, syncedLines[1].time)
-        assertEquals("Tracing my body", syncedLines[1].line)
+        assertEquals("Test line two", syncedLines[1].line)
     }
 
     @Test
     fun parseLyrics_handlesWhitespacesBeforeTimestamp() {
-        val lrc = "\uFEFF   [00:03.80]Time is standing still\r\n\t[00:09.86]Tracing my body"
+        val lrc = "\uFEFF   [00:03.80]Test line one\r\n\t[00:09.86]Test line two"
 
         val lyrics = LyricsUtils.parseLyrics(lrc)
         val synced = requireNotNull(lyrics.synced)
 
         assertEquals(2, synced.size)
         assertEquals(3_800, synced[0].time)
-        assertEquals("Time is standing still", synced[0].line)
+        assertEquals("Test line one", synced[0].line)
         assertEquals(9_860, synced[1].time)
-        assertEquals("Tracing my body", synced[1].line)
+        assertEquals("Test line two", synced[1].line)
     }
 
     @Test
     fun parseLyrics_parsesFullSampleWithBom() {
-        val lrc = "\uFEFF[00:03.80]Time is standing still and I don't wanna leave your lips\n" +
-            "[00:09.86]Tracing my body with your fingertips\n" +
-            "[00:16.53]I know what you're feeling and I know you wanna say it (yeah, say it)\n" +
-            "[00:22.76]I do too, but we gotta be patient (gotta be patient)\n" +
-            "[00:28.32]'Cause someone like me (and someone like you)\n" +
-            "[00:31.65]Really shouldn't work, yeah, the history is proof\n" +
-            "[00:34.75]Damned if I don't (damned if I do)\n" +
-            "[00:38.08]You know, by now, we've seen it all\n" +
-            "[00:41.67]Said, oh, we should fall in love with our eyes closed\n" +
-            "[00:46.76]Better if we keep it where we don't know\n" +
-            "[00:49.97]The beds we've been in, the names and the faces of who we were with\n" +
-            "[00:54.36]And, oh, ain't nobody perfect, but it's all good\n" +
-            "[00:59.52]The past can't hurt us if we don't look\n" +
-            "[01:02.71]Let's let it go, better if we fall in love with our eyes closed\n" +
-            "[01:09.05](Oh, oh, oh)\n" +
-            "[01:13.94]I got tunnel vision every second that you're with me\n" +
-            "[01:19.88]No, I don't care what anybody says, just kiss me (oh)\n" +
-            "[01:26.05]'Cause you look like trouble, but it could be good\n" +
-            "[01:29.09]I've been the same, kind of misunderstood\n" +
-            "[01:32.32]Whatever you've done, trust, it ain't nothing new\n" +
-            "[01:35.48]You know by now, we've seen it all\n" +
-            "[01:39.23]Said, oh, we should fall in love with our eyes closed\n" +
-            "[01:44.48]Better if we keep it where we don't know\n" +
-            "[01:47.55]The beds we've been in, the names and the faces of who we were with\n" +
-            "[01:52.13]And, oh, ain't nobody perfect, but it's all good\n" +
-            "[01:57.17]The past can't hurt us if we don't look\n" +
-            "[02:00.27]Let's let it go, better if we fall in love with our eyes closed\n" +
-            "[02:06.25](Oh, oh, keep your eyes closed)\n" +
-            "[02:10.76]'Cause someone like me and someone like you\n" +
-            "[02:13.86]Really shouldn't work, yeah, the history is proof\n" +
-            "[02:17.25]Damned if I don't, damned if I do\n" +
-            "[02:20.26]You know by now, we've seen it all\n" +
-            "[02:24.13]Said, oh, we should fall in love with our eyes closed\n" +
-            "[02:29.09]Better if we keep it where we don't know\n" +
-            "[02:32.13]The beds we've been in, the names and the faces of who we were with\n" +
-            "[02:36.95]And, oh, ain't nobody perfect, but it's all good\n" +
-            "[02:41.75]The past can't hurt us if we don't look\n" +
-            "[02:45.08]Let's let it go, better if we fall in love with our eyes closed (oh)\n" +
-            "[02:54.13]With our eyes closed\n" +
+        val lrc = "\uFEFF[00:03.80]Test line 1\n" +
+            "[00:09.86]Test line 2\n" +
+            "[00:16.53]Test line 3\n" +
+            "[00:22.76]Test line 4\n" +
+            "[00:28.32]Test line 5\n" +
+            "[00:31.65]Test line 6\n" +
+            "[00:34.75]Test line 7\n" +
+            "[00:38.08]Test line 8\n" +
+            "[00:41.67]Test line 9\n" +
+            "[00:46.76]Test line 10\n" +
+            "[00:49.97]Test line 11\n" +
+            "[00:54.36]Test line 12\n" +
+            "[00:59.52]Test line 13\n" +
+            "[01:02.71]Test line 14\n" +
+            "[01:09.05]Test line 15\n" +
+            "[01:13.94]Test line 16\n" +
+            "[01:19.88]Test line 17\n" +
+            "[01:26.05]Test line 18\n" +
+            "[01:29.09]Test line 19\n" +
+            "[01:32.32]Test line 20\n" +
+            "[01:35.48]Test line 21\n" +
+            "[01:39.23]Test line 22\n" +
+            "[01:44.48]Test line 23\n" +
+            "[01:47.55]Test line 24\n" +
+            "[01:52.13]Test line 25\n" +
+            "[01:57.17]Test line 26\n" +
+            "[02:00.27]Test line 27\n" +
+            "[02:06.25]Test line 28\n" +
+            "[02:10.76]Test line 29\n" +
+            "[02:13.86]Test line 30\n" +
+            "[02:17.25]Test line 31\n" +
+            "[02:20.26]Test line 32\n" +
+            "[02:24.13]Test line 33\n" +
+            "[02:29.09]Test line 34\n" +
+            "[02:32.13]Test line 35\n" +
+            "[02:36.95]Test line 36\n" +
+            "[02:41.75]Test line 37\n" +
+            "[02:45.08]Test line 38\n" +
+            "[02:54.13]Test line 39\n" +
             "[02:58.92]"
 
         val lyrics = LyricsUtils.parseLyrics(lrc)
@@ -181,68 +204,68 @@ class LyricsUtilsTest {
         val synced = requireNotNull(lyrics.synced)
         assertEquals(40, synced.size)
         assertEquals(3_800, synced.first().time)
-        assertEquals("Time is standing still and I don't wanna leave your lips", synced.first().line)
+        assertEquals("Test line 1", synced.first().line)
         assertEquals(178_920, synced.last().time)
         assertEquals("", synced.last().line)
     }
 
     @Test
     fun parseLyrics_ignoresFormatCharactersInsideTimestamp() {
-        val lrc = "\u202a[00:03.80\u202c]Time is standing still\n[00:09.86]Tracing my body"
+        val lrc = "\u202a[00:03.80\u202c]Test line one\n[00:09.86]Test line two"
 
         val lyrics = LyricsUtils.parseLyrics(lrc)
         val synced = requireNotNull(lyrics.synced)
 
         assertEquals(2, synced.size)
         assertEquals(3_800, synced[0].time)
-        assertEquals("Time is standing still", synced[0].line)
+        assertEquals("Test line one", synced[0].line)
         assertEquals(9_860, synced[1].time)
-        assertEquals("Tracing my body", synced[1].line)
+        assertEquals("Test line two", synced[1].line)
     }
 
     @Test
     fun parseLyrics_parsesSampleWrappedInQuotes() {
         val lrc = buildString {
             append('"')
-            appendLine("[00:03.80]Time is standing still and I don't wanna leave your lips")
-            appendLine("[00:09.86]Tracing my body with your fingertips")
-            appendLine("[00:16.53]I know what you're feeling and I know you wanna say it (yeah, say it)")
-            appendLine("[00:22.76]I do too, but we gotta be patient (gotta be patient)")
-            appendLine("[00:28.32]'Cause someone like me (and someone like you)")
-            appendLine("[00:31.65]Really shouldn't work, yeah, the history is proof")
-            appendLine("[00:34.75]Damned if I don't (damned if I do)")
-            appendLine("[00:38.08]You know, by now, we've seen it all")
-            appendLine("[00:41.67]Said, oh, we should fall in love with our eyes closed")
-            appendLine("[00:46.76]Better if we keep it where we don't know")
-            appendLine("[00:49.97]The beds we've been in, the names and the faces of who we were with")
-            appendLine("[00:54.36]And, oh, ain't nobody perfect, but it's all good")
-            appendLine("[00:59.52]The past can't hurt us if we don't look")
-            appendLine("[01:02.71]Let's let it go, better if we fall in love with our eyes closed")
-            appendLine("[01:09.05](Oh, oh, oh)")
-            appendLine("[01:13.94]I got tunnel vision every second that you're with me")
-            appendLine("[01:19.88]No, I don't care what anybody says, just kiss me (oh)")
-            appendLine("[01:26.05]'Cause you look like trouble, but it could be good")
-            appendLine("[01:29.09]I've been the same, kind of misunderstood")
-            appendLine("[01:32.32]Whatever you've done, trust, it ain't nothing new")
-            appendLine("[01:35.48]You know by now, we've seen it all")
-            appendLine("[01:39.23]Said, oh, we should fall in love with our eyes closed")
-            appendLine("[01:44.48]Better if we keep it where we don't know")
-            appendLine("[01:47.55]The beds we've been in, the names and the faces of who we were with")
-            appendLine("[01:52.13]And, oh, ain't nobody perfect, but it's all good")
-            appendLine("[01:57.17]The past can't hurt us if we don't look")
-            appendLine("[02:00.27]Let's let it go, better if we fall in love with our eyes closed")
-            appendLine("[02:06.25](Oh, oh, keep your eyes closed)")
-            appendLine("[02:10.76]'Cause someone like me and someone like you")
-            appendLine("[02:13.86]Really shouldn't work, yeah, the history is proof")
-            appendLine("[02:17.25]Damned if I don't, damned if I do")
-            appendLine("[02:20.26]You know by now, we've seen it all")
-            appendLine("[02:24.13]Said, oh, we should fall in love with our eyes closed")
-            appendLine("[02:29.09]Better if we keep it where we don't know")
-            appendLine("[02:32.13]The beds we've been in, the names and the faces of who we were with")
-            appendLine("[02:36.95]And, oh, ain't nobody perfect, but it's all good")
-            appendLine("[02:41.75]The past can't hurt us if we don't look")
-            appendLine("[02:45.08]Let's let it go, better if we fall in love with our eyes closed (oh)")
-            appendLine("[02:54.13]With our eyes closed")
+            appendLine("[00:03.80]Test line 1")
+            appendLine("[00:09.86]Test line 2")
+            appendLine("[00:16.53]Test line 3")
+            appendLine("[00:22.76]Test line 4")
+            appendLine("[00:28.32]Test line 5")
+            appendLine("[00:31.65]Test line 6")
+            appendLine("[00:34.75]Test line 7")
+            appendLine("[00:38.08]Test line 8")
+            appendLine("[00:41.67]Test line 9")
+            appendLine("[00:46.76]Test line 10")
+            appendLine("[00:49.97]Test line 11")
+            appendLine("[00:54.36]Test line 12")
+            appendLine("[00:59.52]Test line 13")
+            appendLine("[01:02.71]Test line 14")
+            appendLine("[01:09.05]Test line 15")
+            appendLine("[01:13.94]Test line 16")
+            appendLine("[01:19.88]Test line 17")
+            appendLine("[01:26.05]Test line 18")
+            appendLine("[01:29.09]Test line 19")
+            appendLine("[01:32.32]Test line 20")
+            appendLine("[01:35.48]Test line 21")
+            appendLine("[01:39.23]Test line 22")
+            appendLine("[01:44.48]Test line 23")
+            appendLine("[01:47.55]Test line 24")
+            appendLine("[01:52.13]Test line 25")
+            appendLine("[01:57.17]Test line 26")
+            appendLine("[02:00.27]Test line 27")
+            appendLine("[02:06.25]Test line 28")
+            appendLine("[02:10.76]Test line 29")
+            appendLine("[02:13.86]Test line 30")
+            appendLine("[02:17.25]Test line 31")
+            appendLine("[02:20.26]Test line 32")
+            appendLine("[02:24.13]Test line 33")
+            appendLine("[02:29.09]Test line 34")
+            appendLine("[02:32.13]Test line 35")
+            appendLine("[02:36.95]Test line 36")
+            appendLine("[02:41.75]Test line 37")
+            appendLine("[02:45.08]Test line 38")
+            appendLine("[02:54.13]Test line 39")
             append("[02:58.92]")
             append('"')
         }
@@ -252,7 +275,7 @@ class LyricsUtilsTest {
 
         assertEquals(40, synced.size)
         assertEquals(3_800, synced.first().time)
-        assertEquals("Time is standing still and I don't wanna leave your lips", synced.first().line)
+        assertEquals("Test line 1", synced.first().line)
         assertEquals(178_920, synced.last().time)
         assertEquals("", synced.last().line)
     }
@@ -265,13 +288,13 @@ class LyricsUtilsTest {
               <head>
                 <metadata>
                   <ttm:agent type="person" xml:id="v1">
-                    <ttm:name type="full">Chase Atlantic</ttm:name>
+                    <ttm:name type="full">Test Agent</ttm:name>
                   </ttm:agent>
                 </metadata>
               </head>
               <body dur="0:15.000">
                 <div begin="7.531" end="12.005" itunes:songPart="Verse">
-                  <p begin="7.531" end="12.005" itunes:key="L1" ttm:agent="v1"><span begin="7.531" end="7.782">Yeah,</span> <span begin="9.208" end="9.443">I</span> <span begin="9.443" end="9.675">bet</span></p>
+                  <p begin="7.531" end="12.005" itunes:key="L1" ttm:agent="v1"><span begin="7.531" end="7.782">Test,</span> <span begin="9.208" end="9.443">one</span> <span begin="9.443" end="9.675">two</span></p>
                 </div>
               </body>
             </tt>
@@ -283,8 +306,8 @@ class LyricsUtilsTest {
 
         assertEquals(1, synced.size)
         assertEquals(7_530, first.time)
-        assertEquals("Yeah, I bet", first.line)
-        assertEquals(listOf("Yeah,", "I", "bet"), requireNotNull(first.words).map { it.word })
+        assertEquals("Test, one two", first.line)
+        assertEquals(listOf("Test,", "one", "two"), requireNotNull(first.words).map { it.word })
     }
 
     @Test
@@ -309,9 +332,9 @@ class LyricsUtilsTest {
     @Test
     fun parseLyrics_stripsAdditionalLrcTimestampsFromLines() {
         val lrc = """
-            [00:12.57] Sinking under
-            [00:26.42][01:12.34] Three in the morning, I ain't slept all weekend
-            [00:41.71][00:52.96][01:27.42] My heart keeps breaking
+            [00:12.57] Test line one
+            [00:26.42][01:12.34] Test line two
+            [00:41.71][00:52.96][01:27.42] Test line three
         """.trimIndent()
 
         val lyrics = LyricsUtils.parseLyrics(lrc)
@@ -319,9 +342,9 @@ class LyricsUtilsTest {
 
         assertEquals(
             listOf(
-                "Sinking under",
-                "Three in the morning, I ain't slept all weekend",
-                "My heart keeps breaking"
+                "Test line one",
+                "Test line two",
+                "Test line three"
             ),
             synced.map { it.line }
         )
@@ -329,17 +352,17 @@ class LyricsUtilsTest {
 
     @Test
     fun parseLyrics_wordByWord_ignoresTrailingUntaggedTranslationInWordTiming() {
-        val lrc = "[00:10.00]<00:10.00>To <00:10.30>fall <00:10.60>in <00:10.90>love\\n怦然心动"
+        val lrc = "[00:10.00]<00:10.00>Test <00:10.30>line <00:10.60>one <00:10.90>two\\n哈机密密集哈"
 
         val lyrics = LyricsUtils.parseLyrics(lrc)
         val synced = requireNotNull(lyrics.synced)
         val first = synced.first()
         val words = requireNotNull(first.words)
 
-        assertEquals("To fall in love\\n怦然心动", first.line)
-        assertEquals(listOf("To", "fall", "in", "love"), words.map { it.word })
+        assertEquals("Test line one two\\n哈机密密集哈", first.line)
+        assertEquals(listOf("Test", "line", "one", "two"), words.map { it.word })
         assertEquals(listOf(true, true, true, true), words.map { it.startsNewWord })
-        assertTrue(words.none { it.word.contains("怦然心动") })
+        assertTrue(words.none { it.word.contains("哈机密密集哈") })
     }
 
     @Test
@@ -409,25 +432,25 @@ class LyricsUtilsTest {
 
     @Test
     fun parseLyrics_colonSubSecondSeparator_parsedAndPairedWithTranslation() {
-        val lrc = "[00:00.000]作词: イマニシ\n" +
-            "[00:01.000]作曲: イマニシ\n" +
-            "[00:22:43]愛情なんて忘れて\n" +
-            "[00:25:39]一人ワルツを踊る\n" +
-            "[00:22.43]忘掉爱情什么的\n" +
-            "[00:25.39]一个人舞动华尔兹"
+        val lrc = "[00:00.000]作词: テスト\n" +
+            "[00:01.000]作曲: テスト\n" +
+            "[00:22:43]あいうえおかき\n" +
+            "[00:25:39]くけこさしすせ\n" +
+            "[00:22.43]哈机密密集哈\n" +
+            "[00:25.39]密集哈机密集哈"
 
         val lyrics = LyricsUtils.parseLyrics(lrc)
         val synced = requireNotNull(lyrics.synced)
 
         assertEquals(4, synced.size)
 
-        val line22 = synced.first { it.line == "愛情なんて忘れて" }
+        val line22 = synced.first { it.line == "あいうえおかき" }
         assertEquals(22_430, line22.time)
-        assertEquals("忘掉爱情什么的", line22.translation)
+        assertEquals("哈机密密集哈", line22.translation)
 
-        val line25 = synced.first { it.line == "一人ワルツを踊る" }
+        val line25 = synced.first { it.line == "くけこさしすせ" }
         assertEquals(25_390, line25.time)
-        assertEquals("一个人舞动华尔兹", line25.translation)
+        assertEquals("密集哈机密集哈", line25.translation)
     }
 
     @Test
@@ -529,5 +552,89 @@ class LyricsUtilsTest {
         assertEquals("I want", synced[0].line)
         assertEquals(listOf("I", "want"), synced[0].words!!.map { it.word })
         assertTrue(synced[0].words!!.all { it.startsNewWord })
+    }
+    @Test
+    fun parseLyrics_treatsStandaloneVoiceCueLinesAsSectionSwitches() {
+        val lrc = listOf(
+            "[00:10.63]男：",
+            "[00:12.08]哈机密密集哈",
+            "[00:16.48]密集哈机密集哈",
+            "[00:30.87]女：",
+            "[00:32.10]哈机密密集哈机密",
+            "[01:36.51]合：",
+            "[01:40.00]哈机密 密集哈机密",
+        ).joinToString("\n")
+        val synced = LyricsUtils.parseLyrics(lrc).synced!!
+
+        assertEquals(4, synced.size)
+        assertEquals(1, synced[0].voice)
+        assertEquals("哈机密密集哈", synced[0].line)
+        assertEquals(1, synced[1].voice)
+        assertEquals(2, synced[2].voice)
+        assertEquals("哈机密密集哈机密", synced[2].line)
+        assertEquals(1_000, synced[3].voice)
+        assertEquals("哈机密 密集哈机密", synced[3].line)
+    }
+
+    @Test
+    fun parseLyrics_dropsWordTimedStandaloneVoiceCueLines() {
+        val lrc = "[00:10.63]<00:10.63>男<00:10.87>：\n[00:12.08]<00:12.08>哈<00:12.60>机密密集哈"
+        val synced = LyricsUtils.parseLyrics(lrc).synced!!
+
+        assertEquals(1, synced.size)
+        assertEquals(1, synced[0].voice)
+        assertEquals("哈机密密集哈", synced[0].line)
+        assertEquals(2, synced[0].words!!.size)
+    }
+
+    @Test
+    fun parseLyrics_mapsInlineBareKeywordPrefixToVoice() {
+        val lrc = "[00:10.00]男：哈机密密集哈\n[00:20.00]女：密集哈机密集哈"
+        val synced = LyricsUtils.parseLyrics(lrc).synced!!
+
+        assertEquals(2, synced.size)
+        assertEquals(1, synced[0].voice)
+        assertEquals("男：哈机密密集哈", synced[0].line)
+        assertEquals(2, synced[1].voice)
+        assertEquals("女：密集哈机密集哈", synced[1].line)
+    }
+
+    @Test
+    fun parseLyrics_assignsStableVoicesToNovelStandaloneSingerCues() {
+        val lrc = listOf(
+            "[00:01.00]张三：",
+            "[00:02.00]哈机密密集哈",
+            "[00:03.00]李四：",
+            "[00:04.00]密集哈机密集哈",
+        ).joinToString("\n")
+        val synced = LyricsUtils.parseLyrics(lrc).synced!!
+
+        assertEquals(2, synced.size)
+        assertEquals("哈机密密集哈", synced[0].line)
+        assertEquals("密集哈机密集哈", synced[1].line)
+        assertNotNull(synced[0].voice)
+        assertNotNull(synced[1].voice)
+        assertTrue(synced[0].voice != synced[1].voice)
+        assertEquals(synced[0].voice, synced[0].voice)
+    }
+
+    @Test
+    fun parseLyrics_keepsPlainSingleWordLinesWithoutColon() {
+        val synced = LyricsUtils.parseLyrics("[00:01.00]嗯\n[00:02.00]哦").synced!!
+
+        assertEquals(2, synced.size)
+        assertEquals("嗯", synced[0].line)
+        assertEquals("哦", synced[1].line)
+        assertNull(synced[0].voice)
+        assertNull(synced[1].voice)
+    }
+
+    @Test
+    fun parseLyrics_kugouPathDropsStandaloneVoiceCueLines() {
+        val synced = LyricsUtils.parseLyrics("[1000,5000]男：\n[7000,3000]哈机密密集哈").synced!!
+
+        assertEquals(1, synced.size)
+        assertEquals(1, synced[0].voice)
+        assertEquals("哈机密密集哈", synced[0].line)
     }
 }
