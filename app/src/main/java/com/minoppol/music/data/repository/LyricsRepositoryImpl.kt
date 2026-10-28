@@ -462,7 +462,20 @@ class LyricsRepositoryImpl @Inject constructor(
         }
         val translationPool = translationMap?.let { LinkedHashMap(it) }
         val romanizationPool = romanizationMap?.let { LinkedHashMap(it) }
-        val merged = synced.map { line ->
+        val exactMatched = synced.map { line ->
+            if (line.line.isBlank()) {
+                line
+            } else {
+                val tr = translationPool?.remove(line.time)
+                val rm = romanizationPool?.remove(line.time)
+                if (tr == null && rm == null) {
+                    line
+                } else {
+                    line.copy(translation = tr ?: line.translation, romanization = rm ?: line.romanization)
+                }
+            }
+        }
+        val merged = exactMatched.map { line ->
             if (line.line.isBlank()) {
                 line.copy(translation = null, romanization = null)
             } else {
