@@ -39,7 +39,7 @@ class ArtistImageRepositoryTest {
     fun `cancelled prefetch does not mark artist as failed for the session`() = runTest {
         val deezerApiService = mockk<DeezerApiService>()
         val musicDao = mockk<MusicDao>()
-        val repository = ArtistImageRepository(deezerApiService, musicDao, userPreferencesRepository())
+        val repository = artistImageRepository(deezerApiService, musicDao, userPreferencesRepository())
         val firstAttemptStarted = CompletableDeferred<Unit>()
         val searchAttempts = AtomicInteger(0)
         val rawUrl = "https://cdn-images.dzcdn.net/images/artist/250x250-000000-80-0-0.jpg"
@@ -86,7 +86,7 @@ class ArtistImageRepositoryTest {
     fun `disabled artist image lookup does not call deezer`() = runTest {
         val deezerApiService = mockk<DeezerApiService>(relaxed = true)
         val musicDao = mockk<MusicDao>(relaxed = true)
-        val repository = ArtistImageRepository(
+        val repository = artistImageRepository(
             deezerApiService,
             musicDao,
             userPreferencesRepository(externalArtistImagesEnabled = false)
@@ -101,6 +101,18 @@ class ArtistImageRepositoryTest {
     private fun userPreferencesRepository(externalArtistImagesEnabled: Boolean = true): UserPreferencesRepository {
         return mockk {
             every { this@mockk.externalArtistImagesEnabledFlow } returns flowOf(externalArtistImagesEnabled)
+            every { this@mockk.useFolderAlbumArtFlow } returns flowOf(false)
         }
     }
+
+    private fun artistImageRepository(
+        deezerApiService: DeezerApiService,
+        musicDao: MusicDao,
+        preferences: UserPreferencesRepository
+    ): ArtistImageRepository = ArtistImageRepository(
+        deezerApiService,
+        musicDao,
+        preferences,
+        mockk(relaxed = true)
+    )
 }

@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.common.truth.Truth.assertThat
 import com.minoppol.music.data.database.LyricsEntity
 import com.minoppol.music.data.database.LyricsDao
+import com.minoppol.music.data.lxmusic.LxLyricResult
 import com.minoppol.music.data.model.LyricsSourcePreference
 import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.network.lyrics.LrcLibApiService
@@ -25,6 +26,41 @@ class LyricsRepositoryImplTest {
 
     @TempDir
     lateinit var tempDir: Path
+
+    @Test
+    fun buildLxLyrics_doesNotDuplicateSubLinesAcrossAdjacentLines() {
+        val repository = LyricsRepositoryImpl(
+            context = mockk<Context>(relaxed = true),
+            lrcLibApiService = mockk<LrcLibApiService>(relaxed = true),
+            lyricsDao = mockk<LyricsDao>(relaxed = true),
+            okHttpClient = mockk<OkHttpClient>(relaxed = true),
+            userPreferencesRepository = userPreferencesRepository(),
+            lxMusicRepository = mockk(relaxed = true)
+        )
+        val lyric = "[00:10.00]最初の行\n[00:15.48]\n[00:15.71]次の行\n[00:20.00]終わり"
+        val tlyric = "[00:10.00]翻译一\n[00:15.48]翻译二\n[00:20.00]翻译三"
+        val rlyric = "[00:15.48]tsu gi no"
+
+        val lyrics = repository.buildLxLyrics(
+            LxLyricResult(lyric = lyric, tlyric = tlyric, rlyric = rlyric),
+            source = "wy"
+        )
+
+        val synced = lyrics!!.synced!!
+        assertThat(synced).hasSize(4)
+        val blank = synced[1]
+        assertThat(blank.line).isEmpty()
+        assertThat(blank.translation).isNull()
+        assertThat(blank.romanization).isNull()
+        val real = synced[2]
+        assertThat(real.line).isEqualTo("次の行")
+        assertThat(real.translation).isEqualTo("翻译二")
+        assertThat(real.romanization).isEqualTo("tsu gi no")
+        assertThat(synced.count { it.translation == "翻译二" }).isEqualTo(1)
+        assertThat(synced.count { it.romanization == "tsu gi no" }).isEqualTo(1)
+        assertThat(synced[0].translation).isEqualTo("翻译一")
+        assertThat(synced[3].translation).isEqualTo("翻译三")
+    }
 
     @Test
     fun getLyrics_returnsSongLyricsBeforeNeedingStorageRead() = runTest {

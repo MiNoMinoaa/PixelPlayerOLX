@@ -24,12 +24,14 @@ import com.minoppol.music.utils.AlbumArtCacheManager
 import com.minoppol.music.utils.AlbumArtUtils
 import com.minoppol.music.utils.AppLocaleManager
 import com.minoppol.music.utils.CrashHandler
+import com.minoppol.music.utils.FolderArtworkSettingsCoordinator
 import com.minoppol.music.utils.MediaMetadataRetrieverPool
 import dagger.hilt.android.HiltAndroidApp
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -74,6 +76,9 @@ class PixelPlayerApplication : Application(), ImageLoaderFactory, Configuration.
     @Inject
     lateinit var m3uSyncCoordinator: dagger.Lazy<M3uSyncCoordinator>
 
+    @Inject
+    lateinit var folderArtworkSettingsCoordinator: dagger.Lazy<FolderArtworkSettingsCoordinator>
+
     private val startupScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     companion object {
@@ -98,6 +103,9 @@ class PixelPlayerApplication : Application(), ImageLoaderFactory, Configuration.
             libraryStateHolder.get().restoreAfterTrimIfNeeded()
             m3uSyncCoordinator.get().onAppForeground()
             advancedPerformanceDiagnosticsController.get().onAppForeground()
+            startupScope.launch {
+                folderArtworkSettingsCoordinator.get().reconcile()
+            }
         }
 
         override fun onStop(owner: LifecycleOwner) {
@@ -158,6 +166,12 @@ class PixelPlayerApplication : Application(), ImageLoaderFactory, Configuration.
             }.getOrNull()
             if (savedLimit != null) {
                 AlbumArtCacheManager.configuredCacheLimitMb = savedLimit.toLong()
+            }
+        }
+
+        startupScope.launch {
+            userPreferencesRepository.get().useFolderAlbumArtFlow.collectLatest {
+                folderArtworkSettingsCoordinator.get().reconcile()
             }
         }
     }

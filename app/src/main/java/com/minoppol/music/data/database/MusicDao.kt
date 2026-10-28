@@ -1579,6 +1579,26 @@ interface MusicDao {
     @Query("SELECT custom_image_uri FROM artists WHERE id = :artistId")
     suspend fun getArtistCustomImage(artistId: Long): String?
 
+    /**
+     * Distinct local (source_type = 0) folders holding the artist's tracks, resolved via the
+     * three artist links (track artist, album artist, cross-ref) with an index-only inner scan
+     * so large libraries stay cheap. Backs the folder artist-portrait lookup.
+     */
+    @Query("""
+        SELECT DISTINCT songs.parent_directory_path FROM (
+            SELECT id AS song_id FROM songs WHERE artist_id = :artistId
+            UNION
+            SELECT id AS song_id FROM songs WHERE album_artist_id = :artistId
+            UNION
+            SELECT song_id FROM song_artist_cross_ref WHERE artist_id = :artistId
+        ) AS artist_songs
+        CROSS JOIN songs ON songs.id = artist_songs.song_id
+        WHERE songs.source_type = 0 AND songs.parent_directory_path != ''
+        ORDER BY songs.parent_directory_path
+        LIMIT :limit
+    """)
+    suspend fun getLocalArtistDirectories(artistId: Long, limit: Int): List<String>
+
     @Query("""
         SELECT * FROM songs
         WHERE (:applyDirectoryFilter = 0 OR id < 0 OR parent_directory_path IN (:allowedParentDirs))
