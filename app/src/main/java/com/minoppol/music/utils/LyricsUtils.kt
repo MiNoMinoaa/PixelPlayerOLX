@@ -621,6 +621,18 @@ private fun String.capitalizeFirstLetter(): String {
     return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
 }
 
+internal fun romanizationFor(lineText: String, entireLyricsHasKana: Boolean): String? {
+    return when {
+        MultiLangRomanizer.isJapanese(lineText, entireLyricsHasKana) -> MultiLangRomanizer.romanizeJapanese(lineText)
+        MultiLangRomanizer.isChinese(lineText) -> MultiLangRomanizer.romanizeChinese(lineText)
+        MultiLangRomanizer.isKorean(lineText) -> MultiLangRomanizer.romanizeKorean(lineText)
+        MultiLangRomanizer.isHindi(lineText) -> MultiLangRomanizer.romanizeHindi(lineText)
+        MultiLangRomanizer.isPunjabi(lineText) -> MultiLangRomanizer.romanizePunjabi(lineText)
+        MultiLangRomanizer.isCyrillic(lineText) -> MultiLangRomanizer.romanizeCyrillic(lineText)
+        else -> null
+    }?.capitalizeFirstLetter()?.trim()
+}
+
 object LyricsUtils {
 
     private val LRC_LINE_REGEX = Pattern.compile("^\\[(\\d{1,3}):(\\d{1,2})[.:](\\d{1,3})](.*)$")
@@ -1064,18 +1076,7 @@ object LyricsUtils {
                 .let(::dropStandaloneVoiceLabelLines)
                 .let { stripKnownMidLineVoiceLabels(it, collectKnownVoiceLabels(seenBracketLabels.keys)) }
                 .map { line ->
-
-                val romanized = when {
-                    MultiLangRomanizer.isJapanese(line.line, entireLyricsHasKana) -> MultiLangRomanizer.romanizeJapanese(line.line)
-                    MultiLangRomanizer.isChinese(line.line) -> MultiLangRomanizer.romanizeChinese(line.line)
-                    MultiLangRomanizer.isKorean(line.line) -> MultiLangRomanizer.romanizeKorean(line.line)
-                    MultiLangRomanizer.isHindi(line.line) -> MultiLangRomanizer.romanizeHindi(line.line)
-                    MultiLangRomanizer.isPunjabi(line.line) -> MultiLangRomanizer.romanizePunjabi(line.line)
-                    MultiLangRomanizer.isCyrillic(line.line) -> MultiLangRomanizer.romanizeCyrillic(line.line)
-                    else -> null
-                }?.capitalizeFirstLetter()?.trim()
-
-                line.copy(romanization = romanized)
+                    line.copy(romanization = romanizationFor(line.line, entireLyricsHasKana))
             }
             val plainVersion = pairedLines.map { line ->
                 buildString {
@@ -1087,15 +1088,7 @@ object LyricsUtils {
             Lyrics(synced = pairedLines, plain = plainVersion)
         } else {
             val processedPlain = plainLines.map { line ->
-                val romanized = when {
-                    MultiLangRomanizer.isJapanese(line, entireLyricsHasKana) -> MultiLangRomanizer.romanizeJapanese(line)
-                    MultiLangRomanizer.isChinese(line) -> MultiLangRomanizer.romanizeChinese(line)
-                    MultiLangRomanizer.isKorean(line) -> MultiLangRomanizer.romanizeKorean(line)
-                    MultiLangRomanizer.isHindi(line) -> MultiLangRomanizer.romanizeHindi(line)
-                    MultiLangRomanizer.isPunjabi(line) -> MultiLangRomanizer.romanizePunjabi(line)
-                    MultiLangRomanizer.isCyrillic(line) -> MultiLangRomanizer.romanizeCyrillic(line)
-                    else -> null
-                }?.capitalizeFirstLetter()?.trim()
+                val romanized = romanizationFor(line, entireLyricsHasKana)
 
                 if (!romanized.isNullOrEmpty()) "$line\n$romanized" else line
             }
@@ -1265,11 +1258,13 @@ object LyricsUtils {
 
         if (syncedLines.isEmpty()) return Lyrics(plain = emptyList(), synced = emptyList())
 
+        val entireTextHasKana = text.any { it in '\u3040'..'\u309F' || it in '\u30A0'..'\u30FF' }
         val sorted = syncedLines.sortedBy { it.time }
         val paired = pairTranslationLines(sorted)
             .let(::applyVoiceCarryForwardFromStandaloneCues)
             .let(::dropStandaloneVoiceLabelLines)
             .let { stripKnownMidLineVoiceLabels(it, collectKnownVoiceLabels(seenBracketLabels.keys)) }
+            .map { line -> line.copy(romanization = romanizationFor(line.line, entireTextHasKana)) }
         val plainVersion = paired.map { it.line }
         return Lyrics(synced = paired, plain = plainVersion, areFromRemote = false)
     }

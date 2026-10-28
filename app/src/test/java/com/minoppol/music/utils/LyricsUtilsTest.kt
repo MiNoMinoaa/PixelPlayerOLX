@@ -637,4 +637,19 @@ class LyricsUtilsTest {
         assertEquals(1, synced[0].voice)
         assertEquals("哈机密密集哈", synced[0].line)
     }
+
+    @Test
+    fun parseLyrics_kugouTuplePathGeneratesRomanization() {
+        // Regression: the kugou tuple path ([startMs,dur](absMs,dur,0)word) used to
+        // skip romanization entirely, so word-timed songs parsed via it lost pinyin.
+        val krc = "[7000,3000](7000,300,0)哈机(7300,300,0)密集哈"
+        val synced = LyricsUtils.parseLyrics(krc).synced!!
+
+        assertEquals("哈机密集哈", synced[0].line)
+        assertEquals(2, synced[0].words?.size)
+        assertTrue(
+            "expected locally generated pinyin on the kugou tuple path, got: ${synced[0].romanization}",
+            synced[0].romanization?.startsWith("Ha") == true,
+        )
+    }
 }

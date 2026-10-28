@@ -141,6 +141,9 @@
     <string name="setcat_show_recent_tab_subtitle">在底部导航栏中显示最近播放页</string>
     <string name="setcat_navbar_corner_title">导航栏圆角大小</string>
     <string name="setcat_navbar_corner_subtitle">调节导航栏圆角半径</string>
+    <string name="setcat_splash_animation_section">开屏动画</string>
+    <string name="setcat_splash_animation_title">启用开屏动画</string>
+    <string name="setcat_splash_animation_subtitle">启动应用时播放开屏动画</string>
     <string name="setcat_lyrics_screen">歌词页面</string>
     <string name="setcat_immersive_lyrics_title">沉浸歌词模式</string>
     <string name="setcat_immersive_lyrics_subtitle">自动隐藏控件，放大歌词文字</string>
