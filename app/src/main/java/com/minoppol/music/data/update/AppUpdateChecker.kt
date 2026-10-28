@@ -21,6 +21,8 @@ data class AppUpdateInfo(
     val latestVersion: String,
     val downloadUrl: String,
     val releaseNotes: String?,
+    val apkUrl: String? = null,
+    val apkSizeBytes: Long? = null,
 )
 
 sealed class UpdateCheckResult {
@@ -111,10 +113,26 @@ class AppUpdateChecker @Inject constructor(
             if (tag.isBlank()) throw IOException("blank tag")
             val htmlUrl = root.get("html_url")?.takeUnless { it.isJsonNull }?.asString ?: ""
             val notes = root.get("body")?.takeUnless { it.isJsonNull }?.asString ?: ""
+            val apkAsset = root.getAsJsonArray("assets")
+                ?.firstOrNull { asset ->
+                    val name = asset.asJsonObject.get("name")?.asString ?: ""
+                    name.endsWith(".apk", ignoreCase = true)
+                }?.asJsonObject
+            val apkUrl = apkAsset
+                ?.get("browser_download_url")
+                ?.takeUnless { it.isJsonNull }
+                ?.asString
+                ?.takeIf { it.isNotBlank() }
+            val apkSizeBytes = apkAsset
+                ?.get("size")
+                ?.takeUnless { it.isJsonNull }
+                ?.asLong
             AppUpdateInfo(
                 parseVersion(tag).joinToString("."),
                 htmlUrl.ifBlank { RELEASE_PAGE_URL },
                 notes.takeIf { it.isNotBlank() },
+                apkUrl,
+                apkSizeBytes,
             )
         }
     }

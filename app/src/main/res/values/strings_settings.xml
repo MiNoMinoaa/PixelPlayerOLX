@@ -260,6 +260,13 @@
     <string name="setcat_export_runlog_title">Export Run Log</string>
     <string name="setcat_export_runlog_subtitle">Share the recent in-app run log for diagnostics.</string>
     <string name="setcat_application">Application</string>
+    <string name="setcat_updates_section">App updates</string>
+    <string name="setcat_auto_check_updates_title">Auto-check for updates</string>
+    <string name="setcat_auto_check_updates_subtitle">Quietly check for new versions when the app starts</string>
+    <string name="setcat_updates_check_now_title">Check for updates</string>
+    <string name="setcat_updates_check_now_subtitle">Current version v%1$s · fetch the latest release info</string>
+    <string name="settings_updates_row_title">Updates</string>
+    <string name="settings_updates_row_subtitle">Check for and install app updates</string>
     <string name="setcat_about_pixelplayer_title">About PixelPlayerOLX</string>
     <string name="setcat_about_pixelplayer_subtitle">App version, credits, and more.</string>
 

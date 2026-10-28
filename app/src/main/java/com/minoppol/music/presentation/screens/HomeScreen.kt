@@ -23,13 +23,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -60,7 +60,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -91,6 +90,7 @@ import androidx.core.net.toUri
 import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.preferences.CollagePattern
 import com.minoppol.music.presentation.components.AlbumArtCollage
+import com.minoppol.music.presentation.components.AppUpdateDialog
 import com.minoppol.music.presentation.components.BetaInfoBottomSheet
 import com.minoppol.music.presentation.components.ChangelogBottomSheet
 import com.minoppol.music.presentation.jellyfin.dashboard.JellyfinDashboardViewModel
@@ -580,82 +580,14 @@ fun HomeScreen(
     }
     if (showUpdateDialog) {
         updateInfo?.let { update ->
-            Dialog(
-                onDismissRequest = {
+            AppUpdateDialog(
+                update = update,
+                appUpdateViewModel = appUpdateViewModel,
+                onDismiss = {
                     showUpdateDialog = false
                     appUpdateViewModel.dismissUpdate()
                 }
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    tonalElevation = 6.dp
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.update_available_title, update.latestVersion),
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        update.releaseNotes?.takeIf { it.isNotBlank() }?.let {
-                            Text(
-                                text = it,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 10,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                        Spacer(Modifier.height(4.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            UpdateDialogButton(
-                                label = stringResource(R.string.update_available_ignore),
-                                icon = Icons.Rounded.Block,
-                                selected = false,
-                                onClick = {
-                                    showUpdateDialog = false
-                                    appUpdateViewModel.ignoreVersion(update.latestVersion)
-                                }
-                            )
-                            Spacer(Modifier.weight(1f))
-                            UpdateDialogButton(
-                                label = stringResource(R.string.update_available_cancel),
-                                icon = Icons.Rounded.Close,
-                                selected = false,
-                                onClick = {
-                                    showUpdateDialog = false
-                                    appUpdateViewModel.dismissUpdate()
-                                }
-                            )
-                            UpdateDialogButton(
-                                label = null,
-                                icon = Icons.Rounded.Download,
-                                selected = true,
-                                contentDescription = stringResource(R.string.update_available_go_download),
-                                onClick = {
-                                    showUpdateDialog = false
-                                    appUpdateViewModel.dismissUpdate()
-                                    runCatching {
-                                        context.startActivity(
-                                            Intent(
-                                                Intent.ACTION_VIEW,
-                                                update.downloadUrl.toUri()
-                                            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                        )
-                                    }
-                                }
-                            )
-                        }
-                    }
-                }
-            }
+            )
         }
     }
     if (showStreamingProviderSheet) {
@@ -959,56 +891,4 @@ private fun rememberYourMixTitleStyle(): TextStyle {
     }
 }
 
-@Composable
-private fun UpdateDialogButton(
-    label: String?,
-    icon: ImageVector,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    contentDescription: String? = null,
-) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(16.dp),
-        color = if (selected)
-            MaterialTheme.colorScheme.primary
-        else
-            MaterialTheme.colorScheme.secondaryContainer,
-        modifier = modifier,
-    ) {
-        Row(
-            modifier = Modifier.padding(
-                horizontal = if (label == null) 10.dp else 8.dp,
-                vertical = 8.dp,
-            ),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            Icon(
-                icon,
-                contentDescription = contentDescription,
-                modifier = Modifier.size(18.dp),
-                tint = if (selected)
-                    MaterialTheme.colorScheme.onPrimary
-                else
-                    MaterialTheme.colorScheme.onSecondaryContainer,
-            )
-            if (label != null) {
-                Spacer(Modifier.width(5.dp))
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (selected)
-                        MaterialTheme.colorScheme.onPrimary
-                    else
-                        MaterialTheme.colorScheme.onSecondaryContainer,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    softWrap = false,
-                    overflow = TextOverflow.Clip,
-                )
-            }
-        }
-    }
-}
+
