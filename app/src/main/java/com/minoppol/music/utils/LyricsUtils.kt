@@ -637,7 +637,7 @@ object LyricsUtils {
         RegexOption.IGNORE_CASE
     )
     private val LRC_BRACKET_VOICE_REGEX = Regex(
-        """^(<\d{1,3}:\d{1,2}[.:]\d{1,3}>)?\s*(?:\(|\[|\{)([^()\[\]{}]+)(?:\)|\]|\})\s*""",
+        """^(<\d{1,3}:\d{1,2}[.:]\d{1,3}>)?\s*(?:\(|\[|\{|【|（)([^()\[\]{}【】（）]+)(?:\)|\]|\}|】|）)\s*""",
         RegexOption.IGNORE_CASE
     )
     private val GROUP_VOICE_LABEL_KEYWORDS = setOf(

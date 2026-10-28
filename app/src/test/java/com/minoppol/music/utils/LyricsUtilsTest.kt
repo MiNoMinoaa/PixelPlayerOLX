@@ -33,6 +33,29 @@ class LyricsUtilsTest {
     }
 
     @Test
+    fun parseLyrics_assignsVoicesFromFullwidthAndCjkBracketLabels() {
+        val lrc = "[00:01.00]（男）第一句\n[00:02.00]（女）第二句\n[00:03.00]【合】第三句\n[00:04.00]【甲】第四句\n[00:05.00]【乙】第五句\n[00:06.00]【甲】第六句"
+        val synced = requireNotNull(LyricsUtils.parseLyrics(lrc).synced)
+
+        assertEquals(1, synced[0].voice)
+        assertEquals(2, synced[1].voice)
+        assertEquals(1_000, synced[2].voice)
+        assertEquals(3, synced[3].voice)
+        assertEquals(4, synced[4].voice)
+        assertEquals(synced[3].voice, synced[5].voice)
+        assertEquals("第四句", synced[3].line)
+    }
+
+    @Test
+    fun parseLyrics_doesNotTreatCjkTitleBracketsAsVoiceLabel() {
+        val lrc = "[00:01.00]《歌名》"
+        val synced = requireNotNull(LyricsUtils.parseLyrics(lrc).synced)
+
+        assertNull(synced[0].voice)
+        assertEquals("《歌名》", synced[0].line)
+    }
+
+    @Test
     fun parseLyrics_wordTimedLineKeepsVoiceFromLeadingBracketLabel() {
         val lrc = "[00:01.00](男)<00:01.00>第<00:01.50>一句"
         val synced = requireNotNull(LyricsUtils.parseLyrics(lrc).synced)
