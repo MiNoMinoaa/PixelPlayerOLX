@@ -725,6 +725,7 @@ class MainActivity : ComponentActivity() {
                 Screen.Equalizer.route,
                 Screen.SettingsCategory.route,
                 Screen.LyricsSettings.route,
+                Screen.Updates.route,
                 Screen.DelimiterConfig.route,
                 Screen.PaletteStyle.route,
                 Screen.RecentlyPlayed.route,

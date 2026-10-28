@@ -540,6 +540,178 @@ object SettingsRegistry {
                 getValue = { it.immersiveLyricsEnabled },
                 onToggle = { viewModel, checked -> viewModel.setImmersiveLyricsEnabled(checked) }
             ),
+            SettingSpec(
+                id = "lyrics_font_size",
+                itemKey = "item_lyrics_font_size",
+                titleRes = R.string.setcat_lyrics_font_size_title,
+                subtitleRes = R.string.setcat_lyrics_font_size_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.LyricsSettings.createRoute(),
+                type = SettingType.NAVIGABLE_CARD,
+                keywordsStatic = listOf("lyrics", "font", "size", "text", "歌词", "字体", "大小", "字号")
+            ),
+            SettingSpec(
+                id = "lyrics_word_highlight_enabled",
+                itemKey = "item_lyrics_word_highlight_enabled",
+                titleRes = R.string.lyrics_word_highlight_enabled_title,
+                subtitleRes = R.string.lyrics_word_highlight_enabled_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.LyricsSettings.createRoute(),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf(
+                    "word", "highlight", "karaoke", "逐字", "单词", "高亮", "字级", "进度"
+                ),
+                getValue = { it.lyricsWordHighlightEnabled },
+                onToggle = { viewModel, checked -> viewModel.setLyricsWordHighlightEnabled(checked) }
+            ),
+            SettingSpec(
+                id = "lyrics_word_highlight_style",
+                itemKey = "item_lyrics_word_highlight",
+                titleRes = R.string.lyrics_highlight_style_title,
+                subtitleRes = R.string.lyrics_highlight_style_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.LyricsSettings.createRoute(),
+                type = SettingType.NAVIGABLE_CARD,
+                keywordsStatic = listOf(
+                    "word", "highlight", "style", "wipe", "fade", "classic", "逐字", "样式", "风格"
+                )
+            ),
+            SettingSpec(
+                id = "lyrics_duet_layout",
+                itemKey = "item_lyrics_duet_layout",
+                titleRes = R.string.lyrics_duet_layout_title,
+                subtitleRes = R.string.lyrics_duet_layout_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.LyricsSettings.createRoute(),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf("duet", "voice", "singer", "对唱", "声部", "左右", "合唱"),
+                getValue = { it.lyricsDuetLayoutEnabled },
+                onToggle = { viewModel, checked -> viewModel.setLyricsDuetLayoutEnabled(checked) }
+            ),
+            SettingSpec(
+                id = "lyrics_background_vocals",
+                itemKey = "item_lyrics_background_vocals",
+                titleRes = R.string.lyrics_background_vocals_title,
+                subtitleRes = R.string.lyrics_background_vocals_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.LyricsSettings.createRoute(),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf("harmony", "backing", "vocals", "和声", "背景", "伴唱"),
+                getValue = { it.showLyricsBackgroundVocals },
+                onToggle = { viewModel, checked -> viewModel.setShowLyricsBackgroundVocals(checked) }
+            ),
+            SettingSpec(
+                id = "lyrics_animated_blur",
+                itemKey = "item_lyrics_animated_blur",
+                titleRes = R.string.presentation_batch_f_exp_lyric_blur_title,
+                subtitleRes = R.string.presentation_batch_f_exp_lyric_blur_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.LyricsSettings.createRoute(),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf("blur", "animated", "effect", "模糊", "动效", "背景"),
+                getValue = { it.animatedLyricsBlurEnabled },
+                onToggle = { viewModel, checked -> viewModel.setAnimatedLyricsBlurEnabled(checked) }
+            ),
+            SettingSpec(
+                id = "lyrics_immersive_delay",
+                itemKey = "item_lyrics_immersive_delay",
+                titleRes = R.string.setcat_auto_hide_delay_label,
+                subtitleRes = R.string.setcat_auto_hide_delay_desc,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.LyricsSettings.createRoute(),
+                type = SettingType.NAVIGABLE_CARD,
+                keywordsStatic = listOf("immersive", "delay", "hide", "沉浸", "延迟", "隐藏")
+            ),
+            SettingSpec(
+                id = "lyrics_notification",
+                itemKey = "item_lyrics_notification",
+                titleRes = R.string.setcat_notification_lyrics_title,
+                subtitleRes = R.string.setcat_notification_lyrics_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.LyricsSettings.createRoute(),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf("notification", "status bar", "通知", "通知栏"),
+                getValue = { it.notificationLyricsEnabled },
+                onToggle = { viewModel, checked -> viewModel.setNotificationLyricsEnabled(checked) }
+            ),
+            SettingSpec(
+                id = "lyrics_mini_player",
+                itemKey = "item_lyrics_mini_player",
+                titleRes = R.string.setcat_mini_player_lyrics_title,
+                subtitleRes = R.string.setcat_mini_player_lyrics_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.LyricsSettings.createRoute(),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf("mini player", "mini", "迷你", "迷你播放器"),
+                getValue = { it.miniPlayerLyricsEnabled },
+                onToggle = { viewModel, checked -> viewModel.setMiniPlayerLyricsEnabled(checked) }
+            ),
+            SettingSpec(
+                id = "lyrics_in_player",
+                itemKey = "item_lyrics_in_player",
+                titleRes = R.string.setcat_in_player_lyrics_title,
+                subtitleRes = R.string.setcat_in_player_lyrics_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.LyricsSettings.createRoute(),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf("player", "now playing", "播放页", "播放器"),
+                getValue = { it.inPlayerLyricsEnabled },
+                onToggle = { viewModel, checked -> viewModel.setInPlayerLyricsEnabled(checked) }
+            ),
+            SettingSpec(
+                id = "lyrics_in_player_size",
+                itemKey = "item_lyrics_in_player_size",
+                titleRes = R.string.setcat_in_player_lyrics_size_label,
+                subtitleRes = R.string.setcat_in_player_lyrics_size_desc,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.LyricsSettings.createRoute(),
+                type = SettingType.NAVIGABLE_CARD,
+                keywordsStatic = listOf("player", "size", "font", "播放页", "大小", "字号")
+            ),
+            SettingSpec(
+                id = "lyrics_source_priority",
+                itemKey = "item_lyrics_source_priority",
+                titleRes = R.string.setcat_lyrics_source_priority_label,
+                subtitleRes = R.string.setcat_lyrics_source_priority_desc,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.LyricsSettings.createRoute(),
+                type = SettingType.NAVIGABLE_CARD,
+                keywordsStatic = listOf("source", "priority", "embedded", "online", "local", "歌词源", "优先级", "内嵌", "本地", "在线")
+            ),
+            SettingSpec(
+                id = "lyrics_auto_scan_lrc",
+                itemKey = "item_lyrics_auto_scan_lrc",
+                titleRes = R.string.setcat_auto_scan_lrc_title,
+                subtitleRes = R.string.setcat_auto_scan_lrc_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.LyricsSettings.createRoute(),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf("scan", "lrc", "file", "自动扫描", "本地文件"),
+                getValue = { it.autoScanLrcFiles },
+                onToggle = { viewModel, checked -> viewModel.setAutoScanLrcFiles(checked) }
+            ),
+            SettingSpec(
+                id = "lyrics_external",
+                itemKey = "item_lyrics_external",
+                titleRes = R.string.setcat_external_lyrics_title,
+                subtitleRes = R.string.setcat_external_lyrics_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.LyricsSettings.createRoute(),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf("online", "fetch", "external", "在线", "获取"),
+                getValue = { it.externalLyricsEnabled },
+                onToggle = { viewModel, checked -> viewModel.setExternalLyricsEnabled(checked) }
+            ),
+            SettingSpec(
+                id = "lyrics_reset_imported",
+                itemKey = "item_lyrics_reset_imported",
+                titleRes = R.string.setcat_reset_imported_lyrics_title,
+                subtitleRes = R.string.setcat_reset_imported_lyrics_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.LyricsSettings.createRoute(),
+                type = SettingType.NAVIGABLE_CARD,
+                keywordsStatic = listOf("reset", "imported", "clear", "重置", "导入", "清除")
+            ),
 
             // --- BEHAVIOR CATEGORY ---
             SettingSpec(
