@@ -68,6 +68,7 @@ data class SettingsUiState(
     val navBarCompactMode: Boolean = false,
     val showSearchTab: Boolean = true,
     val showRecentTab: Boolean = true,
+    val splashAnimationEnabled: Boolean = true,
     val lxBoardIncludeQueue: Boolean = true,
     val lxBoardShowShuffleFab: Boolean = true,
     val lxBoardShowPlayAllFab: Boolean = true,
@@ -169,6 +170,7 @@ private sealed interface SettingsUiUpdate {
         val globalNowPlayingThemeEnabled: Boolean,
         val showSearchTab: Boolean,
         val showRecentTab: Boolean,
+        val splashAnimationEnabled: Boolean,
         val lxBoardIncludeQueue: Boolean,
         val lxBoardShowShuffleFab: Boolean,
         val lxBoardShowPlayAllFab: Boolean
@@ -294,7 +296,8 @@ class SettingsViewModel @Inject constructor(
                 userPreferencesRepository.showRecentTabFlow,
                 userPreferencesRepository.lxBoardIncludeQueueFlow,
                 userPreferencesRepository.lxBoardShowShuffleFabFlow,
-                userPreferencesRepository.lxBoardShowPlayAllFabFlow
+                userPreferencesRepository.lxBoardShowPlayAllFabFlow,
+                userPreferencesRepository.splashAnimationEnabledFlow
             ) { values ->
                 SettingsUiUpdate.Group1(
                     appRebrandDialogShown = values[0] as Boolean,
@@ -315,7 +318,8 @@ class SettingsViewModel @Inject constructor(
                     showRecentTab = values[15] as Boolean,
                     lxBoardIncludeQueue = values[16] as Boolean,
                     lxBoardShowShuffleFab = values[17] as Boolean,
-                    lxBoardShowPlayAllFab = values[18] as Boolean
+                    lxBoardShowPlayAllFab = values[18] as Boolean,
+                    splashAnimationEnabled = values[19] as Boolean
                 )
             }.collect { update ->
                 _uiState.update { state ->
@@ -338,7 +342,8 @@ class SettingsViewModel @Inject constructor(
                         showRecentTab = update.showRecentTab,
                         lxBoardIncludeQueue = update.lxBoardIncludeQueue,
                         lxBoardShowShuffleFab = update.lxBoardShowShuffleFab,
-                        lxBoardShowPlayAllFab = update.lxBoardShowPlayAllFab
+                        lxBoardShowPlayAllFab = update.lxBoardShowPlayAllFab,
+                        splashAnimationEnabled = update.splashAnimationEnabled
                     )
                 }
             }
@@ -715,6 +720,12 @@ class SettingsViewModel @Inject constructor(
     fun setShowRecentTab(enabled: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setShowRecentTab(enabled)
+        }
+    }
+
+    fun setSplashAnimationEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setSplashAnimationEnabled(enabled)
         }
     }
 

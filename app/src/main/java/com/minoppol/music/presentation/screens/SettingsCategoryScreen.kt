@@ -804,31 +804,15 @@ fun SettingsCategoryScreen(
                                 )
                             }
 
-                            SettingsSubsection(title = stringResource(R.string.setcat_lyrics_screen)) {
+                            SettingsSubsection(title = stringResource(R.string.setcat_splash_animation_section)) {
                                 SwitchSettingItem(
-                                    title = stringResource(R.string.setcat_immersive_lyrics_title),
-                                    subtitle = stringResource(R.string.setcat_immersive_lyrics_subtitle),
-                                    checked = uiState.immersiveLyricsEnabled,
-                                    onCheckedChange = { settingsViewModel.setImmersiveLyricsEnabled(it) },
-                                    leadingIcon = { Icon(painterResource(R.drawable.rounded_lyrics_24), null, tint = MaterialTheme.colorScheme.secondary) },
-                                    modifier = Modifier.settingHighlight("item_appearance_immersive_lyrics", highlightKey)
+                                    title = stringResource(R.string.setcat_splash_animation_title),
+                                    subtitle = stringResource(R.string.setcat_splash_animation_subtitle),
+                                    checked = uiState.splashAnimationEnabled,
+                                    onCheckedChange = { settingsViewModel.setSplashAnimationEnabled(it) },
+                                    leadingIcon = { Icon(painterResource(R.drawable.splash_icon), null, tint = MaterialTheme.colorScheme.secondary) },
+                                    modifier = Modifier.settingHighlight("item_appearance_splash_animation", highlightKey)
                                 )
-
-                                if (uiState.immersiveLyricsEnabled) {
-                                    ThemeSelectorItem(
-                                        label = stringResource(R.string.setcat_auto_hide_delay_label),
-                                        description = stringResource(R.string.setcat_auto_hide_delay_desc),
-                                        options = mapOf(
-                                            "3000" to stringResource(R.string.setcat_lyrics_delay_3s),
-                                            "4000" to stringResource(R.string.setcat_lyrics_delay_4s),
-                                            "5000" to stringResource(R.string.setcat_lyrics_delay_5s),
-                                            "6000" to stringResource(R.string.setcat_lyrics_delay_6s)
-                                        ),
-                                        selectedKey = uiState.immersiveLyricsTimeout.toString(),
-                                        onSelectionChanged = { settingsViewModel.setImmersiveLyricsTimeout(it.toLong()) },
-                                        leadingIcon = { Icon(Icons.Rounded.Timer, null, tint = MaterialTheme.colorScheme.secondary) }
-                                    )
-                                }
                             }
 
                             SettingsSubsection(

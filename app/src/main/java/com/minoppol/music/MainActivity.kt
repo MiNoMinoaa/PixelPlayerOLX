@@ -153,6 +153,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -164,6 +165,7 @@ import com.minoppol.music.utils.CrashLogData
 import javax.annotation.concurrent.Immutable
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 
@@ -265,8 +267,12 @@ class MainActivity : ComponentActivity() {
 
         val SYSTEM_SPLASH_HANDOFF_MS = 200L
         val isBenchmarkMode = intent.getBooleanExtra("is_benchmark", false)
+        val splashAnimationEnabled = runBlocking {
+            userPreferencesRepository.splashAnimationEnabledFlow.first()
+        }
         val playAnimatedSplash = savedInstanceState == null &&
             !isBenchmarkMode &&
+            splashAnimationEnabled &&
             android.provider.Settings.Global.getFloat(contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0f
         if (playAnimatedSplash) {
             splashScreen.setOnExitAnimationListener { provider ->

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="setcat_m3u_sync_section" tools:ignore="MissingTranslation">Playlist synchronization</string>
     <string name="setcat_m3u_sync_title" tools:ignore="MissingTranslation">Automatic M3U sync</string>
@@ -154,6 +154,9 @@
     <string name="setcat_show_recent_tab_subtitle">Display Recently Played as a tab in the bottom navigation bar.</string>
     <string name="setcat_navbar_corner_title">NavBar Corner Radius</string>
     <string name="setcat_navbar_corner_subtitle">Adjust the corner radius of the navigation bar.</string>
+    <string name="setcat_splash_animation_section">Splash Animation</string>
+    <string name="setcat_splash_animation_title">Show splash animation</string>
+    <string name="setcat_splash_animation_subtitle">Play the animated splash when the app launches.</string>
     <string name="setcat_lyrics_screen">Lyrics Screen</string>
     <string name="setcat_immersive_lyrics_title">Immersive Lyrics</string>
     <string name="setcat_immersive_lyrics_subtitle">Auto-hide controls and enlarge text.</string>
