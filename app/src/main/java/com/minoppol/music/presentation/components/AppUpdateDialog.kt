@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.OpenInBrowser
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -122,13 +124,13 @@ fun AppUpdateDialog(
                     }
                 }
                 Spacer(Modifier.height(4.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    when (installStatus) {
-                        UpdateInstallStatus.Idle -> {
+                when (installStatus) {
+                    UpdateInstallStatus.Idle -> {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             UpdateDialogButton(
                                 label = stringResource(R.string.update_available_ignore),
                                 icon = Icons.Rounded.Block,
@@ -145,15 +147,46 @@ fun AppUpdateDialog(
                                 selected = false,
                                 onClick = onDismiss
                             )
-                            if (update.apkUrl != null) {
+                        }
+                        if (update.apkUrl != null) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 UpdateDialogButton(
-                                    label = null,
+                                    label = stringResource(R.string.update_available_browser_download),
+                                    icon = Icons.Rounded.OpenInBrowser,
+                                    selected = false,
+                                    modifier = Modifier.weight(1f),
+                                    onClick = {
+                                        appUpdateViewModel.dismissUpdate()
+                                        onDismiss()
+                                        runCatching {
+                                            context.startActivity(
+                                                Intent(
+                                                    Intent.ACTION_VIEW,
+                                                    update.downloadUrl.toUri()
+                                                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                            )
+                                        }
+                                    }
+                                )
+                                UpdateDialogButton(
+                                    label = stringResource(R.string.update_available_in_app_download),
                                     icon = Icons.Rounded.Download,
                                     selected = true,
-                                    contentDescription = stringResource(R.string.update_available_download),
+                                    modifier = Modifier.weight(1f),
                                     onClick = { appUpdateViewModel.startInstall() }
                                 )
-                            } else {
+                            }
+                        } else {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Spacer(Modifier.weight(1f))
                                 UpdateDialogButton(
                                     label = null,
                                     icon = Icons.Rounded.Download,
@@ -174,7 +207,13 @@ fun AppUpdateDialog(
                                 )
                             }
                         }
-                        is UpdateInstallStatus.Downloading -> {
+                    }
+                    is UpdateInstallStatus.Downloading -> {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Spacer(Modifier.weight(1f))
                             UpdateDialogButton(
                                 label = stringResource(R.string.update_install_cancel_download),
@@ -183,11 +222,17 @@ fun AppUpdateDialog(
                                 onClick = { appUpdateViewModel.stopInstall() }
                             )
                         }
-                        is UpdateInstallStatus.AwaitingInstallPermission -> {
+                    }
+                    is UpdateInstallStatus.AwaitingInstallPermission -> {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             UpdateDialogButton(
                                 label = stringResource(R.string.update_install_allow),
-                                icon = Icons.Rounded.Close,
-                                selected = false,
+                                icon = Icons.Rounded.Check,
+                                selected = true,
                                 onClick = {
                                     runCatching {
                                         context.startActivity(
@@ -203,12 +248,18 @@ fun AppUpdateDialog(
                             UpdateDialogButton(
                                 label = null,
                                 icon = Icons.Rounded.Download,
-                                selected = true,
+                                selected = false,
                                 contentDescription = stringResource(R.string.update_install_confirm),
                                 onClick = { appUpdateViewModel.resumeInstall() }
                             )
                         }
-                        is UpdateInstallStatus.AwaitingConfirmation -> {
+                    }
+                    is UpdateInstallStatus.AwaitingConfirmation -> {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Spacer(Modifier.weight(1f))
                             UpdateDialogButton(
                                 label = null,
@@ -218,8 +269,14 @@ fun AppUpdateDialog(
                                 onClick = { appUpdateViewModel.openInstallConfirmation() }
                             )
                         }
-                        is UpdateInstallStatus.Installing -> Unit
-                        is UpdateInstallStatus.Failed -> {
+                    }
+                    is UpdateInstallStatus.Installing -> Unit
+                    is UpdateInstallStatus.Failed -> {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             UpdateDialogButton(
                                 label = null,
                                 icon = Icons.Rounded.Refresh,
@@ -238,7 +295,13 @@ fun AppUpdateDialog(
                                 }
                             )
                         }
-                        UpdateInstallStatus.RequiresManualInstall -> {
+                    }
+                    UpdateInstallStatus.RequiresManualInstall -> {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             UpdateDialogButton(
                                 label = stringResource(R.string.update_install_open_page),
                                 icon = Icons.Rounded.Download,

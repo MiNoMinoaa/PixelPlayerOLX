@@ -33,7 +33,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -88,6 +88,7 @@ import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -2320,12 +2321,16 @@ private fun InPlayerLyrics(
     val maxHeight = if (isLandscape) 200.dp else (fontSize * 6f).dp
 
     val listState = rememberLazyListState()
+    var viewportHeightPx by remember { mutableIntStateOf(0) }
+    var itemHeightPx by remember { mutableIntStateOf(0) }
+    val density = LocalDensity.current
+    val viewportBottomPaddingPx = with(density) { (fontSize * 0.6f).dp.roundToPx() }
 
-    LaunchedEffect(displayIndex) {
-        if (displayIndex in lines.indices) {
+    LaunchedEffect(displayIndex, viewportHeightPx, itemHeightPx) {
+        if (displayIndex in lines.indices && viewportHeightPx > 0 && itemHeightPx > 0) {
             listState.animateScrollToItem(
-                index = displayIndex,
-                scrollOffset = -listState.layoutInfo.viewportSize.height / 4
+                index = displayIndex + 1,
+                scrollOffset = (itemHeightPx / 2 + viewportBottomPaddingPx) - viewportHeightPx / 2
             )
         }
     }
@@ -2340,6 +2345,7 @@ private fun InPlayerLyrics(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(max = maxHeight)
+                .onSizeChanged { viewportHeightPx = it.height }
                 .drawWithContent {
                     drawContent()
                     drawRect(
@@ -2360,8 +2366,10 @@ private fun InPlayerLyrics(
             horizontalAlignment = Alignment.CenterHorizontally,
             contentPadding = PaddingValues(vertical = (fontSize * 0.6f).dp)
         ) {
-            items(lines) { line ->
-                val idx = lines.indexOf(line)
+            item {
+                Spacer(modifier = Modifier.height(with(density) { (viewportHeightPx / 2).toDp() }))
+            }
+            itemsIndexed(lines) { idx, line ->
                 val distance = abs(idx - displayIndex)
                 val alpha = when {
                     distance == 0 -> 1f
@@ -2379,12 +2387,16 @@ private fun InPlayerLyrics(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
                             .fillMaxWidth()
+                            .onSizeChanged { if (idx == displayIndex) itemHeightPx = it.height }
                             .padding(vertical = lineVerticalPadding),
                         textAlign = TextAlign.Center
                     )
                 } else {
                     Spacer(modifier = Modifier.height(fontSize.dp + lineVerticalPadding * 2))
                 }
+            }
+            item {
+                Spacer(modifier = Modifier.height(with(density) { (viewportHeightPx / 2).toDp() }))
             }
         }
     }

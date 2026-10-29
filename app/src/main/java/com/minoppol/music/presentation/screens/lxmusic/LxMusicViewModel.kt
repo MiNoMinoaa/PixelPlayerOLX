@@ -3732,6 +3732,30 @@ class LxMusicViewModel @Inject constructor(
         }
     }
 
+    fun importFromFiles(uris: List<Uri>, onDone: (Int, Int) -> Unit) {
+        if (uris.isEmpty()) return
+        viewModelScope.launch {
+            var successCount = 0
+            var failCount = 0
+            var lastError: String? = null
+            uris.forEach { uri ->
+                val result = repository.importFromFile(uri)
+                result.onSuccess {
+                    successCount++
+                }.onFailure { e ->
+                    failCount++
+                    lastError = e.message
+                }
+            }
+            _loadState.value = if (failCount == 0 || successCount > 0) {
+                LoadState(loadedSources = emptyList())
+            } else {
+                LoadState(error = context.getString(R.string.lx_error_import_failed, lastError ?: ""))
+            }
+            onDone(successCount, failCount)
+        }
+    }
+
 
     fun batchDownloadSongs(lxSongs: List<LxSong>, quality: String) {
         viewModelScope.launch {

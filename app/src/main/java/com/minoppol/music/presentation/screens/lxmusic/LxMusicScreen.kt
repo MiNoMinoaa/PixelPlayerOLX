@@ -2,6 +2,7 @@ package com.minoppol.music.presentation.screens.lxmusic
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -458,9 +459,19 @@ fun LxMusicScreen(
     }
 
     val filePicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument(),
-    ) { uri ->
-        uri?.let { viewModel.importFromFile(it) { } }
+        contract = ActivityResultContracts.OpenMultipleDocuments(),
+    ) { uris ->
+        if (uris.isNotEmpty()) {
+            viewModel.importFromFiles(uris) { successCount, failCount ->
+                val msg = when {
+                    failCount == 0 && successCount > 1 -> context.getString(R.string.lx_msg_import_files_started, successCount)
+                    failCount == 0 -> null
+                    successCount == 0 -> context.getString(R.string.lx_error_import_failed, "")
+                    else -> context.getString(R.string.lx_msg_import_files_partial, successCount, failCount)
+                }
+                msg?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+            }
+        }
     }
 
     val systemNavBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()

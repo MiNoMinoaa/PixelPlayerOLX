@@ -345,6 +345,8 @@
 <string name="lx_error_playlist_not_found">未找到该歌单或歌单为空</string>
 <string name="lx_error_search_failed">搜索失败: %1$s</string>
 <string name="lx_error_import_failed">导入失败: %1$s</string>
+<string name="lx_msg_import_files_started">已导入 %1$d 个文件</string>
+<string name="lx_msg_import_files_partial">已导入 %1$d 个文件，%2$d 个失败</string>
 
 <string name="lx_msg_source_disabled">音源已禁用，请在脚本管理中开启</string>
 <string name="lx_queue_name_playlist">播放列表</string>

@@ -253,7 +253,13 @@ fun UpdatesScreen(
                     appUpdateViewModel = appUpdateViewModel,
                     onDismiss = {
                         showUpdateDialog = false
-                        appUpdateViewModel.dismissUpdate()
+                        val active = installStatus is UpdateInstallStatus.Downloading ||
+                            installStatus is UpdateInstallStatus.Installing ||
+                            installStatus is UpdateInstallStatus.AwaitingConfirmation ||
+                            installStatus is UpdateInstallStatus.AwaitingInstallPermission
+                        if (!active) {
+                            appUpdateViewModel.dismissUpdate()
+                        }
                     }
                 )
             }

@@ -181,6 +181,8 @@
     <string name="about_version_format">版本 v%1$s</string>
     <string name="update_available_title">发现新版本 v%1$s</string>
     <string name="update_available_download">去下载</string>
+    <string name="update_available_browser_download">浏览器下载</string>
+    <string name="update_available_in_app_download">应用内下载</string>
     <string name="update_available_later">以后再说</string>
     <string name="update_available_go_download">前往下载</string>
     <string name="update_available_cancel">取消</string>

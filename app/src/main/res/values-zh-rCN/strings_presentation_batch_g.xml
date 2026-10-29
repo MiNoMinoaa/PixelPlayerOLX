@@ -409,4 +409,10 @@
         <item>加入曲库功能（单曲 / 多选）</item>
         <item>轻量运行日志：开发者选项内可手动导出</item>
     </string-array>
+    <string name="player_audio_output_title">音频输出</string>
+    <string name="player_audio_output_this_phone">本机</string>
+    <string name="player_audio_output_wired">有线耳机</string>
+    <string name="player_audio_output_unknown_device">未知设备</string>
+    <string name="player_audio_output_more_devices">更多设备</string>
+    <string name="player_audio_output_more_devices_subtitle">打开系统输出切换器或蓝牙设置</string>
 </resources>

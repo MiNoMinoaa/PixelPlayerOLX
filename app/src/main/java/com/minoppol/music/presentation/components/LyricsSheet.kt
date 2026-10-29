@@ -1,6 +1,9 @@
 package com.minoppol.music.presentation.components
 
 import android.animation.ValueAnimator
+import android.content.ClipData
+import android.os.Build
+import android.widget.Toast
 import com.minoppol.music.R
 import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.model.Lyrics
@@ -10,6 +13,8 @@ import androidx.compose.ui.zIndex
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.util.lerp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -31,6 +36,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -62,9 +68,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.animation.core.Animatable
@@ -366,6 +375,31 @@ fun LyricsSheet(
         keepScreenOnFlow.collect { keepScreenOn = it }
     }
     val coroutineScope = rememberCoroutineScope()
+
+    val clipboard = LocalClipboard.current
+    val clipLabel = stringResource(R.string.lyrics)
+    val lyricsCopiedMessage = stringResource(R.string.lyrics_copied)
+    val lineCopiedMessage = stringResource(R.string.lyrics_line_copied)
+    val copyLineActionLabel = stringResource(R.string.lyrics_copy_line_action)
+    val canCopyLyrics = remember(lyrics, showLyricsBackgroundVocals) {
+        LyricsClipboardText.hasCopyableText(lyrics, includeBackground = showLyricsBackgroundVocals)
+    }
+
+    fun copyLyricsToClipboard(text: String, confirmation: String) {
+        if (text.isBlank()) return
+        coroutineScope.launch {
+            try {
+                clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(clipLabel, text)))
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                return@launch
+            }
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                Toast.makeText(context, confirmation, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     val view = LocalView.current
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -766,7 +800,7 @@ fun LyricsSheet(
                                 positionOverrideMs = previewSeekPositionMs,
                                 accentColor = lyricHighlightColor,
                                 textStyle = scaledTextStyle,
-                                onLineClick = { syncedLine -> 
+                                onLineClick = { syncedLine ->
                                     onSeekTo(
                                         resolveSeekPositionMs(
                                             lineTimeMs = syncedLine.time.toLong(),
@@ -775,6 +809,17 @@ fun LyricsSheet(
                                     )
                                     resetImmersiveTimer()
                                 },
+                                onLineLongClick = { syncedLine ->
+                                    resetImmersiveTimer()
+                                    copyLyricsToClipboard(
+                                        LyricsClipboardText.syncedLine(
+                                            syncedLine,
+                                            includeBackground = showLyricsBackgroundVocals
+                                        ),
+                                        lineCopiedMessage
+                                    )
+                                },
+                                lineLongClickLabel = copyLineActionLabel,
                                 highlightZoneFraction = highlightZoneFraction,
                                 highlightOffsetDp = highlightOffsetDp,
                                 autoscrollAnimationSpec = resolvedAutoscrollSpec,
@@ -830,7 +875,14 @@ fun LyricsSheet(
                                         lyricsAlignment = lyricsAlignment,
                                         showTranslation = if (hasTranslatedLyrics) showLyricsTranslation else true,
                                         showRomanization = if (hasRomanizedLyrics) showLyricsRomanization else true,
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier.fillMaxWidth(),
+                                        onLongClick = {
+                                            copyLyricsToClipboard(
+                                                LyricsClipboardText.plainLine(line),
+                                                lineCopiedMessage
+                                            )
+                                        },
+                                        onLongClickLabel = copyLineActionLabel
                                     )
                                     Spacer(modifier = Modifier.height(16.dp))
                                 }
@@ -998,6 +1050,16 @@ fun LyricsSheet(
                     showSyncedLyrics = showSyncedLyrics == true,
                     isSyncControlsVisible = showSyncControls,
                     onSaveLyricsAsLrc = { showSaveLyricsDialog = true },
+                    canCopyLyrics = canCopyLyrics,
+                    onCopyLyrics = {
+                        copyLyricsToClipboard(
+                            LyricsClipboardText.fullLyrics(
+                                lyrics,
+                                includeBackground = showLyricsBackgroundVocals
+                            ),
+                            lyricsCopiedMessage
+                        )
+                    },
                     onResetImportedLyrics = {
                         wasResetTriggered = true
                         resetLyricsForCurrentSong()
@@ -1177,6 +1239,8 @@ fun SyncedLyricsList(
     accentColor: Color,
     textStyle: TextStyle,
     onLineClick: (SyncedLine) -> Unit,
+    onLineLongClick: ((SyncedLine) -> Unit)? = null,
+    lineLongClickLabel: String? = null,
     highlightZoneFraction: Float,
     highlightOffsetDp: Dp,
     autoscrollAnimationSpec: AnimationSpec<Float>,
@@ -1347,7 +1411,11 @@ fun SyncedLyricsList(
                             modifier = parallaxModifier
                                 .fillMaxWidth()
                                 .testTag("synced_line_${line.time}"),
-                            onClick = { onLineClick(line) }
+                            onClick = { onLineClick(line) },
+                            onLongClick = if (onLineLongClick != null) {
+                                { onLineLongClick(line) }
+                            } else null,
+                            onLongClickLabel = lineLongClickLabel
                         )
                     } else {
                         BubblesLine(
@@ -1388,6 +1456,8 @@ fun LyricLineRow(
     accentColor: Color,
     style: TextStyle,
     modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
+    onLongClickLabel: String? = null,
     onClick: () -> Unit
 ) {
     val effectiveAlignment = resolveLineAlignment(line.voice, lyricsAlignment, duetLayoutEnabled)
@@ -1396,8 +1466,7 @@ fun LyricLineRow(
         line.words?.let(::sanitizeSyncedWords)
     }
     val lyricClusters = remember(sanitizedWords, highlightStyle) {
-        if (highlightStyle == LyricsWordHighlightStyle.CLASSIC) null
-        else buildLyricClusters(sanitizedWords)
+        buildLyricClusters(sanitizedWords)
     }
     val lineEndTime = remember(line, nextTime) {
         resolveLineEndTimeMs(line, nextTime)
@@ -1511,7 +1580,11 @@ fun LyricLineRow(
             modifier = animatedModifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .clickable { onClick() }
+                .combinedClickable(
+                onLongClickLabel = onLongClickLabel,
+                onLongClick = onLongClick,
+                onClick = onClick
+            )
                 .padding(vertical = verticalPadding, horizontal = 2.dp),
             horizontalAlignment = horizontalAlignment
         ) {
@@ -1575,11 +1648,15 @@ fun LyricLineRow(
             modifier = animatedModifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .clickable { onClick() }
+                .combinedClickable(
+                onLongClickLabel = onLongClickLabel,
+                onLongClick = onLongClick,
+                onClick = onClick
+            )
                 .padding(vertical = verticalPadding, horizontal = 2.dp),
             horizontalAlignment = horizontalAlignment
         ) {
-            if (lyricClusters != null) {
+            if (!lyricClusters.isNullOrEmpty()) {
                 SyncedWordFlow(
                     clusters = lyricClusters,
                     positionProvider = { position },
@@ -1594,7 +1671,7 @@ fun LyricLineRow(
                     emphasisEnabled = decorativeMotionEnabled,
                     lyricsAlignment = effectiveAlignment
                 )
-            } else {
+            } else if (sanitizedLine.isNotBlank()) {
                 Text(
                     text = sanitizedLine,
                     style = style,
@@ -1652,7 +1729,9 @@ fun PlainLyricsLine(
     lyricsAlignment: String = "left",
     showTranslation: Boolean = true,
     showRomanization: Boolean = true,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
+    onLongClickLabel: String? = null
 ) {
     val sanitizedLines = remember(line) { line.split("\n") }
     val primaryText = remember(sanitizedLines) { if (sanitizedLines.isNotEmpty()) sanitizeLyricLineText(sanitizedLines[0]) else "" }
@@ -1702,7 +1781,29 @@ fun PlainLyricsLine(
     }
     val translationColor = LocalContentColor.current.copy(alpha = 0.45f)
 
-    Column(modifier = modifier, horizontalAlignment = horizontalAlignment) {
+    val hapticFeedback = LocalHapticFeedback.current
+    val currentOnLongClick by rememberUpdatedState(onLongClick)
+    val longClickModifier = if (onLongClick != null && primaryText.isNotBlank()) {
+        Modifier
+            .pointerInput(hapticFeedback) {
+                detectTapGestures(
+                    onLongPress = {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        currentOnLongClick?.invoke()
+                    }
+                )
+            }
+            .semantics(mergeDescendants = true) {
+                onLongClick(label = onLongClickLabel) {
+                    currentOnLongClick?.invoke()
+                    true
+                }
+            }
+    } else {
+        Modifier
+    }
+
+    Column(modifier = modifier.then(longClickModifier), horizontalAlignment = horizontalAlignment) {
         if (primaryText.isNotBlank()) {
             Text(text = primaryText, style = style, color = LocalContentColor.current.copy(alpha = 0.7f), textAlign = textAlign)
 

@@ -182,6 +182,8 @@
     <string name="about_version_format">Version v%1$s</string>
     <string name="update_available_title">New version available: v%1$s</string>
     <string name="update_available_download">Download</string>
+    <string name="update_available_browser_download">Download in browser</string>
+    <string name="update_available_in_app_download">Update in app</string>
     <string name="update_available_later">Later</string>
     <string name="update_available_go_download">Go to download</string>
     <string name="update_available_cancel">Cancel</string>

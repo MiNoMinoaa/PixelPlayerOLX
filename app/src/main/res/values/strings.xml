@@ -384,6 +384,8 @@
     <string name="lx_error_playlist_not_found">Playlist not found or empty</string>
     <string name="lx_error_search_failed">Search failed: %1$s</string>
     <string name="lx_error_import_failed">Import failed: %1$s</string>
+    <string name="lx_msg_import_files_started">Imported %1$d files</string>
+    <string name="lx_msg_import_files_partial">Imported %1$d files, %2$d failed</string>
 
     <string name="lx_msg_source_disabled">Source disabled, please enable it in script management</string>
     <string name="lx_queue_name_playlist">Playlist</string>
