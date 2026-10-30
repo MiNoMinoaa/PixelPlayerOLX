@@ -135,6 +135,8 @@
     <string name="setcat_navbar_style_floating">悬浮透镜</string>
     <string name="setcat_compact_mode_title">紧凑模式</string>
     <string name="setcat_compact_mode_subtitle">仅显示图标，缩小导航栏高度</string>
+    <string name="setcat_show_lx_music_tab_title">启用发现页</string>
+    <string name="setcat_show_lx_music_tab_subtitle">在导航栏中显示在线音乐发现页</string>
     <string name="setcat_show_search_tab_title">显示搜索页</string>
     <string name="setcat_show_search_tab_subtitle">此页搜索的内容是您在本地/缓存播放过的内容</string>
     <string name="setcat_show_recent_tab_title">显示最近播放</string>

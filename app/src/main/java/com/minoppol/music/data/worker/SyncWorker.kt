@@ -3,6 +3,7 @@ package com.minoppol.music.data.worker
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import androidx.hilt.work.HiltWorker
@@ -33,6 +34,7 @@ import com.minoppol.music.utils.AlbumArtCacheManager
 import com.minoppol.music.utils.AlbumArtUtils
 import com.minoppol.music.utils.AudioMetaUtils.getAudioMetadata
 import com.minoppol.music.utils.DirectoryRuleResolver
+import com.minoppol.music.utils.APP_DOWNLOAD_DIR_PATTERN
 import com.minoppol.music.utils.buildLocalAudioSelection
 import com.minoppol.music.utils.normalizeMetadataTextOrEmpty
 import com.minoppol.music.utils.traceAsyncSection
@@ -198,7 +200,16 @@ constructor(
                         val mediaStoreIds = fetchMediaStoreIds(directoryResolver)
                         hasUnindexedSongs = mediaStoreIds.any { it !in localSongIds }
 
-                        val deletedIds = localSongIds - mediaStoreIds
+                        val downloadDirMediaIds = fetchDownloadDirMediaStoreIds()
+                        val protectedLocalSongIds = musicDao.getLocalSongContentUris()
+                            .filter { local ->
+                                local.contentUriString.startsWith("content://media/") &&
+                                    Uri.parse(local.contentUriString).lastPathSegment?.toLongOrNull() in downloadDirMediaIds
+                            }
+                            .map { it.id }
+                            .toHashSet()
+
+                        val deletedIds = localSongIds - mediaStoreIds - protectedLocalSongIds
 
                         if (deletedIds.isNotEmpty()) {
                             Timber.tag(TAG)
@@ -1188,6 +1199,23 @@ constructor(
                         continue
                     }
                 }
+                ids.add(cursor.getLong(idCol))
+            }
+        }
+        return ids
+    }
+
+    private fun fetchDownloadDirMediaStoreIds(): Set<Long> {
+        val ids = mutableSetOf<Long>()
+        contentResolver.query(
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            arrayOf(MediaStore.Audio.Media._ID),
+            "${MediaStore.Audio.Media.DATA} LIKE ?",
+            arrayOf(APP_DOWNLOAD_DIR_PATTERN),
+            null
+        )?.use { cursor ->
+            val idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+            while (cursor.moveToNext()) {
                 ids.add(cursor.getLong(idCol))
             }
         }

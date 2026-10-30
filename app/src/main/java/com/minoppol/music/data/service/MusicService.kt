@@ -13,6 +13,8 @@ import android.graphics.Bitmap
 import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -1423,6 +1425,13 @@ class MusicService : MediaSessionService() {
     private var consecutivePlaybackErrors = 0
     private val maxConsecutivePlaybackErrors = 5
 
+    private fun isNetworkUnavailable(): Boolean {
+        val cm = getSystemService(ConnectivityManager::class.java) ?: return false
+        val network = cm.activeNetwork ?: return true
+        val capabilities = cm.getNetworkCapabilities(network) ?: return true
+        return !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
     private val lxDeadLinkSeenMediaIds = mutableMapOf<String, Int>()
     @Volatile private var lxItemReachedReady = false
 
@@ -1664,7 +1673,25 @@ class MusicService : MediaSessionService() {
                 )
             }
             if (player.currentMediaItem?.localConfiguration?.uri?.scheme == "lxmusic") {
-                consecutivePlaybackErrors = 0
+                if (isNetworkUnavailable()) {
+                    Timber.tag(TAG).w(
+                        "LX error while offline, hold position instead of auto-advance (item %s)",
+                        player.currentMediaItem?.mediaId
+                    )
+                    player.playWhenReady = false
+                    return
+                }
+                if (consecutivePlaybackErrors >= maxConsecutivePlaybackErrors) {
+                    Timber.tag(TAG).w(
+                        "LX advance cap reached (%d), hold position (item %s)",
+                        consecutivePlaybackErrors,
+                        player.currentMediaItem?.mediaId
+                    )
+                    consecutivePlaybackErrors = 0
+                    player.playWhenReady = false
+                    return
+                }
+                consecutivePlaybackErrors++
                 val failedMediaId = player.currentMediaItem?.mediaId
                 serviceScope.launch {
                     delay(1500)

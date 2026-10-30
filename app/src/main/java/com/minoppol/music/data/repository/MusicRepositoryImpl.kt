@@ -972,6 +972,16 @@ class MusicRepositoryImpl @Inject constructor(
         if (entity.sourceType != com.minoppol.music.data.database.SourceType.LX_MUSIC &&
             !entity.contentUriString.startsWith("lxmusic://")
         ) return@withContext false
+        val mediaStoreId = Uri.parse(localContentUri).lastPathSegment?.toLongOrNull()
+            ?: return@withContext false
+        val rowExists = context.contentResolver.query(
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            arrayOf(MediaStore.Audio.Media._ID),
+            "${MediaStore.Audio.Media._ID} = ?",
+            arrayOf(mediaStoreId.toString()),
+            null,
+        )?.use { cursor -> cursor.moveToFirst() } ?: return@withContext false
+        if (!rowExists) return@withContext false
         musicDao.updateSongs(
             listOf(
                 entity.copy(

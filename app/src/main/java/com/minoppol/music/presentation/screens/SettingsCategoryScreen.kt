@@ -769,6 +769,20 @@ fun SettingsCategoryScreen(
                                     modifier = Modifier.settingHighlight("item_appearance_navbar_compact", highlightKey)
                                 )
                                 SwitchSettingItem(
+                                    title = stringResource(R.string.setcat_show_lx_music_tab_title),
+                                    subtitle = stringResource(R.string.setcat_show_lx_music_tab_subtitle),
+                                    checked = uiState.showLxMusicTab,
+                                    onCheckedChange = { settingsViewModel.setShowLxMusicTab(it) },
+                                    leadingIcon = {
+                                        Icon(
+                                            painterResource(R.drawable.rounded_headphones_24),
+                                            null,
+                                            tint = MaterialTheme.colorScheme.secondary
+                                        )
+                                    },
+                                    modifier = Modifier.settingHighlight("item_appearance_show_lx_music_tab", highlightKey)
+                                )
+                                SwitchSettingItem(
                                     title = stringResource(R.string.setcat_show_search_tab_title),
                                     subtitle = stringResource(R.string.setcat_show_search_tab_subtitle),
                                     checked = uiState.showSearchTab,

@@ -145,7 +145,7 @@
     <string name="device_capabilities_finding_unsupported_title">%1$d 首曲目可能無法原生解碼</string>
     <string name="device_capabilities_finding_unsupported_body">需要檢查格式：%1$s。</string>
     <string name="device_capabilities_finding_resample_title">%1$d 首本地曲目可能會被重採樣</string>
-    <string name="device_capabilities_finding_resample_body">曲庫最高採樣率達到 %1$d 赫茲，高於當前輸出採樣率。</string>
+    <string name="device_capabilities_finding_resample_body">曲庫最高採樣率達到 %1$d 赫茲，高於當前輸出採樣率。Android 會自動重採樣，播放不受影響。</string>
     <string name="device_capabilities_finding_unknown_title">%1$d 首曲目元數據未知</string>
     <string name="device_capabilities_finding_unknown_body">完整重新掃描曲庫，可以補全缺失的MIME類型、碼率與採樣率信息。</string>
     <string name="device_capabilities_more_count">另外 %1$d 項</string>

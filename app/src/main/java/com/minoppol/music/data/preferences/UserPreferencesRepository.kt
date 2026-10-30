@@ -122,6 +122,7 @@ constructor(
         val NAV_BAR_COMPACT_MODE = booleanPreferencesKey("nav_bar_compact_mode")
         val SHOW_SEARCH_TAB = booleanPreferencesKey("show_search_tab")
         val SHOW_RECENT_TAB = booleanPreferencesKey("show_recent_tab")
+        val SHOW_LX_MUSIC_TAB = booleanPreferencesKey("show_lx_music_tab")
         val SPLASH_ANIMATION_ENABLED = booleanPreferencesKey("splash_animation_enabled")
         val AUTO_CHECK_UPDATES = booleanPreferencesKey("auto_check_updates")
         val LX_BOARD_INCLUDE_QUEUE = booleanPreferencesKey("lx_board_include_queue")
@@ -765,7 +766,7 @@ constructor(
 
     val inPlayerLyricsEnabledFlow: Flow<Boolean> =
             dataStore.data.map { preferences ->
-                preferences[PreferencesKeys.IN_PLAYER_LYRICS_ENABLED] ?: true
+                preferences[PreferencesKeys.IN_PLAYER_LYRICS_ENABLED] ?: false
             }
 
     suspend fun setInPlayerLyricsEnabled(enabled: Boolean) {
@@ -1475,6 +1476,17 @@ constructor(
     suspend fun setShowRecentTab(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.SHOW_RECENT_TAB] = enabled
+        }
+    }
+
+    val showLxMusicTabFlow: Flow<Boolean> =
+            dataStore.data.map { preferences ->
+                preferences[PreferencesKeys.SHOW_LX_MUSIC_TAB] ?: true
+            }
+
+    suspend fun setShowLxMusicTab(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.SHOW_LX_MUSIC_TAB] = enabled
         }
     }
 

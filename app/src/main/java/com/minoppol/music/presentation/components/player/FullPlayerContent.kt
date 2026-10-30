@@ -2310,7 +2310,7 @@ private fun InPlayerLyrics(
 ) {
     if (lines.isEmpty()) return
 
-    var lastValidIndex by remember { mutableIntStateOf(0) }
+    var lastValidIndex by remember(lines) { mutableIntStateOf(0) }
     if (currentIndex in lines.indices) {
         lastValidIndex = currentIndex
     }
@@ -2326,11 +2326,13 @@ private fun InPlayerLyrics(
     val density = LocalDensity.current
     val viewportBottomPaddingPx = with(density) { (fontSize * 0.6f).dp.roundToPx() }
 
+    val estimatedItemHeightPx = with(density) { (fontSize.dp + lineVerticalPadding * 2).roundToPx() }
     LaunchedEffect(displayIndex, viewportHeightPx, itemHeightPx) {
-        if (displayIndex in lines.indices && viewportHeightPx > 0 && itemHeightPx > 0) {
+        if (displayIndex in lines.indices && viewportHeightPx > 0) {
+            val itemH = if (itemHeightPx > 0) itemHeightPx else estimatedItemHeightPx
             listState.animateScrollToItem(
                 index = displayIndex + 1,
-                scrollOffset = (itemHeightPx / 2 + viewportBottomPaddingPx) - viewportHeightPx / 2
+                scrollOffset = (itemH / 2 + viewportBottomPaddingPx) - viewportHeightPx / 2
             )
         }
     }

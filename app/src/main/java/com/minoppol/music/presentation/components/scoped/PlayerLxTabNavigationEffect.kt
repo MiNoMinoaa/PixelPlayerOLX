@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.minoppol.music.presentation.navigation.Screen
 import com.minoppol.music.presentation.navigation.navigateToTopLevelSafely
@@ -18,7 +19,9 @@ internal fun PlayerLxTabNavigationEffect(
     playerViewModel: PlayerViewModel
 ) {
     val latestSheetCollapsedTargetY by rememberUpdatedState(sheetCollapsedTargetY)
-    LaunchedEffect(navController) {
+    val showLxMusicTab by playerViewModel.showLxMusicTab.collectAsStateWithLifecycle()
+    LaunchedEffect(navController, showLxMusicTab) {
+        if (!showLxMusicTab) return@LaunchedEffect
         playerViewModel.lxTabNavRequests.collectLatest {
             sheetMotionController.snapCollapsed(latestSheetCollapsedTargetY)
             playerViewModel.collapsePlayerSheet()

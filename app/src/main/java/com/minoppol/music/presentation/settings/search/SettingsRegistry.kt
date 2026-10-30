@@ -293,6 +293,18 @@ object SettingsRegistry {
                 onToggle = { viewModel, checked -> viewModel.setNavBarCompactMode(checked) }
             ),
             SettingSpec(
+                id = "appearance_show_lx_music_tab",
+                itemKey = "item_appearance_show_lx_music_tab",
+                titleRes = R.string.setcat_show_lx_music_tab_title,
+                subtitleRes = R.string.setcat_show_lx_music_tab_subtitle,
+                category = SettingsCategory.APPEARANCE,
+                subscreenRoute = Screen.SettingsCategory.createRoute("appearance"),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf("discover", "online", "lx", "tab", "navbar", "hide", "show", "visibility"),
+                getValue = { it.showLxMusicTab },
+                onToggle = { viewModel, checked -> viewModel.setShowLxMusicTab(checked) }
+            ),
+            SettingSpec(
                 id = "appearance_show_search_tab",
                 itemKey = "item_appearance_show_search_tab",
                 titleRes = R.string.setcat_show_search_tab_title,

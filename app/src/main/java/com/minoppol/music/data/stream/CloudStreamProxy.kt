@@ -463,10 +463,22 @@ abstract class CloudStreamProxy<K : Any>(
                                     body.byteStream().use { input ->
                                         val buffer = ByteArray(64 * 1024)
                                         var bytesRead: Int
-                                        while (input.read(buffer)
-                                                .also { bytesRead = it } != -1
-                                        ) {
-                                            writeFully(buffer, 0, bytesRead)
+                                        try {
+                                            while (input.read(buffer)
+                                                    .also { bytesRead = it } != -1
+                                            ) {
+                                                writeFully(buffer, 0, bytesRead)
+                                            }
+                                        } catch (e: Exception) {
+                                            val msg = e.toString()
+                                            if (msg.contains("ChannelWriteException") ||
+                                                msg.contains("ClosedChannelException") ||
+                                                msg.contains("Broken pipe") ||
+                                                msg.contains("JobCancellationException")
+                                            ) {
+                                            } else {
+                                                throw e
+                                            }
                                         }
                                     }
                                 }

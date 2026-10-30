@@ -230,7 +230,7 @@
     <string name="player_error_lx_load_failed_logged_in">Failed to load song... please load a music source script, then retry</string>
     <string name="player_error_lx_playback_failed">The song is temporarily unavailable. Please try again later.</string>
     <string name="player_error_lx_no_copyright">This song has no copyright and cannot be played</string>
-    <string name="player_error_lx_vip_need_vip">This song requires VIP or a music source script to play</string>
+    <string name="player_error_lx_vip_need_vip">This song is a VIP song. Load a music source script to play it.</string>
     <string name="player_error_script_dead_retry">Source link expired, trying other sources…</string>
     <string name="player_error_lx_trial_playing">Playing VIP song trial (128k)</string>
     <string name="player_error_network_unavailable">Network unavailable, please check your connection and retry</string>
@@ -407,8 +407,8 @@
     <string name="lx_title_current_source">Current source</string>
     <string name="lx_msg_loading">Loading…</string>
     <string name="lx_msg_declared_sources">Declared sources: %1$s</string>
-    <string name="lx_btn_url_import">Import from URL</string>
-    <string name="lx_btn_file_import">Import from file</string>
+    <string name="lx_btn_url_import">URL</string>
+    <string name="lx_btn_file_import">File</string>
     <string name="lx_msg_not_logged_in">Not logged in, tap to sign in to Netease on the web</string>
     <string name="lx_msg_not_logged_in_platform">Not logged in, tap to sign in on the web</string>
     <string name="lx_msg_login_expired_status">Login expired, tap to sign in again</string>

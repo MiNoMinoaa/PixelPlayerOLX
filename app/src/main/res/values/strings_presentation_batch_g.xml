@@ -145,7 +145,7 @@
     <string name="device_capabilities_finding_unsupported_title">%1$d tracks may not decode natively</string>
     <string name="device_capabilities_finding_unsupported_body">Formats to review: %1$s.</string>
     <string name="device_capabilities_finding_resample_title">%1$d local tracks may be resampled</string>
-    <string name="device_capabilities_finding_resample_body">The library reaches %1$d Hz, above the current output sample rate.</string>
+    <string name="device_capabilities_finding_resample_body">The library reaches %1$d Hz, above the current output sample rate. Android resamples these tracks automatically; playback is unaffected.</string>
     <string name="device_capabilities_finding_unknown_title">%1$d tracks have unknown metadata</string>
     <string name="device_capabilities_finding_unknown_body">A full library rescan can fill missing MIME, bitrate, and sample-rate data.</string>
     <string name="device_capabilities_more_count">+%1$d more</string>

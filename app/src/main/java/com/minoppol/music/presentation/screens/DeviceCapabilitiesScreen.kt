@@ -491,7 +491,7 @@ private fun PlaybackReadinessCard(
     modifier: Modifier = Modifier
 ) {
     val needsReview = playbackCompatibility?.let {
-        it.unsupportedLibrarySongCount > 0 || it.resampledLocalSongCount > 0
+        it.unsupportedLibrarySongCount > 0
     } ?: false
     val containerColor = if (needsReview) {
         MaterialTheme.colorScheme.errorContainer
@@ -837,7 +837,11 @@ private fun PlaybackFindingsCard(
 
     CapabilityCard(
         title = stringResource(R.string.device_capabilities_findings_title),
-        icon = if (hasFindings) Icons.Rounded.Warning else Icons.Rounded.CheckCircle,
+        icon = when {
+            compatibility.unsupportedLibrarySongCount > 0 -> Icons.Rounded.Warning
+            hasFindings -> Icons.Rounded.Info
+            else -> Icons.Rounded.CheckCircle
+        },
         modifier = modifier
     ) {
         if (!hasFindings) {
@@ -868,7 +872,7 @@ private fun PlaybackFindingsCard(
         if (compatibility.resampledLocalSongCount > 0) {
             Spacer(Modifier.height(8.dp))
             FindingRow(
-                icon = Icons.Rounded.Warning,
+                icon = Icons.Rounded.Info,
                 title = stringResource(
                     R.string.device_capabilities_finding_resample_title,
                     compatibility.resampledLocalSongCount
@@ -877,7 +881,7 @@ private fun PlaybackFindingsCard(
                     R.string.device_capabilities_finding_resample_body,
                     compatibility.maxLocalSampleRate ?: 0
                 ),
-                tone = FindingTone.Warning
+                tone = FindingTone.Info
             )
         }
 

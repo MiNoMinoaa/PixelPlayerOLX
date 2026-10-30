@@ -233,6 +233,9 @@ interface MusicDao {
     @Query("SELECT id FROM songs WHERE source_type = 0")
     suspend fun getAllMediaStoreSongIds(): List<Long>
 
+    @Query("SELECT id, content_uri_string FROM songs WHERE source_type = 0")
+    suspend fun getLocalSongContentUris(): List<LocalSongContentUri>
+
     @Query("DELETE FROM songs WHERE id IN (:songIds)")
     suspend fun deleteSongsByIds(songIds: List<Long>)
 
@@ -2071,3 +2074,8 @@ interface MusicDao {
         const val SONG_BATCH_SIZE = 500
     }
 }
+
+data class LocalSongContentUri(
+    val id: Long,
+    @androidx.room.ColumnInfo(name = "content_uri_string") val contentUriString: String,
+)

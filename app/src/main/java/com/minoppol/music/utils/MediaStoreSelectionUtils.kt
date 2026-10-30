@@ -13,6 +13,8 @@ private val MIDI_EXTENSION_SELECTION_ARGS = arrayOf(
     "%.midi"
 )
 
+const val APP_DOWNLOAD_DIR_PATTERN = "%/Music/PixelPlayer/%"
+
 /**
  * Builds the baseline MediaStore selection for user-facing local audio.
  *
@@ -42,5 +44,5 @@ fun buildLocalAudioSelection(minDurationMs: Int): Pair<String, Array<String>> {
     return selection to arrayOf(clampedMinDurationMs.toString()) +
         MIDI_MIME_SELECTION_ARGS +
         MIDI_EXTENSION_SELECTION_ARGS +
-        arrayOf("%/Music/PixelPlayer/%")
+        arrayOf(APP_DOWNLOAD_DIR_PATTERN)
 }

@@ -675,12 +675,15 @@ class MainActivity : ComponentActivity() {
     ) = traceSection("MainActivity.MainUI") {
         val showSearchTab by playerViewModel.showSearchTab.collectAsStateWithLifecycle()
         val showRecentTab by playerViewModel.showRecentTab.collectAsStateWithLifecycle()
-        val commonNavItems = remember(showSearchTab, showRecentTab) {
+        val showLxMusicTab by playerViewModel.showLxMusicTab.collectAsStateWithLifecycle()
+        val commonNavItems = remember(showSearchTab, showRecentTab, showLxMusicTab) {
             var items = persistentListOf(
                 BottomNavItem(R.string.tab_home, R.drawable.rounded_home_24, R.drawable.home_24_rounded_filled, Screen.Home),
-                BottomNavItem(R.string.tab_online, R.drawable.rounded_headphones_24, R.drawable.rounded_headphones_24, Screen.LxMusic),
-                BottomNavItem(R.string.tab_library, R.drawable.rounded_library_music_24, R.drawable.rounded_library_music_24, Screen.Library),
             )
+            if (showLxMusicTab) {
+                items = items.adding(BottomNavItem(R.string.tab_online, R.drawable.rounded_headphones_24, R.drawable.rounded_headphones_24, Screen.LxMusic))
+            }
+            items = items.adding(BottomNavItem(R.string.tab_library, R.drawable.rounded_library_music_24, R.drawable.rounded_library_music_24, Screen.Library))
             if (showRecentTab) {
                 items = items.adding(BottomNavItem(R.string.tab_recent, R.drawable.rounded_schedule_24, R.drawable.rounded_schedule_24, Screen.RecentlyPlayedTab))
             }
@@ -692,11 +695,14 @@ class MainActivity : ComponentActivity() {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
         var isSearchBarActive by remember { mutableStateOf(false) }
-        LaunchedEffect(showSearchTab, showRecentTab, currentRoute) {
+        LaunchedEffect(showSearchTab, showRecentTab, showLxMusicTab, currentRoute) {
             if (!showSearchTab && currentRoute == Screen.Search.route) {
                 navController.navigateToTopLevelSafely(Screen.Home.route)
             }
             if (!showRecentTab && currentRoute == Screen.RecentlyPlayedTab.route) {
+                navController.navigateToTopLevelSafely(Screen.Home.route)
+            }
+            if (!showLxMusicTab && currentRoute == Screen.LxMusic.route) {
                 navController.navigateToTopLevelSafely(Screen.Home.route)
             }
         }

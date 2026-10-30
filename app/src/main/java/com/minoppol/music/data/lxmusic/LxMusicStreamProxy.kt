@@ -152,7 +152,7 @@ class LxMusicStreamProxy @Inject constructor(
 
     private val degradedCacheMs = 3L * 60 * 1000L
 
-    private val deadUpstreamStatusCodes = setOf(400, 402, 403, 404, 410, 502)
+    private val deadUpstreamStatusCodes = setOf(400, 402, 403, 404, 410, 500, 502, 503, 504)
 
     override suspend fun cacheKeySuffix(id: LxStreamId): String =
         repository.currentPreferredQuality()

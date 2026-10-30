@@ -45,12 +45,27 @@ class AppUpdateChecker @Inject constructor(
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     fun ignoreVersion(version: String) {
-        prefs.edit().putString(KEY_IGNORED_VERSION, version).apply()
+        prefs.edit()
+            .putString(KEY_IGNORED_VERSION, version)
+            .putInt(KEY_IGNORED_MANUAL_CHECKS, 0)
+            .apply()
     }
 
     private fun ignoredVersion(): String? = prefs.getString(KEY_IGNORED_VERSION, null)
 
-    suspend fun checkForUpdate(currentVersion: String): UpdateCheckResult = withContext(Dispatchers.IO) {
+    private fun manualChecksSinceIgnored(): Int = prefs.getInt(KEY_IGNORED_MANUAL_CHECKS, 0)
+
+    private fun clearIgnoredState() {
+        prefs.edit()
+            .remove(KEY_IGNORED_VERSION)
+            .putInt(KEY_IGNORED_MANUAL_CHECKS, 0)
+            .apply()
+    }
+
+    suspend fun checkForUpdate(
+        currentVersion: String,
+        manual: Boolean = false
+    ): UpdateCheckResult = withContext(Dispatchers.IO) {
         var lastError: Exception? = null
         var info: AppUpdateInfo? = null
         try {
@@ -92,11 +107,31 @@ class AppUpdateChecker @Inject constructor(
             }
         }
 
+        val ignored = ignoredVersion()
         when {
             info == null -> UpdateCheckResult.Error(lastError.toUserMessage())
-            !isNewer(parseVersion(info.latestVersion), parseVersion(currentVersion)) -> UpdateCheckResult.UpToDate
-            info.latestVersion == ignoredVersion() -> UpdateCheckResult.Ignored
-            else -> UpdateCheckResult.UpdateAvailable(info)
+            !isNewer(parseVersion(info.latestVersion), parseVersion(currentVersion)) -> {
+                if (ignored != null) clearIgnoredState()
+                UpdateCheckResult.UpToDate
+            }
+            info.latestVersion == ignored -> {
+                if (manual) {
+                    val checks = manualChecksSinceIgnored() + 1
+                    if (checks >= IGNORED_MANUAL_CHECK_LIMIT) {
+                        clearIgnoredState()
+                        UpdateCheckResult.UpdateAvailable(info)
+                    } else {
+                        prefs.edit().putInt(KEY_IGNORED_MANUAL_CHECKS, checks).apply()
+                        UpdateCheckResult.Ignored
+                    }
+                } else {
+                    UpdateCheckResult.Ignored
+                }
+            }
+            else -> {
+                if (ignored != null) clearIgnoredState()
+                UpdateCheckResult.UpdateAvailable(info)
+            }
         }
     }
 
@@ -182,6 +217,8 @@ class AppUpdateChecker @Inject constructor(
     private companion object {
         const val PREFS_NAME = "app_update_prefs"
         const val KEY_IGNORED_VERSION = "ignored_version"
+        const val KEY_IGNORED_MANUAL_CHECKS = "ignored_manual_checks"
+        const val IGNORED_MANUAL_CHECK_LIMIT = 3
         const val RELEASE_API_URL = "https://api.github.com/repos/MiNoMinoaa/PixelPlayerOLX/releases/latest"
         const val MIRROR_GHPROXY_API_URL = "https://gh-proxy.com/https://api.github.com/repos/MiNoMinoaa/PixelPlayerOLX/releases/latest"
         const val RELEASE_DIRECT_URL = "https://github.com/MiNoMinoaa/PixelPlayerOLX/releases/latest"

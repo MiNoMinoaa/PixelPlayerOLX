@@ -149,16 +149,15 @@ fun AppUpdateDialog(
                             )
                         }
                         if (update.apkUrl != null) {
-                            Row(
+                            Column(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 UpdateDialogButton(
                                     label = stringResource(R.string.update_available_browser_download),
                                     icon = Icons.Rounded.OpenInBrowser,
                                     selected = false,
-                                    modifier = Modifier.weight(1f),
+                                    modifier = Modifier.fillMaxWidth(),
                                     onClick = {
                                         appUpdateViewModel.dismissUpdate()
                                         onDismiss()
@@ -176,7 +175,7 @@ fun AppUpdateDialog(
                                     label = stringResource(R.string.update_available_in_app_download),
                                     icon = Icons.Rounded.Download,
                                     selected = true,
-                                    modifier = Modifier.weight(1f),
+                                    modifier = Modifier.fillMaxWidth(),
                                     onClick = { appUpdateViewModel.startInstall() }
                                 )
                             }
@@ -382,7 +381,7 @@ private fun UpdateDialogButton(
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     softWrap = false,
-                    overflow = TextOverflow.Clip,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }

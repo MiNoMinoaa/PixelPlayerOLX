@@ -524,6 +524,13 @@ class PlayerViewModel @Inject constructor(
             initialValue = true
         )
 
+    val showLxMusicTab: StateFlow<Boolean> = userPreferencesRepository.showLxMusicTabFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = true
+        )
+
     val lxBoardIncludeQueue: StateFlow<Boolean> = userPreferencesRepository.lxBoardIncludeQueueFlow
         .stateIn(
             scope = viewModelScope,
@@ -2972,6 +2979,15 @@ class PlayerViewModel @Inject constructor(
                     }
                     val isLxSource = currentSong
                         ?.contentUriString?.startsWith("lxmusic://") == true
+                    if (!isStaleError && isLxSource && !connectivityStateHolder.isOnline.value) {
+                        _toastEvents.emit(context.getString(R.string.player_error_network_unavailable))
+                        Timber.w(
+                            "onPlayerError: network offline, skip dead-link retry and auto-advance (item %s)",
+                            playerItemId
+                        )
+                        playerCtrl.playWhenReady = false
+                        return@launch
+                    }
                     if (!isStaleError && isLxSource && currentSong != null &&
                         (deadLinkRetryCounts[currentSong.id] ?: 0) < 2 &&
                         isDeadLinkError(error) &&
@@ -3012,12 +3028,12 @@ class PlayerViewModel @Inject constructor(
                             } == true
                         val baseMsg = context.getString(
                             when {
+                                !connectivityStateHolder.isOnline.value ->
+                                    R.string.player_error_network_unavailable
                                 noCopyright -> R.string.player_error_lx_no_copyright
                                 platformDenied -> R.string.player_error_lx_vip_need_vip
                                 officialLayerTried -> R.string.player_error_lx_vip_need_vip
                                 hasVip -> R.string.player_error_lx_vip_need_vip
-                                !connectivityStateHolder.isOnline.value ->
-                                    R.string.player_error_network_unavailable
                                 hasScript -> R.string.player_error_lx_playback_failed
                                 neteaseCookieStore.hasCookie() -> R.string.player_error_lx_load_failed_logged_in
                                 else -> R.string.player_error_lx_load_failed

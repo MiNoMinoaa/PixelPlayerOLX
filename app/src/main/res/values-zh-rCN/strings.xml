@@ -227,7 +227,7 @@
 <string name="player_error_lx_load_failed_logged_in">歌曲加载失败了...请加载音源脚本后重试</string>
 <string name="player_error_lx_playback_failed">歌曲暂时无法播放，请稍后重试</string>
 <string name="player_error_lx_no_copyright">此歌曲无版权，无法播放</string>
-<string name="player_error_lx_vip_need_vip">此歌曲需要开通 VIP，或加载音源脚本播放</string>
+<string name="player_error_lx_vip_need_vip">当前歌曲为VIP歌曲，需要加载音源脚本播放</string>
 <string name="player_error_script_dead_retry">音源链接已失效，正在尝试其他音源…</string>
 <string name="player_error_lx_trial_playing">正在试听 VIP 歌曲（128k）</string>
 <string name="player_error_network_unavailable">当前网络不可用，请检查网络后重试</string>

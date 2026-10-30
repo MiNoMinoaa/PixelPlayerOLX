@@ -35,6 +35,9 @@ class AppUpdateViewModel @Inject constructor(
 
     val installStatus: StateFlow<UpdateInstallStatus> = updateInstaller.status
 
+    private val _isChecking = MutableStateFlow(false)
+    val isChecking: StateFlow<Boolean> = _isChecking.asStateFlow()
+
     private val _toast = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val toast: SharedFlow<String> = _toast.asSharedFlow()
 
@@ -46,6 +49,7 @@ class AppUpdateViewModel @Inject constructor(
     fun checkForUpdates(currentVersion: String) {
         if (checking) return
         checking = true
+        _isChecking.value = true
         viewModelScope.launch {
             val enabled = userPreferencesRepository.autoCheckUpdatesFlow.first()
             if (enabled) {
@@ -55,15 +59,18 @@ class AppUpdateViewModel @Inject constructor(
                 }
             }
             checking = false
+            _isChecking.value = false
         }
     }
 
     fun checkForUpdatesManual(currentVersion: String) {
         if (checking) return
         checking = true
+        _isChecking.value = true
         viewModelScope.launch {
-            val result = updateChecker.checkForUpdate(currentVersion)
+            val result = updateChecker.checkForUpdate(currentVersion, manual = true)
             checking = false
+            _isChecking.value = false
             when (result) {
                 is UpdateCheckResult.UpdateAvailable -> {
                     _updateInfo.value = result.info

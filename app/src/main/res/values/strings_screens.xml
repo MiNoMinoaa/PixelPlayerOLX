@@ -194,6 +194,9 @@
     <string name="update_check_error_network">Network connection failed. Please check your connection and try again.</string>
     <string name="update_check_error_generic">Failed to check for updates. Please try again later.</string>
     <string name="update_install_downloading">Downloading v%1$s…</string>
+    <string name="update_card_checking">Checking for updates…</string>
+    <string name="update_card_no_update">You are on the latest version</string>
+    <string name="update_card_progress_format">%1$d%%</string>
     <string name="update_install_installing">Installing…</string>
     <string name="update_install_awaiting_permission">Allow installs from this app to continue</string>
     <string name="update_install_allow">Allow</string>

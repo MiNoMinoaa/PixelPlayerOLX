@@ -193,6 +193,9 @@
     <string name="update_check_error_network">网络连接失败，请检查网络后重试</string>
     <string name="update_check_error_generic">检查更新失败，请稍后重试</string>
     <string name="update_install_downloading">正在下载 v%1$s…</string>
+    <string name="update_card_checking">正在检查更新…</string>
+    <string name="update_card_no_update">已是最新版本</string>
+    <string name="update_card_progress_format">%1$d%%</string>
     <string name="update_install_installing">正在安装…</string>
     <string name="update_install_awaiting_permission">需要授予“安装未知应用”权限后才能继续</string>
     <string name="update_install_allow">去允许</string>
