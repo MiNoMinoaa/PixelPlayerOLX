@@ -3674,17 +3674,27 @@ class LxMusicViewModel @Inject constructor(
     }
 
 
+    private var importUrlJob: kotlinx.coroutines.Job? = null
+
     fun importFromUrl(url: String, onResult: (String?) -> Unit) {
-        viewModelScope.launch {
-            val result = repository.importFromUrl(url)
-            result.onSuccess { meta ->
-                _loadState.value = LoadState(loadedSources = emptyList())
+        importUrlJob = viewModelScope.launch {
+            try {
+                repository.importFromUrl(url)
+                    .onSuccess { meta ->
+                        _loadState.value = LoadState(loadedSources = emptyList())
+                        onResult(null)
+                    }.onFailure { e ->
+                        onResult(e.message)
+                    }
+            } catch (e: kotlinx.coroutines.CancellationException) {
                 onResult(null)
-            }.onFailure { e ->
-                _loadState.value = LoadState(error = context.getString(R.string.lx_error_import_failed, e.message ?: ""))
-                onResult(e.message)
+                throw e
             }
         }
+    }
+
+    fun cancelImportFromUrl() {
+        importUrlJob?.cancel()
     }
 
     val scriptUpdateAlerts
@@ -3726,7 +3736,6 @@ class LxMusicViewModel @Inject constructor(
                 _loadState.value = LoadState(loadedSources = emptyList())
                 onResult(null)
             }.onFailure { e ->
-                _loadState.value = LoadState(error = context.getString(R.string.lx_error_import_failed, e.message ?: ""))
                 onResult(e.message)
             }
         }
@@ -3737,20 +3746,16 @@ class LxMusicViewModel @Inject constructor(
         viewModelScope.launch {
             var successCount = 0
             var failCount = 0
-            var lastError: String? = null
             uris.forEach { uri ->
                 val result = repository.importFromFile(uri)
                 result.onSuccess {
                     successCount++
-                }.onFailure { e ->
+                }.onFailure {
                     failCount++
-                    lastError = e.message
                 }
             }
-            _loadState.value = if (failCount == 0 || successCount > 0) {
-                LoadState(loadedSources = emptyList())
-            } else {
-                LoadState(error = context.getString(R.string.lx_error_import_failed, lastError ?: ""))
+            if (failCount == 0 || successCount > 0) {
+                _loadState.value = LoadState(loadedSources = emptyList())
             }
             onDone(successCount, failCount)
         }

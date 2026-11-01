@@ -35,6 +35,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -49,7 +51,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -77,6 +81,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -114,7 +119,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bookmark
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Cloud
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Headphones
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.minoppol.music.presentation.viewmodel.AudioBookmarksViewModel
@@ -289,7 +296,15 @@ fun FullPlayerContent(
     val bluetoothName = fullPlayerSlice.bluetoothName
     val navigationBarBottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
-    val playbackPosition by playerViewModel.currentPlaybackPosition.collectAsStateWithLifecycle()
+    val playbackPositionRaw by playerViewModel.currentPlaybackPosition.collectAsStateWithLifecycle()
+    val qualitySwitchInFlight by playerViewModel.qualitySwitchInFlight.collectAsStateWithLifecycle()
+    var heldPlaybackPositionMs by remember { mutableStateOf(0L) }
+    val playbackPosition = if (playbackPositionRaw <= 0L && qualitySwitchInFlight && heldPlaybackPositionMs > 0L) {
+        heldPlaybackPositionMs
+    } else {
+        if (playbackPositionRaw > 0L) heldPlaybackPositionMs = playbackPositionRaw
+        playbackPositionRaw
+    }
     val inPlayerLyricsOn by playerViewModel.inPlayerLyricsEnabled.collectAsStateWithLifecycle()
     val inPlayerLyricsFontSize by playerViewModel.inPlayerLyricsFontSize.collectAsStateWithLifecycle()
     val currentLyrics = lyricsProvider()
@@ -622,6 +637,7 @@ fun FullPlayerContent(
 
     val playerProgressSection: @Composable () -> Unit = {
         val currentLxQuality by playerViewModel.currentLxQuality.collectAsStateWithLifecycle()
+        val qualitySwitchInFlight by playerViewModel.qualitySwitchInFlight.collectAsStateWithLifecycle()
         FullPlayerProgressSection(
             song = song,
             playbackMetadataMediaId = playbackAudioMetadata.mediaId,
@@ -631,6 +647,8 @@ fun FullPlayerContent(
             playbackMetadataBitDepth = playbackAudioMetadata.bitDepth,
             playbackMetadataChannelCount = playbackAudioMetadata.channelCount,
             lxQuality = currentLxQuality,
+            qualitySwitchInFlight = qualitySwitchInFlight,
+            onQualitySwitch = { playerViewModel.switchLxQuality(it) },
             currentPositionProvider = currentPositionProvider,
             totalDurationValue = totalDurationValue,
             showPlayerFileInfo = showPlayerFileInfo,
@@ -1301,6 +1319,8 @@ private fun FullPlayerProgressSection(
     playbackMetadataBitDepth: Int?,
     playbackMetadataChannelCount: Int?,
     lxQuality: String?,
+    qualitySwitchInFlight: Boolean,
+    onQualitySwitch: (String) -> Unit,
     currentPositionProvider: () -> Long,
     totalDurationValue: Long,
     showPlayerFileInfo: Boolean,
@@ -1344,6 +1364,8 @@ private fun FullPlayerProgressSection(
         audioBitDepth = audioBitDepth,
         audioChannelCount = audioChannelCount,
         lxQuality = lxQuality,
+        qualitySwitchInFlight = qualitySwitchInFlight,
+        onQualitySwitch = onQualitySwitch,
         showAudioFileInfo = showPlayerFileInfo,
         onSeek = onSeek,
         expansionFractionProvider = expansionFractionProvider,
@@ -1786,6 +1808,8 @@ private fun PlayerProgressBarSection(
     audioBitDepth: Int?,
     audioChannelCount: Int?,
     lxQuality: String?,
+    qualitySwitchInFlight: Boolean,
+    onQualitySwitch: (String) -> Unit,
     showAudioFileInfo: Boolean,
     onSeek: (Long) -> Unit,
     expansionFractionProvider: () -> Float,
@@ -1972,6 +1996,8 @@ private fun PlayerProgressBarSection(
                 textColor = timeTextColor,
                 audioMetaLabel = displayAudioMetaLabel,
                 lxQuality = lxQuality,
+                qualitySwitchInFlight = qualitySwitchInFlight,
+                onQualitySwitch = onQualitySwitch,
                 horizontalTrackInset = progressSectionHorizontalInset
             )
         }
@@ -2024,6 +2050,7 @@ private fun EfficientSlider(
     )
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun EfficientTimeLabels(
     positionState: androidx.compose.runtime.State<Long>,
@@ -2032,6 +2059,8 @@ private fun EfficientTimeLabels(
     textColor: Color,
     audioMetaLabel: String?,
     lxQuality: String?,
+    qualitySwitchInFlight: Boolean,
+    onQualitySwitch: (String) -> Unit,
     horizontalTrackInset: Dp
 ) {
     val coarsePositionMs by remember(isVisible, positionState) {
@@ -2082,7 +2111,33 @@ private fun EfficientTimeLabels(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (lxQuality != null) {
-                    LxQualityBadge(lxQuality)
+                    if (qualitySwitchInFlight) {
+                        Box(
+                            modifier = Modifier.size(24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            LoadingIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = textColor.copy(alpha = 0.8f)
+                            )
+                        }
+                    } else {
+                        var showQualityDialog by remember { mutableStateOf(false) }
+                        LxQualityBadge(
+                            quality = lxQuality,
+                            onClick = { showQualityDialog = true }
+                        )
+                        if (showQualityDialog) {
+                            LxQualitySwitchDialog(
+                                currentQuality = lxQuality,
+                                onSelect = { key ->
+                                    showQualityDialog = false
+                                    if (key != lxQuality) onQualitySwitch(key)
+                                },
+                                onDismiss = { showQualityDialog = false }
+                            )
+                        }
+                    }
                 }
                 if (!audioMetaLabel.isNullOrBlank()) {
                     Surface(
@@ -2107,25 +2162,37 @@ private fun EfficientTimeLabels(
     }
 }
 
+private data class LxQualityEntry(
+    val key: String,
+    val labelRes: Int,
+    val descRes: Int,
+    val accent: Color
+)
+
+private val LxQualityEntries = listOf(
+    LxQualityEntry("master", R.string.lxmusic_quality_master, R.string.lxmusic_quality_master_desc, Color(0xFFE0A33E)),
+    LxQualityEntry("atmos+", R.string.lxmusic_quality_atmos_plus, R.string.lxmusic_quality_atmos_plus_desc, Color(0xFF9B7CFF)),
+    LxQualityEntry("atmos", R.string.lxmusic_quality_atmos, R.string.lxmusic_quality_atmos_desc, Color(0xFF7C83FF)),
+    LxQualityEntry("flac24bit", R.string.lxmusic_quality_flac24bit, R.string.lxmusic_quality_flac24bit_desc, Color(0xFFE0863E)),
+    LxQualityEntry("flac", R.string.lxmusic_quality_flac, R.string.lxmusic_quality_flac_desc, Color(0xFF35B68C)),
+    LxQualityEntry("320k", R.string.lxmusic_quality_320k, R.string.lxmusic_quality_320k_desc, Color(0xFF5C97D6)),
+    LxQualityEntry("128k", R.string.lxmusic_quality_128k, R.string.lxmusic_quality_128k_desc, Color(0xFF9AA0A6)),
+)
+
+private fun lxQualityEntryOf(quality: String): LxQualityEntry? =
+    LxQualityEntries.firstOrNull { it.key == quality }
+
 @Composable
-private fun LxQualityBadge(quality: String) {
-    val (label, accent) = when (quality) {
-        "master" -> "母带" to Color(0xFFE0A33E)
-        "atmos+" -> "全景声+" to Color(0xFF9B7CFF)
-        "atmos" -> "全景声" to Color(0xFF7C83FF)
-        "flac24bit" -> "Hi-Res" to Color(0xFFE0863E)
-        "flac" -> "无损" to Color(0xFF35B68C)
-        "320k" -> "高品" to Color(0xFF5C97D6)
-        "128k" -> "标准" to Color(0xFF9AA0A6)
-        else -> return
-    }
+private fun LxQualityBadge(quality: String, onClick: (() -> Unit)? = null) {
+    val entry = lxQualityEntryOf(quality) ?: return
     Surface(
         shape = RoundedCornerShape(999.dp),
-        color = accent.copy(alpha = 0.18f),
-        contentColor = accent,
+        color = entry.accent.copy(alpha = 0.18f),
+        contentColor = entry.accent,
+        modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
     ) {
         Text(
-            text = label,
+            text = stringResource(entry.labelRes),
             style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = FontWeight.Bold,
                 fontSize = 11.sp
@@ -2134,6 +2201,93 @@ private fun LxQualityBadge(quality: String) {
             modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp)
         )
     }
+}
+
+@Composable
+private fun LxQualitySwitchDialog(
+    currentQuality: String,
+    onSelect: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.lxmusic_quality_title)) },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+            ) {
+                LxQualityEntries.forEach { entry ->
+                    val isSelected = entry.key == currentQuality
+                    Surface(
+                        onClick = { onSelect(entry.key) },
+                        shape = RoundedCornerShape(18.dp),
+                        color = if (isSelected)
+                            MaterialTheme.colorScheme.primaryContainer
+                        else
+                            MaterialTheme.colorScheme.surfaceContainer,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 64.dp),
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(10.dp)
+                                    .clip(CircleShape)
+                                    .background(entry.accent)
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(entry.labelRes),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (isSelected)
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.onSurface,
+                                )
+                                Text(
+                                    text = stringResource(entry.descRes),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (isSelected)
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            if (isSelected) {
+                                Icon(
+                                    Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            val cancelShape = RoundedCornerShape(21.dp)
+            FilledTonalIconButton(
+                onClick = onDismiss,
+                shape = cancelShape,
+                modifier = Modifier
+                    .shadow(2.dp, cancelShape)
+                    .size(42.dp),
+            ) {
+                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.lx_desc_cancel))
+            }
+        },
+    )
 }
 
 @Composable

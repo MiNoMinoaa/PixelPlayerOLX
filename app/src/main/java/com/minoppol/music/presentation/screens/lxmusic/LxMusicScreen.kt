@@ -150,6 +150,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -167,6 +168,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextGeometricTransform
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.util.lerp
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
@@ -256,6 +258,7 @@ fun LxMusicScreen(
     var showUrlImport by remember { mutableStateOf(false) }
     var urlInput by remember { mutableStateOf("") }
     var urlImporting by remember { mutableStateOf(false) }
+    var urlImportError by remember { mutableStateOf<String?>(null) }
     var scriptUpdateQueue by remember { mutableStateOf(listOf<com.minoppol.music.data.lxmusic.LxScriptUpdateAlert>()) }
     var scriptUpdateWorking by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -1220,12 +1223,21 @@ fun LxMusicScreen(
     }
 
     if (showScriptSheet) {
+        val scriptSheetStatusBars = WindowInsets.statusBars
         ModalBottomSheet(
             onDismissRequest = { showScriptSheet = false },
             sheetState = rememberModalSheetState(skipPartiallyExpanded = true),
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             Column(modifier = Modifier
+                .layout { measurable, constraints ->
+                    val statusBarTop = scriptSheetStatusBars.getTop(this)
+                    val maxHeight = (constraints.maxHeight - statusBarTop).coerceAtLeast(0)
+                    val placeable = measurable.measure(
+                        constraints.copy(minHeight = 0, maxHeight = maxHeight),
+                    )
+                    layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+                }
                 .padding(horizontal = 20.dp, vertical = 8.dp)
                 .verticalScroll(rememberScrollState())) {
                 var scriptIntroExpanded by remember { mutableStateOf(false) }
@@ -1672,49 +1684,72 @@ fun LxMusicScreen(
         val urlFieldColor = MaterialTheme.colorScheme.secondaryContainer
             .compositeOver(MaterialTheme.colorScheme.surface)
         val onUrlFieldColor = MaterialTheme.colorScheme.onSecondaryContainer
+        val submitUrlImport: () -> Unit = {
+            if (urlInput.isNotBlank() && !urlImporting) {
+                urlImportError = null
+                urlImporting = true
+                viewModel.importFromUrl(urlInput) { error ->
+                    urlImporting = false
+                    if (error == null) {
+                        showUrlImport = false
+                        urlInput = ""
+                    } else {
+                        urlImportError = error
+                    }
+                }
+            }
+        }
         AlertDialog(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            onDismissRequest = { if (!urlImporting) showUrlImport = false },
+            onDismissRequest = {
+                viewModel.cancelImportFromUrl()
+                showUrlImport = false
+                urlInput = ""
+                urlImportError = null
+            },
             title = { Text(stringResource(R.string.lx_title_import_from_url)) },
             text = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .shadow(4.dp, RoundedCornerShape(18.dp))
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(urlFieldColor)
-                        .padding(horizontal = 16.dp),
-                    contentAlignment = Alignment.CenterStart,
-                ) {
-                    BasicTextField(
-                        value = urlInput,
-                        onValueChange = { urlInput = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        enabled = !urlImporting,
-                        textStyle = MaterialTheme.typography.bodyLarge.copy(color = onUrlFieldColor),
-                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done,
-                        ),
-                        keyboardActions = KeyboardActions(onDone = {
-                            if (urlInput.isNotBlank() && !urlImporting) {
-                                urlImporting = true
-                                viewModel.importFromUrl(urlInput) {
-                                    urlImporting = false
-                                    showUrlImport = false
-                                    urlInput = ""
-                                }
+                Column {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .shadow(4.dp, RoundedCornerShape(18.dp))
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(urlFieldColor)
+                            .padding(horizontal = 16.dp),
+                        contentAlignment = Alignment.CenterStart,
+                    ) {
+                        BasicTextField(
+                            value = urlInput,
+                            onValueChange = { urlInput = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            enabled = !urlImporting,
+                            textStyle = MaterialTheme.typography.bodyLarge.copy(color = onUrlFieldColor),
+                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done,
+                            ),
+                            keyboardActions = KeyboardActions(onDone = { submitUrlImport() }),
+                        ) { innerTextField ->
+                            if (urlInput.isEmpty()) {
+                                Text("https://example.com/source.js",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = onUrlFieldColor.copy(alpha = 0.6f))
                             }
-                        }),
-                    ) { innerTextField ->
-                        if (urlInput.isEmpty()) {
-                            Text("https://example.com/source.js",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = onUrlFieldColor.copy(alpha = 0.6f))
+                            innerTextField()
                         }
-                        innerTextField()
+                    }
+                    urlImportError?.let { message ->
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            message,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                            maxLines = 4,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                     }
                 }
             },
@@ -1724,8 +1759,12 @@ fun LxMusicScreen(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     FilledTonalIconButton(
-                        enabled = !urlImporting,
-                        onClick = { showUrlImport = false },
+                        onClick = {
+                            viewModel.cancelImportFromUrl()
+                            showUrlImport = false
+                            urlInput = ""
+                            urlImportError = null
+                        },
                         shape = lxDialogCancelShape,
                         modifier = Modifier
                             .shadow(2.dp, lxDialogCancelShape)
@@ -1735,14 +1774,7 @@ fun LxMusicScreen(
                     }
                     FilledTonalIconButton(
                         enabled = urlInput.isNotBlank() && !urlImporting,
-                        onClick = {
-                            urlImporting = true
-                            viewModel.importFromUrl(urlInput) {
-                                urlImporting = false
-                                showUrlImport = false
-                                urlInput = ""
-                            }
-                        },
+                        onClick = { submitUrlImport() },
                         shape = lxDialogConfirmShape,
                         modifier = Modifier
                             .then(

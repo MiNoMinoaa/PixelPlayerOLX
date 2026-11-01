@@ -32,7 +32,9 @@ import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.OpenInBrowser
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Update
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -52,11 +54,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -69,6 +73,7 @@ import com.minoppol.music.presentation.settings.search.settingHighlight
 import com.minoppol.music.presentation.viewmodel.AppUpdateViewModel
 import com.minoppol.music.presentation.viewmodel.SettingsViewModel
 import kotlinx.coroutines.launch
+import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import kotlin.math.roundToInt
 
 @Composable
@@ -345,19 +350,15 @@ private fun UpdateCardActions(
                     )
                 }
             }
-            Row(
+            CardIconButton(
+                text = stringResource(R.string.update_install_cancel_download),
+                icon = Icons.Rounded.Close,
+                selected = false,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Spacer(Modifier.weight(1f))
-                CardIconButton(
-                    text = stringResource(R.string.update_install_cancel_download),
-                    icon = Icons.Rounded.Close,
-                    selected = false,
-                    onClick = { appUpdateViewModel.stopInstall() }
-                )
-            }
+                shape = AbsoluteSmoothCornerShape(18.dp, 60),
+                buttonHeight = 48.dp,
+                onClick = { appUpdateViewModel.stopInstall() }
+            )
         }
 
         is UpdateInstallStatus.AwaitingInstallPermission -> {
@@ -375,6 +376,7 @@ private fun UpdateCardActions(
                     text = stringResource(R.string.update_install_allow),
                     icon = Icons.Rounded.Check,
                     selected = true,
+                    modifier = Modifier.weight(1f),
                     onClick = {
                         runCatching {
                             context.startActivity(
@@ -386,12 +388,11 @@ private fun UpdateCardActions(
                         }
                     }
                 )
-                Spacer(Modifier.weight(1f))
                 CardIconButton(
-                    text = null,
+                    text = stringResource(R.string.update_install_confirm),
                     icon = Icons.Rounded.Download,
                     selected = false,
-                    contentDescription = stringResource(R.string.update_install_confirm),
+                    modifier = Modifier.weight(1f),
                     onClick = { appUpdateViewModel.resumeInstall() }
                 )
             }
@@ -413,15 +414,16 @@ private fun UpdateCardActions(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(Modifier.weight(1f))
-                CardIconButton(
-                    text = null,
-                    icon = Icons.Rounded.Download,
-                    selected = true,
-                    contentDescription = stringResource(R.string.update_install_confirm),
-                    onClick = { appUpdateViewModel.openInstallConfirmation() }
-                )
             }
+            CardIconButton(
+                text = stringResource(R.string.update_install_confirm),
+                icon = Icons.Rounded.Download,
+                selected = true,
+                modifier = Modifier.fillMaxWidth(),
+                shape = AbsoluteSmoothCornerShape(18.dp, 60),
+                buttonHeight = 48.dp,
+                onClick = { appUpdateViewModel.openInstallConfirmation() }
+            )
         }
 
         is UpdateInstallStatus.Installing -> {
@@ -461,17 +463,17 @@ private fun UpdateCardActions(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 CardIconButton(
-                    text = null,
+                    text = stringResource(R.string.update_available_download),
                     icon = Icons.Rounded.Refresh,
                     selected = true,
-                    contentDescription = stringResource(R.string.update_available_download),
+                    modifier = Modifier.weight(1f),
                     onClick = { appUpdateViewModel.startInstall() }
                 )
-                Spacer(Modifier.weight(1f))
                 CardIconButton(
                     text = stringResource(R.string.update_available_cancel),
                     icon = Icons.Rounded.Close,
                     selected = false,
+                    modifier = Modifier.weight(1f),
                     onClick = { appUpdateViewModel.dismissInstallError() }
                 )
             }
@@ -492,6 +494,7 @@ private fun UpdateCardActions(
                     text = stringResource(R.string.update_install_open_page),
                     icon = Icons.Rounded.Download,
                     selected = true,
+                    modifier = Modifier.weight(1f),
                     onClick = {
                         runCatching {
                             context.startActivity(
@@ -503,11 +506,11 @@ private fun UpdateCardActions(
                         }
                     }
                 )
-                Spacer(Modifier.weight(1f))
                 CardIconButton(
                     text = stringResource(R.string.update_available_cancel),
                     icon = Icons.Rounded.Close,
                     selected = false,
+                    modifier = Modifier.weight(1f),
                     onClick = { appUpdateViewModel.dismissInstallError() }
                 )
             }
@@ -517,13 +520,15 @@ private fun UpdateCardActions(
             if (updateInfo.apkUrl != null) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     CardIconButton(
                         text = stringResource(R.string.update_available_browser_download),
                         icon = Icons.Rounded.OpenInBrowser,
                         selected = false,
                         modifier = Modifier.fillMaxWidth(),
+                        shape = AbsoluteSmoothCornerShape(18.dp, 60),
+                        buttonHeight = 48.dp,
                         onClick = {
                             runCatching {
                                 context.startActivity(
@@ -540,32 +545,30 @@ private fun UpdateCardActions(
                         icon = Icons.Rounded.Download,
                         selected = true,
                         modifier = Modifier.fillMaxWidth(),
+                        shape = AbsoluteSmoothCornerShape(18.dp, 60),
+                        buttonHeight = 48.dp,
                         onClick = { appUpdateViewModel.startInstall() }
                     )
                 }
             } else {
-                Row(
+                CardIconButton(
+                    text = stringResource(R.string.update_available_go_download),
+                    icon = Icons.Rounded.Download,
+                    selected = true,
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Spacer(Modifier.weight(1f))
-                    CardIconButton(
-                        text = stringResource(R.string.update_available_go_download),
-                        icon = Icons.Rounded.Download,
-                        selected = true,
-                        onClick = {
-                            runCatching {
-                                context.startActivity(
-                                    Intent(
-                                        Intent.ACTION_VIEW,
-                                        updateInfo.downloadUrl.toUri()
-                                    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                )
-                            }
+                    shape = AbsoluteSmoothCornerShape(18.dp, 60),
+                    buttonHeight = 48.dp,
+                    onClick = {
+                        runCatching {
+                            context.startActivity(
+                                Intent(
+                                    Intent.ACTION_VIEW,
+                                    updateInfo.downloadUrl.toUri()
+                                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            )
                         }
-                    )
-                }
+                    }
+                )
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -576,13 +579,14 @@ private fun UpdateCardActions(
                     text = stringResource(R.string.update_available_ignore),
                     icon = Icons.Rounded.Block,
                     selected = false,
+                    modifier = Modifier.weight(1f),
                     onClick = { appUpdateViewModel.ignoreVersion(updateInfo.latestVersion) }
                 )
-                Spacer(Modifier.weight(1f))
                 CardIconButton(
                     text = stringResource(R.string.setcat_updates_check_now_title),
                     icon = Icons.Rounded.Refresh,
                     selected = false,
+                    modifier = Modifier.weight(1f),
                     onClick = { appUpdateViewModel.checkForUpdatesManual(versionName) }
                 )
             }
@@ -597,49 +601,44 @@ private fun CardIconButton(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    contentDescription: String? = null,
+    shape: Shape = RoundedCornerShape(26.dp),
+    buttonHeight: Dp = 42.dp,
 ) {
-    Surface(
+    FilledTonalButton(
         onClick = onClick,
-        shape = RoundedCornerShape(14.dp),
-        color = if (selected)
-            MaterialTheme.colorScheme.primary
-        else
-            MaterialTheme.colorScheme.secondaryContainer,
-        modifier = modifier,
+        shape = shape,
+        colors = ButtonDefaults.filledTonalButtonColors(
+            containerColor = if (selected)
+                MaterialTheme.colorScheme.primary
+            else
+                MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = if (selected)
+                MaterialTheme.colorScheme.onPrimary
+            else
+                MaterialTheme.colorScheme.onSecondaryContainer,
+        ),
+        contentPadding = PaddingValues(horizontal = 12.dp),
+        modifier = modifier.height(buttonHeight),
     ) {
-        Row(
-            modifier = Modifier.padding(
-                horizontal = if (text == null) 10.dp else 12.dp,
-                vertical = 8.dp,
-            ),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            Icon(
-                icon,
-                contentDescription = contentDescription,
-                modifier = Modifier.size(18.dp),
-                tint = if (selected)
+        Icon(
+            icon,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+        )
+        if (text != null) {
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge,
+                color = if (selected)
                     MaterialTheme.colorScheme.onPrimary
                 else
                     MaterialTheme.colorScheme.onSecondaryContainer,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
             )
-            if (text != null) {
-                Spacer(Modifier.width(5.dp))
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (selected)
-                        MaterialTheme.colorScheme.onPrimary
-                    else
-                        MaterialTheme.colorScheme.onSecondaryContainer,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    softWrap = false,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
         }
     }
 }

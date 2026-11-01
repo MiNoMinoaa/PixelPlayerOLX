@@ -1130,7 +1130,7 @@ class DualPlayerEngine @Inject constructor(
                         val (offlineUri, downloadedQuality) = offlineResult
                         val useLocal = downloadedQuality == null ||
                             PlaybackCacheDataSource.qualityRank(downloadedQuality) >=
-                                PlaybackCacheDataSource.qualityRank(lxMusicStreamProxy.preferredQualitySync())
+                                PlaybackCacheDataSource.qualityRank(lxMusicStreamProxy.preferredQualityForUri(originalUri))
                         if (useLocal) {
                             return dataSpec.buildUpon().setUri(offlineUri).build()
                         }
@@ -1303,7 +1303,7 @@ class DualPlayerEngine @Inject constructor(
                     cloudOfflineRepository.resolveLocalUriWithQuality(uriString)?.takeIf { (_, downloadedQuality) ->
                         downloadedQuality == null ||
                             PlaybackCacheDataSource.qualityRank(downloadedQuality) >=
-                                PlaybackCacheDataSource.qualityRank(lxMusicStreamProxy.preferredQualitySync())
+                                PlaybackCacheDataSource.qualityRank(lxMusicStreamProxy.preferredQualityForUri(uriString))
                     }?.first
                 } catch (error: Exception) {
                     Timber.tag("DualPlayerEngine").w(error, "Offline copy lookup failed")

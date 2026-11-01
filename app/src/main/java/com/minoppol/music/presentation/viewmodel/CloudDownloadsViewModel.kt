@@ -97,6 +97,11 @@ class CloudDownloadsViewModel @Inject constructor(
         _playbackCacheSpaceBytes.value = playbackCacheManager.cacheSpaceBytes()
     }
 
+    fun refresh() {
+        refreshPlaybackCacheSpace()
+        viewModelScope.launch { repository.purgeStaleCompletedRecords() }
+    }
+
     fun setPlaybackCacheLimitMb(limitMb: Int) {
         viewModelScope.launch { playbackCacheManager.setLimitMb(limitMb) }
     }

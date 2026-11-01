@@ -17,7 +17,20 @@ internal fun resolveMediaItemsWithTrustedArtworkGrants(
     requestedItems.forEach { requestedItem ->
         val trustedItem = trustedItemResolver(requestedItem.mediaId)
         if (trustedItem != null) {
-            resolvedItems += trustedItem
+            val fragment = requestedItem.localConfiguration?.uri?.fragment
+            val carriedItem = if (fragment.isNullOrBlank()) {
+                trustedItem
+            } else {
+                val baseUri = trustedItem.localConfiguration?.uri
+                if (baseUri == null || baseUri.fragment != null) {
+                    trustedItem
+                } else {
+                    trustedItem.buildUpon()
+                        .setUri(baseUri.buildUpon().fragment(fragment).build())
+                        .build()
+                }
+            }
+            resolvedItems += carriedItem
             trustedArtworkGrantItems += trustedItem
         } else {
             resolvedItems += requestedItem

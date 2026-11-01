@@ -231,6 +231,7 @@
     <string name="player_error_lx_playback_failed">The song is temporarily unavailable. Please try again later.</string>
     <string name="player_error_lx_no_copyright">This song has no copyright and cannot be played</string>
     <string name="player_error_lx_vip_need_vip">This song is a VIP song. Load a music source script to play it.</string>
+    <string name="player_quality_switch_unavailable">Selected quality is unavailable right now; keeping the current stream</string>
     <string name="player_error_script_dead_retry">Source link expired, trying other sources…</string>
     <string name="player_error_lx_trial_playing">Playing VIP song trial (128k)</string>
     <string name="player_error_network_unavailable">Network unavailable, please check your connection and retry</string>
@@ -254,6 +255,7 @@
     <string name="cloud_downloading">Downloading…</string>
     <string name="cloud_download_progress">%1$d%%</string>
     <string name="cloud_remove_download">Remove download</string>
+    <string name="cloud_remove_download_confirm_message">This removes the download record and deletes the downloaded audio file for \"%1$s\". The song stays in your library and streams online again.</string>
     <string name="cloud_download_retry">Retry</string>
     <string name="cloud_album_download">Download album</string>
     <string name="cloud_playlist_download" tools:ignore="MissingTranslation">Download playlist</string>

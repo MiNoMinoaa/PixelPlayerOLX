@@ -109,7 +109,7 @@ object LocalArtworkUri {
                 if (normalizedStoredUri.contains("?t=")) {
                     normalizedStoredUri
                 } else {
-                    buildSongUri(songId)
+                    buildSongUri(parseSongId(normalizedStoredUri) ?: songId)
                 }
             }
             looksLikeVolatileArtworkUri(normalizedStoredUri) -> buildSongUri(songId)

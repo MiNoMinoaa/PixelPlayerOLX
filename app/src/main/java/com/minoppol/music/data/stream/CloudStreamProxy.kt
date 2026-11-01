@@ -152,13 +152,12 @@ abstract class CloudStreamProxy<K : Any>(
         const val MAX_URL_CACHE_ENTRIES = 200
     }
 
-    fun peekResolved(id: K): ResolvedInfo? {
+    fun peekResolved(id: K, qualityHint: String? = null): ResolvedInfo? {
         val exactKey = "$id"
         val idPrefix = "$id|"
+        val scanPrefix = if (qualityHint == null) exactKey else idPrefix + "q=" + qualityHint
         return urlCache.entries
-            .filter { (key, cached) ->
-                (key == exactKey || key.startsWith(idPrefix)) && !cached.isExpired()
-            }
+            .filter { (key, cached) -> !cached.isExpired() && key.startsWith(scanPrefix) }
             .maxByOrNull { it.value.timestamp }
             ?.let { ResolvedInfo(it.value.quality, it.value.contentToken) }
     }
@@ -204,11 +203,19 @@ abstract class CloudStreamProxy<K : Any>(
         return awaitReady(timeoutMs)
     }
 
-    fun getProxyUrl(id: K): String {
+    fun getProxyUrl(id: K, qualityHint: String? = null): String {
         if (actualPort == 0) return ""
         if (!validateId(id)) return ""
-        return "http://127.0.0.1:$actualPort$routePrefix/${formatIdForUrl(id)}?t=$sessionToken"
+        val base = "http://127.0.0.1:$actualPort$routePrefix/${formatIdForUrl(id)}?t=$sessionToken"
+        return if (qualityHint.isNullOrBlank()) base else "$base&q=$qualityHint"
     }
+
+    private fun fragmentQualityHint(uri: Uri): String? =
+        uri.fragment
+            ?.takeIf { it.startsWith("q=") }
+            ?.substringAfter('=')
+            ?.filter { it.isLetterOrDigit() || it == '_' }
+            ?.takeIf { it.isNotBlank() }
 
     /**
      * Parse a cloud URI (e.g. "navidrome://song-id" or "jellyfin://item-id") and return
@@ -220,7 +227,7 @@ abstract class CloudStreamProxy<K : Any>(
         val rawId = extractIdFromUri(uri) ?: return null
         val id = parseRouteParam(rawId) ?: return null
         if (!validateId(id)) return null
-        return getProxyUrl(id)
+        return getProxyUrl(id, fragmentQualityHint(uri))
     }
 
     fun start() {
@@ -303,9 +310,13 @@ abstract class CloudStreamProxy<K : Any>(
         )
     }
 
-    protected suspend fun getOrFetchStreamUrl(id: K): String? {
-        val suffix = cacheKeySuffix(id)
-        val cacheKey = if (suffix.isNullOrBlank()) "$id" else "$id|$suffix"
+    protected suspend fun getOrFetchStreamUrl(id: K, qualityHint: String? = null): String? {
+        val cacheKey = if (qualityHint.isNullOrBlank()) {
+            val suffix = cacheKeySuffix(id)
+            if (suffix.isNullOrBlank()) "$id" else "$id|$suffix"
+        } else {
+            "$id|q=$qualityHint"
+        }
         urlCache[cacheKey]?.let { cached ->
             if (!cached.isExpired()) return cached.url
         }
@@ -356,6 +367,9 @@ abstract class CloudStreamProxy<K : Any>(
                         call.respond(HttpStatusCode.BadRequest, "Invalid ID")
                         return@get
                     }
+                    val qualityHint = call.request.queryParameters["q"]
+                        ?.filter { it.isLetterOrDigit() || it == '_' }
+                        ?.takeIf { it.isNotBlank() }
 
                     try {
                         val rangeValidation = CloudStreamSecurity.validateRangeHeader(
@@ -369,7 +383,7 @@ abstract class CloudStreamProxy<K : Any>(
                             return@get
                         }
 
-                        val streamUrl = getOrFetchStreamUrl(id)
+                        val streamUrl = getOrFetchStreamUrl(id, qualityHint)
                         if (streamUrl.isNullOrBlank()) {
                             call.respond(HttpStatusCode.ServiceUnavailable, "No stream URL available")
                             return@get
@@ -449,21 +463,105 @@ abstract class CloudStreamProxy<K : Any>(
                                 }
                                 ?: ContentType.Audio.Any
 
-                            if (upstream.code == 206) {
+                            val clientRangeStart = rangeValidation.startInclusive
+                            val upstreamIgnoredRange = upstream.code == 200 &&
+                                clientRangeStart != null && clientRangeStart > 0L
+                            if (upstreamIgnoredRange) {
+                                Timber.tag("LxProxyDiag").d(
+                                    "upstream ignored range start=%d, skipping bytes manually",
+                                    clientRangeStart
+                                )
+                            }
+
+                            val normalizedContentType = contentTypeHeader
+                                ?.substringBefore(';')
+                                ?.trim()
+                                ?.lowercase()
+                            val lastSegment = streamUrl.substringBefore('?').substringAfterLast('/')
+                            val encryptedContainer = lastSegment.startsWith("aim", ignoreCase = true)
+                            val suspiciousStream = encryptedContainer ||
+                                ((normalizedContentType == null ||
+                                    normalizedContentType == "application/octet-stream" ||
+                                    normalizedContentType == "binary/octet-stream") &&
+                                    !lastSegment.contains('.') &&
+                                    (clientRangeStart == null || clientRangeStart == 0L))
+                            if (suspiciousStream) {
+                                val sniff = ByteArray(32)
+                                var sniffLength = if (encryptedContainer) -1 else 0
+                                if (!encryptedContainer) {
+                                    runCatching {
+                                        body.source().peek().inputStream().use { peekStream ->
+                                            while (sniffLength < sniff.size) {
+                                                val read = peekStream.read(sniff, sniffLength, sniff.size - sniffLength)
+                                                if (read == -1) break
+                                                sniffLength += read
+                                            }
+                                        }
+                                    }
+                                }
+                                if (sniffLength == -1 ||
+                                    !CloudStreamSecurity.looksLikeAudioBytes(sniff, sniffLength)) {
+                                    Timber.tag("LxProxyDiag").w(
+                                        "stream rejected: no audio signature in %d sniffed bytes (type=%s url=%s)",
+                                        sniffLength,
+                                        contentTypeHeader ?: "(none)",
+                                        streamUrl.take(80)
+                                    )
+                                    runCatching { onUpstreamStreamFailure(id, 403) }
+                                    call.respond(
+                                        HttpStatusCode.UnsupportedMediaType,
+                                        "Upstream stream is not playable audio"
+                                    )
+                                    return@get
+                                }
+                            }
+
+                            if (upstream.code == 206 || upstreamIgnoredRange) {
                                 call.response.status(HttpStatusCode.PartialContent)
                             } else {
                                 call.response.status(HttpStatusCode.OK)
                             }
                             call.response.header("Accept-Ranges", acceptRanges ?: "bytes")
-                            contentLength?.let { call.response.header("Content-Length", it) }
-                            contentRange?.let { call.response.header("Content-Range", it) }
+                            if (upstreamIgnoredRange) {
+                                val total = contentLength?.toLongOrNull()
+                                if (total != null) {
+                                    val remaining = total - clientRangeStart
+                                    if (remaining < 0L) {
+                                        call.respond(
+                                            HttpStatusCode.RequestedRangeNotSatisfiable,
+                                            "Requested range beyond upstream content"
+                                        )
+                                        return@get
+                                    }
+                                    call.response.header("Content-Length", remaining.toString())
+                                    call.response.header(
+                                        "Content-Range",
+                                        "bytes $clientRangeStart-${total - 1}/$total"
+                                    )
+                                }
+                            } else {
+                                contentLength?.let { call.response.header("Content-Length", it) }
+                                contentRange?.let { call.response.header("Content-Range", it) }
+                            }
 
                             call.respondBytesWriter(contentType = responseContentType) {
                                 withContext(Dispatchers.IO) {
                                     body.byteStream().use { input ->
                                         val buffer = ByteArray(64 * 1024)
+                                        var skipRemaining = if (upstreamIgnoredRange) clientRangeStart else 0L
                                         var bytesRead: Int
                                         try {
+                                            while (skipRemaining > 0L) {
+                                                val chunk = input.read(
+                                                    buffer,
+                                                    0,
+                                                    minOf(buffer.size.toLong(), skipRemaining).toInt()
+                                                ).also { bytesRead = it }
+                                                if (chunk == -1) {
+                                                    return@use
+                                                }
+                                                skipRemaining -= chunk
+                                            }
                                             while (input.read(buffer)
                                                     .also { bytesRead = it } != -1
                                             ) {

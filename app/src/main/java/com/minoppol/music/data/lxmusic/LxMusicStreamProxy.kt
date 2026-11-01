@@ -159,6 +159,18 @@ class LxMusicStreamProxy @Inject constructor(
 
     fun preferredQualitySync(): String = repository.preferredQualitySync
 
+    fun preferredQualityFor(id: LxStreamId): String =
+        repository.songQualityOverrideFor(id.source, id.songmid) ?: preferredQualitySync()
+
+    fun preferredQualityForUri(uriString: String): String {
+        val id = parsePlaybackUri(uriString)
+        return if (id != null) preferredQualityFor(id) else preferredQualitySync()
+    }
+
+    fun invalidateResolvedPlayFor(id: LxStreamId) {
+        repository.invalidateResolvedPlay(id.source, id.songmid)
+    }
+
     private fun contentTokenOf(url: String): String? = runCatching {
         val uri = Uri.parse(url)
         val rawPath = uri.path ?: return@runCatching null
@@ -213,7 +225,12 @@ class LxMusicStreamProxy @Inject constructor(
         val songmid = uri.path?.removePrefix("/") ?: return null
         val id = LxStreamId(source, songmid)
         if (!validateId(id)) return null
-        return getProxyUrl(id)
+        val hint = uri.fragment
+            ?.takeIf { it.startsWith("q=") }
+            ?.substringAfter('=')
+            ?.filter { it.isLetterOrDigit() || it == '_' }
+            ?.takeIf { it.isNotBlank() }
+        return getProxyUrl(id, hint)
     }
 
     override suspend fun resolveStreamUrl(id: LxStreamId): String? = resolveStreamUrlMeta(id)?.url
@@ -311,9 +328,14 @@ class LxMusicStreamProxy @Inject constructor(
         val songmid = uri.path?.removePrefix("/") ?: return
         val id = LxStreamId(source, songmid)
         if (!validateId(id)) return
+        val hint = uri.fragment
+            ?.takeIf { it.startsWith("q=") }
+            ?.substringAfter('=')
+            ?.filter { it.isLetterOrDigit() || it == '_' }
+            ?.takeIf { it.isNotBlank() }
         try {
             warmUpSemaphore.withPermit {
-                getOrFetchStreamUrl(id)
+                getOrFetchStreamUrl(id, hint)
             }
         } catch (e: Exception) {
             if (e is CancellationException) throw e

@@ -110,6 +110,25 @@ object CloudStreamSecurity {
         return parsed in 0..MAX_STREAM_CONTENT_LENGTH_BYTES
     }
 
+    fun looksLikeAudioBytes(bytes: ByteArray, length: Int): Boolean {
+        if (length <= 0) return false
+        fun matches(offset: Int, vararg expected: Int): Boolean {
+            if (length < offset + expected.size) return false
+            return expected.indices.all { (bytes[offset + it].toInt() and 0xFF) == expected[it] }
+        }
+        if (matches(0, 0x66, 0x4C, 0x61, 0x43)) return true
+        if (matches(0, 0x49, 0x44, 0x33)) return true
+        if (length >= 2 && (bytes[0].toInt() and 0xFF) == 0xFF && (bytes[1].toInt() and 0xE0) == 0xE0) return true
+        if (matches(0, 0x4F, 0x67, 0x67, 0x53)) return true
+        if (matches(0, 0x52, 0x49, 0x46, 0x46) && matches(8, 0x57, 0x41, 0x56, 0x45)) return true
+        if (matches(0, 0x1A, 0x45, 0xDF, 0xA3)) return true
+        if (matches(4, 0x66, 0x74, 0x79, 0x70)) return true
+        if (matches(0, 0x77, 0x76, 0x70, 0x6B)) return true
+        if (matches(0, 0x4D, 0x41, 0x43, 0x20)) return true
+        if (matches(0, 0x44, 0x53, 0x44, 0x20)) return true
+        return false
+    }
+
     fun isSafeRemoteStreamUrl(
         url: String,
         allowedHostSuffixes: Set<String> = emptySet(),

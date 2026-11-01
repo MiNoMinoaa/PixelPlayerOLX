@@ -2,9 +2,11 @@ package com.minoppol.music.data.worker
 
 import android.content.ContentResolver
 import android.content.ContentUris
+import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
 import androidx.hilt.work.HiltWorker
 import androidx.work.Constraints
@@ -18,6 +20,7 @@ import androidx.work.workDataOf
 import com.minoppol.music.data.database.AlbumEntity
 import com.minoppol.music.data.database.ArtistEntity
 import com.minoppol.music.data.database.MusicDao
+import com.minoppol.music.data.database.OfflineTrackDao
 import com.minoppol.music.data.database.SongArtistCrossRef
 import com.minoppol.music.data.database.SongEntity
 import com.minoppol.music.data.database.SourceType
@@ -34,7 +37,9 @@ import com.minoppol.music.utils.AlbumArtCacheManager
 import com.minoppol.music.utils.AlbumArtUtils
 import com.minoppol.music.utils.AudioMetaUtils.getAudioMetadata
 import com.minoppol.music.utils.DirectoryRuleResolver
-import com.minoppol.music.utils.APP_DOWNLOAD_DIR_PATTERN
+import com.minoppol.music.utils.APP_DOWNLOAD_DIR_NAME
+import com.minoppol.music.utils.APP_DOWNLOAD_DIR_PATTERNS
+import com.minoppol.music.utils.LEGACY_APP_DOWNLOAD_DIR_NAME
 import com.minoppol.music.utils.buildLocalAudioSelection
 import com.minoppol.music.utils.normalizeMetadataTextOrEmpty
 import com.minoppol.music.utils.traceAsyncSection
@@ -102,6 +107,7 @@ constructor(
         @Assisted appContext: Context,
         @Assisted workerParams: WorkerParameters,
         private val musicDao: MusicDao,
+        private val offlineTrackDao: OfflineTrackDao,
         private val userPreferencesRepository: UserPreferencesRepository,
         private val lyricsRepository: LyricsRepository,
         private val cloudSyncCoordinator: CloudSyncCoordinator
@@ -194,10 +200,44 @@ constructor(
                                 "(current=$directoryRulesVersion, applied=$lastAppliedDirectoryRulesVersion)"
                         )
 
+                    migrateLegacyDownloadDirEntries()
+
+                    val onlineSourceUris = musicDao.getOnlineSongContentUris().toHashSet()
+                    val pendingOnlineMediaIds = if (onlineSourceUris.isEmpty()) {
+                        emptySet()
+                    } else {
+                        offlineTrackDao.getCompleted()
+                            .mapNotNull { record ->
+                                val localPath = record.localPath ?: return@mapNotNull null
+                                if (!localPath.startsWith("content://media/")) return@mapNotNull null
+                                val mediaId = Uri.parse(localPath).lastPathSegment?.toLongOrNull()
+                                    ?: return@mapNotNull null
+                                if (record.sourceUri in onlineSourceUris) mediaId else null
+                            }
+                            .toHashSet()
+                    }
+
+                    if (syncMode != SyncMode.REBUILD) {
+                        removeBaselineRowsShadowedByOnlineEntries(pendingOnlineMediaIds)
+                    }
+                    if (syncMode != SyncMode.REBUILD) {
+                        mergeDuplicateLocalRows()
+                    }
+
+                    val ownerByMediaId = musicDao.getLocalSongContentUris()
+                        .mapNotNull { local ->
+                            val mediaId = Uri.parse(local.contentUriString).lastPathSegment?.toLongOrNull()
+                            mediaId?.let { mediaId to local.id }
+                        }
+                        .toMap()
+
                     var hasUnindexedSongs = false
                     if (syncMode != SyncMode.REBUILD) {
                         val localSongIds = musicDao.getAllMediaStoreSongIds().toHashSet()
-                        val mediaStoreIds = fetchMediaStoreIds(directoryResolver)
+                        val hiddenMediaIds = pendingOnlineMediaIds + ownerByMediaId.entries
+                            .filter { (mediaId, rowId) -> mediaId != rowId }
+                            .map { it.key }
+                        val mediaStoreIds = fetchMediaStoreIds(directoryResolver) - hiddenMediaIds
                         hasUnindexedSongs = mediaStoreIds.any { it !in localSongIds }
 
                         val downloadDirMediaIds = fetchDownloadDirMediaStoreIds()
@@ -255,7 +295,7 @@ constructor(
 
                     val progressBatchSize = 50
 
-                    val songsToInsert = fetchMusicFromMediaStore(
+                    var songsToInsert = fetchMusicFromMediaStore(
                         fetchTimestamp,
                         syncPlan.forceMetadata,
                         directoryResolver,
@@ -274,6 +314,35 @@ constructor(
 
                     Timber.tag(TAG)
                         .i("Fetched ${songsToInsert.size} new/modified songs from MediaStore.")
+
+                    if (songsToInsert.isNotEmpty() && pendingOnlineMediaIds.isNotEmpty()) {
+                        val hiddenByOnlineEntry = songsToInsert.filter { scanned ->
+                            scanned.entity.id in pendingOnlineMediaIds
+                        }
+                        if (hiddenByOnlineEntry.isNotEmpty()) {
+                            songsToInsert = songsToInsert - hiddenByOnlineEntry
+                            Timber.tag(TAG)
+                                .i(
+                                    "Skipped ${hiddenByOnlineEntry.size} downloaded songs " +
+                                        "still shown by their online lx row."
+                                )
+                        }
+                    }
+
+                    if (syncMode != SyncMode.REBUILD && songsToInsert.isNotEmpty()) {
+                        val ownedByConvertedRow = songsToInsert.filter { scanned ->
+                            val owner = ownerByMediaId[scanned.entity.id]
+                            owner != null && owner != scanned.entity.id
+                        }
+                        if (ownedByConvertedRow.isNotEmpty()) {
+                            songsToInsert = songsToInsert - ownedByConvertedRow
+                            Timber.tag(TAG)
+                                .i(
+                                    "Skipped ${ownedByConvertedRow.size} MediaStore songs " +
+                                        "already owned by converted lx rows."
+                                )
+                        }
+                    }
 
                     val anySongsFetched = songsToInsert.isNotEmpty()
                     if (anySongsFetched) {
@@ -1205,13 +1274,150 @@ constructor(
         return ids
     }
 
+    private suspend fun migrateLegacyDownloadDirEntries() {
+        val legacyIds = mutableListOf<Long>()
+        try {
+            contentResolver.query(
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                arrayOf(MediaStore.Audio.Media._ID),
+                "${MediaStore.Audio.Media.DATA} LIKE ?",
+                arrayOf("%/Music/$LEGACY_APP_DOWNLOAD_DIR_NAME/%"),
+                null
+            )?.use { cursor ->
+                val idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+                while (cursor.moveToNext()) {
+                    legacyIds.add(cursor.getLong(idCol))
+                }
+            }
+        } catch (e: Exception) {
+            Timber.tag(TAG).w(e, "Failed to query legacy download dir entries")
+            return
+        }
+        if (legacyIds.isEmpty()) return
+
+        var migrated = 0
+        legacyIds.forEach { id ->
+            try {
+                val contentUri = ContentUris.withAppendedId(
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                    id
+                )
+                val values = ContentValues().apply {
+                    put(
+                        MediaStore.Audio.Media.RELATIVE_PATH,
+                        "${Environment.DIRECTORY_MUSIC}/$APP_DOWNLOAD_DIR_NAME"
+                    )
+                }
+                if (contentResolver.update(contentUri, values, null, null) > 0) {
+                    migrated++
+                    refreshStoredPathForContentUri(contentUri.toString())
+                }
+            } catch (e: Exception) {
+                Timber.tag(TAG).w(e, "Failed to migrate legacy download entry $id")
+            }
+        }
+        Timber.tag(TAG)
+            .i("Migrated $migrated/${legacyIds.size} legacy downloads to $APP_DOWNLOAD_DIR_NAME")
+    }
+
+    private suspend fun refreshStoredPathForContentUri(contentUriString: String) {
+        try {
+            val mediaId = contentUriString.toLongOrNull() ?: Uri.parse(contentUriString)
+                .lastPathSegment?.toLongOrNull() ?: return
+            val newPath = contentResolver.query(
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                arrayOf(MediaStore.Audio.Media.DATA),
+                "${MediaStore.Audio.Media._ID} = ?",
+                arrayOf(mediaId.toString()),
+                null
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) cursor.getString(0) else null
+            } ?: return
+            if (newPath.isNullOrBlank()) return
+            musicDao.updateLocalSongPathByContentUri(
+                contentUri = contentUriString,
+                filePath = newPath,
+                parentDir = File(newPath).parent ?: newPath
+            )
+        } catch (e: Exception) {
+            Timber.tag(TAG).w(e, "Failed to refresh stored path for $contentUriString")
+        }
+    }
+
+    private suspend fun removeBaselineRowsShadowedByOnlineEntries(pendingOnlineMediaIds: Set<Long>) {
+        try {
+            if (pendingOnlineMediaIds.isEmpty()) return
+            val shadowedRows = musicDao.getLocalSongContentUris()
+                .filter { local ->
+                    val mediaId = Uri.parse(local.contentUriString).lastPathSegment?.toLongOrNull()
+                    mediaId != null && mediaId == local.id && mediaId in pendingOnlineMediaIds
+                }
+            if (shadowedRows.isEmpty()) return
+            musicDao.deleteSongsAndRelatedData(shadowedRows.map { it.id })
+            Timber.tag(TAG)
+                .i("Removed ${shadowedRows.size} baseline rows shadowed by online lx rows")
+        } catch (e: Exception) {
+            Timber.tag(TAG).w(e, "Failed to remove baseline rows shadowed by online rows")
+        }
+    }
+
+    private suspend fun mergeDuplicateLocalRows() {
+        try {
+            val rows = musicDao.getLocalSongContentUris()
+            val duplicates = rows
+                .groupBy { Uri.parse(it.contentUriString).lastPathSegment?.toLongOrNull() }
+                .filterKeys { it != null }
+                .filterValues { it.size > 1 }
+            if (duplicates.isEmpty()) return
+
+            var merged = 0
+            duplicates.forEach { (mediaId, group) ->
+                val baseline = group.firstOrNull { it.id == mediaId } ?: return@forEach
+                val converted = group.filter { it.id != mediaId }
+                if (converted.size != 1) {
+                    Timber.tag(TAG)
+                        .w("Skipping ambiguous duplicate group mediaId=$mediaId (${group.size} rows)")
+                    return@forEach
+                }
+                val survivor = converted.first()
+                val entities = musicDao.getLocalSongsByIds(listOf(baseline.id, survivor.id))
+                    .associateBy { it.id }
+                val baselineEntity = entities[baseline.id] ?: return@forEach
+                val convertedEntity = entities[survivor.id] ?: return@forEach
+                musicDao.mergeLocalScanMetadata(
+                    songId = convertedEntity.id,
+                    filePath = baselineEntity.filePath,
+                    parentDir = baselineEntity.parentDirectoryPath,
+                    mimeType = baselineEntity.mimeType,
+                    bitrate = baselineEntity.bitrate,
+                    sampleRate = baselineEntity.sampleRate,
+                    albumArtUriString = baselineEntity.albumArtUriString
+                        ?: convertedEntity.albumArtUriString,
+                    duration = baselineEntity.duration,
+                )
+                musicDao.deleteSongsAndRelatedData(listOf(baseline.id))
+                merged++
+                Timber.tag(TAG)
+                    .i("Merged baseline row ${baseline.id} into converted row ${survivor.id} (mediaId=$mediaId)")
+            }
+            if (merged > 0) {
+                Timber.tag(TAG).i("Merged $merged duplicated local song rows")
+            }
+        } catch (e: Exception) {
+            Timber.tag(TAG).w(e, "Failed to merge duplicate local rows")
+        }
+    }
+
     private fun fetchDownloadDirMediaStoreIds(): Set<Long> {
         val ids = mutableSetOf<Long>()
+        val patternPlaceholders = APP_DOWNLOAD_DIR_PATTERNS.joinToString(" OR ") {
+            "${MediaStore.Audio.Media.DATA} LIKE ?"
+        }
         contentResolver.query(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
             arrayOf(MediaStore.Audio.Media._ID),
-            "${MediaStore.Audio.Media.DATA} LIKE ?",
-            arrayOf(APP_DOWNLOAD_DIR_PATTERN),
+            patternPlaceholders,
+            APP_DOWNLOAD_DIR_PATTERNS.toTypedArray(),
             null
         )?.use { cursor ->
             val idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)

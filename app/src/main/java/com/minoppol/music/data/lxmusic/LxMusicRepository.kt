@@ -17,11 +17,14 @@ import com.minoppol.music.data.lxmusic.platform.TencentOfficialApi
 import com.minoppol.music.data.preferences.UserPreferencesRepository
 import com.minoppol.music.data.stream.CloudStreamSecurity
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,16 +32,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import timber.log.Timber
 import java.io.File
+import java.io.IOException
 import java.net.URLEncoder
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -478,6 +486,8 @@ class LxMusicRepository @Inject constructor(
         }.getOrElse {
             Timber.w(it, "kugou search failed")
             emptyList()
+        }.let { base ->
+            enrichKugouSongs(base)
         }
     }
 
@@ -532,7 +542,82 @@ class LxMusicRepository @Inject constructor(
                     extraFields = extra,
                 ))
             }
-            songs
+            enrichKugouSongs(songs)
+        }
+    }
+
+    private suspend fun fetchKugouBatchQualityInfo(hashList: List<String>): Map<String, Map<String, Pair<String, Long>>> = withContext(Dispatchers.IO) {
+        if (hashList.isEmpty()) return@withContext emptyMap()
+        val resources = com.google.gson.JsonArray()
+        hashList.forEach { hash ->
+            resources.add(com.google.gson.JsonObject().apply {
+                addProperty("id", 0)
+                addProperty("type", "audio")
+                addProperty("hash", hash)
+            })
+        }
+        val payload = com.google.gson.JsonObject().apply {
+            addProperty("behavior", "play")
+            addProperty("clientver", "20049")
+            add("resource", resources)
+            addProperty("area_code", "1")
+            addProperty("quality", "128")
+            add("qualities", com.google.gson.JsonArray().apply {
+                listOf("128", "320", "flac", "high", "dolby", "viper_atmos", "viper_tape", "viper_clear").forEach { add(it) }
+            })
+        }
+        val url = "https://gateway.kugou.com/goodsmstore/v1/get_res_privilege?appid=1005&clientver=20049&clienttime=${System.currentTimeMillis()}&mid=NeZha"
+        val req = Request.Builder().url(url)
+            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+            .header("624868746c", "624868746c")
+            .post(payload.toString().toRequestBody("application/json; charset=utf-8".toMediaType()))
+            .build()
+        runCatching {
+            okHttpClient.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return@use emptyMap<String, Map<String, Pair<String, Long>>>()
+                val root = JsonParser.parseString(resp.body?.string().orEmpty()).asJsonObject
+                if (root.get("error_code")?.takeIf { it.isJsonPrimitive }?.asInt != 0) {
+                    return@use emptyMap<String, Map<String, Pair<String, Long>>>()
+                }
+                val data = root.getAsJsonArray("data") ?: return@use emptyMap<String, Map<String, Pair<String, Long>>>()
+                val result = mutableMapOf<String, Map<String, Pair<String, Long>>>()
+                for (index in hashList.indices) {
+                    val entry = data.get(index)?.takeIf { it.isJsonObject }?.asJsonObject ?: continue
+                    val goods = entry.getAsJsonArray("relate_goods") ?: continue
+                    val tiers = mutableMapOf<String, Pair<String, Long>>()
+                    for (goodEl in goods) {
+                        val good = goodEl.asJsonObject
+                        val quality = good.get("quality")?.takeIf { it.isJsonPrimitive }?.asString ?: continue
+                        val hash = good.get("hash")?.takeIf { it.isJsonPrimitive }?.asString ?: continue
+                        if (hash.isBlank()) continue
+                        val size = good.getAsJsonObject("info")?.get("filesize")?.takeIf { it.isJsonPrimitive }
+                            ?.let { runCatching { it.asLong }.getOrNull() } ?: 0L
+                        when (quality) {
+                            "128" -> tiers["128k"] = hash to size
+                            "320" -> tiers["320k"] = hash to size
+                            "flac" -> tiers["flac"] = hash to size
+                            "high" -> tiers["hires"] = hash to size
+                            "viper_clear" -> tiers["master"] = hash to size
+                            "viper_atmos" -> tiers["atmos"] = hash to size
+                        }
+                    }
+                    if (tiers.isNotEmpty()) result[hashList[index]] = tiers
+                }
+                result
+            }
+        }.getOrDefault(emptyMap())
+    }
+
+    private suspend fun enrichKugouSongs(songs: List<LxSong>): List<LxSong> {
+        val hashes = songs.mapNotNull { it.hash }.filter { it.isNotBlank() }.distinct()
+        if (hashes.isEmpty()) return songs
+        val qualityInfo = fetchKugouBatchQualityInfo(hashes)
+        if (qualityInfo.isEmpty()) return songs
+        return songs.map { song ->
+            val tiers = song.hash?.let { qualityInfo[it] } ?: return@map song
+            val qualityExtras = buildKugouQualityExtras(tiers)
+            val kept = song.extraFields.filterKeys { it != "hash_320" && it != "hash_flac" && it != "hash_high" && it != "_types" }
+            song.copy(extraFields = qualityExtras + kept)
         }
     }
 
@@ -1497,6 +1582,8 @@ class LxMusicRepository @Inject constructor(
         }.getOrElse {
             Timber.w(it, "fetchKgBoardSongs failed bangid=$bangid")
             emptyList()
+        }.let { base ->
+            enrichKugouSongs(base)
         }.also { list ->
             Timber.d("fetchKgBoardSongs: bangid=$bangid songs=${list.size}")
         }
@@ -4020,9 +4107,14 @@ class LxMusicRepository @Inject constructor(
     private val otherSourceCache = android.util.LruCache<String, List<LxSong>>(100)
     private val matchedSongCache = android.util.LruCache<String, LxSong>(200)
 
-    private data class CachedResolved(val result: ResolvedPlayUrl, val expiresAt: Long)
+    private data class CachedResolved(
+        val result: ResolvedPlayUrl,
+        val expiresAt: Long,
+        val degraded: Boolean = false,
+    )
     private val resolvedPlayCache = android.util.LruCache<String, CachedResolved>(64)
     private val resolvedPlayTtlMs = 5 * 60 * 1000L
+    private val degradedPlayTtlMs = 45_000L
 
     private val scriptUrlDeadAt = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val scriptUrlDeadTtlMs = 5 * 60 * 1000L
@@ -4089,8 +4181,12 @@ class LxMusicRepository @Inject constructor(
         return true
     }
 
-    private fun onScriptResolveOutcome(assetPath: String, outcome: ScriptOutcome) {
+    private fun onScriptResolveOutcome(assetPath: String, outcome: ScriptOutcome, timedOut: Boolean = false) {
         if (outcome is ScriptOutcome.Unavailable) {
+            if (timedOut) {
+                scriptConsecutiveFailures.remove(assetPath)
+                return
+            }
             val count = (scriptConsecutiveFailures[assetPath] ?: 0) + 1
             if (count >= scriptCircuitThreshold) {
                 scriptConsecutiveFailures.remove(assetPath)
@@ -4111,6 +4207,32 @@ class LxMusicRepository @Inject constructor(
     fun lastScriptRejectReason(source: String, songmid: String): String? =
         lastScriptRejectReasons["$source/$songmid"]
 
+    private val songQualityOverrides = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    fun applySongQualitySwitch(source: String, songmid: String, quality: String, probe: ResolvedPlayUrl) {
+        if (songQualityOverrides.size >= 64) {
+            songQualityOverrides.clear()
+        }
+        val key = "$source/$songmid"
+        songQualityOverrides[key] = quality
+        val full = qualityRank(probe.quality) >= qualityRank(quality)
+        resolvedPlayCache.put(
+            key,
+            CachedResolved(
+                probe,
+                System.currentTimeMillis() + if (full) resolvedPlayTtlMs else degradedPlayTtlMs,
+                degraded = !full,
+            ),
+        )
+    }
+
+    fun songQualityOverrideFor(source: String, songmid: String): String? =
+        songQualityOverrides["$source/$songmid"]
+
+    fun clearSongQualityOverride(source: String, songmid: String) {
+        songQualityOverrides.remove("$source/$songmid")
+    }
+
     private val scriptResolveSemaphores = java.util.concurrent.ConcurrentHashMap<String, Semaphore>()
     private fun scriptSemaphore(assetPath: String): Semaphore =
         scriptResolveSemaphores.getOrPut(assetPath) { Semaphore(3) }
@@ -4118,6 +4240,7 @@ class LxMusicRepository @Inject constructor(
     private val musicUrlEventTimeoutMs = 8_000L
     private val fallbackTotalTimeoutMs = 20_000L
     private val scriptChainBudgetMs = 10_000L
+    private val scriptHedgeDelayMs = 350L
     private val crossSourceCandidateTimeoutMs = 8_000L
     private val crossSourceGraceMs = 1_500L
 
@@ -4131,6 +4254,50 @@ class LxMusicRepository @Inject constructor(
     suspend fun resolveMusicUrlWithFallback(song: LxSong, quality: String? = null): String? =
         resolveMusicUrlWithFallbackMeta(song, quality)?.url
 
+    suspend fun probeScriptQuality(song: LxSong, quality: String): ResolvedPlayUrl? {
+        val best = resolveViaScripts(song, quality) ?: return null
+        if (!isStreamLikelyPlayable(best.first)) return null
+        return ResolvedPlayUrl(
+            best.first,
+            fullQuality = qualityRank(best.second) >= qualityRank(quality),
+            quality = best.second,
+        )
+    }
+
+    suspend fun isStreamLikelyPlayable(url: String): Boolean = withContext(Dispatchers.IO) {
+        val lastSegment = url.substringBefore('?').substringAfterLast('/')
+        if (lastSegment.startsWith("aim", ignoreCase = true)) {
+            return@withContext false
+        }
+        runCatching {
+            val request = Request.Builder()
+                .url(url)
+                .header("Range", "bytes=0-31")
+                .header(
+                    "User-Agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+                )
+                .get()
+                .build()
+            val client = okHttpClient.newBuilder()
+                .callTimeout(3_000L, java.util.concurrent.TimeUnit.MILLISECONDS)
+                .build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return@runCatching false
+                val body = response.body ?: return@runCatching false
+                val head = ByteArray(32)
+                val source = body.source()
+                var read = 0
+                while (read < head.size) {
+                    val n = source.read(head, read, head.size - read)
+                    if (n <= 0L) break
+                    read += n.toInt()
+                }
+                CloudStreamSecurity.looksLikeAudioBytes(head, read)
+            }
+        }.getOrDefault(false)
+    }
+
     suspend fun resolveMusicUrlWithFallbackMeta(
         song: LxSong,
         quality: String? = null,
@@ -4138,16 +4305,19 @@ class LxMusicRepository @Inject constructor(
     ): ResolvedPlayUrl? {
         val cacheKey = "${song.source}/${song.songmid}"
         val startMs = System.currentTimeMillis()
-        val effectiveQuality = quality ?: runCatching {
+        val effectiveQuality = quality ?: songQualityOverrides[cacheKey] ?: runCatching {
             userPreferencesRepository.lxMusicPreferredQualityFlow.first()
         }.getOrNull()
 
         val route = decidePlaybackRoute(song, effectiveQuality)
 
         resolvedPlayCache.get(cacheKey)?.let { cached ->
-            if (System.currentTimeMillis() < cached.expiresAt &&
-                qualityRank(cached.result.quality) == qualityRank(effectiveQuality)
-            ) {
+            val cachedRank = qualityRank(cached.result.quality)
+            val requestedRank = qualityRank(effectiveQuality)
+            val fresh = System.currentTimeMillis() < cached.expiresAt
+            val rankMatch = cachedRank == requestedRank ||
+                (cached.degraded && cachedRank < requestedRank)
+            if (fresh && rankMatch) {
                 LxResolveDiag.log(
                     "resolve_cache_hit",
                     "source" to song.source,
@@ -4167,21 +4337,23 @@ class LxMusicRepository @Inject constructor(
             }
             val requestedRank = qualityRank(effectiveQuality)
             val matched = matchedSongCache.get(cacheKey)
+            var matchedFallback: Pair<String, String?>? = null
             if (matched != null) {
                 val viaMatched = resolveViaScripts(matched, effectiveQuality)
-                if (viaMatched == null || !probeCandidateAlive(viaMatched.first)) {
+                if (viaMatched == null) {
                     matchedSongCache.remove(cacheKey)
+                } else if (!probeCandidateAlive(viaMatched.first)) {
+                    matchedSongCache.remove(cacheKey)
+                } else if (qualityRank(viaMatched.second) >= requestedRank) {
+                    return@layerScope viaMatched
                 } else {
-                    val (_, matchedQ) = viaMatched
-                    if (qualityRank(matchedQ) >= requestedRank) return@layerScope viaMatched
-                    Timber.d("layerB: cached match ${matched.source}/${matched.songmid} " +
-                        "quality=$matchedQ below requested=$effectiveQuality, drop and retry chain for $cacheKey")
-                    matchedSongCache.remove(cacheKey)
+                    matchedFallback = viaMatched
                 }
             }
-            val crossSearchDeferred = if (allScriptPaths().any { it !in disabledPaths }) {
-                async { runCatching { findOtherSourceSongs(song) }.getOrDefault(emptyList()) }
-            } else null
+            var crossSearchDeferred: kotlinx.coroutines.Deferred<List<LxSong>>? =
+                if (skipOriginalScript && allScriptPaths().any { it !in disabledPaths }) {
+                    async { runCatching { findOtherSourceSongs(song) }.getOrDefault(emptyList()) }
+                } else null
             if (!skipOriginalScript) {
                 _resolvePhase.value = "scripts"
                 val chainStartMs = System.currentTimeMillis()
@@ -4189,6 +4361,9 @@ class LxMusicRepository @Inject constructor(
                 if (viaScripts != null) {
                     crossSearchDeferred?.cancel()
                     return@layerScope viaScripts
+                }
+                if (crossSearchDeferred == null && allScriptPaths().any { it !in disabledPaths }) {
+                    crossSearchDeferred = async { runCatching { findOtherSourceSongs(song) }.getOrDefault(emptyList()) }
                 }
                 if (System.currentTimeMillis() - chainStartMs >= scriptChainBudgetMs) {
                     LxResolveDiag.log(
@@ -4248,10 +4423,16 @@ class LxMusicRepository @Inject constructor(
                     deferreds.forEach { it.cancel() }
                 }
             }
-            if (best == null) return@layerScope null
-            matchedSongCache.put(cacheKey, best.first)
-            Timber.d("resolveMusicUrlWithFallback: cross-source hit ${best.first.source}/${best.first.songmid} for $cacheKey")
-            return@layerScope best.second
+            if (best == null) return@layerScope matchedFallback
+            val bestRank = qualityRank(best.second.second)
+            val matchedRank = matchedFallback?.second?.let { qualityRank(it) } ?: -1
+            if (bestRank >= matchedRank) {
+                matchedSongCache.put(cacheKey, best.first)
+                markScriptUrlDead(song.source, song.songmid)
+                Timber.d("resolveMusicUrlWithFallback: cross-source hit ${best.first.source}/${best.first.songmid} for $cacheKey")
+                return@layerScope best.second
+            }
+            return@layerScope matchedFallback
         }
 
         val requestedRankFinal = qualityRank(effectiveQuality)
@@ -4407,12 +4588,20 @@ class LxMusicRepository @Inject constructor(
         Timber.w("markScriptUrlDead: $key blacklisted for ${scriptUrlDeadTtlMs / 1000}s")
     }
 
+    fun clearScriptUrlDead(source: String, songmid: String) {
+        scriptUrlDeadAt.remove("$source/$songmid")
+    }
+
     fun invalidateCrossSourceMatch(source: String, songmid: String) {
         val key = "$source/$songmid"
         matchedSongCache.remove(key)
         otherSourceCache.remove(key)
         resolvedPlayCache.remove(key)
         Timber.w("invalidateCrossSourceMatch: cleared cross-source match cache for $key")
+    }
+
+    fun invalidateResolvedPlay(source: String, songmid: String) {
+        resolvedPlayCache.remove("$source/$songmid")
     }
 
     fun isScriptUrlDead(source: String, songmid: String): Boolean {
@@ -4600,28 +4789,16 @@ class LxMusicRepository @Inject constructor(
         }
 
         val primaryPath = activeScriptPath()?.takeIf(supports)?.takeIf { it in circuitFiltered }
-        val primaryOutcome = primaryPath?.let {
-            tried.add(it)
-            resolveViaSingleScript(it, song, quality)
-        }
-        if (primaryOutcome is ScriptOutcome.Ok) {
-            lastScriptRejectReasons.remove(rejectKey)
-            return primaryOutcome.url to primaryOutcome.quality
-        }
-        var bestSoFar: Pair<String, String?>? = null
-        if (primaryOutcome is ScriptOutcome.Rejected) {
-            rejections.add("${primaryOutcome.scriptPath.substringAfterLast('/')}: ${primaryOutcome.reason ?: "rejected"}")
+        val others = circuitFiltered.filter { it != primaryPath && supports(it) }
+        if (primaryPath == null && others.isEmpty()) {
+            return null
         }
 
-        val others = circuitFiltered.filter { it !in tried && supports(it) }
-        if (others.isEmpty()) {
-            if (rejections.isNotEmpty()) lastScriptRejectReasons[rejectKey] = rejections.first()
-            return bestSoFar
-        }
         val results = coroutineScope {
             val deadlineMs = System.currentTimeMillis() + scriptChainBudgetMs
-            val deferreds = others.map { scriptPath ->
+            val deferreds = (listOfNotNull(primaryPath) + others).map { scriptPath ->
                 async {
+                    if (scriptPath != primaryPath) delay(scriptHedgeDelayMs)
                     tried.add(scriptPath)
                     when (val r = resolveViaSingleScript(scriptPath, song, quality)) {
                         is ScriptOutcome.Ok -> Triple(r.url, r.quality, qualityRank(r.quality) >= requestedRank)
@@ -4646,6 +4823,7 @@ class LxMusicRepository @Inject constructor(
                     } ?: break
                     pending.removeAll { it.first == finished.first }
                     finished.second.getCompleted()?.let { collected.add(finished.first to it) }
+                    if (collected.any { it.second.third }) break
                 }
             } finally {
                 pending.forEach { it.second.cancel() }
@@ -4656,6 +4834,7 @@ class LxMusicRepository @Inject constructor(
             lastScriptRejectReasons.remove(rejectKey)
             return hit.first to hit.second
         }
+        var bestSoFar: Pair<String, String?>? = null
         for ((url, q) in results) {
             if (bestSoFar == null || qualityRank(q) > qualityRank(bestSoFar!!.second)) {
                 bestSoFar = url to q
@@ -4783,7 +4962,11 @@ class LxMusicRepository @Inject constructor(
                 ScriptOutcome.Unavailable
             }
         }
-        onScriptResolveOutcome(scriptPath, outcome)
+        onScriptResolveOutcome(
+            scriptPath,
+            outcome,
+            timedOut = event is LxMusicUrlEvent.Unavailable && elapsedMs >= musicUrlEventTimeoutMs - 250L,
+        )
         outcome
     }
 
@@ -5349,6 +5532,31 @@ class LxMusicRepository @Inject constructor(
         return candidates.distinct()
     }
 
+    private val scriptDownloadTimeoutSeconds = 60L
+
+    private val scriptDownloadUserAgent =
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+
+    private fun describeScriptDownloadHost(candidate: String): String =
+        Uri.parse(candidate).host ?: candidate.take(24)
+
+    private fun describeScriptDownloadFailure(e: Exception): String {
+        val msg = e.message?.take(48)?.trim().orEmpty()
+        return if (msg.isNotEmpty()) "${e.javaClass.simpleName}: $msg" else e.javaClass.simpleName
+    }
+
+    private fun buildAllSourcesFailedException(failures: List<String>): IllegalStateException {
+        if (failures.isEmpty()) {
+            return IllegalStateException("所有下载源均失败，请检查网络或稍后再试")
+        }
+        val summary = if (failures.size > 3) {
+            "${failures.take(3).joinToString("；")}（等 ${failures.size} 个源）"
+        } else {
+            failures.joinToString("；")
+        }
+        return IllegalStateException("所有下载源均失败：$summary。请检查网络或稍后再试")
+    }
+
     val scriptUpdateAlerts
         get() = engine.updateAlerts
 
@@ -5366,65 +5574,98 @@ class LxMusicRepository @Inject constructor(
     fun isAnyScriptUpdateIgnored(assetPath: String) =
         engine.isAnyScriptUpdateIgnored(assetPath)
 
-    suspend fun importFromUrl(url: String): Result<LxScriptMeta> = withContext(Dispatchers.IO) {
-        runCatching {
-            var lastErr: Exception? = null
-            for (candidate in buildScriptDownloadCandidates(url)) {
-                try {
-                    val client = okHttpClient.newBuilder()
-                        .callTimeout(12, java.util.concurrent.TimeUnit.SECONDS)
-                        .build()
-                    val req = Request.Builder().url(candidate).get().build()
-                    client.newCall(req).execute().use { resp ->
-                        if (!resp.isSuccessful) {
-                            throw IllegalStateException("下载失败：HTTP ${resp.code}，请检查链接是否有效")
-                        }
-                        val body = resp.body?.string().orEmpty()
-                        validateLxScriptBody(body)
-                        val fileName = "imported_${System.currentTimeMillis()}.js"
-                        val file = File(importedDir, fileName)
-                        file.writeText(body)
-                        refreshScripts()
-                        return@runCatching parseScriptMeta(fileName, file.absolutePath, body, isImported = true)
-                    }
+    private class ScriptCandidateOutcome(val candidate: String, val body: String?, val failure: Exception?)
+
+    private suspend fun fetchFirstValidScriptBody(url: String): String = coroutineScope {
+        val candidates = buildScriptDownloadCandidates(url)
+        val outcomes = Channel<ScriptCandidateOutcome>(capacity = candidates.size)
+        candidates.forEach { candidate ->
+            launch(Dispatchers.IO) {
+                val outcome = try {
+                    ScriptCandidateOutcome(candidate, downloadScriptCandidate(candidate), null)
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
-                    lastErr = e
+                    ScriptCandidateOutcome(candidate, null, e)
                 }
+                outcomes.send(outcome)
             }
-            throw lastErr ?: IllegalStateException("所有下载源均失败，请检查网络或稍后再试")
+        }
+        val failures = mutableListOf<String>()
+        repeat(candidates.size) {
+            val outcome = outcomes.receive()
+            val body = outcome.body
+            if (body != null) {
+                coroutineContext.cancelChildren()
+                return@coroutineScope body
+            }
+            failures += "${describeScriptDownloadHost(outcome.candidate)}: ${describeScriptDownloadFailure(outcome.failure!!)}"
+        }
+        throw buildAllSourcesFailedException(failures)
+    }
+
+    private suspend fun downloadScriptCandidate(candidate: String): String {
+        val client = okHttpClient.newBuilder()
+            .callTimeout(scriptDownloadTimeoutSeconds, java.util.concurrent.TimeUnit.SECONDS)
+            .build()
+        val request = Request.Builder().url(candidate).get()
+            .header("User-Agent", scriptDownloadUserAgent)
+            .header("Accept", "text/javascript, application/javascript, */*")
+            .build()
+        client.newCall(request).awaitResponse().use { resp ->
+            if (!resp.isSuccessful) {
+                throw IllegalStateException("HTTP ${resp.code}")
+            }
+            val body = resp.body?.string().orEmpty()
+            validateLxScriptBody(body)
+            return body
+        }
+    }
+
+    private suspend fun Call.awaitResponse(): Response = suspendCancellableCoroutine { cont ->
+        enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                if (cont.isActive) cont.resumeWith(Result.failure(e))
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                cont.resumeWith(Result.success(response))
+            }
+        })
+        cont.invokeOnCancellation { cancel() }
+    }
+
+    suspend fun importFromUrl(url: String): Result<LxScriptMeta> = withContext(Dispatchers.IO) {
+        try {
+            val body = fetchFirstValidScriptBody(url)
+            val fileName = "imported_${System.currentTimeMillis()}.js"
+            val file = File(importedDir, fileName)
+            file.writeText(body)
+            refreshScripts()
+            Result.success(parseScriptMeta(fileName, file.absolutePath, body, isImported = true))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
     suspend fun updateScriptFromUrl(assetPath: String, url: String): Result<LxScriptMeta> = withContext(Dispatchers.IO) {
-        runCatching {
+        try {
             val target = _scripts.value.firstOrNull { it.assetPath == assetPath }
                 ?: throw IllegalStateException("脚本不存在或已被删除")
             if (!File(assetPath).isFile) {
                 throw IllegalStateException("该脚本不支持应用内更新，请在浏览器中更新")
             }
-            var lastErr: Exception? = null
-            for (candidate in buildScriptDownloadCandidates(url)) {
-                try {
-                    val client = okHttpClient.newBuilder()
-                        .callTimeout(12, java.util.concurrent.TimeUnit.SECONDS)
-                        .build()
-                    val req = Request.Builder().url(candidate).get().build()
-                    client.newCall(req).execute().use { resp ->
-                        if (!resp.isSuccessful) {
-                            throw IllegalStateException("下载失败：HTTP ${resp.code}，请检查链接是否有效")
-                        }
-                        val body = resp.body?.string().orEmpty()
-                        validateLxScriptBody(body)
-                        unload(assetPath)
-                        File(assetPath).writeText(body)
-                        refreshScripts()
-                        return@runCatching parseScriptMeta(File(assetPath).name, assetPath, body, isImported = target.isImported)
-                    }
-                } catch (e: Exception) {
-                    lastErr = e
-                }
-            }
-            throw lastErr ?: IllegalStateException("所有下载源均失败，请检查网络或稍后再试")
+            val body = fetchFirstValidScriptBody(url)
+            unload(assetPath)
+            File(assetPath).writeText(body)
+            refreshScripts()
+            Result.success(parseScriptMeta(File(assetPath).name, assetPath, body, isImported = target.isImported))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
@@ -5447,9 +5688,11 @@ class LxMusicRepository @Inject constructor(
         if (s.first() == '<') {
             throw IllegalStateException("内容是网页而不是音源脚本（链接可能已失效），请换用直接的 .js 链接")
         }
+        val hasLxHeader = metaRegex.containsMatchIn(s.take(2048))
         val looksLikeLxScript = s.contains("globalThis.lx") || s.contains("EVENT_NAMES") ||
-            s.contains("lx.send") || s.contains("lx.on") || s.contains("lx.request")
-        if (!looksLikeLxScript) {
+            s.contains("lx.send") || s.contains("lx.on") || s.contains("lx.request") ||
+            s.contains("SERVER_SCRIPT_CONFIG")
+        if (!looksLikeLxScript && !hasLxHeader) {
             throw IllegalStateException("内容不是有效的音源脚本（缺少洛雪脚本特征），请检查链接或文件")
         }
     }
@@ -5511,6 +5754,32 @@ class LxMusicRepository @Inject constructor(
                 extra["_types"] = typesObj.toString()
             }
             return extra
+        }
+
+        fun buildKugouQualityExtras(tiers: Map<String, Pair<String, Long>>): Map<String, String> {
+            val extra = mutableMapOf<String, String>()
+            val typesObj = com.google.gson.JsonObject()
+            for ((label, tier) in tiers) {
+                typesObj.add(label, com.google.gson.JsonObject().apply {
+                    addProperty("hash", tier.first)
+                    val sizeText = formatKugouSize(tier.second)
+                    if (sizeText.isNotEmpty()) addProperty("size", sizeText)
+                })
+                when (label) {
+                    "320k" -> extra["hash_320"] = tier.first
+                    "flac" -> extra["hash_flac"] = tier.first
+                    "hires" -> extra["hash_high"] = tier.first
+                }
+            }
+            extra["_types"] = typesObj.toString()
+            return extra
+        }
+
+        fun formatKugouSize(bytes: Long): String = when {
+            bytes <= 0L -> ""
+            bytes < 1048576L -> String.format(java.util.Locale.US, "%.2fKB", bytes / 1024.0)
+            bytes < 1073741824L -> String.format(java.util.Locale.US, "%.2fM", bytes / 1048576.0)
+            else -> String.format(java.util.Locale.US, "%.2fG", bytes / 1073741824.0)
         }
     }
 }

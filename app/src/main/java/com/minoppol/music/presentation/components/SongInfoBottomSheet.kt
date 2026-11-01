@@ -137,6 +137,7 @@ fun SongInfoBottomSheet(
     var toneConfirmationTarget by remember { mutableStateOf<ToneTarget?>(null) }
     var pendingTonePermissionSong by remember { mutableStateOf<Song?>(null) }
     var pendingTonePermissionTarget by remember { mutableStateOf<ToneTarget?>(null) }
+    var showRemoveDownloadConfirm by remember(song.id) { mutableStateOf(false) }
     val audioMeta by songInfoViewModel.audioMeta.collectAsStateWithLifecycle()
     val resolvedArtists by songInfoViewModel.resolvedArtists.collectAsStateWithLifecycle()
     val offlineDownload by songInfoViewModel.offlineDownload.collectAsStateWithLifecycle()
@@ -298,7 +299,8 @@ fun SongInfoBottomSheet(
         }
         parts.takeIf { it.isNotEmpty() }?.joinToString(" · ")
     }
-    val songLocationInfo = remember(song.path, song.contentUriString) {
+    val resolvedContentPaths by songInfoViewModel.resolvedContentPaths.collectAsStateWithLifecycle()
+    val songLocationInfo = remember(song.path, song.contentUriString, resolvedContentPaths) {
         songInfoViewModel.getSongLocationInfo(song)
     }
 
@@ -306,6 +308,7 @@ fun SongInfoBottomSheet(
         songInfoViewModel.bindSong(song)
         songInfoViewModel.loadAudioMeta(song)
         songInfoViewModel.loadArtistsForSong(song)
+        songInfoViewModel.resolveContentPath(song)
     }
 
     val pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { 2 })
@@ -638,6 +641,8 @@ fun SongInfoBottomSheet(
                                                                 when (offlineDownload?.status) {
                                                                     OfflineDownloadStatus.FAILED ->
                                                                         songInfoViewModel.retryOfflineDownload(song)
+                                                                    OfflineDownloadStatus.COMPLETE ->
+                                                                        showRemoveDownloadConfirm = true
                                                                     else -> songInfoViewModel.onDownloadAction(song)
                                                                 }
                                                             }
@@ -706,6 +711,8 @@ fun SongInfoBottomSheet(
                                                             when (offlineDownload?.status) {
                                                                 OfflineDownloadStatus.FAILED ->
                                                                     songInfoViewModel.retryOfflineDownload(song)
+                                                                OfflineDownloadStatus.COMPLETE ->
+                                                                    showRemoveDownloadConfirm = true
                                                                 else -> songInfoViewModel.onDownloadAction(song)
                                                             }
                                                         } else {
@@ -1024,6 +1031,93 @@ fun SongInfoBottomSheet(
             onConfirm = songInfoViewModel::confirmLxDownload,
             onDismiss = songInfoViewModel::dismissDownloadQualityDialog,
         )
+    }
+
+    if (showRemoveDownloadConfirm) {
+        RemoveDownloadConfirmDialog(
+            song = song,
+            onDismiss = { showRemoveDownloadConfirm = false },
+            onConfirm = {
+                showRemoveDownloadConfirm = false
+                songInfoViewModel.removeOfflineDownload(song)
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RemoveDownloadConfirmDialog(
+    song: Song,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    BasicAlertDialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = AbsoluteSmoothCornerShape(
+                cornerRadiusTR = 32.dp,
+                smoothnessAsPercentBR = 60,
+                cornerRadiusBR = 32.dp,
+                smoothnessAsPercentTL = 60,
+                cornerRadiusTL = 32.dp,
+                smoothnessAsPercentBL = 60,
+                cornerRadiusBL = 32.dp,
+                smoothnessAsPercentTR = 60,
+            ),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 6.dp,
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.secondaryContainer),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            Icons.Rounded.CloudDone,
+                            contentDescription = null,
+                            modifier = Modifier.size(28.dp),
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        )
+                    }
+                    Text(
+                        text = stringResource(R.string.cloud_remove_download),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+                Text(
+                    text = stringResource(
+                        R.string.cloud_remove_download_confirm_message,
+                        song.title,
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.End),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                    FilledTonalButton(onClick = onConfirm) {
+                        Text(stringResource(R.string.confirm))
+                    }
+                }
+            }
+        }
     }
 }
 

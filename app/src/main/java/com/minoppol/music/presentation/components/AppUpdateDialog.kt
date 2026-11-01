@@ -3,6 +3,7 @@ package com.minoppol.music.presentation.components
 import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,7 +19,9 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.OpenInBrowser
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -27,11 +30,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
@@ -41,6 +46,7 @@ import com.minoppol.music.data.update.AppUpdateInfo
 import com.minoppol.music.data.update.UpdateInstallError
 import com.minoppol.music.data.update.UpdateInstallStatus
 import com.minoppol.music.presentation.viewmodel.AppUpdateViewModel
+import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 
 @Composable
 fun AppUpdateDialog(
@@ -82,7 +88,7 @@ fun AppUpdateDialog(
         ) {
             Column(
                 modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text(
                     text = stringResource(R.string.update_available_title, update.latestVersion),
@@ -123,7 +129,6 @@ fun AppUpdateDialog(
                         )
                     }
                 }
-                Spacer(Modifier.height(4.dp))
                 when (installStatus) {
                     UpdateInstallStatus.Idle -> {
                         Row(
@@ -135,29 +140,32 @@ fun AppUpdateDialog(
                                 label = stringResource(R.string.update_available_ignore),
                                 icon = Icons.Rounded.Block,
                                 selected = false,
+                                modifier = Modifier.weight(1f),
                                 onClick = {
                                     onDismiss()
                                     appUpdateViewModel.ignoreVersion(update.latestVersion)
                                 }
                             )
-                            Spacer(Modifier.weight(1f))
                             UpdateDialogButton(
                                 label = stringResource(R.string.update_available_cancel),
                                 icon = Icons.Rounded.Close,
                                 selected = false,
+                                modifier = Modifier.weight(1f),
                                 onClick = onDismiss
                             )
                         }
                         if (update.apkUrl != null) {
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
                             ) {
                                 UpdateDialogButton(
                                     label = stringResource(R.string.update_available_browser_download),
                                     icon = Icons.Rounded.OpenInBrowser,
                                     selected = false,
                                     modifier = Modifier.fillMaxWidth(),
+                                    shape = AbsoluteSmoothCornerShape(18.dp, 60),
+                                    buttonHeight = 48.dp,
                                     onClick = {
                                         appUpdateViewModel.dismissUpdate()
                                         onDismiss()
@@ -176,51 +184,44 @@ fun AppUpdateDialog(
                                     icon = Icons.Rounded.Download,
                                     selected = true,
                                     modifier = Modifier.fillMaxWidth(),
+                                    shape = AbsoluteSmoothCornerShape(18.dp, 60),
+                                    buttonHeight = 48.dp,
                                     onClick = { appUpdateViewModel.startInstall() }
                                 )
                             }
                         } else {
-                            Row(
+                            UpdateDialogButton(
+                                label = stringResource(R.string.update_available_go_download),
+                                icon = Icons.Rounded.Download,
+                                selected = true,
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Spacer(Modifier.weight(1f))
-                                UpdateDialogButton(
-                                    label = null,
-                                    icon = Icons.Rounded.Download,
-                                    selected = true,
-                                    contentDescription = stringResource(R.string.update_available_go_download),
-                                    onClick = {
-                                        appUpdateViewModel.dismissUpdate()
-                                        onDismiss()
-                                        runCatching {
-                                            context.startActivity(
-                                                Intent(
-                                                    Intent.ACTION_VIEW,
-                                                    update.downloadUrl.toUri()
-                                                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                            )
-                                        }
+                                shape = AbsoluteSmoothCornerShape(18.dp, 60),
+                                buttonHeight = 48.dp,
+                                onClick = {
+                                    appUpdateViewModel.dismissUpdate()
+                                    onDismiss()
+                                    runCatching {
+                                        context.startActivity(
+                                            Intent(
+                                                Intent.ACTION_VIEW,
+                                                update.downloadUrl.toUri()
+                                            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        )
                                     }
-                                )
-                            }
+                                }
+                            )
                         }
                     }
                     is UpdateInstallStatus.Downloading -> {
-                        Row(
+                        UpdateDialogButton(
+                            label = stringResource(R.string.update_install_cancel_download),
+                            icon = Icons.Rounded.Close,
+                            selected = false,
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Spacer(Modifier.weight(1f))
-                            UpdateDialogButton(
-                                label = stringResource(R.string.update_install_cancel_download),
-                                icon = Icons.Rounded.Close,
-                                selected = false,
-                                onClick = { appUpdateViewModel.stopInstall() }
-                            )
-                        }
+                            shape = AbsoluteSmoothCornerShape(18.dp, 60),
+                            buttonHeight = 48.dp,
+                            onClick = { appUpdateViewModel.stopInstall() }
+                        )
                     }
                     is UpdateInstallStatus.AwaitingInstallPermission -> {
                         Row(
@@ -232,6 +233,7 @@ fun AppUpdateDialog(
                                 label = stringResource(R.string.update_install_allow),
                                 icon = Icons.Rounded.Check,
                                 selected = true,
+                                modifier = Modifier.weight(1f),
                                 onClick = {
                                     runCatching {
                                         context.startActivity(
@@ -243,31 +245,25 @@ fun AppUpdateDialog(
                                     }
                                 }
                             )
-                            Spacer(Modifier.weight(1f))
                             UpdateDialogButton(
-                                label = null,
+                                label = stringResource(R.string.update_install_confirm),
                                 icon = Icons.Rounded.Download,
                                 selected = false,
-                                contentDescription = stringResource(R.string.update_install_confirm),
+                                modifier = Modifier.weight(1f),
                                 onClick = { appUpdateViewModel.resumeInstall() }
                             )
                         }
                     }
                     is UpdateInstallStatus.AwaitingConfirmation -> {
-                        Row(
+                        UpdateDialogButton(
+                            label = stringResource(R.string.update_install_confirm),
+                            icon = Icons.Rounded.Download,
+                            selected = true,
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Spacer(Modifier.weight(1f))
-                            UpdateDialogButton(
-                                label = null,
-                                icon = Icons.Rounded.Download,
-                                selected = true,
-                                contentDescription = stringResource(R.string.update_install_confirm),
-                                onClick = { appUpdateViewModel.openInstallConfirmation() }
-                            )
-                        }
+                            shape = AbsoluteSmoothCornerShape(18.dp, 60),
+                            buttonHeight = 48.dp,
+                            onClick = { appUpdateViewModel.openInstallConfirmation() }
+                        )
                     }
                     is UpdateInstallStatus.Installing -> Unit
                     is UpdateInstallStatus.Failed -> {
@@ -277,17 +273,17 @@ fun AppUpdateDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             UpdateDialogButton(
-                                label = null,
+                                label = stringResource(R.string.update_available_download),
                                 icon = Icons.Rounded.Refresh,
                                 selected = true,
-                                contentDescription = stringResource(R.string.update_available_download),
+                                modifier = Modifier.weight(1f),
                                 onClick = { appUpdateViewModel.startInstall() }
                             )
-                            Spacer(Modifier.weight(1f))
                             UpdateDialogButton(
                                 label = stringResource(R.string.update_available_cancel),
                                 icon = Icons.Rounded.Close,
                                 selected = false,
+                                modifier = Modifier.weight(1f),
                                 onClick = {
                                     appUpdateViewModel.dismissInstallError()
                                     onDismiss()
@@ -305,6 +301,7 @@ fun AppUpdateDialog(
                                 label = stringResource(R.string.update_install_open_page),
                                 icon = Icons.Rounded.Download,
                                 selected = true,
+                                modifier = Modifier.weight(1f),
                                 onClick = {
                                     runCatching {
                                         context.startActivity(
@@ -316,11 +313,11 @@ fun AppUpdateDialog(
                                     }
                                 }
                             )
-                            Spacer(Modifier.weight(1f))
                             UpdateDialogButton(
                                 label = stringResource(R.string.update_available_cancel),
                                 icon = Icons.Rounded.Close,
                                 selected = false,
+                                modifier = Modifier.weight(1f),
                                 onClick = {
                                     appUpdateViewModel.dismissInstallError()
                                     onDismiss()
@@ -341,49 +338,44 @@ private fun UpdateDialogButton(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    contentDescription: String? = null,
+    shape: Shape = RoundedCornerShape(26.dp),
+    buttonHeight: Dp = 42.dp,
 ) {
-    Surface(
+    FilledTonalButton(
         onClick = onClick,
-        shape = RoundedCornerShape(16.dp),
-        color = if (selected)
-            MaterialTheme.colorScheme.primary
-        else
-            MaterialTheme.colorScheme.secondaryContainer,
-        modifier = modifier,
+        shape = shape,
+        colors = ButtonDefaults.filledTonalButtonColors(
+            containerColor = if (selected)
+                MaterialTheme.colorScheme.primary
+            else
+                MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = if (selected)
+                MaterialTheme.colorScheme.onPrimary
+            else
+                MaterialTheme.colorScheme.onSecondaryContainer,
+        ),
+        contentPadding = PaddingValues(horizontal = 12.dp),
+        modifier = modifier.height(buttonHeight),
     ) {
-        Row(
-            modifier = Modifier.padding(
-                horizontal = if (label == null) 10.dp else 8.dp,
-                vertical = 8.dp,
-            ),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            Icon(
-                icon,
-                contentDescription = contentDescription,
-                modifier = Modifier.size(18.dp),
-                tint = if (selected)
+        Icon(
+            icon,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+        )
+        if (label != null) {
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                color = if (selected)
                     MaterialTheme.colorScheme.onPrimary
                 else
                     MaterialTheme.colorScheme.onSecondaryContainer,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
             )
-            if (label != null) {
-                Spacer(Modifier.width(5.dp))
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (selected)
-                        MaterialTheme.colorScheme.onPrimary
-                    else
-                        MaterialTheme.colorScheme.onSecondaryContainer,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    softWrap = false,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
         }
     }
 }

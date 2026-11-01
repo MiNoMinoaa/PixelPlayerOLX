@@ -41,6 +41,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -90,6 +91,9 @@ class SongInfoBottomSheetViewModel @Inject constructor(
     val audioMeta: StateFlow<AudioMeta?> = _audioMeta.asStateFlow()
     val offlineDownload: StateFlow<OfflineDownload?> = _offlineDownload.asStateFlow()
 
+    private val _resolvedContentPaths = MutableStateFlow<Map<Long, String>>(emptyMap())
+    val resolvedContentPaths: StateFlow<Map<Long, String>> = _resolvedContentPaths.asStateFlow()
+
     fun bindSong(song: Song) {
         offlineObservationJob?.cancel()
         _offlineDownload.value = null
@@ -130,6 +134,11 @@ class SongInfoBottomSheetViewModel @Inject constructor(
                 cloudOfflineRepository.enqueue(song)
             }
         }
+    }
+
+    fun removeOfflineDownload(song: Song) {
+        if (!CloudOfflineRepository.isCloudSong(song)) return
+        viewModelScope.launch { cloudOfflineRepository.remove(song) }
     }
 
     fun retryOfflineDownload(song: Song) {
@@ -311,9 +320,36 @@ class SongInfoBottomSheetViewModel @Inject constructor(
             )
             else -> SongLocationInfo(
                 label = "Path",
-                value = song.path,
+                value = displayPathFor(song),
                 isCloud = false,
             )
+        }
+    }
+
+    private fun displayPathFor(song: Song): String {
+        if (!song.path.startsWith("content://")) return song.path
+        val id = song.id.toLongOrNull() ?: return song.path
+        return _resolvedContentPaths.value[id] ?: song.path
+    }
+
+    fun resolveContentPath(song: Song) {
+        if (!song.path.startsWith("content://")) return
+        val songId = song.id.toLongOrNull() ?: return
+        if (_resolvedContentPaths.value.containsKey(songId)) return
+        val mediaId = song.path.toUri().lastPathSegment?.toLongOrNull() ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            val realPath = runCatching {
+                appContext.contentResolver.query(
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                    arrayOf(MediaStore.Audio.Media.DATA),
+                    "${MediaStore.Audio.Media._ID} = ?",
+                    arrayOf(mediaId.toString()),
+                    null,
+                )?.use { cursor ->
+                    if (cursor.moveToFirst()) cursor.getString(0) else null
+                }
+            }.getOrNull() ?: return@launch
+            _resolvedContentPaths.update { it + (songId to realPath) }
         }
     }
 

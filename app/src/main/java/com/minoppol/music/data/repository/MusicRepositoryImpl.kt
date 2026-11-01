@@ -974,19 +974,28 @@ class MusicRepositoryImpl @Inject constructor(
         ) return@withContext false
         val mediaStoreId = Uri.parse(localContentUri).lastPathSegment?.toLongOrNull()
             ?: return@withContext false
+        var realPath: String? = null
         val rowExists = context.contentResolver.query(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-            arrayOf(MediaStore.Audio.Media._ID),
+            arrayOf(MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DATA),
             "${MediaStore.Audio.Media._ID} = ?",
             arrayOf(mediaStoreId.toString()),
             null,
-        )?.use { cursor -> cursor.moveToFirst() } ?: return@withContext false
+        )?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val idx = cursor.getColumnIndex(MediaStore.Audio.Media.DATA)
+                if (idx >= 0) realPath = cursor.getString(idx)
+                true
+            } else {
+                false
+            }
+        } ?: return@withContext false
         if (!rowExists) return@withContext false
         musicDao.updateSongs(
             listOf(
                 entity.copy(
                     contentUriString = localContentUri,
-                    filePath = localContentUri,
+                    filePath = realPath ?: localContentUri,
                     sourceType = com.minoppol.music.data.database.SourceType.LOCAL,
                     lxHash = null,
                 )

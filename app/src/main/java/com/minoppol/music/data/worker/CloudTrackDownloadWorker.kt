@@ -25,6 +25,7 @@ import com.minoppol.music.data.navidrome.NavidromeRepository
 import com.minoppol.music.data.offline.CloudOfflineRepository
 import com.minoppol.music.data.offline.OfflineDownloadStatus
 import com.minoppol.music.data.stream.CloudStreamSecurity
+import com.minoppol.music.utils.APP_DOWNLOAD_DIR_NAME
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.io.File
@@ -502,15 +503,21 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
         actualQuality: String,
         attempt: LxAttempt.Ok,
     ): Result {
-        val tempFile = attempt.file
+        var file = attempt.file
         return try {
-            runCatching { embedTags(lxSong, tempFile) }
+            val realExtFile = File(file.parentFile, file.nameWithoutExtension)
+            if (file.renameTo(realExtFile)) {
+                file = realExtFile
+            } else {
+                Timber.tag(TAG).w("rename temp file to real extension failed: %s", file.absolutePath)
+            }
+            runCatching { embedTags(lxSong, file) }
                 .onFailure { Timber.tag(TAG).w(it, "embed tags failed (non-fatal)") }
 
             val displayName = buildDisplayName(lxSong, attempt.audio.extension)
-            val localUri = publishToMediaStore(tempFile, displayName, attempt.audio.mediaStoreMime, lxSong)
+            val localUri = publishToMediaStore(file, displayName, attempt.audio.mediaStoreMime, lxSong)
                 ?: throw IOException("MediaStore insert failed")
-            tempFile.delete()
+            file.delete()
             coroutineContext.ensureActive()
 
             val completed = dao.updateState(
@@ -532,10 +539,10 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
             }
             Result.success()
         } catch (cancelled: CancellationException) {
-            tempFile.delete()
+            file.delete()
             throw cancelled
         } catch (error: Throwable) {
-            tempFile.delete()
+            file.delete()
             failOrRetry(downloadId, attemptId, error)
         }
     }
@@ -576,7 +583,7 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
         val values = ContentValues().apply {
             put(MediaStore.Audio.Media.DISPLAY_NAME, displayName)
             put(MediaStore.Audio.Media.MIME_TYPE, mime)
-            put(MediaStore.Audio.Media.RELATIVE_PATH, "${Environment.DIRECTORY_MUSIC}/$LX_MUSIC_DIR")
+            put(MediaStore.Audio.Media.RELATIVE_PATH, "${Environment.DIRECTORY_MUSIC}/$APP_DOWNLOAD_DIR_NAME")
             put(MediaStore.Audio.Media.IS_PENDING, 1)
             put(MediaStore.Audio.Media.IS_MUSIC, 1)
             put(MediaStore.Audio.Media.TITLE, song.name)
@@ -701,7 +708,6 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
         private const val PROGRESS_STEP_BYTES = 512L * 1024L
         private const val MAX_RETRIES = 3
         private const val RESOLVE_TIMEOUT_MS = 25_000L
-        private const val LX_MUSIC_DIR = "PixelPlayer"
         private const val UNKNOWN_ARTIST = "未知艺术家"
         private const val UNKNOWN_ALBUM = "未知专辑"
         private val ILLEGAL_FILE_CHARS = Regex("[/\\\\:*?\"<>|\\r\\n\\t]")

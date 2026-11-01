@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 enum class OfflineDownloadStatus(val storageValue: String) {
     QUEUED("queued"),
@@ -174,6 +175,16 @@ class CloudOfflineRepository @Inject constructor(
     }
 
     suspend fun remove(song: Song) = remove(song.contentUriString)
+
+    suspend fun purgeStaleCompletedRecords(): Int = withContext(Dispatchers.IO) {
+        val stale = dao.getCompleted().filter { row -> !offlineResourceExists(row.localPath) }
+        stale.forEach { row -> dao.deleteBySourceUri(row.sourceUri) }
+        if (stale.isNotEmpty()) {
+            Timber.i("Purged %d stale completed download records", stale.size)
+        }
+        stale.size
+    }
+
 
     suspend fun remove(sourceUri: String) = withContext(Dispatchers.IO) {
         mutationMutex.withLock {

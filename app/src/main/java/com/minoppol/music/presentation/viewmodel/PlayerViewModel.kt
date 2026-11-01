@@ -1000,6 +1000,22 @@ class PlayerViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            stablePlayerState
+                .map { state ->
+                    val song = state.currentSong
+                    song?.lxMusicSource?.let { src -> song.lxMusicSongMid?.let { mid -> src to mid } }
+                }
+                .distinctUntilChanged()
+                .collect { activeKey ->
+                    val overrideKey = qualityOverrideKey
+                    if (overrideKey != null && overrideKey != activeKey) {
+                        qualityOverrideKey = null
+                        lxMusicRepository.clearSongQualityOverride(overrideKey.first, overrideKey.second)
+                    }
+                }
+        }
+
+        viewModelScope.launch {
             combine(
                 _playbackOrigin,
                 stablePlayerState.map { it.currentSong?.lxMusicSource }.distinctUntilChanged(),
@@ -3048,6 +3064,12 @@ class PlayerViewModel @Inject constructor(
                     } else {
                         context.getString(R.string.player_error_skipping)
                     }
+                    Timber.w(
+                        "onPlayerError: generic failure code=%d item=%s msg=%s",
+                        error.errorCode,
+                        playerItemId,
+                        msg
+                    )
                     _toastEvents.emit(msg)
                     if (!isStaleError) {
                         delay(700)
@@ -3103,11 +3125,17 @@ class PlayerViewModel @Inject constructor(
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                val stableStateAtTransition = playbackStateHolder.stablePlayerState.value
+                val keepCurrentLyrics = mediaItem?.mediaId != null &&
+                    mediaItem.mediaId == stableStateAtTransition.currentSong?.id &&
+                    stableStateAtTransition.lyrics != null
                 lxItemReachedReady = false
                 playbackStateHolder.onPlaybackOccurrenceTransition(mediaItem?.mediaId)
                 preparePlaybackAudioMetadataForMedia(mediaItem?.mediaId)
                 transitionSchedulerJob?.cancel()
-                lyricsStateHolder.cancelLoading()
+                if (!keepCurrentLyrics) {
+                    lyricsStateHolder.cancelLoading()
+                }
                 transitionSchedulerJob = viewModelScope.launch {
                     if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
                         val activeEotSongId = EotStateHolder.eotTargetSongId.value
@@ -3141,7 +3169,9 @@ class PlayerViewModel @Inject constructor(
                         } else {
                             0L
                         }
-                        resetLyricsSearchState()
+                        if (!keepCurrentLyrics) {
+                            resetLyricsSearchState()
+                        }
                         playbackStateHolder.updateStablePlayerState {
                             it.copy(
                                 currentSong = song,
@@ -3151,8 +3181,8 @@ class PlayerViewModel @Inject constructor(
                                     playerCtrl.currentMediaItemIndex
                                 },
                                 totalDuration = resolvedDuration,
-                                lyrics = null,
-                                isLoadingLyrics = song != null,
+                                lyrics = if (keepCurrentLyrics) it.lyrics else null,
+                                isLoadingLyrics = if (keepCurrentLyrics) false else song != null,
                                 playWhenReady = playerCtrl.playWhenReady
                             )
                         }
@@ -3168,7 +3198,9 @@ class PlayerViewModel @Inject constructor(
                                 val currentUri = playbackStateHolder.stablePlayerState.value.currentSong?.albumArtUriString
                                 themeStateHolder.extractAndGenerateColorScheme(uri, currentUri)
                             }
-                            loadLyricsForCurrentSong()
+                            if (!keepCurrentLyrics) {
+                                loadLyricsForCurrentSong()
+                            }
                         }
                     } ?: run {
                         lyricsStateHolder.cancelLoading()
@@ -3467,7 +3499,11 @@ class PlayerViewModel @Inject constructor(
         return false
     }
 
-    private fun replayCurrentSongPreservingQueue(song: Song) {
+    private fun replayCurrentSongPreservingQueue(
+        song: Song,
+        startPositionMs: Long = androidx.media3.common.C.TIME_UNSET,
+        lxQualityTag: String? = null,
+    ) {
         val controller = mediaController
         if (controller == null) {
             loadAndPlaySong(song)
@@ -3475,13 +3511,16 @@ class PlayerViewModel @Inject constructor(
         }
         viewModelScope.launch {
             val requestToken = directPlaybackToken
-            val mediaItem = buildResolvedPlaybackMediaItem(song)
+            val mediaItem = withLxQualityFragment(buildResolvedPlaybackMediaItem(song), lxQualityTag)
             throwIfDirectPlaybackRequestIsStale(requestToken)
             runCatching {
                 if (controller.currentMediaItem?.mediaId == song.id && controller.mediaItemCount > 0) {
                     controller.replaceMediaItem(controller.currentMediaItemIndex, mediaItem)
+                    if (startPositionMs != androidx.media3.common.C.TIME_UNSET) {
+                        controller.seekTo(controller.currentMediaItemIndex, startPositionMs)
+                    }
                 } else {
-                    controller.setMediaItem(mediaItem)
+                    controller.setMediaItem(mediaItem, startPositionMs)
                 }
                 controller.prepare()
                 controller.play()
@@ -3491,6 +3530,14 @@ class PlayerViewModel @Inject constructor(
             beginPreparingSong(song)
             _isSheetVisible.value = true
         }
+    }
+
+    private fun withLxQualityFragment(mediaItem: MediaItem, lxQualityTag: String?): MediaItem {
+        if (lxQualityTag == null) return mediaItem
+        val uri = mediaItem.localConfiguration?.uri ?: return mediaItem
+        if (uri.scheme != "lxmusic" || uri.fragment != null) return mediaItem
+        val tagged = uri.buildUpon().fragment("q=$lxQualityTag").build()
+        return mediaItem.buildUpon().setUri(tagged).build()
     }
 
     private fun clearPreparingSongIfMatching(mediaId: String? = null) {
@@ -4693,6 +4740,60 @@ class PlayerViewModel @Inject constructor(
 
     fun seekTo(position: Long) {
         playbackStateHolder.seekTo(position)
+    }
+
+    private val _qualitySwitchInFlight = MutableStateFlow(false)
+    val qualitySwitchInFlight: StateFlow<Boolean> = _qualitySwitchInFlight.asStateFlow()
+
+    private var qualityOverrideKey: Pair<String, String>? = null
+
+    fun switchLxQuality(quality: String) {
+        if (_qualitySwitchInFlight.value) return
+        val song = playbackStateHolder.stablePlayerState.value.currentSong ?: return
+        val source = song.lxMusicSource ?: return
+        val songmid = song.lxMusicSongMid ?: return
+        viewModelScope.launch {
+            _qualitySwitchInFlight.value = true
+            try {
+                val positionMs = playbackStateHolder.currentPosition.value
+                val currentQuality = currentLxQuality.value
+                val lxSong = com.minoppol.music.data.lxmusic.LxSongMapper.toLxSong(song)
+                val probe = if (lxSong == null) null else withContext(Dispatchers.IO) {
+                    runCatching {
+                        lxMusicRepository.probeScriptQuality(lxSong, quality)
+                    }.getOrNull()
+                }
+                val probeQuality = probe?.quality
+                val probeRank = probeQuality?.let {
+                    com.minoppol.music.data.cache.PlaybackCacheDataSource.qualityRank(it)
+                }
+                val requestedRank =
+                    com.minoppol.music.data.cache.PlaybackCacheDataSource.qualityRank(quality)
+                val currentRank = currentQuality?.let {
+                    com.minoppol.music.data.cache.PlaybackCacheDataSource.qualityRank(it)
+                } ?: -1
+                val acceptable = probe != null &&
+                    (probeRank == null || probeRank >= requestedRank || probeRank > currentRank)
+                if (probe == null || !acceptable) {
+                    if (probeQuality != null) {
+                        currentQuality?.let {
+                            lxPlaybackQualityTracker.report(source, songmid, it, true)
+                        }
+                    }
+                    sendToast(context.getString(R.string.player_quality_switch_unavailable))
+                    return@launch
+                }
+                lxMusicRepository.applySongQualitySwitch(source, songmid, probeQuality ?: quality, probe)
+                qualityOverrideKey = source to songmid
+                replayCurrentSongPreservingQueue(
+                    song,
+                    if (positionMs > 1000L) positionMs else androidx.media3.common.C.TIME_UNSET,
+                    quality,
+                )
+            } finally {
+                _qualitySwitchInFlight.value = false
+            }
+        }
     }
 
     fun nextSong() {

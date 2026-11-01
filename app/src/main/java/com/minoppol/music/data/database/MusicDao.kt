@@ -236,6 +236,35 @@ interface MusicDao {
     @Query("SELECT id, content_uri_string FROM songs WHERE source_type = 0")
     suspend fun getLocalSongContentUris(): List<LocalSongContentUri>
 
+    @Query("SELECT content_uri_string FROM songs WHERE source_type = 7")
+    suspend fun getOnlineSongContentUris(): List<String>
+
+    @Query(
+        "UPDATE songs SET file_path = :filePath, parent_directory_path = :parentDir " +
+            "WHERE source_type = 0 AND content_uri_string = :contentUri"
+    )
+    suspend fun updateLocalSongPathByContentUri(contentUri: String, filePath: String, parentDir: String)
+
+    @Query("SELECT * FROM songs WHERE source_type = 0 AND id IN (:ids)")
+    suspend fun getLocalSongsByIds(ids: List<Long>): List<SongEntity>
+
+    @Query(
+        "UPDATE songs SET file_path = :filePath, parent_directory_path = :parentDir, " +
+            "mime_type = :mimeType, bitrate = :bitrate, sample_rate = :sampleRate, " +
+            "album_art_uri_string = :albumArtUriString, duration = :duration " +
+            "WHERE id = :songId AND source_type = 0"
+    )
+    suspend fun mergeLocalScanMetadata(
+        songId: Long,
+        filePath: String,
+        parentDir: String,
+        mimeType: String?,
+        bitrate: Int?,
+        sampleRate: Int?,
+        albumArtUriString: String?,
+        duration: Long,
+    )
+
     @Query("DELETE FROM songs WHERE id IN (:songIds)")
     suspend fun deleteSongsByIds(songIds: List<Long>)
 

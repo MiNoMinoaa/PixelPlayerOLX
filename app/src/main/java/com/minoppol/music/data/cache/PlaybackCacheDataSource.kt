@@ -66,33 +66,12 @@ class PlaybackCacheDataSource(
             return openDelegate(upstreamDataSourceFactory.createDataSource(), dataSpec)
         }
 
-        val preferred = lxProxy.preferredQualitySync()
-        var probe = lxProxy.peekResolved(id)
-        if (probe != null && probe.quality != null &&
-            qualityRank(probe.quality) < qualityRank(preferred)
-        ) {
-            val invalidateKey = id.source + "_" + id.songmid
-            val now = System.currentTimeMillis()
-            val last = lastInvalidateTime[invalidateKey] ?: 0L
-            if (now - last > INVALIDATE_COOLDOWN_MS) {
-                Timber.tag(TAG).d(
-                    "cached quality %s < preferred %s for %s/%s — invalidate & refetch",
-                    probe.quality, preferred, id.source, id.songmid,
-                )
-                lxProxy.invalidateUrlCacheForId(id)
-                lastInvalidateTime[invalidateKey] = now
-                probe = null
-            } else {
-                Timber.tag(TAG).d(
-                    "cached quality %s < preferred %s for %s/%s — cooldown, accept",
-                    probe.quality, preferred, id.source, id.songmid,
-                )
-            }
-        }
+        val qualityHint = parseQualityHint(uri)
+        val probe = lxProxy.peekResolved(id, qualityHint)
         probe?.let { info ->
             val q = info.quality
             if (q != null) {
-                val key = PlaybackCacheManager.cacheKey(id.source, id.songmid, q)
+                val key = PlaybackCacheManager.cacheKey(id.source, id.songmid, q, info.contentToken)
                 val result = openCached(dataSpec, id, key, q, fallbackToUpstream = true)
                 qualityTracker.report(id.source, id.songmid, q, trusted = true)
                 return result
@@ -101,37 +80,55 @@ class PlaybackCacheDataSource(
 
         val upstream = upstreamDataSourceFactory.createDataSource()
         try {
-            val length = upstream.open(dataSpec)
-            val actual = lxProxy.peekResolved(id)
-            if (actual == null || actual.quality == null) {
-                Timber.tag(TAG).d("no quality probe for %s/%s — pass-through", id.source, id.songmid)
-                return openDelegate(upstream, dataSpec)
-            }
-            val key = PlaybackCacheManager.cacheKey(id.source, id.songmid, actual.quality)
-            beginTeeWrite(upstream, dataSpec, id, actual.quality, key, length)
-            return length
+            return openUpstreamAndTee(upstream, dataSpec, id)
         } catch (e: IOException) {
             runCatching { upstream.close() }
-            val entries = cacheManager.findCachedEntries(id.source, id.songmid)
-            for (entry in entries) {
-                if (!cacheManager.isCacheComplete(entry.cacheKey)) {
-                    Timber.tag(TAG).w("cached quality %s incomplete, skipping", entry.quality)
-                    continue
+            lxProxy.invalidateUrlCacheForId(id)
+            lxProxy.invalidateResolvedPlayFor(id)
+            val retrySource = upstreamDataSourceFactory.createDataSource()
+            try {
+                return openUpstreamAndTee(retrySource, dataSpec, id)
+            } catch (e2: IOException) {
+                runCatching { retrySource.close() }
+                val entries = cacheManager.findCachedEntries(id.source, id.songmid)
+                for (entry in entries) {
+                    if (!cacheManager.isCacheComplete(entry.cacheKey)) {
+                        Timber.tag(TAG).w("cached quality %s incomplete, skipping", entry.quality)
+                        continue
+                    }
+                    try {
+                        Timber.tag(TAG).d(
+                            "offline fallback to cached quality %s for %s/%s", entry.quality, id.source, id.songmid
+                        )
+                        val result = openCached(dataSpec, id, entry.cacheKey, entry.quality, fallbackToUpstream = false)
+                        qualityTracker.report(id.source, id.songmid, entry.quality, trusted = false)
+                        return result
+                    } catch (e3: IOException) {
+                        Timber.tag(TAG).w(e3, "cached quality %s failed, trying next", entry.quality)
+                        continue
+                    }
                 }
-                try {
-                    Timber.tag(TAG).d(
-                        "offline fallback to cached quality %s for %s/%s", entry.quality, id.source, id.songmid
-                    )
-                    val result = openCached(dataSpec, id, entry.cacheKey, entry.quality, fallbackToUpstream = false)
-                    qualityTracker.report(id.source, id.songmid, entry.quality, trusted = false)
-                    return result
-                } catch (e2: IOException) {
-                    Timber.tag(TAG).w(e2, "cached quality %s failed, trying next", entry.quality)
-                    continue
-                }
+                throw e2
             }
-            throw e
         }
+    }
+
+    private fun parseQualityHint(uri: Uri): String? =
+        runCatching { uri.getQueryParameter("q") }.getOrNull()?.takeIf { it.isNotBlank() }
+
+    private fun openUpstreamAndTee(dataSource: DataSource, dataSpec: DataSpec, id: LxStreamId): Long {
+        val length = dataSource.open(dataSpec)
+        val actual = lxProxy.peekResolved(id, parseQualityHint(dataSpec.uri))
+        if (actual == null || actual.quality == null) {
+            Timber.tag(TAG).d("no quality probe for %s/%s — pass-through", id.source, id.songmid)
+            listeners.forEach { dataSource.addTransferListener(it) }
+            delegate = dataSource
+            return length
+        }
+        qualityTracker.report(id.source, id.songmid, actual.quality, trusted = true)
+        val key = PlaybackCacheManager.cacheKey(id.source, id.songmid, actual.quality, actual.contentToken)
+        beginTeeWrite(dataSource, dataSpec, id, actual.quality, key, length)
+        return length
     }
 
     private fun beginTeeWrite(
@@ -210,7 +207,7 @@ class PlaybackCacheDataSource(
             val afterBytes = runCatching {
                 cache?.getCachedBytes(cacheKey, 0, Long.MAX_VALUE)
             }.getOrDefault(-2L)
-            if (cachedLen > 0 && afterBytes != null && afterBytes > cachedLen) {
+            if (dataSpec.position == 0L && cachedLen > 0 && afterBytes != null && afterBytes > cachedLen) {
                 Timber.tag(TAG).w(
                     "cache stale key=%s cachedBytes=%d upstreamLen=%d, drop and refetch",
                     cacheKey, afterBytes, cachedLen
@@ -317,8 +314,6 @@ class PlaybackCacheDataSource(
 
     companion object {
         const val TAG = "PlaybackCache"
-        private const val INVALIDATE_COOLDOWN_MS = 30_000L
-        private val lastInvalidateTime = mutableMapOf<String, Long>()
 
         fun qualityRank(quality: String): Int = when (quality) {
             "128k" -> 0

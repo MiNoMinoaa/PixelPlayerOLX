@@ -29,6 +29,7 @@ import androidx.compose.material.icons.rounded.HourglassTop
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilledTonalIconButton
@@ -39,11 +40,14 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -74,6 +78,30 @@ fun CloudDownloadsScreen(
     val playbackCacheLimitMb by viewModel.playbackCacheLimitMb.collectAsStateWithLifecycle()
     val downloadMaxThreads by viewModel.downloadMaxThreads.collectAsStateWithLifecycle()
     val context = LocalContext.current
+
+    LaunchedEffect(Unit) { viewModel.refresh() }
+
+    var pendingRemoval by remember { mutableStateOf<OfflineDownload?>(null) }
+    pendingRemoval?.let { target ->
+        AlertDialog(
+            onDismissRequest = { pendingRemoval = null },
+            title = { Text(stringResource(R.string.cloud_remove_download)) },
+            text = { Text(stringResource(R.string.cloud_remove_download_confirm_message, target.title)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.remove(target)
+                        pendingRemoval = null
+                    }
+                ) { Text(stringResource(R.string.confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingRemoval = null }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -158,7 +186,7 @@ fun CloudDownloadsScreen(
                     )
                 }
                 items(state.downloading, key = OfflineDownload::downloadId) { download ->
-                    DownloadItemCard(download = download, onRemove = { viewModel.remove(download) })
+                    DownloadItemCard(download = download, onRemove = { pendingRemoval = download })
                 }
             }
 
@@ -170,7 +198,7 @@ fun CloudDownloadsScreen(
                     )
                 }
                 items(state.queued, key = OfflineDownload::downloadId) { download ->
-                    DownloadItemCard(download = download, onRemove = { viewModel.remove(download) })
+                    DownloadItemCard(download = download, onRemove = { pendingRemoval = download })
                 }
             }
 
@@ -184,7 +212,7 @@ fun CloudDownloadsScreen(
                 items(state.failed, key = OfflineDownload::downloadId) { download ->
                     DownloadItemCard(
                         download = download,
-                        onRemove = { viewModel.remove(download) },
+                        onRemove = { pendingRemoval = download },
                         onRetry = { viewModel.retry(download) }
                     )
                 }
@@ -198,7 +226,7 @@ fun CloudDownloadsScreen(
                     )
                 }
                 items(state.completed, key = OfflineDownload::downloadId) { download ->
-                    DownloadItemCard(download = download, onRemove = { viewModel.remove(download) })
+                    DownloadItemCard(download = download, onRemove = { pendingRemoval = download })
                 }
             }
         }
