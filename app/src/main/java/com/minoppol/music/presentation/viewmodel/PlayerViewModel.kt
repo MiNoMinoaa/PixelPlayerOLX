@@ -3632,13 +3632,25 @@ class PlayerViewModel @Inject constructor(
             )
         }
         playbackStateHolder.updateStablePlayerState {
-            it.copy(
-                currentSong = effectiveStartSong,
-                currentMediaItemIndex = 0,
-                totalDuration = 0L,
-                isPlaying = true,
-                playWhenReady = true,
-            )
+            if (it.currentSong?.id == effectiveStartSong.id) {
+                it.copy(
+                    currentSong = effectiveStartSong,
+                    currentMediaItemIndex = 0,
+                    totalDuration = 0L,
+                    isPlaying = true,
+                    playWhenReady = true,
+                )
+            } else {
+                it.copy(
+                    currentSong = effectiveStartSong,
+                    currentMediaItemIndex = 0,
+                    totalDuration = 0L,
+                    isPlaying = true,
+                    playWhenReady = true,
+                    lyrics = null,
+                    isLoadingLyrics = true
+                )
+            }
         }
         maybeRestoreMissingArtwork(effectiveStartSong)
         _isSheetVisible.value = true
@@ -3695,11 +3707,21 @@ class PlayerViewModel @Inject constructor(
         cancelPendingFullQueuePlayback()
         beginPreparingSong(song)
         playbackStateHolder.updateStablePlayerState {
-            it.copy(
-                currentSong = song,
-                isPlaying = true,
-                playWhenReady = true
-            )
+            if (it.currentSong?.id == song.id) {
+                it.copy(
+                    currentSong = song,
+                    isPlaying = true,
+                    playWhenReady = true
+                )
+            } else {
+                it.copy(
+                    currentSong = song,
+                    isPlaying = true,
+                    playWhenReady = true,
+                    lyrics = null,
+                    isLoadingLyrics = true
+                )
+            }
         }
         maybeRestoreMissingArtwork(song)
         _isSheetVisible.value = true
