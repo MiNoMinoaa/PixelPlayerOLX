@@ -4782,25 +4782,13 @@ class PlayerViewModel @Inject constructor(
                 val lxSong = com.minoppol.music.data.lxmusic.LxSongMapper.toLxSong(song)
                 val probe = if (lxSong == null) null else withContext(Dispatchers.IO) {
                     runCatching {
-                        lxMusicRepository.probeScriptQuality(lxSong, quality)
+                        lxMusicRepository.probeBestUpgradableQuality(lxSong, quality, currentQuality)
                     }.getOrNull()
                 }
                 val probeQuality = probe?.quality
-                val probeRank = probeQuality?.let {
-                    com.minoppol.music.data.cache.PlaybackCacheDataSource.qualityRank(it)
-                }
-                val requestedRank =
-                    com.minoppol.music.data.cache.PlaybackCacheDataSource.qualityRank(quality)
-                val currentRank = currentQuality?.let {
-                    com.minoppol.music.data.cache.PlaybackCacheDataSource.qualityRank(it)
-                } ?: -1
-                val acceptable = probe != null &&
-                    (probeRank == null || probeRank >= requestedRank || probeRank > currentRank)
-                if (probe == null || !acceptable) {
-                    if (probeQuality != null) {
-                        currentQuality?.let {
-                            lxPlaybackQualityTracker.report(source, songmid, it, true)
-                        }
+                if (probe == null) {
+                    currentQuality?.let {
+                        lxPlaybackQualityTracker.report(source, songmid, it, true)
                     }
                     sendToast(context.getString(R.string.player_quality_switch_unavailable))
                     return@launch
@@ -4810,7 +4798,7 @@ class PlayerViewModel @Inject constructor(
                 replayCurrentSongPreservingQueue(
                     song,
                     if (positionMs > 1000L) positionMs else androidx.media3.common.C.TIME_UNSET,
-                    quality,
+                    probeQuality ?: quality,
                 )
             } finally {
                 _qualitySwitchInFlight.value = false

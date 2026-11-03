@@ -2185,11 +2185,16 @@ private fun lxQualityEntryOf(quality: String): LxQualityEntry? =
 @Composable
 private fun LxQualityBadge(quality: String, onClick: (() -> Unit)? = null) {
     val entry = lxQualityEntryOf(quality) ?: return
+    val interactionSource = remember { MutableInteractionSource() }
     Surface(
         shape = RoundedCornerShape(999.dp),
         color = entry.accent.copy(alpha = 0.18f),
         contentColor = entry.accent,
-        modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
+        modifier = if (onClick != null) Modifier.clickable(
+            interactionSource = interactionSource,
+            indication = null,
+            onClick = onClick
+        ) else Modifier
     ) {
         Text(
             text = stringResource(entry.labelRes),

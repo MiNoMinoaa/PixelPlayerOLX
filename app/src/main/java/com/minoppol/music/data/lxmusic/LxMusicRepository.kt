@@ -4298,6 +4298,80 @@ class LxMusicRepository @Inject constructor(
         }.getOrDefault(false)
     }
 
+    private data class FlacStreamInfo(val sampleRateHz: Int, val bitDepth: Int)
+
+    private suspend fun readFlacStreamInfo(url: String): FlacStreamInfo? = withContext(Dispatchers.IO) {
+        runCatching {
+            val request = Request.Builder()
+                .url(url)
+                .header("Range", "bytes=0-63")
+                .header(
+                    "User-Agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+                )
+                .get()
+                .build()
+            val client = okHttpClient.newBuilder()
+                .callTimeout(3_000L, java.util.concurrent.TimeUnit.MILLISECONDS)
+                .build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return@runCatching null
+                val body = response.body ?: return@runCatching null
+                val head = ByteArray(64)
+                val source = body.source()
+                var read = 0
+                while (read < head.size) {
+                    val n = source.read(head, read, head.size - read)
+                    if (n <= 0L) break
+                    read += n.toInt()
+                }
+                if (read < 26) return@runCatching null
+                if (head[0] != 'f'.code.toByte() || head[1] != 'L'.code.toByte() ||
+                    head[2] != 'a'.code.toByte() || head[3] != 'C'.code.toByte()
+                ) return@runCatching null
+                val sampleRate = ((head[18].toInt() and 0xFF) shl 12) or
+                    ((head[19].toInt() and 0xFF) shl 4) or
+                    ((head[20].toInt() and 0xFF) shr 4)
+                val bitDepth = (((head[20].toInt() and 0x01) shl 4) or
+                    ((head[21].toInt() and 0xFF) shr 4)) + 1
+                FlacStreamInfo(sampleRate, bitDepth)
+            }
+        }.getOrNull()
+    }
+
+    internal suspend fun verifyStreamQualityClaim(url: String, claimed: String): String {
+        val info = readFlacStreamInfo(url) ?: return claimed
+        val actual = when {
+            info.sampleRateHz >= 176_400 || (info.bitDepth >= 24 && info.sampleRateHz >= 88_200) -> LxQualities.MASTER
+            info.bitDepth >= 24 -> LxQualities.FLAC24
+            else -> LxQualities.FLAC
+        }
+        return if (qualityRank(actual) < qualityRank(claimed)) actual else claimed
+    }
+
+    suspend fun probeBestUpgradableQuality(
+        song: LxSong,
+        requested: String,
+        currentQuality: String?,
+    ): ResolvedPlayUrl? {
+        val startMs = System.currentTimeMillis()
+        val currentRank = currentQuality?.let { qualityRank(it) } ?: -1
+        var q: String? = requested
+        while (q != null) {
+            val remainingMs = 12_000L - (System.currentTimeMillis() - startMs)
+            if (remainingMs <= 0L) break
+            val stepQuality = q
+            val probe = kotlinx.coroutines.withTimeoutOrNull(remainingMs) { probeScriptQuality(song, stepQuality) }
+            val probeRank = probe?.quality?.let { qualityRank(it) }
+            if (probe != null && (probeRank == null || probeRank >= qualityRank(stepQuality) || probeRank > currentRank)) {
+                return probe
+            }
+            val next = qualityFallbackNext[stepQuality]
+            q = if (next != null && qualityRank(next) > currentRank) next else null
+        }
+        return null
+    }
+
     suspend fun resolveMusicUrlWithFallbackMeta(
         song: LxSong,
         quality: String? = null,
@@ -4905,7 +4979,20 @@ class LxMusicRepository @Inject constructor(
         val elapsedMs = System.currentTimeMillis() - startMs
         val outcome = when (event) {
             is LxMusicUrlEvent.Success -> {
-                if (streamUrlValidator?.invoke(event.url) == false) {
+                val lastSegment = event.url.substringBefore('?').substringAfterLast('/')
+                if (lastSegment.startsWith("aim", ignoreCase = true)) {
+                    Timber.w("resolveViaSingleScript: aim encrypted url (${event.url.take(80)}) for ${song.source}/${song.songmid}")
+                    LxResolveDiag.log(
+                        "script_result",
+                        "script" to scriptName,
+                        "source" to song.source,
+                        "songmid" to song.songmid,
+                        "outcome" to "Unavailable",
+                        "reason" to "aim_encrypted",
+                        "ms" to elapsedMs,
+                    )
+                    ScriptOutcome.Unavailable
+                } else if (streamUrlValidator?.invoke(event.url) == false) {
                     Timber.w("resolveViaSingleScript: rejected by security (${event.url.take(80)}) for ${song.source}/${song.songmid}")
                     LxResolveDiag.log(
                         "script_result",
@@ -4918,7 +5005,21 @@ class LxMusicRepository @Inject constructor(
                     )
                     ScriptOutcome.Unavailable
                 } else {
-                    val actualQ = inferScriptResultQuality(event.url, requestQuality)
+                    var actualQ = inferScriptResultQuality(event.url, requestQuality)
+                    if (actualQ != null && qualityRank(actualQ) >= qualityRank(LxQualities.FLAC24)) {
+                        val verified = verifyStreamQualityClaim(event.url, actualQ)
+                        if (verified != actualQ) {
+                            LxResolveDiag.log(
+                                "quality_verified",
+                                "script" to scriptName,
+                                "source" to song.source,
+                                "songmid" to song.songmid,
+                                "claimed" to actualQ,
+                                "actual" to verified,
+                            )
+                            actualQ = verified
+                        }
+                    }
                     if (actualQ != requestQuality) {
                         Timber.d(
                             "resolveViaSingleScript: script returned lossy url for q=$quality, " +
