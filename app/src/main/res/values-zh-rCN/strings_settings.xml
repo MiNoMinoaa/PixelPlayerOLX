@@ -209,6 +209,8 @@
     <string name="setcat_lx_board_show_shuffle_fab_subtitle">关闭后，发现页左下角的随机播放悬浮按钮将不再显示。</string>
     <string name="setcat_lx_board_show_play_all_fab_title">显示发现页播放全部按钮</string>
     <string name="setcat_lx_board_show_play_all_fab_subtitle">关闭后，发现页左下角的播放全部悬浮按钮将不再显示。</string>
+    <string name="setcat_lx_discover_show_sort_fab_title">显示发现页排序按钮</string>
+    <string name="setcat_lx_discover_show_sort_fab_subtitle">开启后，发现页左下角会显示排序悬浮按钮；关闭后不再显示。</string>
 
     <string name="setcat_folders">文件夹</string>
     <string name="setcat_folder_back_gesture_title">返回键优先操作文件夹</string>

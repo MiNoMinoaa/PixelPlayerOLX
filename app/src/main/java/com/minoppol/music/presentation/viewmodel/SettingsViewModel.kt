@@ -74,6 +74,7 @@ data class SettingsUiState(
     val lxBoardIncludeQueue: Boolean = true,
     val lxBoardShowShuffleFab: Boolean = true,
     val lxBoardShowPlayAllFab: Boolean = true,
+    val lxDiscoverShowSortFab: Boolean = false,
     val carouselStyle: String = CarouselStyle.NO_PEEK,
     val libraryNavigationMode: String = LibraryNavigationMode.TAB_ROW,
     val launchTab: String = LaunchTab.HOME,
@@ -177,7 +178,8 @@ private sealed interface SettingsUiUpdate {
         val autoCheckUpdates: Boolean,
         val lxBoardIncludeQueue: Boolean,
         val lxBoardShowShuffleFab: Boolean,
-        val lxBoardShowPlayAllFab: Boolean
+        val lxBoardShowPlayAllFab: Boolean,
+        val lxDiscoverShowSortFab: Boolean
     ) : SettingsUiUpdate
 
     data class Group2(
@@ -301,6 +303,7 @@ class SettingsViewModel @Inject constructor(
                 userPreferencesRepository.lxBoardIncludeQueueFlow,
                 userPreferencesRepository.lxBoardShowShuffleFabFlow,
                 userPreferencesRepository.lxBoardShowPlayAllFabFlow,
+                userPreferencesRepository.lxDiscoverShowSortFabFlow,
                 userPreferencesRepository.splashAnimationEnabledFlow,
                 userPreferencesRepository.autoCheckUpdatesFlow,
                 userPreferencesRepository.showLxMusicTabFlow
@@ -325,9 +328,10 @@ class SettingsViewModel @Inject constructor(
                     lxBoardIncludeQueue = values[16] as Boolean,
                     lxBoardShowShuffleFab = values[17] as Boolean,
                     lxBoardShowPlayAllFab = values[18] as Boolean,
-                    splashAnimationEnabled = values[19] as Boolean,
-                    autoCheckUpdates = values[20] as Boolean,
-                    showLxMusicTab = values[21] as Boolean
+                    lxDiscoverShowSortFab = values[19] as Boolean,
+                    splashAnimationEnabled = values[20] as Boolean,
+                    autoCheckUpdates = values[21] as Boolean,
+                    showLxMusicTab = values[22] as Boolean
                 )
             }.collect { update ->
                 _uiState.update { state ->
@@ -351,6 +355,7 @@ class SettingsViewModel @Inject constructor(
                         lxBoardIncludeQueue = update.lxBoardIncludeQueue,
                         lxBoardShowShuffleFab = update.lxBoardShowShuffleFab,
                         lxBoardShowPlayAllFab = update.lxBoardShowPlayAllFab,
+                        lxDiscoverShowSortFab = update.lxDiscoverShowSortFab,
                         splashAnimationEnabled = update.splashAnimationEnabled,
                         autoCheckUpdates = update.autoCheckUpdates,
                         showLxMusicTab = update.showLxMusicTab
@@ -766,6 +771,12 @@ class SettingsViewModel @Inject constructor(
     fun setLxBoardShowPlayAllFab(enabled: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setLxBoardShowPlayAllFab(enabled)
+        }
+    }
+
+    fun setLxDiscoverShowSortFab(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setLxDiscoverShowSortFab(enabled)
         }
     }
 

@@ -11,6 +11,7 @@ import com.minoppol.music.data.model.Artist
 import com.minoppol.music.data.model.MusicFolder
 import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.model.SortOption
+import com.minoppol.music.data.model.cjkSortKey
 import com.minoppol.music.data.preferences.UserPreferencesRepository
 import com.minoppol.music.data.repository.MusicRepository
 import kotlinx.collections.immutable.ImmutableList
@@ -385,48 +386,48 @@ class LibraryStateHolder @Inject constructor(
     private fun sortAlbumsList(albums: Iterable<Album>, sortOption: SortOption): List<Album> {
         return when (sortOption) {
             SortOption.AlbumTitleAZ -> albums.sortedWith(
-                compareBy<Album> { it.title.lowercase() }
-                    .thenBy { it.artist.lowercase() }
+                compareBy<Album> { cjkSortKey(it.title) }
+                    .thenBy { cjkSortKey(it.artist) }
                     .thenBy { it.id }
             )
             SortOption.AlbumTitleZA -> albums.sortedWith(
-                compareByDescending<Album> { it.title.lowercase() }
-                    .thenBy { it.artist.lowercase() }
+                compareByDescending<Album> { cjkSortKey(it.title) }
+                    .thenBy { cjkSortKey(it.artist) }
                     .thenBy { it.id }
             )
             SortOption.AlbumArtist -> albums.sortedWith(
-                compareBy<Album> { it.artist.lowercase() }
-                    .thenBy { it.title.lowercase() }
+                compareBy<Album> { cjkSortKey(it.artist) }
+                    .thenBy { cjkSortKey(it.title) }
                     .thenBy { it.id }
             )
             SortOption.AlbumArtistDesc -> albums.sortedWith(
-                compareByDescending<Album> { it.artist.lowercase() }
-                    .thenBy { it.title.lowercase() }
+                compareByDescending<Album> { cjkSortKey(it.artist) }
+                    .thenBy { cjkSortKey(it.title) }
                     .thenBy { it.id }
             )
             SortOption.AlbumReleaseYear -> albums.sortedWith(
                 compareByDescending<Album> { it.year }
-                    .thenBy { it.title.lowercase() }
+                    .thenBy { cjkSortKey(it.title) }
                     .thenBy { it.id }
             )
             SortOption.AlbumReleaseYearAsc -> albums.sortedWith(
                 compareBy<Album> { it.year }
-                    .thenBy { it.title.lowercase() }
+                    .thenBy { cjkSortKey(it.title) }
                     .thenBy { it.id }
             )
             SortOption.AlbumDateAdded -> albums.sortedWith(
                 compareByDescending<Album> { it.dateAdded }
-                    .thenBy { it.title.lowercase() }
+                    .thenBy { cjkSortKey(it.title) }
                     .thenBy { it.id }
             )
             SortOption.AlbumSizeAsc -> albums.sortedWith(
                 compareBy<Album> { it.songCount }
-                    .thenBy { it.title.lowercase() }
+                    .thenBy { cjkSortKey(it.title) }
                     .thenBy { it.id }
             )
             SortOption.AlbumSizeDesc -> albums.sortedWith(
                 compareByDescending<Album> { it.songCount }
-                    .thenBy { it.title.lowercase() }
+                    .thenBy { cjkSortKey(it.title) }
                     .thenBy { it.id }
             )
             else -> albums.toList()
@@ -436,21 +437,21 @@ class LibraryStateHolder @Inject constructor(
     private fun sortArtistsList(artists: Iterable<Artist>, sortOption: SortOption): List<Artist> {
         return when (sortOption) {
             SortOption.ArtistNameAZ -> artists.sortedWith(
-                compareBy<Artist> { it.name.lowercase() }
+                compareBy<Artist> { cjkSortKey(it.name) }
                     .thenBy { it.id }
             )
             SortOption.ArtistNameZA -> artists.sortedWith(
-                compareByDescending<Artist> { it.name.lowercase() }
+                compareByDescending<Artist> { cjkSortKey(it.name) }
                     .thenBy { it.id }
             )
             SortOption.ArtistNumSongsDesc -> artists.sortedWith(
                 compareByDescending<Artist> { it.songCount }
-                    .thenBy { it.name.lowercase() }
+                    .thenBy { cjkSortKey(it.name) }
                     .thenBy { it.id }
             )
             SortOption.ArtistNumSongsAsc -> artists.sortedWith(
                 compareBy<Artist> { it.songCount }
-                    .thenBy { it.name.lowercase() }
+                    .thenBy { cjkSortKey(it.name) }
                     .thenBy { it.id }
             )
             else -> artists.toList()
@@ -460,31 +461,31 @@ class LibraryStateHolder @Inject constructor(
     private fun sortFoldersList(folders: Iterable<MusicFolder>, sortOption: SortOption): List<MusicFolder> {
         return when (sortOption) {
             SortOption.FolderNameAZ -> folders.sortedWith(
-                compareBy<MusicFolder> { it.name.lowercase() }
+                compareBy<MusicFolder> { cjkSortKey(it.name) }
                     .thenBy { it.path }
             )
             SortOption.FolderNameZA -> folders.sortedWith(
-                compareByDescending<MusicFolder> { it.name.lowercase() }
+                compareByDescending<MusicFolder> { cjkSortKey(it.name) }
                     .thenBy { it.path }
             )
             SortOption.FolderSongCountAsc -> folders.sortedWith(
                 compareBy<MusicFolder> { it.totalSongCount }
-                    .thenBy { it.name.lowercase() }
+                    .thenBy { cjkSortKey(it.name) }
                     .thenBy { it.path }
             )
             SortOption.FolderSongCountDesc -> folders.sortedWith(
                 compareByDescending<MusicFolder> { it.totalSongCount }
-                    .thenBy { it.name.lowercase() }
+                    .thenBy { cjkSortKey(it.name) }
                     .thenBy { it.path }
             )
             SortOption.FolderSubdirCountAsc -> folders.sortedWith(
                 compareBy<MusicFolder> { it.totalSubFolderCount }
-                    .thenBy { it.name.lowercase() }
+                    .thenBy { cjkSortKey(it.name) }
                     .thenBy { it.path }
             )
             SortOption.FolderSubdirCountDesc -> folders.sortedWith(
                 compareByDescending<MusicFolder> { it.totalSubFolderCount }
-                    .thenBy { it.name.lowercase() }
+                    .thenBy { cjkSortKey(it.name) }
                     .thenBy { it.path }
             )
             else -> folders.toList()

@@ -22,6 +22,7 @@ import com.minoppol.music.data.lxmusic.LxTxQrPoll
 import com.minoppol.music.data.lxmusic.LxTxQrType
 import com.minoppol.music.data.lxmusic.netease.NeteaseCookieStore
 import com.minoppol.music.data.lxmusic.netease.NeteaseOfficialApi
+import com.minoppol.music.data.model.SortOption
 import com.minoppol.music.data.offline.CloudOfflineRepository
 import com.minoppol.music.data.preferences.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -147,6 +148,13 @@ class LxMusicViewModel @Inject constructor(
 
     private val _browseState = MutableStateFlow(BrowseState())
     val browseState: StateFlow<BrowseState> = _browseState.asStateFlow()
+
+    private val _discoverSortOption = MutableStateFlow<SortOption>(SortOption.SongDefaultOrder)
+    val discoverSortOption: StateFlow<SortOption> = _discoverSortOption.asStateFlow()
+
+    fun setDiscoverSortOption(option: SortOption) {
+        _discoverSortOption.value = option
+    }
 
     private var loadEpoch = 0L
     private var currentLoadJob: Job? = null

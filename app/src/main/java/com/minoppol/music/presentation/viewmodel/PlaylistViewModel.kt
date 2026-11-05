@@ -10,6 +10,7 @@ import com.minoppol.music.data.model.Playlist
 import com.minoppol.music.data.model.SmartPlaylistRule
 import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.model.SortOption
+import com.minoppol.music.data.model.cjkSortKey
 import com.minoppol.music.data.model.fromPlaylistSource
 import com.minoppol.music.data.model.isSmartPlaylist
 import com.minoppol.music.data.model.toPlaylistSource
@@ -813,27 +814,27 @@ class PlaylistViewModel @Inject constructor(
     ): List<com.minoppol.music.data.model.Playlist> {
         return when (sortOption) {
             SortOption.PlaylistNameAZ -> playlists.sortedWith(
-                compareBy<com.minoppol.music.data.model.Playlist> { it.name.lowercase() }
+                compareBy<com.minoppol.music.data.model.Playlist> { cjkSortKey(it.name) }
                     .thenByDescending { it.lastModified }
                     .thenBy { it.id }
             )
             SortOption.PlaylistNameZA -> playlists.sortedWith(
-                compareByDescending<com.minoppol.music.data.model.Playlist> { it.name.lowercase() }
+                compareByDescending<com.minoppol.music.data.model.Playlist> { cjkSortKey(it.name) }
                     .thenByDescending { it.lastModified }
                     .thenBy { it.id }
             )
             SortOption.PlaylistDateCreated -> playlists.sortedWith(
                 compareByDescending<com.minoppol.music.data.model.Playlist> { it.lastModified }
-                    .thenBy { it.name.lowercase() }
+                    .thenBy { cjkSortKey(it.name) }
                     .thenBy { it.id }
             )
             SortOption.PlaylistDateCreatedAsc -> playlists.sortedWith(
                 compareBy<com.minoppol.music.data.model.Playlist> { it.lastModified }
-                    .thenBy { it.name.lowercase() }
+                    .thenBy { cjkSortKey(it.name) }
                     .thenBy { it.id }
             )
             else -> playlists.sortedWith(
-                compareBy<com.minoppol.music.data.model.Playlist> { it.name.lowercase() }
+                compareBy<com.minoppol.music.data.model.Playlist> { cjkSortKey(it.name) }
                     .thenByDescending { it.lastModified }
                     .thenBy { it.id }
             )
@@ -846,53 +847,53 @@ class PlaylistViewModel @Inject constructor(
     ): List<Song> {
         return when (sortOption) {
             SortOption.SongTitleAZ -> songs.sortedWith(
-                compareBy<Song> { it.title.lowercase() }
-                    .thenBy { it.artist.lowercase() }
+                compareBy<Song> { cjkSortKey(it.title) }
+                    .thenBy { cjkSortKey(it.artist) }
                     .thenBy { it.id }
             )
             SortOption.SongTitleZA -> songs.sortedWith(
-                compareByDescending<Song> { it.title.lowercase() }
-                    .thenBy { it.artist.lowercase() }
+                compareByDescending<Song> { cjkSortKey(it.title) }
+                    .thenBy { cjkSortKey(it.artist) }
                     .thenBy { it.id }
             )
             SortOption.SongArtist -> songs.sortedWith(
-                compareBy<Song> { it.artist.lowercase() }
-                    .thenBy { it.title.lowercase() }
+                compareBy<Song> { cjkSortKey(it.artist) }
+                    .thenBy { cjkSortKey(it.title) }
                     .thenBy { it.id }
             )
             SortOption.SongArtistDesc -> songs.sortedWith(
-                compareByDescending<Song> { it.artist.lowercase() }
-                    .thenBy { it.title.lowercase() }
+                compareByDescending<Song> { cjkSortKey(it.artist) }
+                    .thenBy { cjkSortKey(it.title) }
                     .thenBy { it.id }
             )
             SortOption.SongAlbum -> songs.sortedWith(
-                compareBy<Song> { it.album.lowercase() }
-                    .thenBy { it.title.lowercase() }
+                compareBy<Song> { cjkSortKey(it.album) }
+                    .thenBy { cjkSortKey(it.title) }
                     .thenBy { it.id }
             )
             SortOption.SongAlbumDesc -> songs.sortedWith(
-                compareByDescending<Song> { it.album.lowercase() }
-                    .thenBy { it.title.lowercase() }
+                compareByDescending<Song> { cjkSortKey(it.album) }
+                    .thenBy { cjkSortKey(it.title) }
                     .thenBy { it.id }
             )
             SortOption.SongDuration -> songs.sortedWith(
                 compareByDescending<Song> { it.duration }
-                    .thenBy { it.title.lowercase() }
+                    .thenBy { cjkSortKey(it.title) }
                     .thenBy { it.id }
             )
             SortOption.SongDurationAsc -> songs.sortedWith(
                 compareBy<Song> { it.duration }
-                    .thenBy { it.title.lowercase() }
+                    .thenBy { cjkSortKey(it.title) }
                     .thenBy { it.id }
             )
             SortOption.SongDateAdded -> songs.sortedWith(
                 compareByDescending<Song> { it.dateAdded }
-                    .thenBy { it.title.lowercase() }
+                    .thenBy { cjkSortKey(it.title) }
                     .thenBy { it.id }
             )
             SortOption.SongDateAddedAsc -> songs.sortedWith(
                 compareBy<Song> { it.dateAdded }
-                    .thenBy { it.title.lowercase() }
+                    .thenBy { cjkSortKey(it.title) }
                     .thenBy { it.id }
             )
             else -> songs

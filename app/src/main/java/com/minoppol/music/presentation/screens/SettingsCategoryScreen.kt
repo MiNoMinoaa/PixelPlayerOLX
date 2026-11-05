@@ -1067,6 +1067,14 @@ fun SettingsCategoryScreen(
                                     leadingIcon = { Icon(painterResource(R.drawable.rounded_play_arrow_24), null, tint = MaterialTheme.colorScheme.secondary) },
                                     modifier = Modifier.settingHighlight("item_playback_lx_board_show_play_all_fab", highlightKey)
                                 )
+                                SwitchSettingItem(
+                                    title = stringResource(R.string.setcat_lx_discover_show_sort_fab_title),
+                                    subtitle = stringResource(R.string.setcat_lx_discover_show_sort_fab_subtitle),
+                                    checked = uiState.lxDiscoverShowSortFab,
+                                    onCheckedChange = { settingsViewModel.setLxDiscoverShowSortFab(it) },
+                                    leadingIcon = { Icon(painterResource(R.drawable.rounded_sort_24), null, tint = MaterialTheme.colorScheme.secondary) },
+                                    modifier = Modifier.settingHighlight("item_playback_lx_discover_show_sort_fab", highlightKey)
+                                )
                             }
 
                             SettingsSubsection(title = stringResource(R.string.setcat_lyrics_title)) {

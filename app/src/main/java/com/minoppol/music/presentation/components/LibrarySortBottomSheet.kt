@@ -59,6 +59,24 @@ import com.minoppol.music.ui.theme.RoundedSans
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import kotlinx.collections.immutable.ImmutableList
 
+@Composable
+private fun localizedSortMethodLabel(option: SortOption): String = when (option.methodLabel) {
+    "Default Order" -> stringResource(R.string.sort_method_default_order)
+    "Title" -> stringResource(R.string.sort_method_title)
+    "Artist" -> stringResource(R.string.sort_method_artist)
+    "Album" -> stringResource(R.string.sort_method_album)
+    "Date Added" -> stringResource(R.string.sort_method_date_added)
+    "Duration" -> stringResource(R.string.sort_method_duration)
+    "Release Year" -> stringResource(R.string.sort_method_release_year)
+    "Song Count" -> stringResource(R.string.sort_method_song_count)
+    "Name" -> stringResource(R.string.sort_method_name)
+    "Number of Songs" -> stringResource(R.string.sort_method_number_of_songs)
+    "Date Created" -> stringResource(R.string.sort_method_date_created)
+    "Date Liked" -> stringResource(R.string.sort_method_date_liked)
+    "Subfolder Count" -> stringResource(R.string.sort_method_subfolder_count)
+    else -> option.methodLabel
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibrarySortBottomSheet(
@@ -200,7 +218,7 @@ fun LibrarySortBottomSheet(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = option.methodLabel,
+                                text = localizedSortMethodLabel(option),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface
                             )

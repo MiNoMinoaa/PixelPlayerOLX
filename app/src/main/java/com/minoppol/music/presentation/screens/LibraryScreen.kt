@@ -133,6 +133,7 @@ import com.minoppol.music.data.model.FolderSource
 import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.lxmusic.LxQualities
 import com.minoppol.music.data.model.SortOption
+import com.minoppol.music.data.model.cjkSortKey
 import com.minoppol.music.data.model.StorageFilter
 import com.minoppol.music.presentation.components.MiniPlayerHeight
 import com.minoppol.music.presentation.components.SmartImage
@@ -2941,35 +2942,35 @@ private fun findFolderByPath(path: String, folders: List<MusicFolder>): MusicFol
 private fun sortMusicFoldersByOption(folders: List<MusicFolder>, sortOption: SortOption): List<MusicFolder> {
     return when (sortOption) {
         SortOption.FolderNameAZ -> folders.sortedWith(
-            compareBy<MusicFolder> { it.name.lowercase() }
+            compareBy<MusicFolder> { cjkSortKey(it.name) }
                 .thenBy { it.path }
         )
         SortOption.FolderNameZA -> folders.sortedWith(
-            compareByDescending<MusicFolder> { it.name.lowercase() }
+            compareByDescending<MusicFolder> { cjkSortKey(it.name) }
                 .thenBy { it.path }
         )
         SortOption.FolderSongCountAsc -> folders.sortedWith(
             compareBy<MusicFolder> { it.totalSongCount }
-                .thenBy { it.name.lowercase() }
+                .thenBy { cjkSortKey(it.name) }
                 .thenBy { it.path }
         )
         SortOption.FolderSongCountDesc -> folders.sortedWith(
             compareByDescending<MusicFolder> { it.totalSongCount }
-                .thenBy { it.name.lowercase() }
+                .thenBy { cjkSortKey(it.name) }
                 .thenBy { it.path }
         )
         SortOption.FolderSubdirCountAsc -> folders.sortedWith(
             compareBy<MusicFolder> { it.totalSubFolderCount }
-                .thenBy { it.name.lowercase() }
+                .thenBy { cjkSortKey(it.name) }
                 .thenBy { it.path }
         )
         SortOption.FolderSubdirCountDesc -> folders.sortedWith(
             compareByDescending<MusicFolder> { it.totalSubFolderCount }
-                .thenBy { it.name.lowercase() }
+                .thenBy { cjkSortKey(it.name) }
                 .thenBy { it.path }
         )
         else -> folders.sortedWith(
-            compareBy<MusicFolder> { it.name.lowercase() }
+            compareBy<MusicFolder> { cjkSortKey(it.name) }
                 .thenBy { it.path }
         )
     }
@@ -2978,13 +2979,13 @@ private fun sortMusicFoldersByOption(folders: List<MusicFolder>, sortOption: Sor
 private fun sortSongsForFolderView(songs: List<Song>, sortOption: SortOption): List<Song> {
     return when (sortOption) {
         SortOption.FolderNameZA -> songs.sortedWith(
-            compareByDescending<Song> { it.title.lowercase() }
-                .thenBy { it.artist.lowercase() }
+            compareByDescending<Song> { cjkSortKey(it.title) }
+                .thenBy { cjkSortKey(it.artist) }
                 .thenBy { it.id }
         )
         else -> songs.sortedWith(
-            compareBy<Song> { it.title.lowercase() }
-                .thenBy { it.artist.lowercase() }
+            compareBy<Song> { cjkSortKey(it.title) }
+                .thenBy { cjkSortKey(it.artist) }
                 .thenBy { it.id }
         )
     }

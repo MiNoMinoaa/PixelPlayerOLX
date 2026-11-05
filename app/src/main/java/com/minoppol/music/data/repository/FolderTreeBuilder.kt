@@ -6,6 +6,7 @@ import com.minoppol.music.data.database.FolderSongRow
 import com.minoppol.music.data.model.FolderSource
 import com.minoppol.music.data.model.MusicFolder
 import com.minoppol.music.data.model.Song
+import com.minoppol.music.data.model.cjkSortKey
 import com.minoppol.music.utils.DirectoryRuleResolver
 import com.minoppol.music.utils.LocalArtworkUri
 import com.minoppol.music.utils.StorageType
@@ -86,7 +87,7 @@ class FolderTreeBuilder @Inject constructor() {
                 )
             }
             .filter { it.totalSongCount > 0 }
-            .sortedBy { it.name.lowercase() }
+            .sortedBy { cjkSortKey(it.name) }
     }
 
     private fun buildFolderTreeForRoot(
@@ -132,7 +133,7 @@ class FolderTreeBuilder @Inject constructor() {
         return rootFolder.subFolderPaths
             .mapNotNull { path -> buildImmutableFolder(path, folderMap) }
             .filter { it.totalSongCount > 0 }
-            .sortedBy { it.name.lowercase() }
+            .sortedBy { cjkSortKey(it.name) }
     }
 
     internal fun inferRemovableStorageRoots(
@@ -203,7 +204,7 @@ class FolderTreeBuilder @Inject constructor() {
         
         val subFolders = temp.subFolderPaths
             .mapNotNull { subPath -> buildImmutableFolder(subPath, map) }
-            .sortedBy { it.name.lowercase() }
+            .sortedBy { cjkSortKey(it.name) }
             .toImmutableList()
             
         return MusicFolder(
@@ -212,7 +213,7 @@ class FolderTreeBuilder @Inject constructor() {
             songs = temp.songs
                 .sortedWith(
                     compareBy<Song> { if (it.trackNumber > 0) it.trackNumber else Int.MAX_VALUE }
-                        .thenBy { it.title.lowercase() }
+                        .thenBy { cjkSortKey(it.title) }
                 )
                 .toImmutableList(),
             subFolders = subFolders

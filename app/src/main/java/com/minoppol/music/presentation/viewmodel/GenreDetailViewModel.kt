@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.minoppol.music.data.model.Genre
 import com.minoppol.music.data.model.Song
+import com.minoppol.music.data.model.cjkSortKey
 import com.minoppol.music.data.repository.MusicRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -290,7 +291,7 @@ class GenreDetailViewModel @Inject constructor(
                         val sortedAlbumSongs = albumSongs.sortedWith(
                             compareBy<Song> { it.discNumber ?: 1 }
                                 .thenBy { if (it.trackNumber > 0) it.trackNumber else Int.MAX_VALUE }
-                                .thenBy { it.title.lowercase() }
+                                .thenBy { cjkSortKey(it.title) }
                         )
                         AlbumData(albumName, sortedAlbumSongs.firstOrNull()?.albumArtUriString, sortedAlbumSongs)
                     }
@@ -304,7 +305,7 @@ class GenreDetailViewModel @Inject constructor(
                     val sortedAlbumSongs = albumSongs.sortedWith(
                         compareBy<Song> { it.discNumber ?: 1 }
                             .thenBy { if (it.trackNumber > 0) it.trackNumber else Int.MAX_VALUE }
-                            .thenBy { it.title.lowercase() }
+                            .thenBy { cjkSortKey(it.title) }
                     )
                     SectionData.AlbumSection(
                         "album_$album",

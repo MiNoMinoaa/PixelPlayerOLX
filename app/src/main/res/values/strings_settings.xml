@@ -222,6 +222,8 @@
     <string name="setcat_lx_board_show_shuffle_fab_subtitle">When off, the floating shuffle button at the bottom-left of the discover page is hidden.</string>
     <string name="setcat_lx_board_show_play_all_fab_title">Show discover play-all button</string>
     <string name="setcat_lx_board_show_play_all_fab_subtitle">When off, the floating play-all button at the bottom-left of the discover page is hidden.</string>
+    <string name="setcat_lx_discover_show_sort_fab_title">Show discover sort button</string>
+    <string name="setcat_lx_discover_show_sort_fab_subtitle">When on, the floating sort button at the bottom-left of the discover page is shown. When off, it is hidden.</string>
 
     <string name="setcat_folders">Folders</string>
     <string name="setcat_folder_back_gesture_title">Back gesture controls folders</string>

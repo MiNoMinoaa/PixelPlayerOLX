@@ -7,6 +7,7 @@ import android.net.Uri
 import android.provider.MediaStore
 
 import com.minoppol.music.data.model.Song
+import com.minoppol.music.data.model.cjkSortKey
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -830,7 +831,7 @@ class MusicRepositoryImpl @Inject constructor(
                             .filter { it.isNotBlank() }
                             .map { buildGenre(it) }
                             .distinctBy { it.id }
-                            .sortedBy { it.name.lowercase() }
+                            .sortedBy { cjkSortKey(it.name) }
                             .toList()
                         val unknownAlreadyPresent = knownGenres.any { it.id == UNKNOWN_GENRE_ID }
                         if (hasUnknown && !unknownAlreadyPresent) {
