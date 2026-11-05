@@ -292,6 +292,7 @@
 <string name="lx_error_board_unsupported">该平台排行榜暂未支持，敬请期待</string>
 <string name="lx_error_playlist_unsupported">该平台歌单暂未支持，敬请期待</string>
 <string name="lx_error_board_load_failed">榜单加载失败或暂无歌曲</string>
+<string name="lx_empty_load_failed_title">载入失败</string>
 <string name="lx_error_playlist_load_failed">歌单加载失败或暂无数据</string>
 <string name="lx_error_playlist_songs_load_failed">歌单加载失败或暂无歌曲</string>
 <string name="lx_error_no_playlist_found">未找到相关歌单</string>

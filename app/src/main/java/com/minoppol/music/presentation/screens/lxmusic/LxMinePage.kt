@@ -1193,13 +1193,10 @@ internal fun LazyListScope.mineSongItems(
         }
     } else if (!loading && !error.isNullOrBlank()) {
         item(key = "mine_songs_empty") {
-            Text(
-                error,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
+            LxEmptyState(
+                title = stringResource(R.string.lx_empty_load_failed_title),
+                subtitle = error,
+                modifier = Modifier.padding(top = 32.dp, bottom = 24.dp),
             )
         }
     }

@@ -3041,6 +3041,15 @@ private fun LxBoardPage(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
                     }
                 }
+                if (browseState.error != null && browseState.boardSongs.isEmpty()) {
+                    item(key = "board_error_state") {
+                        LxEmptyState(
+                            title = stringResource(R.string.lx_empty_load_failed_title),
+                            subtitle = browseState.error,
+                            modifier = Modifier.padding(top = 48.dp, bottom = 24.dp),
+                        )
+                    }
+                }
             }
         }
         Box(
@@ -3390,10 +3399,12 @@ private fun LxPlaylistPage(
                     }
                 }
                 if (browseState.error != null) {
-                    item {
-                        Text(browseState.error, style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                    item(key = "playlist_error_state") {
+                        LxEmptyState(
+                            title = stringResource(R.string.lx_empty_load_failed_title),
+                            subtitle = browseState.error,
+                            modifier = Modifier.padding(top = 32.dp, bottom = 24.dp),
+                        )
                     }
                 }
             }
@@ -3855,11 +3866,10 @@ private fun LxSearchPage(
                             )
                         } else if (searchState.error != null) {
                             item(key = "artist_error") {
-                                Text(
-                                    searchState.error,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                LxEmptyState(
+                                    title = stringResource(R.string.lx_empty_load_failed_title),
+                                    subtitle = searchState.error,
+                                    modifier = Modifier.padding(top = 24.dp, bottom = 24.dp),
                                 )
                             }
                         }
@@ -3891,11 +3901,10 @@ private fun LxSearchPage(
                             )
                         } else if (searchState.error != null) {
                             item(key = "album_error") {
-                                Text(
-                                    searchState.error,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                LxEmptyState(
+                                    title = stringResource(R.string.lx_empty_load_failed_title),
+                                    subtitle = searchState.error,
+                                    modifier = Modifier.padding(top = 24.dp, bottom = 24.dp),
                                 )
                             }
                         }
@@ -3916,10 +3925,12 @@ private fun LxSearchPage(
                     }
                 } else {
                 if (searchState.error != null) {
-                    item {
-                        Text(searchState.error, style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                    item(key = "song_error_state") {
+                        LxEmptyState(
+                            title = stringResource(R.string.lx_empty_load_failed_title),
+                            subtitle = searchState.error,
+                            modifier = Modifier.padding(top = 24.dp, bottom = 24.dp),
+                        )
                     }
                 }
                 if (searchState.error == null && !searchState.searching &&
