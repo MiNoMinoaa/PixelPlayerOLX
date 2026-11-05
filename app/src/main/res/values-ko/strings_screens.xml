@@ -161,8 +161,8 @@
     <string name="setup_excluded_folders_title">제외된 폴더</string>
     <string name="setup_external_artist_images_description">없는 아티스트 사진을 Deezer에서 가져와 로컬에 캐시합니다.</string>
     <string name="setup_external_artist_images_title">Deezer의 아티스트 이미지</string>
-    <string name="setup_external_lyrics_description">로컬 또는 내장 가사가 없을 때 lrclib.net에서 검색합니다.</string>
-    <string name="setup_external_lyrics_title">LRCLIB의 온라인 가사</string>
+    <string name="setup_external_lyrics_description">로컬 또는 내장 가사가 없을 때 온라인 출처를 검색합니다.</string>
+    <string name="setup_external_lyrics_title">온라인 가사</string>
     <string name="setup_external_services_footer">나중에 설정 &gt; 음악 관리 &gt; 선택적 온라인 서비스에서 변경할 수 있습니다.</string>
     <string name="setup_external_services_title">선택적 온라인 서비스</string>
     <string name="setup_grant_media_permission">미디어 권한 허용</string>

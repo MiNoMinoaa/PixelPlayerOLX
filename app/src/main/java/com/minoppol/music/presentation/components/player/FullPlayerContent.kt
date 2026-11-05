@@ -407,6 +407,7 @@ fun FullPlayerContent(
                 onManualSearch = { title, artist ->
                     playerViewModel.searchLyricsManually(title, artist)
                 },
+                onNoMatch = { playerViewModel.markLyricsSearchNoMatch() },
                 onDismiss = {
                     showFetchLyricsDialog = false
                     playerViewModel.resetLyricsSearchState()
@@ -1051,6 +1052,7 @@ fun FullPlayerContent(
                 onSearchLyrics = { forcePick -> playerViewModel.fetchLyricsForCurrentSong(forcePick) },
                 onPickResult = { playerViewModel.acceptLyricsSearchResultForCurrentSong(it) },
                 onManualSearch = { title, artist -> playerViewModel.searchLyricsManually(title, artist) },
+                onNoMatch = { playerViewModel.markLyricsSearchNoMatch() },
                 onImportLyrics = { filePickerLauncher.launch(com.minoppol.music.utils.LyricsImportSecurity.pickerMimeTypes()) },
                 onDismissLyricsSearch = { playerViewModel.resetLyricsSearchState() },
                 lyricsSyncOffset = lyricsSyncOffset,

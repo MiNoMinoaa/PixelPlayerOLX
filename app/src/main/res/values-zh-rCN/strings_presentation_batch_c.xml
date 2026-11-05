@@ -25,6 +25,7 @@
     <string name="cd_sort_options">排序选项</string>
 
     <string name="lyrics_synced_badge">已同步</string>
+    <string name="lyrics_word_synced_badge">已逐字同步</string>
     <string name="song_field_artist_optional">艺术家（选填）</string>
 
     <string name="song_picker_title">添加歌曲</string>

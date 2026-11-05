@@ -1202,6 +1202,40 @@ class LxMusicRepository @Inject constructor(
         }
     }
 
+    suspend fun ensureSearchCover(song: LxSong): String? {
+        if (!song.pic.isNullOrBlank()) return song.pic
+        return when (song.source) {
+            "kw" -> fetchKuwoPic(song.songmid)
+            "wy" -> fetchNeteaseSongPic(song.songmid)
+            "kg" -> fetchKugouPic(song)
+            else -> null
+        }
+    }
+
+    private suspend fun fetchNeteaseSongPic(songmid: String): String? {
+        return runCatching {
+            val url = "https://music.163.com/api/song/detail?id=$songmid&ids=%5B$songmid%5D"
+            okHttpClient.newCall(
+                Request.Builder().url(url)
+                    .header("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36")
+                    .header("Referer", "https://music.163.com/")
+                    .get().build()
+            ).execute().use { resp ->
+                if (!resp.isSuccessful) return@use null
+                val root = JsonParser.parseString(resp.body?.string().orEmpty()).asJsonObject
+                val album = root.getAsJsonArray("songs")
+                    ?.firstOrNull { it.isJsonObject }
+                    ?.asJsonObject
+                    ?.getAsJsonObject("album")
+                val pic = album?.let { jsonStr(it, "picUrl") }
+                pic?.let { normalizeNeteasePicUrl(it) }
+            }
+        }.getOrElse {
+            Timber.w(it, "fetchNeteaseSongPic failed for songmid=$songmid")
+            null
+        }
+    }
+
     internal fun decodeHtmlEntities(s: String): String {
         if ('&' !in s) return s
         return s.replace("&amp;", "&")

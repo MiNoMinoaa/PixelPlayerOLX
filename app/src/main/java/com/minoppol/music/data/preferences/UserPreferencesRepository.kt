@@ -220,6 +220,7 @@ constructor(
         val LYRICS_SOURCE_PREFERENCE = stringPreferencesKey("lyrics_source_preference")
         val AUTO_SCAN_LRC_FILES = booleanPreferencesKey("auto_scan_lrc_files")
         val EXTERNAL_LYRICS_ENABLED = booleanPreferencesKey("external_lyrics_enabled")
+        val ONLINE_LYRICS_PLATFORM = stringPreferencesKey("online_lyrics_platform")
         val EXTERNAL_ARTIST_IMAGES_ENABLED = booleanPreferencesKey("external_artist_images_enabled")
         val NOTIFICATION_LYRICS_ENABLED = booleanPreferencesKey("notification_lyrics_enabled")
         val MINI_PLAYER_LYRICS_ENABLED = booleanPreferencesKey("mini_player_lyrics_enabled")
@@ -729,6 +730,17 @@ constructor(
             if (!enabled && preferences[PreferencesKeys.LYRICS_SOURCE_PREFERENCE] == LyricsSourcePreference.API_FIRST.name) {
                 preferences[PreferencesKeys.LYRICS_SOURCE_PREFERENCE] = LyricsSourcePreference.EMBEDDED_FIRST.name
             }
+        }
+    }
+
+    val onlineLyricsPlatformFlow: Flow<String> =
+        dataStore.data.map { preferences ->
+            preferences[PreferencesKeys.ONLINE_LYRICS_PLATFORM] ?: "platform"
+        }.distinctUntilChanged()
+
+    suspend fun setOnlineLyricsPlatform(platform: String) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.ONLINE_LYRICS_PLATFORM] = platform
         }
     }
 

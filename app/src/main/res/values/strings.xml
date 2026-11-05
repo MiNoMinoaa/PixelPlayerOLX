@@ -39,6 +39,8 @@
     <string name="lyrics">Lyrics</string>
     <string name="loading_lyrics">Loading lyrics…</string>
     <string name="lyrics_provided_by">Lyrics provided by</string>
+    <string name="lyrics_provided_by_platforms">Lyrics come from public data of various platforms</string>
+    <string name="lyrics_none_match">None of these match</string>
     <string name="lrclib_uri">https://lrclib.net/</string>
     <string name="lyrics_not_found">Lyrics not found</string>
     <string name="search_lyrics_online_prompt">Would you like to search for lyrics online?</string>

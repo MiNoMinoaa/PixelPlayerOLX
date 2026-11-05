@@ -95,6 +95,7 @@ data class SettingsUiState(
     val lyricsSourcePreference: LyricsSourcePreference = LyricsSourcePreference.EMBEDDED_FIRST,
     val autoScanLrcFiles: Boolean = false,
     val externalLyricsEnabled: Boolean = false,
+    val onlineLyricsPlatform: String = "platform",
     val externalArtistImagesEnabled: Boolean = false,
     val notificationLyricsEnabled: Boolean = true,
     val miniPlayerLyricsEnabled: Boolean = true,
@@ -512,6 +513,12 @@ class SettingsViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            userPreferencesRepository.onlineLyricsPlatformFlow.collect { platform ->
+                _uiState.update { it.copy(onlineLyricsPlatform = platform) }
+            }
+        }
+
+        viewModelScope.launch {
             userPreferencesRepository.externalArtistImagesEnabledFlow.collect { enabled ->
                 _uiState.update { it.copy(externalArtistImagesEnabled = enabled) }
             }
@@ -913,6 +920,12 @@ class SettingsViewModel @Inject constructor(
     fun setExternalLyricsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setExternalLyricsEnabled(enabled)
+        }
+    }
+
+    fun setOnlineLyricsPlatform(platform: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.setOnlineLyricsPlatform(platform)
         }
     }
 

@@ -727,6 +727,16 @@ object SettingsRegistry {
                 onToggle = { viewModel, checked -> viewModel.setExternalLyricsEnabled(checked) }
             ),
             SettingSpec(
+                id = "lyrics_platform_priority",
+                itemKey = "item_lyrics_platform_priority",
+                titleRes = R.string.setcat_online_lyrics_platform_label,
+                subtitleRes = R.string.setcat_online_lyrics_platform_desc,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.LyricsSettings.createRoute(),
+                type = SettingType.NAVIGABLE_CARD,
+                keywordsStatic = listOf("platform", "lrclib", "priority", "platform", "来源", "优先")
+            ),
+            SettingSpec(
                 id = "lyrics_reset_imported",
                 itemKey = "item_lyrics_reset_imported",
                 titleRes = R.string.setcat_reset_imported_lyrics_title,

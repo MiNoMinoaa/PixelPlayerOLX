@@ -1,5 +1,6 @@
 package com.minoppol.music.data.repository
 
+import com.minoppol.music.data.lxmusic.LxSong
 import com.minoppol.music.data.model.Lyrics
 import com.minoppol.music.data.model.LyricsSourcePreference
 import com.minoppol.music.data.model.Song
@@ -34,12 +35,16 @@ interface LyricsRepository {
     /**
      * Search for lyrics on remote API and return multiple results.
      */
-    suspend fun searchRemote(song: Song): Result<Pair<String, List<LyricsSearchResult>>>
-  
+    suspend fun searchRemote(song: Song): Result<Pair<String, List<LyricsSearchEntry>>>
+
     /**
      * Search for lyrics on remote API using query title and artist, and return multiple results.
      */
-    suspend fun searchRemoteByQuery(title: String, artist: String? = null): Result<Pair<String, List<LyricsSearchResult>>>
+    suspend fun searchRemoteByQuery(title: String, artist: String? = null): Result<Pair<String, List<LyricsSearchEntry>>>
+
+    suspend fun fetchPlatformLyrics(entry: PlatformLyricsSearchEntry): Result<PlatformLyricsFetch>
+
+    suspend fun ensureLxSearchCover(song: LxSong): String?
     
     /**
      * Update lyrics for a song in the database.

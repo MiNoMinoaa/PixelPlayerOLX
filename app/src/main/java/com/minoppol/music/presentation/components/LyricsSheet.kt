@@ -94,7 +94,7 @@ import androidx.compose.ui.unit.sp
 
 import com.minoppol.music.data.model.SyncedLine
 import com.minoppol.music.data.model.SyncedWord
-import com.minoppol.music.data.repository.LyricsSearchResult
+import com.minoppol.music.data.repository.LyricsSearchEntry
 import com.minoppol.music.presentation.components.subcomps.FetchLyricsDialog
 import com.minoppol.music.presentation.components.subcomps.PlayerSeekBar
 import com.minoppol.music.presentation.viewmodel.LyricsSearchUiState
@@ -220,8 +220,9 @@ fun LyricsSheet(
     lyricsSearchUiState: LyricsSearchUiState,
     resetLyricsForCurrentSong: () -> Unit,
     onSearchLyrics: (Boolean) -> Unit,
-    onPickResult: (LyricsSearchResult) -> Unit,
+    onPickResult: (LyricsSearchEntry) -> Unit,
     onManualSearch: (String, String?) -> Unit,
+    onNoMatch: () -> Unit,
     onImportLyrics: () -> Unit,
     onDismissLyricsSearch: () -> Unit,
     lyricsSyncOffset: Int,
@@ -559,6 +560,7 @@ fun LyricsSheet(
                 onConfirm = onSearchLyrics,
                 onPickResult = onPickResult,
                 onManualSearch = onManualSearch,
+                onNoMatch = onNoMatch,
                 onDismiss = {
                     showFetchLyricsDialog = false
                     onDismissLyricsSearch()

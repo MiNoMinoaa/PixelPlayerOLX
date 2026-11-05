@@ -306,14 +306,18 @@ interface MusicRepository {
      * @param song The song to search lyrics for
      * @return The search query and the results
      */
-    suspend fun searchRemoteLyrics(song: Song): Result<Pair<String, List<LyricsSearchResult>>>
+    suspend fun searchRemoteLyrics(song: Song): Result<Pair<String, List<LyricsSearchEntry>>>
 
     /**
      * Search for lyrics remotely using query provided, and not use song metadata
      * @param query The query for searching, typically song title and artist name
      * @return The search query and the results
      */
-    suspend fun searchRemoteLyricsByQuery(title: String, artist: String? = null): Result<Pair<String, List<LyricsSearchResult>>>
+    suspend fun searchRemoteLyricsByQuery(title: String, artist: String? = null): Result<Pair<String, List<LyricsSearchEntry>>>
+
+    suspend fun fetchPlatformLyrics(entry: PlatformLyricsSearchEntry): Result<PlatformLyricsFetch>
+
+    suspend fun ensureLxSearchCover(song: com.minoppol.music.data.lxmusic.LxSong): String?
 
     suspend fun updateLyrics(songId: Long, lyrics: String)
 

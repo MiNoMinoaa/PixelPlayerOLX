@@ -8,9 +8,12 @@ import com.minoppol.music.data.model.Lyrics
 import com.minoppol.music.data.model.LyricsSourcePreference
 import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.preferences.UserPreferencesRepository
+import com.minoppol.music.data.repository.LyricsSearchEntry
 import com.minoppol.music.data.repository.LyricsSearchResult
 import com.minoppol.music.data.repository.MusicRepository
 import com.minoppol.music.data.repository.NoLyricsFoundException
+import com.minoppol.music.data.repository.PlatformLyricsFetch
+import com.minoppol.music.data.repository.PlatformLyricsSearchEntry
 import com.minoppol.music.utils.LyricsImportSecurity
 import com.minoppol.music.utils.LyricsImportValidationResult
 import com.minoppol.music.utils.LyricsUtils
@@ -28,7 +31,12 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import kotlinx.collections.immutable.toImmutableList
 
@@ -53,6 +61,8 @@ class LyricsStateHolder @Inject constructor(
 ) {
     private var scope: CoroutineScope? = null
     private var loadingJob: Job? = null
+    private var probeJob: Job? = null
+    private var lastPick: LyricsSearchUiState.PickResult? = null
     private var loadCallback: LyricsLoadCallback? = null
 
     private val _currentSongSyncOffset = MutableStateFlow(0)
@@ -154,7 +164,15 @@ class LyricsStateHolder @Inject constructor(
      * Reset the lyrics search state to idle.
      */
     fun resetSearchState() {
+        probeJob?.cancel()
+        lastPick = null
         _searchUiState.value = LyricsSearchUiState.Idle
+    }
+
+    fun markNoMatch() {
+        probeJob?.cancel()
+        lastPick = null
+        _searchUiState.value = LyricsSearchUiState.NotFound("Lyrics not found")
     }
 
     /**
@@ -167,6 +185,7 @@ class LyricsStateHolder @Inject constructor(
         contextHelper: (Int) -> String
     ) {
         loadingJob?.cancel()
+        probeJob?.cancel()
         loadingJob = scope?.launch {
             _searchUiState.value = LyricsSearchUiState.Loading
 
@@ -219,7 +238,7 @@ class LyricsStateHolder @Inject constructor(
             if (forcePickResults) {
                 musicRepository.searchRemoteLyrics(song)
                     .onSuccess { (query, results) ->
-                        _searchUiState.value = LyricsSearchUiState.PickResult(query, results.toImmutableList())
+                        setPickResult(query, results)
                     }
                     .onFailure { error ->
                         handleError(error)
@@ -236,7 +255,7 @@ class LyricsStateHolder @Inject constructor(
                         if (error is NoLyricsFoundException) {
                             musicRepository.searchRemoteLyrics(song)
                                 .onSuccess { (query, results) ->
-                                    _searchUiState.value = LyricsSearchUiState.PickResult(query, results.toImmutableList())
+                                    setPickResult(query, results)
                                 }
                                 .onFailure { searchError -> handleError(searchError) }
                         } else {
@@ -253,11 +272,12 @@ class LyricsStateHolder @Inject constructor(
     fun searchLyricsManually(title: String, artist: String?) {
         if (title.isBlank()) return
         loadingJob?.cancel()
+        probeJob?.cancel()
         loadingJob = scope?.launch {
             _searchUiState.value = LyricsSearchUiState.Loading
             musicRepository.searchRemoteLyricsByQuery(title, artist)
                 .onSuccess { (q, results) ->
-                    _searchUiState.value = LyricsSearchUiState.PickResult(q, results.toImmutableList())
+                    setPickResult(q, results)
                 }
                 .onFailure { error -> handleError(error) }
         }
@@ -278,6 +298,95 @@ class LyricsStateHolder @Inject constructor(
             val updatedSong = currentSong.withPersistedLyrics(result.rawLyrics, refreshedAlbumArtUri)
 
             _songUpdates.emit(updatedSong to result.lyrics)
+        }
+    }
+
+    fun acceptPlatformLyricsSearchResult(entry: PlatformLyricsSearchEntry, currentSong: Song) {
+        scope?.launch {
+            val fetch = entry.probe ?: run {
+                _searchUiState.value = LyricsSearchUiState.Loading
+                musicRepository.fetchPlatformLyrics(entry).getOrNull()
+            }
+            if (fetch == null) {
+                lastPick?.let { _searchUiState.value = it }
+                return@launch
+            }
+            _searchUiState.value = LyricsSearchUiState.Success(fetch.lyrics)
+
+            currentSong.id.toLongOrNull()?.let { songId ->
+                musicRepository.updateLyrics(songId, fetch.rawLyrics)
+            }
+
+            val refreshedAlbumArtUri = persistLyricsToFileMetadataIfPossible(currentSong, fetch.rawLyrics)
+            val updatedSong = currentSong.withPersistedLyrics(fetch.rawLyrics, refreshedAlbumArtUri)
+
+            _songUpdates.emit(updatedSong to fetch.lyrics)
+        }
+    }
+
+    private fun setPickResult(query: String, results: List<LyricsSearchEntry>) {
+        val immediate = results.filterIsInstance<LyricsSearchResult>()
+        if (immediate.isEmpty()) {
+            lastPick = null
+            _searchUiState.value = LyricsSearchUiState.Loading
+        } else {
+            val state = LyricsSearchUiState.PickResult(query, immediate.toImmutableList())
+            lastPick = state
+            _searchUiState.value = state
+        }
+        startPlatformProbes(query, results)
+    }
+
+    private fun startPlatformProbes(query: String, results: List<LyricsSearchEntry>) {
+        probeJob?.cancel()
+        val platformEntries = results.filterIsInstance<PlatformLyricsSearchEntry>()
+        if (platformEntries.isEmpty()) {
+            if (_searchUiState.value is LyricsSearchUiState.Loading) {
+                _searchUiState.value = LyricsSearchUiState.NotFound("Lyrics not found")
+            }
+            return
+        }
+        probeJob = scope?.launch {
+            val semaphore = Semaphore(4)
+            val mutex = Mutex()
+            var remaining = platformEntries.size
+            coroutineScope {
+                platformEntries.forEach { entry ->
+                    launch {
+                        semaphore.withPermit {
+                            val probe = musicRepository.fetchPlatformLyrics(entry).getOrNull()
+                            var song = entry.song
+                            if (probe != null && song.pic.isNullOrBlank()) {
+                                musicRepository.ensureLxSearchCover(song)?.let { cover ->
+                                    song = song.copy(pic = cover)
+                                }
+                            }
+                            mutex.withLock {
+                                remaining--
+                                if (probe != null) {
+                                    val verified = entry.copy(song = song, probe = probe)
+                                    val current = _searchUiState.value
+                                    when {
+                                        current is LyricsSearchUiState.PickResult && current.query == query -> {
+                                            val newState = LyricsSearchUiState.PickResult(query, (current.results + verified).toImmutableList())
+                                            lastPick = newState
+                                            _searchUiState.value = newState
+                                        }
+                                        current is LyricsSearchUiState.Loading -> {
+                                            val newState = LyricsSearchUiState.PickResult(query, listOf(verified).toImmutableList())
+                                            lastPick = newState
+                                            _searchUiState.value = newState
+                                        }
+                                    }
+                                }
+                                if (remaining == 0 && _searchUiState.value is LyricsSearchUiState.Loading) {
+                                    _searchUiState.value = LyricsSearchUiState.NotFound("Lyrics not found")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

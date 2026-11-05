@@ -110,8 +110,8 @@
     <string name="setcat_export_backup_title">Экспорт резервной копии</string>
     <string name="setcat_external_artist_images_subtitle">Разрешить загрузку недостающих изображений исполнителей из Deezer и их кэширование локально.</string>
     <string name="setcat_external_artist_images_title">Изображения исполнителей из Deezer</string>
-    <string name="setcat_external_lyrics_subtitle">Разрешить поиск и ручную загрузку с lrclib.net, когда локального текста нет.</string>
-    <string name="setcat_external_lyrics_title">Онлайн-тексты из LRCLIB</string>
+    <string name="setcat_external_lyrics_subtitle">Разрешает поиск и ручную загрузку текстов, если их нет локально.</string>
+    <string name="setcat_external_lyrics_title">Тексты онлайн</string>
     <string name="setcat_filtering">Фильтрация</string>
     <string name="setcat_folder_back_gesture_subtitle">На вкладке «Папки» системный жест «Назад» сначала перемещается по иерархии папок, а затем выходит из медиатеки.</string>
     <string name="setcat_folder_back_gesture_title">Жест назад управляет папками</string>

@@ -11,6 +11,8 @@ import com.kyant.taglib.TagLib
 import com.minoppol.music.R
 import com.minoppol.music.data.lxmusic.LxLyricResult
 import com.minoppol.music.data.lxmusic.LxMusicRepository
+import com.minoppol.music.data.lxmusic.LxSong
+import com.minoppol.music.data.lxmusic.LxSources
 import com.minoppol.music.data.model.Lyrics
 import com.minoppol.music.data.model.SyncedLine
 import com.minoppol.music.data.model.LyricsSourcePreference
@@ -55,6 +57,8 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 
 private val EMBEDDED_LYRICS_KEYS = listOf("LYRICS", "SYNCEDLYRICS", "TTML", "UNSYNCEDLYRICS")
+
+private const val ONLINE_LYRICS_PLATFORM_LRCLIB = "lrclib"
 
 private fun Lyrics.isValid(): Boolean = !synced.isNullOrEmpty() || !plain.isNullOrEmpty()
 
@@ -1272,27 +1276,52 @@ class LyricsRepositoryImpl @Inject constructor(
             if (searchResult.isSuccess) {
                 val (_, results) = searchResult.getOrThrow()
                 if (results.isNotEmpty()) {
-                    val best = results.first()
-                    val rawLyricsToSave = best.rawLyrics
+                    for (platformEntry in results.filterIsInstance<PlatformLyricsSearchEntry>()) {
+                        val platformFetch = fetchPlatformLyrics(platformEntry).getOrNull() ?: continue
 
-                    try {
-                        lyricsDao.insert(
-                             com.minoppol.music.data.database.LyricsEntity(
-                                 songId = song.id.toLong(),
-                                 content = rawLyricsToSave,
-                                 isSynced = !best.lyrics.synced.isNullOrEmpty(),
-                                 source = "remote"
-                             )
-                        )
-                    } catch (e: NumberFormatException) {
-                        Timber.tag(TAG).w("Skipping DB update for non-numeric ID: ${song.id}")
+                        try {
+                            lyricsDao.insert(
+                                com.minoppol.music.data.database.LyricsEntity(
+                                    songId = song.id.toLong(),
+                                    content = platformFetch.rawLyrics,
+                                    isSynced = !platformFetch.lyrics.synced.isNullOrEmpty(),
+                                    source = "remote"
+                                )
+                            )
+                        } catch (e: NumberFormatException) {
+                            Timber.tag(TAG).w("Skipping DB update for non-numeric ID: ${song.id}")
+                        }
+
+                        lyricsCache.put(cacheKey, platformFetch.lyrics)
+                        saveLocalLyricsJson(song, platformFetch.lyrics)
+                        LogUtils.d(this@LyricsRepositoryImpl, "Fetched and cached platform lyrics for: ${song.title}")
+
+                        return@withContext Result.success(Pair(platformFetch.lyrics, platformFetch.rawLyrics))
                     }
 
-                    lyricsCache.put(cacheKey, best.lyrics)
-                    saveLocalLyricsJson(song, best.lyrics)
-                    LogUtils.d(this@LyricsRepositoryImpl, "Fetched and cached remote lyrics for: ${song.title}")
+                    val best = results.filterIsInstance<LyricsSearchResult>().firstOrNull()
+                    if (best != null) {
+                        val rawLyricsToSave = best.rawLyrics
 
-                    return@withContext Result.success(Pair(best.lyrics, rawLyricsToSave))
+                        try {
+                            lyricsDao.insert(
+                                com.minoppol.music.data.database.LyricsEntity(
+                                    songId = song.id.toLong(),
+                                    content = rawLyricsToSave,
+                                    isSynced = !best.lyrics.synced.isNullOrEmpty(),
+                                    source = "remote"
+                                )
+                            )
+                        } catch (e: NumberFormatException) {
+                            Timber.tag(TAG).w("Skipping DB update for non-numeric ID: ${song.id}")
+                        }
+
+                        lyricsCache.put(cacheKey, best.lyrics)
+                        saveLocalLyricsJson(song, best.lyrics)
+                        LogUtils.d(this@LyricsRepositoryImpl, "Fetched and cached remote lyrics for: ${song.title}")
+
+                        return@withContext Result.success(Pair(best.lyrics, rawLyricsToSave))
+                    }
                 }
             }
 
@@ -1352,7 +1381,7 @@ class LyricsRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun searchRemote(song: Song): Result<Pair<String, List<LyricsSearchResult>>> = withContext(Dispatchers.IO) {
+    private suspend fun searchLrclibRemote(song: Song): Result<Pair<String, List<LyricsSearchEntry>>> = withContext(Dispatchers.IO) {
         try {
             if (!isExternalLyricsEnabled()) {
                 return@withContext Result.failure(LyricsException(context.getString(R.string.lyrics_remote_disabled)))
@@ -1433,7 +1462,7 @@ class LyricsRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun searchRemoteByQuery(title: String, artist: String?): Result<Pair<String, List<LyricsSearchResult>>> = withContext(Dispatchers.IO) {
+    private suspend fun searchLrclibByQuery(title: String, artist: String?): Result<Pair<String, List<LyricsSearchEntry>>> = withContext(Dispatchers.IO) {
         try {
             if (!isExternalLyricsEnabled()) {
                 return@withContext Result.failure(LyricsException(context.getString(R.string.lyrics_remote_disabled)))
@@ -1483,6 +1512,90 @@ class LyricsRepositoryImpl @Inject constructor(
             Result.failure(LyricsException(context.getString(R.string.failed_to_search_for_lyrics), e)
             )
         }
+    }
+
+    override suspend fun searchRemote(song: Song): Result<Pair<String, List<LyricsSearchEntry>>> {
+        if (!isExternalLyricsEnabled()) {
+            return Result.failure(LyricsException(context.getString(R.string.lyrics_remote_disabled)))
+        }
+        val keyword = "${song.title} ${song.displayArtist}".trim()
+        val platformFirst = userPreferencesRepository.onlineLyricsPlatformFlow.first() != ONLINE_LYRICS_PLATFORM_LRCLIB
+        if (platformFirst) {
+            val platformEntries = runCatching { searchRemoteFromLxPlatforms(keyword, song.duration / 1000) }.getOrDefault(emptyList())
+            if (platformEntries.isNotEmpty()) return Result.success(Pair(keyword, platformEntries))
+            return searchLrclibRemote(song)
+        }
+        val lrclibResult = searchLrclibRemote(song)
+        if (lrclibResult.isSuccess) return lrclibResult
+        val platformEntries = runCatching { searchRemoteFromLxPlatforms(keyword, song.duration / 1000) }.getOrDefault(emptyList())
+        if (platformEntries.isNotEmpty()) return Result.success(Pair(keyword, platformEntries))
+        return lrclibResult
+    }
+
+    override suspend fun searchRemoteByQuery(title: String, artist: String?): Result<Pair<String, List<LyricsSearchEntry>>> {
+        if (!isExternalLyricsEnabled()) {
+            return Result.failure(LyricsException(context.getString(R.string.lyrics_remote_disabled)))
+        }
+        val keyword = listOfNotNull(
+            title.trim().takeIf { it.isNotBlank() },
+            artist?.trim()?.takeIf { it.isNotBlank() }
+        ).joinToString(" ")
+        val platformFirst = userPreferencesRepository.onlineLyricsPlatformFlow.first() != ONLINE_LYRICS_PLATFORM_LRCLIB
+        if (platformFirst) {
+            val platformEntries = runCatching { searchRemoteFromLxPlatforms(keyword, 0L) }.getOrDefault(emptyList())
+            if (platformEntries.isNotEmpty()) return Result.success(Pair(keyword, platformEntries))
+            return searchLrclibByQuery(title, artist)
+        }
+        val lrclibResult = searchLrclibByQuery(title, artist)
+        if (lrclibResult.isSuccess) return lrclibResult
+        val platformEntries = runCatching { searchRemoteFromLxPlatforms(keyword, 0L) }.getOrDefault(emptyList())
+        if (platformEntries.isNotEmpty()) return Result.success(Pair(keyword, platformEntries))
+        return lrclibResult
+    }
+
+    private suspend fun searchRemoteFromLxPlatforms(keyword: String, durationSec: Long): List<LyricsSearchEntry> = coroutineScope {
+        if (keyword.isBlank()) return@coroutineScope emptyList()
+        val candidates = LxSources.ALL.map { source ->
+            async {
+                runCatching { lxMusicRepository.searchMusic("", source, keyword) }.getOrDefault(emptyList())
+            }
+        }.awaitAll().flatten()
+        if (candidates.isEmpty()) return@coroutineScope emptyList()
+        val keywordLower = keyword.lowercase(Locale.getDefault())
+        val scored = candidates.map { candidate ->
+            var score = 0
+            val nameLower = candidate.name.lowercase(Locale.getDefault())
+            if (nameLower.isNotEmpty() && (keywordLower.contains(nameLower) || nameLower.contains(keywordLower))) score += 6
+            val singerLower = candidate.singer.lowercase(Locale.getDefault())
+            if (singerLower.isNotEmpty() && keywordLower.contains(singerLower)) score += 3
+            if (durationSec > 0 && candidate.interval > 0) {
+                val delta = abs(candidate.interval - durationSec)
+                score += when {
+                    delta <= 2 -> 4
+                    delta <= 5 -> 2
+                    delta > 15 -> -4
+                    else -> 0
+                }
+            }
+            score to PlatformLyricsSearchEntry(candidate)
+        }
+        scored.sortedByDescending { it.first }.map { it.second }.distinctBy { it.entryKey }.take(12)
+    }
+
+    override suspend fun fetchPlatformLyrics(entry: PlatformLyricsSearchEntry): Result<PlatformLyricsFetch> = withContext(Dispatchers.IO) {
+        val fetched = runCatching { lxMusicRepository.fetchLyric(entry.song) }.getOrNull()
+            ?: return@withContext Result.failure(NoLyricsFoundException())
+        val built = buildLxLyrics(fetched, entry.song.source)
+            ?: return@withContext Result.failure(NoLyricsFoundException())
+        val wordText = fetched.lxlyric?.takeIf { it.isNotBlank() }
+        val raw = wordText ?: fetched.lyric
+        if (raw.isNullOrBlank()) return@withContext Result.failure(NoLyricsFoundException())
+        val isWordTimed = wordText != null && built.synced?.any { !it.words.isNullOrEmpty() } == true
+        Result.success(PlatformLyricsFetch(raw, built, isWordTimed))
+    }
+
+    override suspend fun ensureLxSearchCover(song: LxSong): String? = withContext(Dispatchers.IO) {
+        lxMusicRepository.ensureSearchCover(song)
     }
 
     override suspend fun updateLyrics(songId: Long, lyricsContent: String): Unit = withContext(Dispatchers.IO) {
@@ -1680,7 +1793,19 @@ class LyricsRepositoryImpl @Inject constructor(
     }
 }
 
-data class LyricsSearchResult(val record: LrcLibResponse, val lyrics: Lyrics, val rawLyrics: String)
+sealed interface LyricsSearchEntry {
+    val entryKey: String
+}
+
+data class LyricsSearchResult(val record: LrcLibResponse, val lyrics: Lyrics, val rawLyrics: String) : LyricsSearchEntry {
+    override val entryKey: String get() = "lrclib:${record.id}"
+}
+
+data class PlatformLyricsSearchEntry(val song: LxSong, val probe: PlatformLyricsFetch? = null) : LyricsSearchEntry {
+    override val entryKey: String get() = "${song.source}:${song.songmid}"
+}
+
+data class PlatformLyricsFetch(val rawLyrics: String, val lyrics: Lyrics, val isWordTimed: Boolean)
 
 data class NoLyricsFoundException(val query: String? = null) : Exception()
 

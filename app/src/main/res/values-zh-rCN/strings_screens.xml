@@ -52,8 +52,8 @@
     <string name="setup_recommended">推荐</string>
     <string name="setup_external_services_title">可选在线服务</string>
     <string name="setup_external_services_subtitle">PixelPlayerOLX 默认离线运行，按需开启需要的联网查询功能。</string>
-    <string name="setup_external_lyrics_title">来自 LRCLIB 的在线歌词</string>
-    <string name="setup_external_lyrics_description">本地或内嵌歌词缺失时，从 lrclib.net 搜索歌词。</string>
+    <string name="setup_external_lyrics_title">在线歌词</string>
+    <string name="setup_external_lyrics_description">本地或内嵌歌词缺失时，从在线来源搜索歌词。</string>
     <string name="setup_external_artist_images_title">来自 Deezer 的艺术家封面</string>
     <string name="setup_external_artist_images_description">拉取缺失的艺术家图片并缓存至本地。</string>
     <string name="setup_external_services_footer">后续可在 设置＞音乐管理＞可选在线服务 修改。</string>

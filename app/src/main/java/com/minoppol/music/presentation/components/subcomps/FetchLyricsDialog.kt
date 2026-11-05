@@ -1,5 +1,6 @@
 package com.minoppol.music.presentation.components.subcomps
 
+import coil.compose.AsyncImage
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -52,8 +54,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.minoppol.music.R
+import com.minoppol.music.data.lxmusic.LxSources
 import com.minoppol.music.data.model.Song
+import com.minoppol.music.data.repository.LyricsSearchEntry
 import com.minoppol.music.data.repository.LyricsSearchResult
+import com.minoppol.music.data.repository.PlatformLyricsSearchEntry
 import com.minoppol.music.presentation.viewmodel.LyricsSearchUiState
 import com.minoppol.music.utils.ProviderText
 import com.minoppol.music.utils.shapes.RoundedStarShape
@@ -64,10 +69,11 @@ fun FetchLyricsDialog(
     uiState: LyricsSearchUiState,
     currentSong: Song?,
     onConfirm: (Boolean) -> Unit,
-    onPickResult: (LyricsSearchResult) -> Unit,
+    onPickResult: (LyricsSearchEntry) -> Unit,
     onManualSearch: (String, String?) -> Unit,
     onDismiss: () -> Unit,
-    onImport: () -> Unit
+    onImport: () -> Unit,
+    onNoMatch: () -> Unit = {}
 ) {
     if (uiState is LyricsSearchUiState.Success) return
 
@@ -107,7 +113,8 @@ fun FetchLyricsDialog(
                         PickResultContent(
                             results = uiState.results,
                             onPickResult = onPickResult,
-                            onCancel = onDismiss
+                            onCancel = onDismiss,
+                            onNoMatch = onNoMatch
                         )
                     }
                     is LyricsSearchUiState.NotFound -> {
@@ -294,10 +301,13 @@ private fun LoadingContent() {
 
 @Composable
 private fun PickResultContent(
-    results: ImmutableList<LyricsSearchResult>,
-    onPickResult: (LyricsSearchResult) -> Unit,
-    onCancel: () -> Unit
+    results: ImmutableList<LyricsSearchEntry>,
+    onPickResult: (LyricsSearchEntry) -> Unit,
+    onCancel: () -> Unit,
+    onNoMatch: () -> Unit
 ) {
+    val hasPlatformEntries = results.any { it is PlatformLyricsSearchEntry }
+
     Text(
         text = stringResource(R.string.found_n_matches_format).format(results.size),
         style = MaterialTheme.typography.headlineSmall,
@@ -312,28 +322,54 @@ private fun PickResultContent(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(bottom = 8.dp)
     ) {
-        items(results, key = { it.record.id }) { result ->
-            ResultItemCard(result = result, onClick = { onPickResult(result) })
+        items(results, key = { it.entryKey }) { entry ->
+            when (entry) {
+                is LyricsSearchResult -> ResultItemCard(result = entry, onClick = { onPickResult(entry) })
+                is PlatformLyricsSearchEntry -> PlatformResultItemCard(entry = entry, onClick = { onPickResult(entry) })
+            }
         }
 
         item {
-            ProviderText(
-                providerText = stringResource(R.string.lyrics_provided_by),
-                uri = stringResource(R.string.lrclib_uri),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp)
-            )
+            if (hasPlatformEntries) {
+                Text(
+                    text = stringResource(R.string.lyrics_provided_by_platforms),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp)
+                )
+            } else {
+                ProviderText(
+                    providerText = stringResource(R.string.lyrics_provided_by),
+                    uri = stringResource(R.string.lrclib_uri),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp)
+                )
+            }
         }
     }
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    TextButton(
-        onClick = onCancel,
+    Row(
         modifier = Modifier.fillMaxWidth(),
-        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(stringResource(R.string.cancel), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        TextButton(
+            onClick = onCancel,
+            modifier = Modifier.weight(1f),
+            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+        ) {
+            Text(stringResource(R.string.cancel), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+
+        TextButton(
+            onClick = onNoMatch,
+            modifier = Modifier.weight(1f),
+            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+        ) {
+            Text(stringResource(R.string.lyrics_none_match), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
     }
 }
 
@@ -343,6 +379,12 @@ private fun ResultItemCard(
     onClick: () -> Unit
 ) {
     val hasSyncedLyrics = result.record.hasSyncedContent
+    val hasWordTimedLyrics = !result.record.lyricsfile.isNullOrBlank()
+    val badgeTextRes = when {
+        hasWordTimedLyrics -> R.string.lyrics_word_synced_badge
+        hasSyncedLyrics -> R.string.lyrics_synced_badge
+        else -> null
+    }
     
     Surface(
         onClick = onClick,
@@ -389,14 +431,14 @@ private fun ResultItemCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    if (hasSyncedLyrics) {
+                    if (badgeTextRes != null) {
                         Surface(
                             shape = RoundedCornerShape(6.dp),
                             color = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary
                         ) {
                             Text(
-                                text = stringResource(R.string.lyrics_synced_badge),
+                                text = stringResource(badgeTextRes),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -409,6 +451,116 @@ private fun ResultItemCard(
                         R.string.presentation_batch_g_list_song_artist_album,
                         result.record.artistName,
                         result.record.albumName
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlatformResultItemCard(
+    entry: PlatformLyricsSearchEntry,
+    onClick: () -> Unit
+) {
+    val song = entry.song
+    val probe = entry.probe
+    val hasSyncedLyrics = probe?.lyrics?.synced?.isNotEmpty() == true
+    val badgeTextRes = when {
+        probe != null && probe.isWordTimed -> R.string.lyrics_word_synced_badge
+        probe != null && hasSyncedLyrics -> R.string.lyrics_synced_badge
+        else -> null
+    }
+
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (hasSyncedLyrics) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                if (song.pic != null) {
+                    AsyncImage(
+                        model = song.pic,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(40.dp).clip(CircleShape)
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Rounded.MusicNote,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = if (hasSyncedLyrics) MaterialTheme.colorScheme.onPrimaryContainer
+                               else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = song.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f, fill = false),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (badgeTextRes != null) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ) {
+                            Text(
+                                text = stringResource(badgeTextRes),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                    Text(
+                        text = LxSources.shortLabel(song.source),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = LxSources.onBrandColor(song.source),
+                        maxLines = 1,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(LxSources.brandColor(song.source))
+                            .padding(horizontal = 5.dp, vertical = 1.dp)
+                    )
+                }
+                Text(
+                    text = stringResource(
+                        R.string.presentation_batch_g_list_song_artist_album,
+                        song.singer,
+                        song.albumName
                     ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -39,6 +39,8 @@
 <string name="lyrics">歌詞</string>
 <string name="loading_lyrics">正在加載歌詞…</string>
 <string name="lyrics_provided_by">歌詞來源</string>
+<string name="lyrics_provided_by_platforms">歌詞來自各平台公開數據</string>
+<string name="lyrics_none_match">均不匹配</string>
 <string name="lrclib_uri">https://lrclib.net/</string>
 <string name="lyrics_not_found">未找到歌詞</string>
 <string name="search_lyrics_online_prompt">是否在線搜索歌詞？</string>

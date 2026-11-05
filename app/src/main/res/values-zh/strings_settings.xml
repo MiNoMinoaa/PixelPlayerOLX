@@ -61,8 +61,11 @@
     <string name="setcat_auto_scan_lrc_title">自動掃描.lrc歌詞文件</string>
     <string name="setcat_auto_scan_lrc_subtitle">曲庫同步時自動掃描同目錄下的lrc歌詞並綁定歌曲</string>
     <string name="setcat_online_services">可選在線服務</string>
-    <string name="setcat_external_lyrics_title">來自 LRCLIB 的在線歌詞</string>
-    <string name="setcat_external_lyrics_subtitle">本地無歌詞時允許從 lrclib.net 搜索、手動獲取歌詞</string>
+    <string name="setcat_external_lyrics_title">在線歌詞</string>
+    <string name="setcat_external_lyrics_subtitle">本地無歌詞時允許在線搜索、手動獲取歌詞</string>
+    <string name="setcat_online_lyrics_platform_label">在線歌詞優先來源</string>
+    <string name="setcat_online_lyrics_platform_desc">優先使用所選來源搜索，無結果時自動嘗試另一個</string>
+    <string name="setcat_online_lyrics_platform_sources">各平台來源</string>
     <string name="setcat_external_artist_images_title">來自 Deezer 的歌手封面</string>
     <string name="setcat_external_artist_images_subtitle">歌手圖片缺失時從 Deezer 獲取並緩存到本地</string>
     <string name="setcat_lyrics_management">歌詞管理</string>

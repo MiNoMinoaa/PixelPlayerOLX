@@ -60,8 +60,10 @@ import com.minoppol.music.data.preferences.ThemePreferencesRepository
 import com.minoppol.music.data.preferences.UserPreferencesRepository
 import com.minoppol.music.data.preferences.AlbumArtQuality
 import com.minoppol.music.data.preferences.ThemePreference
+import com.minoppol.music.data.repository.LyricsSearchEntry
 import com.minoppol.music.data.repository.LyricsSearchResult
 import com.minoppol.music.data.repository.MusicRepository
+import com.minoppol.music.data.repository.PlatformLyricsSearchEntry
 import com.minoppol.music.data.service.MusicNotificationProvider
 import com.minoppol.music.data.service.player.DualPlayerEngine
 import com.minoppol.music.data.worker.SyncManager
@@ -5650,9 +5652,12 @@ class PlayerViewModel @Inject constructor(
         lyricsStateHolder.searchLyricsManually(title, artist)
     }
 
-    fun acceptLyricsSearchResultForCurrentSong(result: LyricsSearchResult) {
+    fun acceptLyricsSearchResultForCurrentSong(entry: LyricsSearchEntry) {
         val currentSong = stablePlayerState.value.currentSong ?: return
-        lyricsStateHolder.acceptLyricsSearchResult(result, currentSong)
+        when (entry) {
+            is LyricsSearchResult -> lyricsStateHolder.acceptLyricsSearchResult(entry, currentSong)
+            is PlatformLyricsSearchEntry -> lyricsStateHolder.acceptPlatformLyricsSearchResult(entry, currentSong)
+        }
     }
 
     fun resetLyricsForCurrentSong() {
@@ -5683,6 +5688,10 @@ class PlayerViewModel @Inject constructor(
      */
     fun resetLyricsSearchState() {
         lyricsStateHolder.resetSearchState()
+    }
+
+    fun markLyricsSearchNoMatch() {
+        lyricsStateHolder.markNoMatch()
     }
 
     private fun onBlockedDirectoriesChanged() {

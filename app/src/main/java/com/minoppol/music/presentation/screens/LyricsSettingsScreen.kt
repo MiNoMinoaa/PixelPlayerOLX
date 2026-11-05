@@ -421,6 +421,29 @@ fun LyricsSettingsScreen(
                         modifier = Modifier.settingHighlight("item_lyrics_external", highlightKey)
                     )
 
+                    if (uiState.externalLyricsEnabled) {
+                        ThemeSelectorItem(
+                            label = stringResource(R.string.setcat_online_lyrics_platform_label),
+                            description = stringResource(R.string.setcat_online_lyrics_platform_desc),
+                            options = mapOf(
+                                "platform" to stringResource(R.string.setcat_online_lyrics_platform_sources),
+                                "lrclib" to "LRCLIB"
+                            ),
+                            selectedKey = uiState.onlineLyricsPlatform,
+                            onSelectionChanged = { key ->
+                                settingsViewModel.setOnlineLyricsPlatform(key)
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    painterResource(R.drawable.rounded_lyrics_24),
+                                    null,
+                                    tint = MaterialTheme.colorScheme.secondary
+                                )
+                            },
+                            modifier = Modifier.settingHighlight("item_lyrics_platform_priority", highlightKey)
+                        )
+                    }
+
                     SettingsItem(
                         title = stringResource(R.string.setcat_reset_imported_lyrics_title),
                         subtitle = stringResource(R.string.setcat_reset_imported_lyrics_subtitle),

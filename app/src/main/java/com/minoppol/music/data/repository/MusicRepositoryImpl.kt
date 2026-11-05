@@ -893,12 +893,20 @@ class MusicRepositoryImpl @Inject constructor(
         return lyricsRepository.fetchFromRemote(song)
     }
 
-    override suspend fun searchRemoteLyrics(song: Song): Result<Pair<String, List<LyricsSearchResult>>> {
+    override suspend fun searchRemoteLyrics(song: Song): Result<Pair<String, List<LyricsSearchEntry>>> {
         return lyricsRepository.searchRemote(song)
     }
 
-    override suspend fun searchRemoteLyricsByQuery(title: String, artist: String?): Result<Pair<String, List<LyricsSearchResult>>> {
+    override suspend fun searchRemoteLyricsByQuery(title: String, artist: String?): Result<Pair<String, List<LyricsSearchEntry>>> {
         return lyricsRepository.searchRemoteByQuery(title, artist)
+    }
+
+    override suspend fun fetchPlatformLyrics(entry: PlatformLyricsSearchEntry): Result<PlatformLyricsFetch> {
+        return lyricsRepository.fetchPlatformLyrics(entry)
+    }
+
+    override suspend fun ensureLxSearchCover(song: com.minoppol.music.data.lxmusic.LxSong): String? {
+        return lyricsRepository.ensureLxSearchCover(song)
     }
 
     override suspend fun updateLyrics(songId: Long, lyrics: String) {
