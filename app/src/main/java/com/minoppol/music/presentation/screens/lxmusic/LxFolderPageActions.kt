@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.MyLocation
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.Sort
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledIconButton
@@ -74,12 +75,29 @@ internal fun LxBottomPlayActions(
     enabled: Boolean = true,
     showShuffle: Boolean = true,
     showPlayAll: Boolean = true,
+    showSort: Boolean = false,
+    onSort: (() -> Unit)? = null,
 ) {
+    val hm = rememberLxHeaderMetrics()
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        if (showSort && onSort != null) {
+            FilledTonalIconButton(
+                onClick = onSort,
+                enabled = enabled,
+                shape = CircleShape,
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                ),
+                modifier = Modifier.size(hm.fabSize),
+            ) {
+                Icon(Icons.Rounded.Sort, contentDescription = stringResource(R.string.lx_desc_sort), modifier = Modifier.size(hm.fabIconSmall))
+            }
+        }
         if (showShuffle) {
             FilledTonalIconButton(
                 onClick = onShuffle,
@@ -89,9 +107,9 @@ internal fun LxBottomPlayActions(
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                     contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                 ),
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(hm.fabSize),
             ) {
-                Icon(Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.lx_desc_shuffle), modifier = Modifier.size(22.dp))
+                Icon(Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.lx_desc_shuffle), modifier = Modifier.size(hm.fabIconSmall))
             }
         }
         if (showPlayAll) {
@@ -99,9 +117,9 @@ internal fun LxBottomPlayActions(
                 onClick = onPlayAll,
                 enabled = enabled,
                 shape = CircleShape,
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(hm.fabSize),
             ) {
-                Icon(Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.lx_desc_play_all), modifier = Modifier.size(26.dp))
+                Icon(Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.lx_desc_play_all), modifier = Modifier.size(hm.fabIconLarge))
             }
         }
     }
@@ -145,7 +163,6 @@ internal fun rememberLocateButtonState(
     return visible to targetIndex
 }
 
-private val capsuleHeight: Dp = 42.dp
 private val capsuleOuterCorner = 26.dp
 private val capsuleInnerCorner = 8.dp
 
@@ -179,6 +196,8 @@ internal fun LxFolderActionCapsule(
     modifier: Modifier = Modifier,
     buttonElevation: androidx.compose.ui.unit.Dp = 0.dp,
 ) {
+    val hm = rememberLxHeaderMetrics()
+    val capsuleHeight = hm.capsuleSize
     val gapLocate by animateDpAsState(
         targetValue = if (showLocate) 4.dp else 0.dp,
         label = "gapLocate",
@@ -232,7 +251,7 @@ internal fun LxFolderActionCapsule(
                 Icon(
                     Icons.Rounded.MyLocation,
                     contentDescription = stringResource(R.string.lx_desc_locate_current),
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(hm.capsuleIcon),
                 )
             }
         }
@@ -268,13 +287,13 @@ internal fun LxFolderActionCapsule(
                                 Icon(
                                     Icons.Rounded.Close,
                                     contentDescription = if (locked) stringResource(R.string.lx_desc_collected_locked) else stringResource(R.string.lx_desc_uncollect),
-                                    modifier = Modifier.size(21.dp),
+                                    modifier = Modifier.size(hm.capsuleIcon),
                                 )
                             } else {
                                 Icon(
                                     Icons.Rounded.CreateNewFolder,
                                     contentDescription = stringResource(R.string.lx_desc_collect),
-                                    modifier = Modifier.size(21.dp),
+                                    modifier = Modifier.size(hm.capsuleIcon),
                                 )
                             }
                         }
@@ -294,7 +313,7 @@ internal fun LxFolderActionCapsule(
             Icon(
                 Icons.Rounded.Share,
                 contentDescription = stringResource(R.string.lx_desc_share),
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(hm.capsuleIcon),
             )
         }
     }

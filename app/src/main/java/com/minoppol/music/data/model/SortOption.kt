@@ -1,6 +1,15 @@
 package com.minoppol.music.data.model
 
 import androidx.compose.runtime.Immutable
+import java.text.CollationKey
+import java.text.Collator
+import java.util.Locale
+
+private val cjkCollator: Collator = Collator.getInstance(Locale.SIMPLIFIED_CHINESE).apply {
+    strength = Collator.PRIMARY
+}
+
+fun cjkSortKey(value: String): CollationKey = cjkCollator.getCollationKey(value)
 
 @Immutable
 enum class SortDirection {

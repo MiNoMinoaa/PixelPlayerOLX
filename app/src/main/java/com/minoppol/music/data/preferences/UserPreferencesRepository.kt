@@ -128,6 +128,7 @@ constructor(
         val LX_BOARD_INCLUDE_QUEUE = booleanPreferencesKey("lx_board_include_queue")
         val LX_BOARD_SHOW_SHUFFLE_FAB = booleanPreferencesKey("lx_board_show_shuffle_fab")
         val LX_BOARD_SHOW_PLAY_ALL_FAB = booleanPreferencesKey("lx_board_show_play_all_fab")
+        val LX_DISCOVER_SHOW_SORT_FAB = booleanPreferencesKey("lx_discover_show_sort_fab")
         val CAROUSEL_STYLE = stringPreferencesKey("carousel_style")
         val LIBRARY_NAVIGATION_MODE = stringPreferencesKey("library_navigation_mode")
         val LAUNCH_TAB = stringPreferencesKey("launch_tab")
@@ -1542,6 +1543,17 @@ constructor(
     suspend fun setLxBoardShowPlayAllFab(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.LX_BOARD_SHOW_PLAY_ALL_FAB] = enabled
+        }
+    }
+
+    val lxDiscoverShowSortFabFlow: Flow<Boolean> =
+            dataStore.data.map { preferences ->
+                preferences[PreferencesKeys.LX_DISCOVER_SHOW_SORT_FAB] ?: false
+            }
+
+    suspend fun setLxDiscoverShowSortFab(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.LX_DISCOVER_SHOW_SORT_FAB] = enabled
         }
     }
 

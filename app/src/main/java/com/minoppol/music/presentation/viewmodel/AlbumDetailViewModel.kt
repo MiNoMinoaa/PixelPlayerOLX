@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.minoppol.music.data.model.Album
 import com.minoppol.music.data.model.Song
+import com.minoppol.music.data.model.cjkSortKey
 import com.minoppol.music.data.repository.MusicRepository
 import com.minoppol.music.data.offline.CloudOfflineRepository
 import com.minoppol.music.R
@@ -75,7 +76,7 @@ class AlbumDetailViewModel @Inject constructor(
                             songs = songs.sortedWith(
                                 compareBy<Song> { it.discNumber ?: 1 }
                                     .thenBy { if (it.trackNumber > 0) it.trackNumber else Int.MAX_VALUE }
-                                    .thenBy { it.title.lowercase() }
+                                    .thenBy { cjkSortKey(it.title) }
                             ),
                             isLoading = false
                         )

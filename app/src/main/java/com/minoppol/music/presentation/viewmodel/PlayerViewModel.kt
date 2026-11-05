@@ -48,6 +48,7 @@ import com.minoppol.music.data.model.LyricsSourcePreference
 import com.minoppol.music.data.model.SearchFilterType
 import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.model.SortOption
+import com.minoppol.music.data.model.cjkSortKey
 import com.minoppol.music.data.model.toLibraryTabIdOrNull
 import com.minoppol.music.data.provider.SharedArtworkContentProvider
 import com.minoppol.music.data.preferences.CarouselStyle
@@ -550,6 +551,13 @@ class PlayerViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
             initialValue = true
+        )
+
+    val lxDiscoverShowSortFab: StateFlow<Boolean> = userPreferencesRepository.lxDiscoverShowSortFabFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = false
         )
 
     val lxResolvePhase: StateFlow<String?> = lxMusicRepository.resolvePhase
@@ -2372,7 +2380,7 @@ class PlayerViewModel @Inject constructor(
                     val sortedSongs = songsList.sortedWith(
                         compareBy<Song> { it.discNumber ?: 1 }
                             .thenBy { if (it.trackNumber > 0) it.trackNumber else Int.MAX_VALUE }
-                            .thenBy { it.title.lowercase() }
+                            .thenBy { cjkSortKey(it.title) }
                     )
 
                     playSongs(sortedSongs, sortedSongs.first(), album.title, null)
@@ -4331,7 +4339,7 @@ class PlayerViewModel @Inject constructor(
         return songs.sortedWith(
             compareBy<Song> { it.discNumber ?: 1 }
                 .thenBy { if (it.trackNumber > 0) it.trackNumber else Int.MAX_VALUE }
-                .thenBy { it.title.lowercase(Locale.getDefault()) }
+                .thenBy { cjkSortKey(it.title) }
         )
     }
 

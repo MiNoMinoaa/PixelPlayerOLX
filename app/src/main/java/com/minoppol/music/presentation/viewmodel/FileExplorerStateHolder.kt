@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Environment
 import android.provider.MediaStore
 import com.minoppol.music.data.preferences.UserPreferencesRepository
+import com.minoppol.music.data.model.cjkSortKey
 import com.minoppol.music.utils.DirectoryRuleResolver
 import com.minoppol.music.utils.StorageInfo
 import com.minoppol.music.utils.StorageUtils
@@ -69,7 +70,7 @@ internal fun mergeDirectoryEntryLists(
             }
     }
 
-    return merged.values.sortedWith(compareBy({ it.file.name.lowercase() }))
+    return merged.values.sortedWith(compareBy({ cjkSortKey(it.file.name) }))
 }
 
 private data class MediaStoreDirectoryIndex(
@@ -376,7 +377,7 @@ class FileExplorerStateHolder(
                             canonicalPath = childKey
                         )
                     }
-                    ?.sortedBy { it.file.name.lowercase() }
+                    ?.sortedBy { cjkSortKey(it.file.name) }
                     ?.toList()
                     ?: emptyList()
             }.getOrElse { emptyList() }
@@ -399,7 +400,7 @@ class FileExplorerStateHolder(
                     canonicalPath = childPath
                 )
             }
-            .sortedWith(compareBy({ it.file.name.lowercase() }))
+            .sortedWith(compareBy({ cjkSortKey(it.file.name) }))
     }
 
     private fun enrichDirectoryEntries(
@@ -424,7 +425,7 @@ class FileExplorerStateHolder(
                             canonicalPath = childPath
                         )
                     }
-                    .sortedWith(compareBy({ it.file.name.lowercase() }))
+                    .sortedWith(compareBy({ cjkSortKey(it.file.name) }))
                 val enrichedEntries = mergeDirectoryEntryLists(
                     filesystemEntries = currentEntries,
                     mediaStoreEntries = mediaStoreEntries

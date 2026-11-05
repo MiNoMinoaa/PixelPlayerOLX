@@ -330,6 +330,7 @@
     <string name="lx_error_board_unsupported">Boards not yet supported on this source</string>
     <string name="lx_error_playlist_unsupported">Playlists not yet supported on this source</string>
     <string name="lx_error_board_load_failed">Board load failed or no songs</string>
+    <string name="lx_empty_load_failed_title">Failed to load</string>
     <string name="lx_error_playlist_load_failed">Playlist load failed or no data</string>
     <string name="lx_error_playlist_songs_load_failed">Playlist load failed or no songs</string>
     <string name="lx_error_no_playlist_found">No playlists found</string>
@@ -425,6 +426,7 @@
     <string name="lx_desc_cancel">Cancel</string>
     <string name="lx_desc_import">Import</string>
     <string name="lx_desc_ignore_version">Ignore this version</string>
+    <string name="lx_btn_ignore_update">Block update</string>
     <string name="lx_desc_restore_update_prompt">Restore update prompts</string>
     <string name="lx_desc_script_update_ignored_badge">Updates ignored</string>
     <string name="lx_title_script_update">Source Update</string>
@@ -461,8 +463,9 @@
     <string name="lx_text_total_playlists_count">Total %1$d playlists</string>
     <string name="lx_desc_shuffle">Shuffle play</string>
     <string name="lx_desc_play_all">Play all</string>
+    <string name="lx_desc_sort">Sort</string>
     <string name="lx_text_playlist_list">Playlist list</string>
-    <string name="lx_placeholder_search_playlist">Search playlists / paste link or playlist ID</string>
+    <string name="lx_placeholder_search_playlist">Search / paste link or playlist ID</string>
     <string name="lx_desc_fetch_user_playlists">Fetch user playlists by Netease UID</string>
     <string name="lx_text_back_to_categories">Back to categories</string>
     <string name="lx_text_netease_user_with_name">Netease user · %1$s</string>

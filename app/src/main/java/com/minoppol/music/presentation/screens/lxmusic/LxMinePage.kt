@@ -37,6 +37,7 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Radio
 import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.Sort
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -93,7 +94,6 @@ import com.minoppol.music.presentation.components.MiniPlayerHeight
 import com.minoppol.music.presentation.components.SmartImage
 import com.minoppol.music.presentation.components.SmartImageListTargetSize
 import com.minoppol.music.presentation.components.subcomps.EnhancedSongListItem
-import com.minoppol.music.presentation.screens.ListExtraBottomGap
 import com.minoppol.music.presentation.screens.rememberListBottomCornerRadius
 import com.minoppol.music.presentation.viewmodel.PlayerViewModel
 import kotlinx.coroutines.launch
@@ -127,6 +127,7 @@ fun LxMinePage(
     multiSelectionState: com.minoppol.music.presentation.viewmodel.MultiSelectionStateHolder =
         com.minoppol.music.presentation.viewmodel.MultiSelectionStateHolder(),
     onSelectionOptionsClick: () -> Unit = {},
+    onSortClick: () -> Unit = {},
 ) {
     val density = LocalDensity.current
     val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
@@ -142,6 +143,7 @@ fun LxMinePage(
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
     val showShuffleFab by playerViewModel.lxBoardShowShuffleFab.collectAsStateWithLifecycle()
     val showPlayAllFab by playerViewModel.lxBoardShowPlayAllFab.collectAsStateWithLifecycle()
+    val showSortFab by playerViewModel.lxDiscoverShowSortFab.collectAsStateWithLifecycle()
 
     val page = mineState.page
     val isHome = page is LxMusicViewModel.MinePage.Home
@@ -171,6 +173,14 @@ fun LxMinePage(
     LaunchedEffect(homeScrollKey, homeContentEmpty) {
         if (homeContentWasEmpty && !homeContentEmpty) homeListState.scrollToItem(0)
         homeContentWasEmpty = homeContentEmpty
+    }
+    val discoverSortOption by viewModel.discoverSortOption.collectAsStateWithLifecycle()
+    var lastHandledDiscoverSortKey by remember { mutableStateOf(discoverSortOption.storageKey) }
+    LaunchedEffect(discoverSortOption) {
+        val sortKey = discoverSortOption.storageKey
+        if (sortKey == lastHandledDiscoverSortKey) return@LaunchedEffect
+        lastHandledDiscoverSortKey = sortKey
+        subListState.scrollToItem(0)
     }
     LaunchedEffect(mineState.navSession) {
         val current = mineState.navSession
@@ -241,7 +251,7 @@ fun LxMinePage(
         }
     }
 
-    val bottomPadding = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap
+    val bottomPadding = bottomBarHeightDp + MiniPlayerHeight + 16.dp
 
     Box(modifier = Modifier.fillMaxSize().nestedScroll(consumeHorizontalScroll)) {
         PullToRefreshBox(
@@ -544,7 +554,7 @@ fun LxMinePage(
         ExpressiveScrollBar(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .padding(end = 4.dp, top = headerHeight + 4.dp, bottom = bottomPadding + 16.dp),
+                .padding(end = 4.dp, top = headerHeight + 4.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + 16.dp),
             listState = if (isHome) homeListState else subListState,
         )
 
@@ -578,7 +588,8 @@ fun LxMinePage(
             )
         }
 
-        if (showSongActions && (showShuffleFab || showPlayAllFab)) {
+        if (showSongActions && (showShuffleFab || showPlayAllFab || showSortFab)) {
+            val hm = rememberLxHeaderMetrics()
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
@@ -586,6 +597,19 @@ fun LxMinePage(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
+                if (showSortFab) {
+                    FilledTonalIconButton(
+                        onClick = onSortClick,
+                        shape = CircleShape,
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        ),
+                        modifier = Modifier.size(hm.fabSize),
+                    ) {
+                        Icon(Icons.Rounded.Sort, contentDescription = stringResource(R.string.lx_desc_sort), modifier = Modifier.size(hm.fabIconSmall))
+                    }
+                }
                 if (showShuffleFab) {
                     FilledTonalIconButton(
                         onClick = { shuffleAllPlaylist(mineState.pageSongs, mineState.pageTitle) },
@@ -594,18 +618,18 @@ fun LxMinePage(
                             containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                             contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                         ),
-                        modifier = Modifier.size(48.dp),
+                        modifier = Modifier.size(hm.fabSize),
                     ) {
-                        Icon(Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.lx_desc_shuffle), modifier = Modifier.size(22.dp))
+                        Icon(Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.lx_desc_shuffle), modifier = Modifier.size(hm.fabIconSmall))
                     }
                 }
                 if (showPlayAllFab) {
                     FilledIconButton(
                         onClick = { playAllPlaylist(mineState.pageSongs, mineState.pageTitle) },
                         shape = CircleShape,
-                        modifier = Modifier.size(48.dp),
+                        modifier = Modifier.size(hm.fabSize),
                     ) {
-                        Icon(Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.lx_desc_play_all), modifier = Modifier.size(26.dp))
+                        Icon(Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.lx_desc_play_all), modifier = Modifier.size(hm.fabIconLarge))
                     }
                 }
             }
@@ -638,10 +662,11 @@ private fun MineProfileHeader(
     vipType: Int,
     onLogout: () -> Unit,
 ) {
+    val hm = rememberLxHeaderMetrics()
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = hm.mineProfileVPad),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (!avatarUrl.isNullOrBlank()) {
@@ -650,13 +675,13 @@ private fun MineProfileHeader(
                 contentDescription = null,
                 targetSize = SmartImageListTargetSize,
                 modifier = Modifier
-                    .size(42.dp)
+                    .size(hm.mineAvatar)
                     .clip(CircleShape),
             )
         } else {
             Box(
                 modifier = Modifier
-                    .size(42.dp)
+                    .size(hm.mineAvatar)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.secondaryContainer),
                 contentAlignment = Alignment.Center,
@@ -665,11 +690,11 @@ private fun MineProfileHeader(
                     Icons.Rounded.Person,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(hm.mineAvatarIcon),
                 )
             }
         }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(10.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = nickname ?: stringResource(R.string.lx_default_nickname),
@@ -895,7 +920,7 @@ private fun MineTabSegment(
         ),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp, pressedElevation = 6.dp),
         contentPadding = PaddingValues(horizontal = 18.dp, vertical = 0.dp),
-        modifier = Modifier.height(34.dp),
+        modifier = Modifier.height(rememberLxHeaderMetrics().mineTabHeight),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -1168,13 +1193,10 @@ internal fun LazyListScope.mineSongItems(
         }
     } else if (!loading && !error.isNullOrBlank()) {
         item(key = "mine_songs_empty") {
-            Text(
-                error,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
+            LxEmptyState(
+                title = stringResource(R.string.lx_empty_load_failed_title),
+                subtitle = error,
+                modifier = Modifier.padding(top = 32.dp, bottom = 24.dp),
             )
         }
     }

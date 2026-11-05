@@ -531,6 +531,18 @@ object SettingsRegistry {
                 onToggle = { viewModel, checked -> viewModel.setLxBoardShowPlayAllFab(checked) }
             ),
             SettingSpec(
+                id = "playback_lx_discover_show_sort_fab",
+                itemKey = "item_playback_lx_discover_show_sort_fab",
+                titleRes = R.string.setcat_lx_discover_show_sort_fab_title,
+                subtitleRes = R.string.setcat_lx_discover_show_sort_fab_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.SettingsCategory.createRoute("playback"),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf("discover", "sort", "floating", "button", "order"),
+                getValue = { it.lxDiscoverShowSortFab },
+                onToggle = { viewModel, checked -> viewModel.setLxDiscoverShowSortFab(checked) }
+            ),
+            SettingSpec(
                 id = "playback_lyrics_subscreen",
                 itemKey = "item_playback_lyrics_subscreen",
                 titleRes = R.string.setcat_lyrics_title,

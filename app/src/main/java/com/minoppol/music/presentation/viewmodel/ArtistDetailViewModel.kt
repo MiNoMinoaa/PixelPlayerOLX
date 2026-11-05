@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.minoppol.music.R
 import com.minoppol.music.data.model.Artist
 import com.minoppol.music.data.model.Song
+import com.minoppol.music.data.model.cjkSortKey
 import com.minoppol.music.data.repository.ArtistImageRepository
 import com.minoppol.music.data.repository.MusicRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -269,7 +270,7 @@ class ArtistDetailViewModel @Inject constructor(
 
 private val songDisplayComparator = compareBy<Song> { it.discNumber ?: 1 }
     .thenBy { if (it.trackNumber > 0) it.trackNumber else Int.MAX_VALUE }
-    .thenBy { it.title.lowercase() }
+    .thenBy { cjkSortKey(it.title) }
 
 private fun buildAlbumSections(songs: List<Song>): List<ArtistAlbumSection> {
     if (songs.isEmpty()) return emptyList()
@@ -292,9 +293,9 @@ private fun buildAlbumSections(songs: List<Song>): List<ArtistAlbumSection> {
     val (withYear, withoutYear) = sections.partition { it.year != null }
     val withYearSorted = withYear.sortedWith(
         compareByDescending<ArtistAlbumSection> { it.year ?: Int.MIN_VALUE }
-            .thenBy { it.title.lowercase() }
+            .thenBy { cjkSortKey(it.title) }
     )
-    val withoutYearSorted = withoutYear.sortedBy { it.title.lowercase() }
+    val withoutYearSorted = withoutYear.sortedBy { cjkSortKey(it.title) }
 
     return withYearSorted + withoutYearSorted
 }

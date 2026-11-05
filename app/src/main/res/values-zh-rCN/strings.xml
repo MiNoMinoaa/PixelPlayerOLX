@@ -292,6 +292,7 @@
 <string name="lx_error_board_unsupported">该平台排行榜暂未支持，敬请期待</string>
 <string name="lx_error_playlist_unsupported">该平台歌单暂未支持，敬请期待</string>
 <string name="lx_error_board_load_failed">榜单加载失败或暂无歌曲</string>
+<string name="lx_empty_load_failed_title">载入失败</string>
 <string name="lx_error_playlist_load_failed">歌单加载失败或暂无数据</string>
 <string name="lx_error_playlist_songs_load_failed">歌单加载失败或暂无歌曲</string>
 <string name="lx_error_no_playlist_found">未找到相关歌单</string>
@@ -386,6 +387,7 @@
 <string name="lx_desc_cancel">取消</string>
 <string name="lx_desc_import">导入</string>
 <string name="lx_desc_ignore_version">忽略此版本</string>
+<string name="lx_btn_ignore_update">屏蔽更新</string>
 <string name="lx_desc_restore_update_prompt">恢复更新提醒</string>
 <string name="lx_desc_script_update_ignored_badge">更新已忽略</string>
 <string name="lx_title_script_update">音源更新</string>
@@ -422,8 +424,9 @@
 <string name="lx_text_total_playlists_count">共 %1$d 个歌单</string>
 <string name="lx_desc_shuffle">随机播放</string>
 <string name="lx_desc_play_all">播放全部</string>
+<string name="lx_desc_sort">排序</string>
 <string name="lx_text_playlist_list">歌单列表</string>
-<string name="lx_placeholder_search_playlist">搜索歌单 / 粘贴链接或歌单ID</string>
+<string name="lx_placeholder_search_playlist">搜索/粘贴链接或歌单ID</string>
 <string name="lx_desc_fetch_user_playlists">按网易云 UID 拉取用户歌单</string>
 <string name="lx_text_back_to_categories">返回歌单分类</string>
 <string name="lx_text_netease_user_with_name">网易云用户 · %1$s</string>
