@@ -292,4 +292,17 @@
     <string name="cd_toggle_grid_list">Toggle grid/list view</string>
     <string name="cd_genre_illustration">Genre illustration</string>
     <string name="dash_last_synced_format">Last synced: %1$s</string>
+    <string name="search_online_mode_cd">Online aggregated search</string>
+    <string name="search_online_history_title">Search history</string>
+    <string name="search_online_clear_history">Clear search history</string>
+    <string name="search_online_hot_title">Trending</string>
+    <string name="search_online_hot_empty">Failed to load trending searches.</string>
+    <string name="search_online_tab_songs">Songs</string>
+    <string name="search_online_tab_playlists">Playlists</string>
+    <string name="search_online_clear_history_confirm">Clear all search history?</string>
+    <string name="search_online_prompt">Enter a keyword to search across platforms</string>
+    <string name="search_online_play_all">Play all</string>
+    <string name="search_online_shuffle">Shuffle</string>    <string name="search_online_selected_count">Selected %1$d</string>
+    <string name="search_online_selection_options">Options</string>
+
 </resources>

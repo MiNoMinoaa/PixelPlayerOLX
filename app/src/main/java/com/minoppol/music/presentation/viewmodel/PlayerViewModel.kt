@@ -4959,6 +4959,12 @@ class PlayerViewModel @Inject constructor(
         searchStateHolder.clearSearchHistory()
     }
 
+    val onlineSearchMode = searchStateHolder.onlineSearchMode
+
+    fun setOnlineSearchMode(enabled: Boolean) {
+        searchStateHolder.setOnlineSearchMode(enabled)
+    }
+
     fun clearQueueExceptCurrent() {
         mediaController?.let { controller ->
             val currentSongIndex = controller.currentMediaItemIndex

@@ -119,7 +119,7 @@
     <string name="setcat_show_lx_music_tab_title">啟用發現頁</string>
     <string name="setcat_show_lx_music_tab_subtitle">在導覽列中顯示線上音樂發現頁</string>
     <string name="setcat_show_search_tab_title">顯示搜索頁</string>
-    <string name="setcat_show_search_tab_subtitle">此頁搜索的內容是您在本地/緩存播放過的內容</string>
+    <string name="setcat_show_search_tab_subtitle">在導覽列中顯示線上/本地搜索功能</string>
     <string name="setcat_show_recent_tab_title">顯示最近播放</string>
     <string name="setcat_show_recent_tab_subtitle">在底部導覽列中顯示最近播放頁</string>
     <string name="setcat_navbar_corner_title">導航欄圓角大小</string>

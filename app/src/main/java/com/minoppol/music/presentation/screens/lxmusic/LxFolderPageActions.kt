@@ -501,7 +501,8 @@ internal fun rememberCollectState(
     id: String?,
     gid: String? = null,
     name: String? = null,
+    source: String? = null,
 ): LxMusicViewModel.CollectState? {
     val version by viewModel.collectDataVersion.collectAsStateWithLifecycle()
-    return remember(kind, id, gid, name, version) { viewModel.collectStateOf(kind, id, gid, name) }
+    return remember(kind, id, gid, name, version, source) { viewModel.collectStateOf(kind, id, gid, name, source) }
 }

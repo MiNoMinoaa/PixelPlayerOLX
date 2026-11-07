@@ -56,6 +56,13 @@ class SearchStateHolder @Inject constructor(
     private val _searchHistory = MutableStateFlow<ImmutableList<SearchHistoryItem>>(persistentListOf())
     val searchHistory = _searchHistory.asStateFlow()
 
+    private val _onlineSearchMode = MutableStateFlow(true)
+    val onlineSearchMode = _onlineSearchMode.asStateFlow()
+
+    fun setOnlineSearchMode(enabled: Boolean) {
+        _onlineSearchMode.value = enabled
+    }
+
     private val searchRequests = MutableSharedFlow<SearchRequest>(
         extraBufferCapacity = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST

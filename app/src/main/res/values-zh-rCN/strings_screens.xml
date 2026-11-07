@@ -314,4 +314,17 @@
     <string name="lxmusic_quality_master">臻品母带</string>
     <string name="lxmusic_quality_master_desc">录音室母带级音质</string>
     <string name="lxmusic_need_script_or_cookie">请先加载音源脚本或登录网易云</string>
+    <string name="search_online_mode_cd">在线聚合搜索</string>
+    <string name="search_online_history_title">搜索历史</string>
+    <string name="search_online_clear_history">清空搜索历史</string>
+    <string name="search_online_hot_title">热搜榜单</string>
+    <string name="search_online_hot_empty">热搜榜单加载失败。</string>
+    <string name="search_online_tab_songs">歌曲</string>
+    <string name="search_online_tab_playlists">歌单</string>
+    <string name="search_online_clear_history_confirm">清空全部搜索历史？</string>
+    <string name="search_online_prompt">输入关键词，聚合搜索各平台歌曲与歌单</string>
+    <string name="search_online_play_all">播放全部</string>
+    <string name="search_online_shuffle">随机播放</string>    <string name="search_online_selected_count">已选 %1$d 首</string>
+    <string name="search_online_selection_options">批量操作</string>
+
 </resources>

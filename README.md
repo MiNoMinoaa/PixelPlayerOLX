@@ -21,7 +21,7 @@
   新增了与 <a href="https://github.com/lyswhut/lx-music-mobile">lx-music-mobile</a> 兼容的在线音源（自定义音源）与播放列表互通的导入/导出等功能。
 </p>
 
-> **注意：** PixelPlayerOLX 是一个独立的派生项目。它**不是** PixelPlayerOSS、lx-music-mobile、lx-lxwalnut-music-mobile 或任何音乐平台的官方版本，也未获得上述原作者的背书。
+> **注意：** PixelPlayerOLX 是一个独立的派生项目。它**不是** PixelPlayerOSS、lx-music-mobile或任何音乐平台的官方版本，也未获得上述原作者的背书。
 
 <p align="center">本软件实现了lx音源导入播放平台在线功能仅用于满足个人需求自用，且只有在导入并启用音源脚本时平台在线功能方可生效，本软件不托管、不存储、不拥有任何受版权保护的音频内容</p>
 
@@ -36,7 +36,7 @@
 
 ## 简介
 
-PixelPlayerOLX 派生自 [PixelPlayerOSS](https://github.com/PixelPlayerHQ/PixelPlayerOSS)。它保留了上游项目以本地播放、可自托管为核心的基础，并新增了一套在线音源（自定义音源 / "Lx音乐"）系统，其设计参考了 [lx-music-mobile](https://github.com/lyswhut/lx-music-mobile) 和 [lx-lxwalnut-music-mobile](https://github.com/WalnutBai/lx-lxwalnut-music-mobile)。
+PixelPlayerOLX 派生自 [PixelPlayerOSS](https://github.com/PixelPlayerHQ/PixelPlayerOSS)。它保留了上游项目以本地播放、可自托管为核心的基础，并新增了一套在线音源（自定义音源 / "Lx音乐"）系统，其设计参考了 [lx-music-mobile](https://github.com/lyswhut/lx-music-mobile)。
 
 本地播放、自托管媒体库和离线使用默认可用。在线音源功能是可选的，只有在你导入并启用音源脚本（或登录支持的平台）后才会生效。
 
@@ -45,7 +45,7 @@ PixelPlayerOLX 派生自 [PixelPlayerOSS](https://github.com/PixelPlayerHQ/Pixel
 
 PixelPlayerOSS 坚持 FOSS（自由开源软件）方向，移除了不属于该方向的集成（Telegram、网易云、QQ 音乐、Google Drive、Gemini、投屏、Wear OS、Play 商店付费、Firebase、Crashlytics 以及 Google Play 服务的运行时依赖）。
 
-PixelPlayerOLX 在这套 FOSS 基础之上，加回了一套*可选的、由用户掌控的*在线音源系统，实现时参考了 [lx-music-mobile](https://github.com/lyswhut/lx-music-mobile) 和 [lx-lxwalnut-music-mobile](https://github.com/WalnutBai/lx-lxwalnut-music-mobile)：
+PixelPlayerOLX 在这套 FOSS 基础之上，加回了一套*可选的、由用户掌控的*在线音源系统，实现时参考了 [lx-music-mobile](https://github.com/lyswhut/lx-music-mobile)：
 
 - 一个沙箱化的 **QuickJS** 脚本引擎，用于运行兼容 lx-music-mobile 的音源脚本。
 - 内置多个平台的官方 API 路径，与脚本配合使用，以选出可用的最佳音质。
@@ -120,7 +120,7 @@ https://github.com/MiNoMinoaa/PixelPlayerOLX/releases
 
 ## 上游项目与署名
 
-PixelPlayerOLX 派生自 [PixelPlayerOSS](https://github.com/PixelPlayerHQ/PixelPlayerOSS)。部分在线音源功能在实现时参考了 [lx-music-mobile](https://github.com/lyswhut/lx-music-mobile) 和 [lx-lxwalnut-music-mobile](https://github.com/WalnutBai/lx-lxwalnut-music-mobile)。相关许可证与版权均予以保留。
+PixelPlayerOLX 派生自 [PixelPlayerOSS](https://github.com/PixelPlayerHQ/PixelPlayerOSS)。部分在线音源功能在实现时参考了 [lx-music-mobile](https://github.com/lyswhut/lx-music-mobile) 与各音源脚本，多平台灵感来自 [lx-lxwalnut-music-mobile](https://github.com/WalnutBai/lx-lxwalnut-music-mobile)。相关许可证与版权均予以保留。
 
 | 项目 | 仓库 | 许可证 | 版权 / 署名 |
 | --- | --- | --- | --- |

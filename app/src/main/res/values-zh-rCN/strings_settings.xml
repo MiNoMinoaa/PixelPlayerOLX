@@ -141,7 +141,7 @@
     <string name="setcat_show_lx_music_tab_title">启用发现页</string>
     <string name="setcat_show_lx_music_tab_subtitle">在导航栏中显示在线音乐发现页</string>
     <string name="setcat_show_search_tab_title">显示搜索页</string>
-    <string name="setcat_show_search_tab_subtitle">此页搜索的内容是您在本地/缓存播放过的内容</string>
+    <string name="setcat_show_search_tab_subtitle">在导航栏中显示在线/本地搜索功能</string>
     <string name="setcat_show_recent_tab_title">显示最近播放</string>
     <string name="setcat_show_recent_tab_subtitle">在底部导航栏中显示最近播放页</string>
     <string name="setcat_navbar_corner_title">导航栏圆角大小</string>

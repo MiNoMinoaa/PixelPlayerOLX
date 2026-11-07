@@ -154,7 +154,7 @@
     <string name="setcat_show_lx_music_tab_title">Show Discover tab</string>
     <string name="setcat_show_lx_music_tab_subtitle">Display online music discovery as a tab in the navigation bar.</string>
     <string name="setcat_show_search_tab_title">Show Search tab</string>
-    <string name="setcat_show_search_tab_subtitle">Search shows content you have played locally or from cache.</string>
+    <string name="setcat_show_search_tab_subtitle">Display online/local search as a tab in the navigation bar.</string>
     <string name="setcat_show_recent_tab_title">Show Recently Played</string>
     <string name="setcat_show_recent_tab_subtitle">Display Recently Played as a tab in the bottom navigation bar.</string>
     <string name="setcat_navbar_corner_title">NavBar Corner Radius</string>

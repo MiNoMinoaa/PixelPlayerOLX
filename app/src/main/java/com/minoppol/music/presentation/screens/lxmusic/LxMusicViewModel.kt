@@ -2144,8 +2144,9 @@ class LxMusicViewModel @Inject constructor(
 
     fun collectKey(kind: CollectKind, id: String) = "${kind.name}_$id"
 
-    fun ensureCollectDataLoaded() {
-        val loggedIn = when (_selectedSource.value) {
+    fun ensureCollectDataLoaded(source: String? = null) {
+        val src = source ?: _selectedSource.value
+        val loggedIn = when (src) {
             LxSources.KUGOU -> kugouCookieStore.hasCookie() || kugouCookieStore.hasAppLogin()
             LxSources.KUWO -> kuwoCookieStore.hasCookie()
             LxSources.TENCENT -> tencentCookieStore.hasCookie()
@@ -2157,11 +2158,12 @@ class LxMusicViewModel @Inject constructor(
     private fun kwRawPlaylistId(id: String): String =
         id.removePrefix("kw_pl_").removePrefix("kw_opt_").replace(Regex("^kw:\\d+:"), "")
 
-    fun collectStateOf(kind: CollectKind, id: String?, gid: String? = null, name: String? = null): CollectState? {
+    fun collectStateOf(kind: CollectKind, id: String?, gid: String? = null, name: String? = null, source: String? = null): CollectState? {
         if (id.isNullOrBlank()) return null
         val st = _mineState.value
-        if (_selectedSource.value == LxSources.TENCENT) return null
-        if (_selectedSource.value == LxSources.KUGOU) {
+        val src = source ?: _selectedSource.value
+        if (src == LxSources.TENCENT) return null
+        if (src == LxSources.KUGOU) {
             if (!accountWritesEnabled) return null
             val own = st.myPlaylists.filter { it.specialType != 5 && it.subscribed != true }
             return when (kind) {
@@ -2196,7 +2198,7 @@ class LxMusicViewModel @Inject constructor(
                 }
             }
             CollectKind.ALBUM ->
-                if (_selectedSource.value == LxSources.KUWO) {
+                if (src == LxSources.KUWO) {
                     if (repository.kwLikedAlbums.value.any { it.id == id }) CollectState.COLLECTED
                     else CollectState.UNCOLLECTED
                 } else if (st.subAlbums.any { it.id == id }) CollectState.COLLECTED
@@ -2204,12 +2206,13 @@ class LxMusicViewModel @Inject constructor(
         }
     }
 
-    fun onCollectButtonClick(kind: CollectKind, id: String, gid: String? = null, name: String? = null) {
+    fun onCollectButtonClick(kind: CollectKind, id: String, gid: String? = null, name: String? = null, source: String? = null) {
+        val src = source ?: _selectedSource.value
         if (!accountWritesEnabled &&
-            (_selectedSource.value == LxSources.KUGOU || _selectedSource.value == LxSources.KUWO)
+            (src == LxSources.KUGOU || src == LxSources.KUWO)
         ) return
-        if (_selectedSource.value == LxSources.TENCENT) return
-        val loggedIn = when (_selectedSource.value) {
+        if (src == LxSources.TENCENT) return
+        val loggedIn = when (src) {
             LxSources.KUGOU -> kugouCookieStore.hasAppLogin()
             LxSources.KUWO -> kuwoCookieStore.hasCookie()
             else -> neteaseCookieStore.hasCookie()
@@ -2218,13 +2221,13 @@ class LxMusicViewModel @Inject constructor(
             _toastMessage.tryEmit(context.getString(R.string.lx_msg_user_not_logged_in))
             return
         }
-        when (collectStateOf(kind, id, gid, name)) {
+        when (collectStateOf(kind, id, gid, name, source)) {
             CollectState.COLLECTED -> {
                 pendingUncollectExtra = gid to name
                 _uncollectConfirm.value = kind to id
             }
             CollectState.UNCOLLECTED -> viewModelScope.launch {
-                applyCollect(kind, id, gid, name, subscribe = true)
+                applyCollect(kind, id, gid, name, subscribe = true, source = source)
             }
             CollectState.COLLECTED_LOCKED, null -> Unit
         }
@@ -2617,11 +2620,13 @@ class LxMusicViewModel @Inject constructor(
         gid: String? = null,
         name: String? = null,
         subscribe: Boolean,
+        source: String? = null,
     ) {
         val key = collectKey(kind, id)
         _collectBusyKeys.update { it + key }
         try {
-            val ok = if (_selectedSource.value == LxSources.KUGOU) {
+            val src = source ?: _selectedSource.value
+            val ok = if (src == LxSources.KUGOU) {
                 when (kind) {
                     CollectKind.PLAYLIST -> runCatching {
                         if (subscribe) {
@@ -2647,7 +2652,7 @@ class LxMusicViewModel @Inject constructor(
                         }
                     }.getOrDefault(false)
                 }
-            } else if (_selectedSource.value == LxSources.KUWO) {
+            } else if (src == LxSources.KUWO) {
                 when (kind) {
                     CollectKind.PLAYLIST -> runCatching {
                         repository.kwSetPlaylistCollect(kwRawPlaylistId(id), subscribe)
@@ -2677,7 +2682,7 @@ class LxMusicViewModel @Inject constructor(
             }
             if (ok) {
                 _toastMessage.tryEmit(if (subscribe) context.getString(R.string.lx_msg_subscribe_success) else context.getString(R.string.lx_msg_unsubscribe_success))
-                refreshCollectLists(kind, id, gid, name, subscribe)
+                refreshCollectLists(kind, id, gid, name, subscribe, source)
             } else {
                 Timber.w("collect failed kind=%s id=%s subscribe=%s", kind, id, subscribe)
                 _toastMessage.tryEmit(if (subscribe) context.getString(R.string.lx_msg_subscribe_failed) else context.getString(R.string.lx_msg_unsubscribe_failed))
@@ -2693,9 +2698,11 @@ class LxMusicViewModel @Inject constructor(
         gid: String?,
         name: String?,
         subscribe: Boolean,
+        source: String? = null,
     ) {
         viewModelScope.launch {
-            if (_selectedSource.value == LxSources.KUGOU) {
+            val src = source ?: _selectedSource.value
+            if (src == LxSources.KUGOU) {
                 runCatching { repository.invalidateKgCloudListsCache() }
                 val serverLists = runCatching { repository.fetchKgUserPlaylists() }.getOrDefault(emptyList())
                 val playlists = if (!subscribe) {
@@ -2724,7 +2731,7 @@ class LxMusicViewModel @Inject constructor(
                 _collectDataVersion.update { it + 1 }
                 return@launch
             }
-            if (_selectedSource.value == LxSources.KUWO) {
+            if (src == LxSources.KUWO) {
                 if (kind == CollectKind.ALBUM) {
                     val albums = runCatching { repository.fetchKwLikedAlbums() }.getOrNull()
                         ?: repository.kwLikedAlbums.value

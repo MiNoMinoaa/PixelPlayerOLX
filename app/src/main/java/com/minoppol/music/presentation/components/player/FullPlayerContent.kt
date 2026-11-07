@@ -102,6 +102,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isFinite
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -138,6 +139,19 @@ import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.preferences.AlbumArtQuality
 import com.minoppol.music.data.preferences.CarouselStyle
 import com.minoppol.music.data.preferences.FullPlayerLoadingTweaks
+import com.minoppol.music.data.preferences.LyricsWordHighlightStyle
+import com.minoppol.music.data.preferences.dataStore
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.compose.runtime.State
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.text.TextStyle
+import com.minoppol.music.presentation.components.SyncedWordFlow
+import com.minoppol.music.presentation.components.buildLyricClusters
+import com.minoppol.music.presentation.components.sanitizeSyncedWords
+import com.minoppol.music.presentation.components.resolveLineEndTimeMs
+import kotlinx.coroutines.flow.map
 import com.minoppol.music.presentation.components.AlbumCarouselSection
 import com.minoppol.music.presentation.components.AutoScrollingTextOnDemand
 import com.minoppol.music.presentation.components.LocalMaterialTheme
@@ -315,6 +329,7 @@ fun FullPlayerContent(
         } ?: -1
     }
     val currentLyricLine = syncedLines?.getOrNull(currentLyricLineIndex)?.line
+    val hasWordTimings = remember(syncedLines) { syncedLines?.any { !it.words.isNullOrEmpty() } == true }
     val queueGestureBottomExclusion = maxOf(20.dp, navigationBarBottomInset + 8.dp)
     val queueGestureBottomExclusionPx = with(LocalDensity.current) {
         queueGestureBottomExclusion.toPx()
@@ -324,6 +339,20 @@ fun FullPlayerContent(
     var totalDrag by remember { mutableStateOf(0f) }
 
     val context = LocalContext.current
+    val inPlayerWordHighlightStyle by remember(context) {
+        context.dataStore.data.map { LyricsWordHighlightStyle.fromStorage(it[stringPreferencesKey("lyrics_word_highlight_style")]) }
+    }.collectAsStateWithLifecycle(initialValue = LyricsWordHighlightStyle.WIPE)
+    val inPlayerWordHighlightEnabled by remember(context) {
+        context.dataStore.data.map { it[booleanPreferencesKey("lyrics_word_highlight_enabled")] ?: true }
+    }.collectAsStateWithLifecycle(initialValue = true)
+    val inPlayerPlaybackSpeed by remember(context) {
+        context.dataStore.data.map { it[floatPreferencesKey("playback_speed")] ?: 1f }
+    }.collectAsStateWithLifecycle(initialValue = 1f)
+    val inPlayerInterpolatedPosition = rememberInterpolatedPlaybackPositionState(
+        sampledPositionMs = playbackPosition,
+        isPlaying = isPlayingProvider() && hasWordTimings,
+        playbackSpeed = inPlayerPlaybackSpeed
+    )
     val fileImportScope = rememberCoroutineScope()
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
@@ -725,6 +754,14 @@ fun FullPlayerContent(
                     backgroundColor = LocalMaterialTheme.current.primaryContainer,
                     fontSize = inPlayerLyricsFontSize,
                     isLandscape = isLandscape,
+                    positionProvider = {
+                        (inPlayerInterpolatedPosition.value + lyricsSyncOffset).coerceAtLeast(0L)
+                    },
+                    highlightStyle = if (inPlayerWordHighlightEnabled) {
+                        inPlayerWordHighlightStyle
+                    } else {
+                        LyricsWordHighlightStyle.CLASSIC
+                    },
                     onClick = onLyricsClick,
                     modifier = Modifier.padding(top = 2.dp, bottom = 4.dp)
                 )
@@ -2466,6 +2503,8 @@ private fun InPlayerLyrics(
     backgroundColor: Color,
     fontSize: Int,
     isLandscape: Boolean,
+    positionProvider: () -> Long,
+    highlightStyle: LyricsWordHighlightStyle,
     onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -2479,9 +2518,21 @@ private fun InPlayerLyrics(
 
     val textSizeSp = fontSize.sp
     val lineVerticalPadding = (fontSize * 0.1f).dp
-    val maxHeight = if (isLandscape) 200.dp else (fontSize * 6f).dp
+    val lineHeightUnit = (fontSize * 1.2f).dp
 
-    val listState = rememberLazyListState()
+    BoxWithConstraints(
+        modifier = modifier.clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null,
+            onClick = onClick
+        )
+    ) {
+        val lyricsBlockMax = if (isLandscape) 200.dp else {
+            val padTotal = (fontSize * 1.2f).dp
+            minOf(lineHeightUnit * 3f + padTotal, maxWidth * 0.42f)
+        }
+
+        val listState = rememberLazyListState()
     var viewportHeightPx by remember { mutableIntStateOf(0) }
     var itemHeightPx by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
@@ -2498,16 +2549,11 @@ private fun InPlayerLyrics(
         }
     }
 
-    Box(modifier = modifier.clickable(
-        interactionSource = remember { MutableInteractionSource() },
-        indication = null,
-        onClick = onClick
-    )) {
         LazyColumn(
             state = listState,
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = maxHeight)
+                .heightIn(max = lyricsBlockMax)
                 .onSizeChanged { viewportHeightPx = it.height }
                 .drawWithContent {
                     drawContent()
@@ -2515,13 +2561,13 @@ private fun InPlayerLyrics(
                         brush = Brush.verticalGradient(
                             colors = listOf(backgroundColor, Color.Transparent),
                             startY = 0f,
-                            endY = size.height * 0.35f
+                            endY = size.height * 0.22f
                         )
                     )
                     drawRect(
                         brush = Brush.verticalGradient(
                             colors = listOf(Color.Transparent, backgroundColor),
-                            startY = size.height * 0.65f,
+                            startY = size.height * 0.78f,
                             endY = size.height
                         )
                     )
@@ -2541,19 +2587,47 @@ private fun InPlayerLyrics(
                     else -> 0f
                 }
                 if (alpha > 0f) {
-                    Text(
-                        text = line.line,
-                        fontSize = textSizeSp,
-                        fontWeight = if (idx == displayIndex) FontWeight.SemiBold else FontWeight.Normal,
-                        color = textColor.copy(alpha = alpha),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .onSizeChanged { if (idx == displayIndex) itemHeightPx = it.height }
-                            .padding(vertical = lineVerticalPadding),
-                        textAlign = TextAlign.Center
-                    )
+                    val wordClusters = remember(line.words) {
+                        buildLyricClusters(line.words?.let(::sanitizeSyncedWords))
+                    }
+                    if (idx == displayIndex && !wordClusters.isNullOrEmpty()) {
+                        val nextLineTime = lines.getOrNull(idx + 1)?.time ?: Int.MAX_VALUE
+                        val lineEndTime = remember(line, nextLineTime) {
+                            resolveLineEndTimeMs(line, nextLineTime)
+                        }
+                        SyncedWordFlow(
+                            clusters = wordClusters,
+                            positionProvider = positionProvider,
+                            rangeStartMs = line.time.toLong(),
+                            rangeEndMs = lineEndTime,
+                            style = TextStyle(fontSize = textSizeSp),
+                            fontWeight = FontWeight.SemiBold,
+                            reserveBoldWidth = false,
+                            highlightedColor = textColor,
+                            unhighlightedColor = textColor.copy(alpha = 0.55f),
+                            highlightStyle = highlightStyle,
+                            emphasisEnabled = false,
+                            lyricsAlignment = "center",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .onSizeChanged { itemHeightPx = it.height }
+                                .padding(vertical = lineVerticalPadding)
+                        )
+                    } else {
+                        Text(
+                            text = line.line,
+                            fontSize = textSizeSp,
+                            fontWeight = if (idx == displayIndex) FontWeight.SemiBold else FontWeight.Normal,
+                            color = textColor.copy(alpha = alpha),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .onSizeChanged { if (idx == displayIndex) itemHeightPx = it.height }
+                                .padding(vertical = lineVerticalPadding),
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 } else {
                     Spacer(modifier = Modifier.height(fontSize.dp + lineVerticalPadding * 2))
                 }
@@ -2563,6 +2637,28 @@ private fun InPlayerLyrics(
             }
         }
     }
+}
+
+@Composable
+private fun rememberInterpolatedPlaybackPositionState(
+    sampledPositionMs: Long,
+    isPlaying: Boolean,
+    playbackSpeed: Float
+): State<Long> {
+    val interpolatedPositionMs = remember { mutableLongStateOf(sampledPositionMs.coerceAtLeast(0L)) }
+    LaunchedEffect(sampledPositionMs, isPlaying, playbackSpeed) {
+        val anchorPositionMs = sampledPositionMs.coerceAtLeast(0L)
+        val safePlaybackSpeed = playbackSpeed.takeIf { it.isFinite() && it > 0f } ?: 1f
+        interpolatedPositionMs.longValue = anchorPositionMs
+        if (!isPlaying) return@LaunchedEffect
+        val anchorFrameNanos = withFrameNanos { it }
+        while (true) {
+            val frameNanos = withFrameNanos { it }
+            val elapsedMs = ((frameNanos - anchorFrameNanos) / 1_000_000L).coerceAtLeast(0L)
+            interpolatedPositionMs.longValue = anchorPositionMs + (elapsedMs * safePlaybackSpeed).roundToLong()
+        }
+    }
+    return interpolatedPositionMs
 }
 
 @androidx.annotation.OptIn(UnstableApi::class)

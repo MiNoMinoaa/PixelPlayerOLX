@@ -2,6 +2,7 @@ package com.minoppol.music.data.lxmusic
 
 import android.content.Context
 import android.net.Uri
+import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.minoppol.music.data.database.AlbumEntity
 import com.minoppol.music.data.database.ArtistEntity
@@ -783,7 +784,8 @@ class LxMusicRepository @Inject constructor(
                     val durationSec = obj.get("DURATION")?.asLong
                         ?: obj.get("SONGTIME")?.asLong
                         ?: 0L
-                    val artistId = obj.get("ARTISTID")?.asString?.takeIf { it.isNotBlank() }
+                    val artistId = jsonStr(obj, "ARTISTID")?.takeIf { it.isNotBlank() }
+                    val albumId = jsonStr(obj, "ALBUMID")?.takeIf { it.isNotBlank() }
                     LxSong(
                         source = "kw",
                         songmid = rid,
@@ -792,7 +794,10 @@ class LxMusicRepository @Inject constructor(
                         albumName = album,
                         interval = durationSec,
                         pic = null,
-                        extraFields = if (artistId != null) mapOf("artistIds" to artistId) else emptyMap(),
+                        extraFields = buildMap {
+                            if (artistId != null) put("artistIds", artistId)
+                            if (albumId != null) put("albumId", albumId)
+                        },
                     )
                 }
             }
@@ -897,6 +902,7 @@ class LxMusicRepository @Inject constructor(
             ?: return null
         val artistId = jsonStr(o, "ARTISTID")
         val artistIds = artistId?.takeIf { it.isNotBlank() }
+        val albumId = (jsonStr(o, "ALBUMID") ?: jsonStr(o, "albumid"))?.takeIf { it.isNotBlank() }
         return LxSong(
             source = "kw",
             songmid = rid,
@@ -905,7 +911,10 @@ class LxMusicRepository @Inject constructor(
             albumName = decodeHtmlEntities(jsonStr(o, "ALBUM") ?: ""),
             interval = o.get("DURATION")?.takeIf { it.isJsonPrimitive }?.asLong ?: 0L,
             pic = null,
-            extraFields = if (artistIds != null) mapOf("artistIds" to artistIds) else emptyMap(),
+            extraFields = buildMap {
+                if (artistIds != null) put("artistIds", artistIds)
+                if (albumId != null) put("albumId", albumId)
+            },
         )
     }
 
@@ -1202,19 +1211,20 @@ class LxMusicRepository @Inject constructor(
         }
     }
 
-    suspend fun ensureSearchCover(song: LxSong): String? {
-        if (!song.pic.isNullOrBlank()) return song.pic
-        return when (song.source) {
+    suspend fun ensureSearchCover(song: LxSong): String? = withContext(Dispatchers.IO) {
+        if (!song.pic.isNullOrBlank()) return@withContext song.pic
+        when (song.source) {
             "kw" -> fetchKuwoPic(song.songmid)
-            "wy" -> fetchNeteaseSongPic(song.songmid)
+            "wy" -> fetchNeteaseSongPic(song)
             "kg" -> fetchKugouPic(song)
             else -> null
         }
     }
 
-    private suspend fun fetchNeteaseSongPic(songmid: String): String? {
+    private suspend fun fetchNeteaseSongPic(song: LxSong): String? {
         return runCatching {
-            val url = "https://music.163.com/api/song/detail?id=$songmid&ids=%5B$songmid%5D"
+            val encoded = URLEncoder.encode(song.name, "UTF-8")
+            val url = "https://music.163.com/api/cloudsearch/pc?s=$encoded&type=1&limit=10"
             okHttpClient.newCall(
                 Request.Builder().url(url)
                     .header("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36")
@@ -1223,15 +1233,18 @@ class LxMusicRepository @Inject constructor(
             ).execute().use { resp ->
                 if (!resp.isSuccessful) return@use null
                 val root = JsonParser.parseString(resp.body?.string().orEmpty()).asJsonObject
-                val album = root.getAsJsonArray("songs")
-                    ?.firstOrNull { it.isJsonObject }
+                val pic = root.getAsJsonObject("result")
+                    ?.getAsJsonArray("songs")
+                    ?.firstOrNull { el ->
+                        el.isJsonObject && jsonStr(el.asJsonObject, "id") == song.songmid
+                    }
                     ?.asJsonObject
-                    ?.getAsJsonObject("album")
-                val pic = album?.let { jsonStr(it, "picUrl") }
+                    ?.getAsJsonObject("al")
+                    ?.let { jsonStr(it, "picUrl") }
                 pic?.let { normalizeNeteasePicUrl(it) }
             }
         }.getOrElse {
-            Timber.w(it, "fetchNeteaseSongPic failed for songmid=$songmid")
+            Timber.w(it, "fetchNeteaseSongPic failed for songmid=${song.songmid}")
             null
         }
     }
@@ -1251,14 +1264,14 @@ class LxMusicRepository @Inject constructor(
     }
 
     private suspend fun searchNetease(keyword: String, page: Int): List<LxSong> {
-        val web = searchNeteaseWeb(keyword, page)
-        if (web.isNotEmpty()) {
-            Timber.d("searchNetease: used=web keyword=$keyword count=${web.size} withPic=${web.count { !it.pic.isNullOrBlank() }}")
-            return web
-        }
         val cs = searchNeteaseCloudsearch(keyword, page)
-        Timber.d("searchNetease: used=cloudsearch(web empty) keyword=$keyword count=${cs.size} withPic=${cs.count { !it.pic.isNullOrBlank() }}")
-        return cs
+        if (cs.isNotEmpty()) {
+            Timber.d("searchNetease: used=cloudsearch keyword=$keyword count=${cs.size} withPic=${cs.count { !it.pic.isNullOrBlank() }}")
+            return cs
+        }
+        val web = searchNeteaseWeb(keyword, page)
+        Timber.d("searchNetease: used=web(cloudsearch empty) keyword=$keyword count=${web.size} withPic=${web.count { !it.pic.isNullOrBlank() }}")
+        return web
     }
 
     private suspend fun searchNeteaseWeb(keyword: String, page: Int): List<LxSong> = withContext(Dispatchers.IO) {
@@ -3467,6 +3480,234 @@ class LxMusicRepository @Inject constructor(
         "kg" -> searchKgPlaylists(keyword, page)
         "tx" -> searchTxPlaylists(keyword, page)
         else -> emptyList()
+    }
+
+    suspend fun fetchSearchSuggestions(source: String, keyword: String): List<String> {
+        if (keyword.isBlank()) return emptyList()
+        return when (source) {
+            "wy" -> fetchNeteaseSearchSuggestions(keyword)
+            "kw" -> fetchKuwoSearchSuggestions(keyword)
+            "kg" -> fetchKugouSearchSuggestions(keyword)
+            "tx" -> fetchTencentSearchSuggestions(keyword)
+            else -> emptyList()
+        }
+    }
+
+    suspend fun fetchHotSearches(source: String): List<String> = when (source) {
+        "wy" -> fetchNeteaseHotSearches()
+        "kw" -> fetchKuwoHotSearches()
+        "kg" -> fetchKugouHotSearches()
+        "tx" -> fetchTencentHotSearches()
+        else -> emptyList()
+    }
+
+    private suspend fun fetchNeteaseSearchSuggestions(keyword: String): List<String> = withContext(Dispatchers.IO) {
+        val encoded = URLEncoder.encode(keyword, "UTF-8")
+        val req = Request.Builder()
+            .url("https://music.163.com/api/search/suggest/web?s=$encoded")
+            .header("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36")
+            .header("Referer", "https://music.163.com/")
+            .get()
+            .build()
+        runCatching {
+            okHttpClient.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return@use emptyList()
+                val root = JsonParser.parseString(resp.body?.string().orEmpty()).asJsonObject
+                val result = root.getAsJsonObject("result") ?: return@use emptyList()
+                val songs = result.getAsJsonArray("songs") ?: return@use emptyList()
+                songs.take(10).mapNotNull { el ->
+                    if (!el.isJsonObject) return@mapNotNull null
+                    val item = el.asJsonObject
+                    val name = item.get("name")?.asString ?: return@mapNotNull null
+                    val artists = item.getAsJsonArray("artists")
+                        ?.mapNotNull { a -> a.takeIf { it.isJsonObject }?.asJsonObject?.get("name")?.asString }
+                        ?.filter { it.isNotBlank() }
+                        ?.joinToString("/")
+                    if (artists.isNullOrBlank()) name else "$name - $artists"
+                }
+            }
+        }.onFailure { Timber.w(it, "netease suggest failed") }.getOrDefault(emptyList())
+    }
+
+    private suspend fun fetchTencentSearchSuggestions(keyword: String): List<String> = withContext(Dispatchers.IO) {
+        val encoded = URLEncoder.encode(keyword, "UTF-8")
+        val req = Request.Builder()
+            .url("https://c.y.qq.com/splcloud/fcgi-bin/smartbox_new.fcg?is_xml=0&format=json&key=$encoded&loginUin=0&hostUin=0&inCharset=utf8&outCharset=utf-8&notice=0&platform=yqq&needNewCode=0")
+            .header("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36")
+            .header("Referer", "https://y.qq.com/")
+            .get()
+            .build()
+        runCatching {
+            okHttpClient.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return@use emptyList()
+                val root = JsonParser.parseString(resp.body?.string().orEmpty()).asJsonObject
+                val items = root.getAsJsonObject("data")
+                    ?.getAsJsonObject("song")
+                    ?.getAsJsonArray("itemlist") ?: return@use emptyList()
+                items.take(10).mapNotNull { el ->
+                    if (!el.isJsonObject) return@mapNotNull null
+                    val item = el.asJsonObject
+                    val name = item.get("name")?.asString ?: return@mapNotNull null
+                    val singer = item.get("singer")?.asString
+                    if (singer.isNullOrBlank()) name else "$name - $singer"
+                }
+            }
+        }.onFailure { Timber.w(it, "tencent suggest failed") }.getOrDefault(emptyList())
+    }
+
+    private suspend fun fetchKuwoSearchSuggestions(keyword: String): List<String> = withContext(Dispatchers.IO) {
+        val encoded = URLEncoder.encode(keyword, "UTF-8")
+        val req = Request.Builder()
+            .url("https://tips.kuwo.cn/t.s?corp=kuwo&newver=3&p2p=1&notrace=0&c=mbox&w=$encoded&encoding=utf8&rformat=json")
+            .header("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 13)")
+            .header("Referer", "http://www.kuwo.cn/")
+            .get()
+            .build()
+        runCatching {
+            okHttpClient.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return@use emptyList()
+                val root = JsonParser.parseString(resp.body?.string().orEmpty()).asJsonObject
+                val words = root.getAsJsonArray("WORDITEMS") ?: return@use emptyList()
+                words.take(10).mapNotNull { el ->
+                    el.takeIf { it.isJsonObject }?.asJsonObject?.get("RELWORD")?.asString
+                }.filter { it.isNotBlank() }
+            }
+        }.onFailure { Timber.w(it, "kuwo suggest failed") }.getOrDefault(emptyList())
+    }
+
+    private suspend fun fetchKugouSearchSuggestions(keyword: String): List<String> = withContext(Dispatchers.IO) {
+        val encoded = URLEncoder.encode(keyword, "UTF-8")
+        val req = Request.Builder()
+            .url("https://searchtip.kugou.com/getSearchTip?MusicTipCount=10&keyword=$encoded")
+            .header("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36")
+            .header("Referer", "https://www.kugou.com/")
+            .get()
+            .build()
+        runCatching {
+            okHttpClient.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return@use emptyList()
+                val root = JsonParser.parseString(resp.body?.string().orEmpty())
+                if (!root.isJsonArray) return@use emptyList()
+                val records = root.asJsonArray.firstOrNull()
+                    ?.takeIf { it.isJsonObject }
+                    ?.asJsonObject
+                    ?.getAsJsonArray("RecordDatas") ?: return@use emptyList()
+                records.take(10).mapNotNull { el ->
+                    el.takeIf { it.isJsonObject }?.asJsonObject?.get("HintInfo")?.asString
+                }.filter { it.isNotBlank() }
+            }
+        }.onFailure { Timber.w(it, "kugou suggest failed") }.getOrDefault(emptyList())
+    }
+
+    private suspend fun fetchNeteaseHotSearches(): List<String> = withContext(Dispatchers.IO) {
+        val cookie = neteaseCookieStore.getCookie()?.takeIf { it.isNotBlank() }
+            ?: "os=pc; appver=2.5.2.197409"
+        val req = Request.Builder()
+            .url("https://music.163.com/api/playlist/detail?id=3778678&n=1000")
+            .header("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36")
+            .header("Referer", "https://music.163.com/")
+            .header("Cookie", cookie)
+            .get()
+            .build()
+        runCatching {
+            okHttpClient.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return@use emptyList()
+                val root = JsonParser.parseString(resp.body?.string().orEmpty()).asJsonObject
+                val result = root.getAsJsonObject("result") ?: return@use emptyList()
+                val tracks = result.getAsJsonArray("tracks") ?: return@use emptyList()
+                val seen = mutableSetOf<String>()
+                tracks.take(60).mapNotNull { el ->
+                    if (!el.isJsonObject) return@mapNotNull null
+                    val name = el.asJsonObject.get("name")?.asString ?: return@mapNotNull null
+                    if (name.isBlank() || !seen.add(name)) return@mapNotNull null
+                    name
+                }.take(15)
+            }
+        }.onFailure { Timber.w(it, "netease hot failed") }.getOrDefault(emptyList())
+    }
+
+    private suspend fun fetchKuwoHotSearches(): List<String> = withContext(Dispatchers.IO) {
+        val req = Request.Builder()
+            .url("http://hotword.kuwo.cn/hotword.s?prod=kwplayer_ar_9.3.0.1&corp=kuwo&newver=2&vipver=9.3.0.1&source=kwplayer_ar_9.3.0.1_40.apk&p2p=1&notrace=0&uid=0&plat=kwplayer_ar&rformat=json&encoding=utf8&tabid=1")
+            .header("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 13)")
+            .get()
+            .build()
+        runCatching {
+            okHttpClient.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return@use emptyList()
+                val root = JsonParser.parseString(resp.body?.string().orEmpty())
+                val tags = root.asJsonObject.getAsJsonArray("tagvalue") ?: return@use emptyList()
+                tags.mapNotNull { el ->
+                    el.takeIf { it.isJsonObject }?.asJsonObject?.get("key")?.asString
+                }.filter { it.isNotBlank() }.take(15)
+            }
+        }.onFailure { Timber.w(it, "kuwo hot failed") }.getOrDefault(emptyList())
+    }
+
+    private suspend fun fetchKugouHotSearches(): List<String> = withContext(Dispatchers.IO) {
+        val req = Request.Builder()
+            .url("http://gateway.kugou.com/api/v3/search/hot_tab?signature=ee44edb9d7155821412d220bcaf509dd&appid=1005&clientver=10026&plat=0")
+            .header("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 13)")
+            .header("dfid", "1ssiv93oVqMp27cirf2CvoF1")
+            .header("mid", "156798703528610303473757548878786007104")
+            .header("clienttime", "1584257267")
+            .header("x-router", "msearch.kugou.com")
+            .header("kg-rc", "1")
+            .get()
+            .build()
+        runCatching {
+            okHttpClient.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return@use emptyList()
+                val root = JsonParser.parseString(resp.body?.string().orEmpty()).asJsonObject
+                if (root.get("errcode")?.takeIf { it.isJsonPrimitive }?.asInt != 0) return@use emptyList()
+                val lists = root.getAsJsonObject("data")
+                    ?.getAsJsonArray("list") ?: return@use emptyList()
+                val seen = mutableSetOf<String>()
+                lists.mapNotNull { el ->
+                    val keywords = el.takeIf { it.isJsonObject }
+                        ?.asJsonObject
+                        ?.getAsJsonArray("keywords") ?: return@mapNotNull null
+                    keywords.firstNotNullOfOrNull { k ->
+                        k.takeIf { it.isJsonObject }?.asJsonObject?.get("keyword")?.asString
+                    }
+                }.filter { it.isNotBlank() && seen.add(it) }.take(15)
+            }
+        }.onFailure { Timber.w(it, "kugou hot failed") }.getOrDefault(emptyList())
+    }
+
+    private suspend fun fetchTencentHotSearches(): List<String> = withContext(Dispatchers.IO) {
+        val payload = JsonObject().apply {
+            add("comm", JsonObject().apply {
+                addProperty("ct", 24)
+                addProperty("cv", 0)
+            })
+            add("hotkey", JsonObject().apply {
+                addProperty("method", "GetHotkeyForQQMusicPC")
+                addProperty("module", "tencent_musicsoso_hotkey.HotkeyService")
+                add("param", JsonObject().apply {
+                    addProperty("search_id", "")
+                    addProperty("uin", 0)
+                })
+            })
+        }
+        val req = Request.Builder()
+            .url("https://u.y.qq.com/cgi-bin/musicu.fcg")
+            .header("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36")
+            .header("Referer", "https://y.qq.com/")
+            .post(payload.toString().toRequestBody("application/json; charset=utf-8".toMediaType()))
+            .build()
+        runCatching {
+            okHttpClient.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return@use emptyList()
+                val root = JsonParser.parseString(resp.body?.string().orEmpty()).asJsonObject
+                val hotkeys = root.getAsJsonObject("hotkey")
+                    ?.getAsJsonObject("data")
+                    ?.getAsJsonArray("vec_hotkey") ?: return@use emptyList()
+                hotkeys.mapNotNull { el ->
+                    el.takeIf { it.isJsonObject }?.asJsonObject?.get("query")?.asString
+                }.filter { it.isNotBlank() }.take(15)
+            }
+        }.onFailure { Timber.w(it, "tencent hot failed") }.getOrDefault(emptyList())
     }
 
     private val shareUrlRegex = Regex("""https?://[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+""")

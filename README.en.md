@@ -21,7 +21,7 @@
   adding <a href="https://github.com/lyswhut/lx-music-mobile">lx-music-mobile</a>-compatible online music sources (自定义音源) plus playlist-interoperable import/export and other features.
 </p>
 
-> **Note:** PixelPlayerOLX is an independent fork. It is **not** an official version of PixelPlayerOSS, lx-music-mobile, lx-lxwalnut-music-mobile, or any music platform, and it is not endorsed by their original authors.
+> **Note:** PixelPlayerOLX is an independent fork. It is **not** an official version of PixelPlayerOSS, lx-music-mobile, or any music platform, and it is not endorsed by their original authors.
 
 <p align="center">This software implements lx source import and playback online features solely for personal use. Platform online features only take effect after a source script is imported and enabled. This software does not host, store, or own any copyrighted audio content.</p>
 
@@ -36,7 +36,7 @@
 
 ## Introduction
 
-PixelPlayerOLX is a fork of [PixelPlayerOSS](https://github.com/PixelPlayerHQ/PixelPlayerOSS). It keeps the upstream project's local-playback, self-hostable foundation and adds an online music source (自定义音源 / "LX Music") system whose design references [lx-music-mobile](https://github.com/lyswhut/lx-music-mobile) and [lx-lxwalnut-music-mobile](https://github.com/WalnutBai/lx-lxwalnut-music-mobile).
+PixelPlayerOLX is a fork of [PixelPlayerOSS](https://github.com/PixelPlayerHQ/PixelPlayerOSS). It keeps the upstream project's local-playback, self-hostable foundation and adds an online music source (自定义音源 / "LX Music") system whose design references [lx-music-mobile](https://github.com/lyswhut/lx-music-mobile).
 
 Local playback, self-hosted libraries, and offline use work by default. The online source features are optional and are only active after you import and enable a source script (or sign in to a supported platform).
 
@@ -45,7 +45,7 @@ Package name: `com.minoppol.music`
 
 PixelPlayerOSS keeps the player FOSS-oriented and removes integrations that are not part of that direction (Telegram, NetEase, QQ Music, Google Drive, Gemini, Cast, Wear OS, Play Store billing, Firebase, Crashlytics, and Google Play Services runtime dependencies).
 
-PixelPlayerOLX builds on that FOSS base and adds back an *optional, user-controlled* online music source system, implemented with reference to [lx-music-mobile](https://github.com/lyswhut/lx-music-mobile) and [lx-lxwalnut-music-mobile](https://github.com/WalnutBai/lx-lxwalnut-music-mobile):
+PixelPlayerOLX builds on that FOSS base and adds back an *optional, user-controlled* online music source system, implemented with reference to [lx-music-mobile](https://github.com/lyswhut/lx-music-mobile):
 
 - A sandboxed **QuickJS** script engine that runs lx-music-mobile-compatible source scripts (音源脚本).
 - Built-in official API paths for several platforms, used alongside scripts to pick the best available quality.
@@ -118,7 +118,7 @@ To install a release, download the APK for your device and install it: `arm64-v8
 
 ## Upstream Projects & Attribution
 
-PixelPlayerOLX is a fork of [PixelPlayerOSS](https://github.com/PixelPlayerHQ/PixelPlayerOSS). Some online-source features are implemented with reference to [lx-music-mobile](https://github.com/lyswhut/lx-music-mobile) and [lx-lxwalnut-music-mobile](https://github.com/WalnutBai/lx-lxwalnut-music-mobile). The relevant licenses and copyrights are retained.
+PixelPlayerOLX is a fork of [PixelPlayerOSS](https://github.com/PixelPlayerHQ/PixelPlayerOSS). Some online-source features are implemented with reference to [lx-music-mobile](https://github.com/lyswhut/lx-music-mobile) and the various source scripts, with the multi-platform design inspired by [lx-lxwalnut-music-mobile](https://github.com/WalnutBai/lx-lxwalnut-music-mobile). The relevant licenses and copyrights are retained.
 
 | Project | Repository | License | Copyright / attribution |
 | --- | --- | --- | --- |

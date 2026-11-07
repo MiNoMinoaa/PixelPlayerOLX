@@ -284,4 +284,17 @@
     <string name="lxmusic_quality_master">臻品母帶</string>
     <string name="lxmusic_quality_master_desc">錄音室母帶級音質</string>
     <string name="lxmusic_need_script_or_cookie">請先加載音源腳本或設置網易雲 Cookie</string>
+    <string name="search_online_mode_cd">在線聚合搜索</string>
+    <string name="search_online_history_title">搜索歷史</string>
+    <string name="search_online_clear_history">清空搜索歷史</string>
+    <string name="search_online_hot_title">熱搜榜單</string>
+    <string name="search_online_hot_empty">熱搜榜單加載失敗。</string>
+    <string name="search_online_tab_songs">歌曲</string>
+    <string name="search_online_tab_playlists">歌單</string>
+    <string name="search_online_clear_history_confirm">清空全部搜索歷史？</string>
+    <string name="search_online_prompt">輸入關鍵詞，聚合搜索各平台歌曲與歌單</string>
+    <string name="search_online_play_all">播放全部</string>
+    <string name="search_online_shuffle">隨機播放</string>    <string name="search_online_selected_count">已選 %1$d 首</string>
+    <string name="search_online_selection_options">批量操作</string>
+
 </resources>

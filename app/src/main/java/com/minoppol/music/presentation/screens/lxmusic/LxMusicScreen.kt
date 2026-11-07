@@ -161,6 +161,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -223,7 +225,7 @@ private object LxMoodHolder {
     var word: String? = null
 }
 
-private val LxDiscoverSortOptions = persistentListOf(
+internal val LxDiscoverSortOptions = persistentListOf(
     SortOption.SongDefaultOrder,
     SortOption.SongTitleAZ,
     SortOption.SongTitleZA,
@@ -235,7 +237,7 @@ private val LxDiscoverSortOptions = persistentListOf(
     SortOption.SongDurationAsc,
 )
 
-private fun sortLxSongs(
+internal fun sortLxSongs(
     songs: List<com.minoppol.music.data.lxmusic.LxSong>,
     option: SortOption,
 ): List<com.minoppol.music.data.lxmusic.LxSong> {
@@ -1146,7 +1148,9 @@ fun LxMusicScreen(
                         com.minoppol.music.data.lxmusic.LxAlbum(
                             id = albumId,
                             name = infoUiSong.album.orEmpty(),
-                        )
+                            pic = infoLxSong.pic,
+                        ),
+                        source = infoLxSong.source
                     )
                     lxInfoSong = null
                 }
@@ -2542,6 +2546,7 @@ private fun LxDockedSearchBar(
 ) {
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    val searchFocusRequester = remember { FocusRequester() }
     val hm = rememberLxHeaderMetrics()
     val fieldColor = MaterialTheme.colorScheme.secondaryContainer
         .compositeOver(MaterialTheme.colorScheme.surface)
@@ -2560,7 +2565,11 @@ private fun LxDockedSearchBar(
             .height(hm.searchBarHeight)
             .shadow(4.dp, shape)
             .clip(shape)
-            .background(fieldColor),
+            .background(fieldColor)
+            .clickable {
+                searchFocusRequester.requestFocus()
+                keyboardController?.show()
+            },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Spacer(Modifier.width(hm.searchLeadSpacer))
@@ -2583,7 +2592,9 @@ private fun LxDockedSearchBar(
                 BasicTextField(
                     value = query,
                     onValueChange = onQueryChange,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .focusRequester(searchFocusRequester)
+                        .fillMaxWidth(),
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = onFieldColor),
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -2603,7 +2614,9 @@ private fun LxDockedSearchBar(
             BasicTextField(
                 value = query,
                 onValueChange = onQueryChange,
-                modifier = Modifier.weight(1f).padding(horizontal = 6.dp),
+                modifier = Modifier
+                    .focusRequester(searchFocusRequester)
+                    .weight(1f).padding(horizontal = 6.dp),
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyLarge.copy(color = onFieldColor),
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -4395,7 +4408,7 @@ private fun LxCollapsingDetailHeader(
 }
 
 @Composable
-private fun LxSearchArtistPage(
+internal fun LxSearchArtistPage(
     state: LxMusicViewModel.SearchArtistPageState,
     viewModel: LxMusicViewModel,
     playerViewModel: PlayerViewModel,
@@ -4813,7 +4826,7 @@ private fun LxSearchArtistPage(
 }
 
 @Composable
-private fun LxSearchAlbumPage(
+internal fun LxSearchAlbumPage(
     state: LxMusicViewModel.SearchAlbumPageState,
     viewModel: LxMusicViewModel,
     playerViewModel: PlayerViewModel,
