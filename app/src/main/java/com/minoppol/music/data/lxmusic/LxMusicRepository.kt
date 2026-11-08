@@ -1265,7 +1265,7 @@ class LxMusicRepository @Inject constructor(
         if (!song.pic.isNullOrBlank()) return@withContext song.pic
         when (song.source) {
             "kw" -> fetchKuwoPic(song.songmid)
-            "wy" -> fetchNeteaseSongPic(song)
+            "wy" -> fetchNeteasePic(song.songmid) ?: fetchNeteaseSongPic(song)
             "kg" -> fetchKugouPic(song)
             else -> null
         }

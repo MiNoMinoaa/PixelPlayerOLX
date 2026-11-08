@@ -194,7 +194,7 @@ class LxOnlineSearchViewModel @Inject constructor(
             viewModelScope.launch {
                 mergedSongs.filter { it.pic.isNullOrBlank() }.forEach { song ->
                     launch {
-                        val cover = withTimeoutOrNull(6_000L) {
+                        val cover = withTimeoutOrNull(10_000L) {
                             runCatching { repository.ensureSearchCover(song) }.getOrNull()
                         }
                         if (jobId != searchJobId || cover.isNullOrBlank()) return@launch
@@ -291,7 +291,7 @@ class LxOnlineSearchViewModel @Inject constructor(
             viewModelScope.launch {
                 merged.filter { it.pic.isNullOrBlank() }.forEach { song ->
                     launch {
-                        val cover = withTimeoutOrNull(6_000L) {
+                        val cover = withTimeoutOrNull(10_000L) {
                             runCatching { repository.ensureSearchCover(song) }.getOrNull()
                         }
                         if (jobId != searchJobId || cover.isNullOrBlank()) return@launch
@@ -382,7 +382,7 @@ class LxOnlineSearchViewModel @Inject constructor(
             viewModelScope.launch {
                 songs.filter { it.pic.isNullOrBlank() }.forEach { song ->
                     launch {
-                        val cover = withTimeoutOrNull(6_000L) {
+                        val cover = withTimeoutOrNull(10_000L) {
                             runCatching { repository.ensureSearchCover(song) }.getOrNull()
                         }
                         if (picJobId != playlistPicJobId || cover.isNullOrBlank()) return@launch
