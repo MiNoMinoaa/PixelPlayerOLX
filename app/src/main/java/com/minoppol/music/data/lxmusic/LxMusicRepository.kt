@@ -1038,7 +1038,17 @@ class LxMusicRepository @Inject constructor(
                             )
                         }.getOrNull()
                     } ?: emptyList()
-                    if (list.isNotEmpty()) return@use (null to list)
+                    if (list.isNotEmpty()) {
+                        val kwAlbum = LxAlbum(
+                            id = albumId,
+                            name = albumName,
+                            pic = null,
+                            artistName = list.first().singer.takeIf { it.isNotBlank() },
+                            artistId = list.first().extraFields["artistIds"]
+                                ?.split(",")?.firstOrNull()?.takeIf { it.isNotBlank() },
+                        )
+                        return@use (kwAlbum to list)
+                    }
                     null
                 }
             }.getOrNull()?.let { return@withContext it }
@@ -1071,7 +1081,19 @@ class LxMusicRepository @Inject constructor(
                     pn++
                 }
             }
-            null to songs
+            if (songs.isNotEmpty()) {
+                val kwAlbum = LxAlbum(
+                    id = albumId,
+                    name = albumName,
+                    pic = null,
+                    artistName = songs.first().singer.takeIf { it.isNotBlank() },
+                    artistId = songs.first().extraFields["artistIds"]
+                        ?.split(",")?.firstOrNull()?.takeIf { it.isNotBlank() },
+                )
+                kwAlbum to songs
+            } else {
+                null to songs
+            }
         }
 
     suspend fun fetchPic(song: LxSong): String? = withContext(Dispatchers.IO) {
@@ -1160,6 +1182,34 @@ class LxMusicRepository @Inject constructor(
         if (el.isJsonNull) return null
         if (!el.isJsonPrimitive) return null
         return runCatching { el.asString }.getOrNull()
+    }
+
+    private val publishDateRegex = Regex("""^(\d{4})(?:-(\d{1,2}))?(?:-(\d{1,2}))?""")
+
+    internal fun normalizePublishTime(raw: String?): Long {
+        if (raw.isNullOrBlank()) return 0L
+        val trimmed = raw.trim()
+        publishDateRegex.find(trimmed)?.let { m ->
+            val year = m.groupValues[1].toIntOrNull() ?: return@let
+            if (year in 1900..2100) {
+                val month = m.groupValues[2].toIntOrNull()?.coerceIn(1, 12) ?: 1
+                val day = m.groupValues[3].toIntOrNull()?.coerceIn(1, 28) ?: 1
+                return java.time.LocalDate.of(year, month, day).toEpochDay() * 86_400_000L
+            }
+        }
+        val num = trimmed.toLongOrNull() ?: trimmed.toDoubleOrNull()?.toLong() ?: return 0L
+        return when {
+            num > 100_000_000_000L -> num
+            num >= 1_000_000_000L -> num * 1000L
+            num in 10_000_000L..99_991_231L -> {
+                val year = (num / 10000).toInt()
+                val month = ((num % 10000) / 100).toInt().coerceIn(1, 12)
+                val day = (num % 100).toInt().coerceIn(1, 28)
+                if (year in 1900..2100) java.time.LocalDate.of(year, month, day).toEpochDay() * 86_400_000L else 0L
+            }
+            num in 1900..2100 -> java.time.LocalDate.of(num.toInt(), 1, 1).toEpochDay() * 86_400_000L
+            else -> 0L
+        }
     }
 
     private fun normalizeNeteasePicUrl(raw: String): String? = when {
@@ -2585,6 +2635,11 @@ class LxMusicRepository @Inject constructor(
                     pic = normalizeNeteasePicUrl(jsonStr(it, "picUrl") ?: ""),
                     artistName = it.getAsJsonObject("artist")?.let { a -> jsonStr(a, "name") }
                         ?: it.getAsJsonArray("artists")?.firstOrNull()?.asJsonObject?.let { a -> jsonStr(a, "name") },
+                    artistId = it.getAsJsonObject("artist")?.let { a -> jsonStr(a, "id") },
+                    artistPic = it.getAsJsonObject("artist")
+                        ?.let { a -> jsonStr(a, "picUrl") ?: jsonStr(a, "img1v1Url") }
+                        ?.takeIf { !it.isNullOrBlank() }
+                        ?.let { url -> normalizeNeteasePicUrl(url) },
                     publishTime = it.get("publishTime")?.takeIf { v -> v.isJsonPrimitive }?.asLong ?: 0L,
                     size = it.get("size")?.takeIf { v -> v.isJsonPrimitive }?.asInt ?: 0,
                 )
@@ -2861,7 +2916,7 @@ class LxMusicRepository @Inject constructor(
                                 name = jsonStr(o, "albumName").orEmpty(),
                                 pic = if (pic.startsWith("http://")) pic.replace("http://", "https://") else pic,
                                 artistName = jsonStr(o, "singerName"),
-                                publishTime = jsonStr(o, "publicTime")?.toLongOrNull() ?: 0L,
+                                publishTime = normalizePublishTime(jsonStr(o, "publicTime")),
                             )
                         }.getOrNull()
                     } ?: emptyList()
@@ -2966,7 +3021,7 @@ class LxMusicRepository @Inject constructor(
                                 name = jsonStr(o, "albumName").orEmpty(),
                                 pic = if (pic.startsWith("http://")) pic.replace("http://", "https://") else pic,
                                 artistName = jsonStr(o, "singerName"),
-                                publishTime = jsonStr(o, "publicTime")?.toLongOrNull() ?: 0L,
+                                publishTime = normalizePublishTime(jsonStr(o, "publicTime")),
                             )
                         }.getOrNull()
                     } ?: emptyList()
@@ -3020,7 +3075,22 @@ class LxMusicRepository @Inject constructor(
                             )
                         }.getOrNull()
                     } ?: emptyList()
-                    null to songs
+                    val firstArtistMid = songs.firstOrNull()
+                        ?.extraFields?.get("artistIds")?.split(",")?.firstOrNull()
+                        ?.takeIf { it.isNotBlank() }
+                    val album = LxAlbum(
+                        id = albumId,
+                        name = jsonStr(data, "name")?.takeIf { it.isNotBlank() } ?: albumName,
+                        pic = jsonStr(data, "albummid")?.takeIf { it.isNotBlank() }
+                            ?.let { "https://y.gtimg.cn/music/photo_new/T002R300x300M000$it.jpg" },
+                        artistName = jsonStr(data, "singername")?.takeIf { it.isNotBlank() }
+                            ?: songs.firstOrNull()?.singer?.takeIf { it.isNotBlank() },
+                        artistId = firstArtistMid,
+                        artistPic = firstArtistMid
+                            ?.let { "https://y.gtimg.cn/music/photo_new/T001R300x300M000$it.jpg" },
+                        publishTime = normalizePublishTime(jsonStr(data, "aDate")),
+                    )
+                    album to songs
                 }
             }.getOrElse {
                 Timber.w(it, "fetchTxAlbumDetail failed albumId=$albumId")
@@ -3093,7 +3163,7 @@ class LxMusicRepository @Inject constructor(
                                     ?.replace("{size}", "400")
                                     ?.let { if (it.startsWith("http://")) it.replace("http://", "https://") else it },
                                 artistName = decodeHtmlEntities(jsonStr(o, "singername") ?: ""),
-                                publishTime = jsonStr(o, "publishtime")?.toLongOrNull() ?: 0L,
+                                publishTime = normalizePublishTime(jsonStr(o, "publishtime")),
                                 size = jsonStr(o, "songcount")?.toIntOrNull() ?: 0,
                             )
                         }.getOrNull()
@@ -3231,7 +3301,7 @@ class LxMusicRepository @Inject constructor(
                                     ?.replace("{size}", "400")
                                     ?.let { if (it.startsWith("http://")) it.replace("http://", "https://") else it },
                                 artistName = decodeHtmlEntities(jsonStr(o, "singername") ?: ""),
-                                publishTime = jsonStr(o, "publishtime")?.toLongOrNull() ?: 0L,
+                                publishTime = normalizePublishTime(jsonStr(o, "publishtime")),
                                 size = jsonStr(o, "songcount")?.toIntOrNull() ?: 0,
                             )
                         }.getOrNull()
@@ -3274,7 +3344,14 @@ class LxMusicRepository @Inject constructor(
                         ?.let { if (it.startsWith("http://")) it.replace("http://", "https://") else it }
                     val artistName = jsonStr(data, "singername")
                     Timber.i("fetchKgAlbumDetail resolved albumId=$albumId name=$name pic=$pic artistName=$artistName")
-                    LxAlbum(id = albumId, name = decodeHtmlEntities(name), pic = pic, artistName = artistName)
+                    LxAlbum(
+                        id = albumId,
+                        name = decodeHtmlEntities(name),
+                        pic = pic,
+                        artistName = artistName,
+                        artistId = jsonStr(data, "singerid")?.takeIf { it.isNotBlank() },
+                        publishTime = normalizePublishTime(jsonStr(data, "publishtime")),
+                    )
                 }
             }.getOrElse {
                 Timber.w(it, "fetchKgAlbumInfo failed albumId=$albumId")

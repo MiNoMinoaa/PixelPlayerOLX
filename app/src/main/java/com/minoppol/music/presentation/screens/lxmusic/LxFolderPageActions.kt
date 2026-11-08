@@ -58,6 +58,7 @@ import androidx.compose.ui.res.stringResource
 import com.minoppol.music.R
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.minoppol.music.data.lxmusic.LxSources
 
 
 internal object LxShareUrls {
@@ -65,6 +66,12 @@ internal object LxShareUrls {
     fun album(id: String): String = "https://music.163.com/#/album?id=$id"
     fun of(kind: LxMusicViewModel.CollectKind, id: String): String =
         if (kind == LxMusicViewModel.CollectKind.PLAYLIST) playlist(id) else album(id)
+    fun artist(source: String, id: String): String = when (source) {
+        LxSources.TENCENT -> "https://y.qq.com/n/ryqq/singer/$id"
+        LxSources.KUGOU -> "https://www.kugou.com/singer/$id/"
+        LxSources.KUWO -> "https://www.kuwo.cn/singer_detail/$id"
+        else -> "https://music.163.com/#/artist?id=$id"
+    }
 }
 
 @Composable

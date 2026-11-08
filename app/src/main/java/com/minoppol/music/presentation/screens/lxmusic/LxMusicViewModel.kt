@@ -199,6 +199,7 @@ class LxMusicViewModel @Inject constructor(
         val songs: List<LxSong> = emptyList(),
         val albums: List<LxAlbum> = emptyList(),
         val albumsLoading: Boolean = false,
+        val albumsSortDesc: Boolean = true,
         val tab: String = "songs",
         val loading: Boolean = false,
         val error: String? = null,
@@ -1820,6 +1821,7 @@ class LxMusicViewModel @Inject constructor(
         )
         _searchArtistOverlay.value = true
         loadSearchArtistPage(artist.id)
+        refreshSearchArtistAlbums()
     }
 
     private val _searchArtistOverlay = MutableStateFlow(false)
@@ -1863,13 +1865,36 @@ class LxMusicViewModel @Inject constructor(
             val cur = _searchAlbumPageState.value
             Timber.i("loadSearchAlbumPage albumId=$albumId curId=${cur.album?.id} curName=${cur.album?.name} willOverride=${detail != null}")
             if (cur.album?.id != albumId) return@launch
+            val merged = detail?.let { d ->
+                val base = cur.album
+                d.copy(
+                    pic = d.pic?.takeIf { it.isNotBlank() } ?: base?.pic,
+                    artistName = d.artistName.takeIf { !it.isNullOrBlank() } ?: base?.artistName,
+                    artistId = d.artistId.takeIf { !it.isNullOrBlank() } ?: base?.artistId,
+                    artistPic = d.artistPic.takeIf { !it.isNullOrBlank() } ?: base?.artistPic,
+                    publishTime = if (d.publishTime > 0L) d.publishTime else (base?.publishTime ?: 0L),
+                )
+            } ?: cur.album
             _searchAlbumPageState.value = cur.copy(
-                album = detail ?: cur.album,
+                album = merged,
                 loading = false,
                 songs = songs,
                 error = if (songs.isEmpty()) context.getString(R.string.lx_error_album_no_songs) else null,
             )
             if (songs.isNotEmpty()) loadPicsForResults(songs)
+            if (merged != null) {
+                backfillAlbumArtist(merged, source) { found ->
+                    val s = _searchAlbumPageState.value
+                    if (s.album?.id == albumId) {
+                        _searchAlbumPageState.value = s.copy(
+                            album = s.album.copy(
+                                artistPic = s.album.artistPic.takeIf { !it.isNullOrBlank() } ?: found.pic,
+                                artistId = s.album.artistId.takeIf { !it.isNullOrBlank() } ?: found.id,
+                            )
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -1993,19 +2018,62 @@ class LxMusicViewModel @Inject constructor(
         if (cur.tab == tab) return
         _searchArtistPageState.value = cur.copy(tab = tab)
         if (tab == "albums" && cur.albums.isEmpty() && cur.artist != null) {
-            _searchArtistPageState.value = _searchArtistPageState.value.copy(albumsLoading = true)
-            viewModelScope.launch {
-                val albums = when (cur.source) {
-                    LxSources.TENCENT -> repository.fetchTxArtistAlbums(cur.artist.id, cur.artist.name)
-                    LxSources.KUGOU -> repository.fetchKgArtistAlbums(cur.artist.id)
-                    LxSources.KUWO -> repository.fetchKwArtistAlbums(cur.artist.id, cur.artist.name)
-                    else -> repository.fetchNeteaseArtistAlbums(cur.artist.id)
-                }
-                val now = _searchArtistPageState.value
-                if (now.artist?.id == cur.artist.id) {
-                    _searchArtistPageState.value = now.copy(albums = albums, albumsLoading = false)
+            refreshSearchArtistAlbums()
+        }
+    }
+
+    fun refreshSearchArtistAlbums() {
+        val cur = _searchArtistPageState.value
+        val artist = cur.artist ?: return
+        if (cur.albumsLoading) return
+        _searchArtistPageState.value = cur.copy(albumsLoading = true)
+        viewModelScope.launch {
+            val albums = when (cur.source) {
+                LxSources.TENCENT -> repository.fetchTxArtistAlbums(artist.id, artist.name)
+                LxSources.KUGOU -> repository.fetchKgArtistAlbums(artist.id)
+                LxSources.KUWO -> repository.fetchKwArtistAlbums(artist.id, artist.name)
+                else -> repository.fetchNeteaseArtistAlbums(artist.id)
+            }
+            val now = _searchArtistPageState.value
+            if (now.artist?.id == artist.id) {
+                _searchArtistPageState.value = now.copy(albums = albums, albumsLoading = false)
+            }
+        }
+    }
+
+    fun toggleSearchArtistAlbumsSort() {
+        val cur = _searchArtistPageState.value
+        _searchArtistPageState.value = cur.copy(albumsSortDesc = !cur.albumsSortDesc)
+    }
+
+    private suspend fun findLxArtistByName(name: String, source: String): LxArtist? {
+        val artists = runCatching {
+            when (source) {
+                LxSources.TENCENT -> repository.searchTxArtists(name).first
+                LxSources.KUGOU -> repository.searchKgArtists(name).first
+                LxSources.KUWO -> repository.searchKwArtists(name).first
+                else -> repository.searchNeteaseArtists(name).first
+            }
+        }.getOrDefault(emptyList())
+        return artists.firstOrNull { it.name == name } ?: artists.firstOrNull()
+    }
+
+    private fun backfillAlbumArtist(album: LxAlbum, source: String, apply: (LxArtist) -> Unit) {
+        if (!album.artistPic.isNullOrBlank()) return
+        val name = album.artistName?.takeIf { it.isNotBlank() } ?: return
+        viewModelScope.launch {
+            var found = findLxArtistByName(name, source)
+            if (source == LxSources.KUGOU) {
+                val kgId = album.artistId?.takeIf { it.isNotBlank() } ?: found?.id
+                if (found?.pic.isNullOrBlank() && kgId != null) {
+                    val pic = runCatching { repository.fetchKgArtistPic(kgId) }.getOrNull()
+                    if (!pic.isNullOrBlank()) {
+                        found = (found ?: LxArtist(id = kgId, name = name)).copy(pic = pic)
+                    }
                 }
             }
+            found ?: return@launch
+            apply(found)
         }
     }
 
@@ -2014,17 +2082,53 @@ class LxMusicViewModel @Inject constructor(
         if (cur.selectedAlbum?.id == album.id) return
         _searchArtistPageState.value = cur.copy(selectedAlbum = album, albumSongs = emptyList(), albumLoading = true)
         viewModelScope.launch {
-            val (_, songs) = when (cur.source) {
+            val (detail, songs) = when (cur.source) {
                 LxSources.TENCENT -> repository.fetchTxAlbumDetail(album.id, album.name)
                 LxSources.KUGOU -> repository.fetchKgAlbumDetail(album.id)
                 LxSources.KUWO -> repository.fetchKwAlbumDetail(album.id, album.name)
                 else -> repository.fetchNeteaseAlbumDetail(album.id)
             }
+            val merged = detail?.let { d ->
+                d.copy(
+                    pic = d.pic?.takeIf { it.isNotBlank() } ?: album.pic,
+                    artistName = d.artistName.takeIf { !it.isNullOrBlank() } ?: album.artistName,
+                    artistId = d.artistId.takeIf { !it.isNullOrBlank() } ?: album.artistId,
+                    artistPic = d.artistPic.takeIf { !it.isNullOrBlank() } ?: album.artistPic,
+                    publishTime = if (d.publishTime > 0L) d.publishTime else album.publishTime,
+                )
+            } ?: album
             val now = _searchArtistPageState.value
             if (now.selectedAlbum?.id == album.id) {
-                _searchArtistPageState.value = now.copy(albumSongs = songs, albumLoading = false)
+                _searchArtistPageState.value = now.copy(selectedAlbum = merged, albumSongs = songs, albumLoading = false)
                 if (songs.isNotEmpty()) loadPicsForResults(songs)
+                backfillAlbumArtist(merged, cur.source) { found ->
+                    val s = _searchArtistPageState.value
+                    if (s.selectedAlbum?.id == album.id) {
+                        _searchArtistPageState.value = s.copy(
+                            selectedAlbum = s.selectedAlbum.copy(
+                                artistPic = s.selectedAlbum.artistPic.takeIf { !it.isNullOrBlank() } ?: found.pic,
+                                artistId = s.selectedAlbum.artistId.takeIf { !it.isNullOrBlank() } ?: found.id,
+                            )
+                        )
+                    }
+                }
             }
+        }
+    }
+
+    fun openAlbumArtist(album: LxAlbum, source: String? = null) {
+        val name = album.artistName?.takeIf { it.isNotBlank() } ?: return
+        val src = source ?: _searchAlbumPageState.value.source
+        if (!album.artistId.isNullOrBlank()) {
+            openArtistFromSearch(
+                LxArtist(id = album.artistId, name = name, pic = album.artistPic),
+                src,
+            )
+            return
+        }
+        viewModelScope.launch {
+            val match = findLxArtistByName(name, src) ?: return@launch
+            openArtistFromSearch(match, src)
         }
     }
 

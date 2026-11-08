@@ -138,6 +138,8 @@ data class LxAlbum(
     val artistName: String? = null,
     val publishTime: Long = 0L,
     val size: Int = 0,
+    val artistId: String? = null,
+    val artistPic: String? = null,
 )
 
 data class LxScriptMeta(

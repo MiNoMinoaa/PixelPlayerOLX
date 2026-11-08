@@ -109,6 +109,8 @@ import androidx.compose.material.icons.rounded.DragHandle
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.ArrowDownward
+import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Leaderboard
@@ -118,6 +120,11 @@ import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.QueueMusic
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.SkipNext
+import com.minoppol.music.presentation.components.LxHeroActionGroup
+import com.minoppol.music.presentation.components.LxHeroMenuAction
+import com.minoppol.music.presentation.components.LxHeroPlayState
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.Sort
@@ -156,6 +163,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -165,6 +173,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -1194,7 +1203,7 @@ fun LxMusicScreen(
     val showSearchAlbumOverlay by viewModel.searchAlbumOverlay.collectAsStateWithLifecycle()
     if (showSearchAlbumOverlay) {
         val albumPageState by viewModel.searchAlbumPageState.collectAsStateWithLifecycle()
-        BackHandler {
+        BackHandler(enabled = !topLayerVisible) {
             if (isSelectionMode) multiSelectionState.clearSelection()
             else viewModel.dismissSearchAlbumOverlay()
         }
@@ -1228,7 +1237,7 @@ fun LxMusicScreen(
     val showSearchArtistOverlay by viewModel.searchArtistOverlay.collectAsStateWithLifecycle()
     if (showSearchArtistOverlay) {
         val artistPageState by viewModel.searchArtistPageState.collectAsStateWithLifecycle()
-        BackHandler {
+        BackHandler(enabled = !topLayerVisible) {
             if (isSelectionMode) {
                 multiSelectionState.clearSelection()
             } else if (artistPageState.selectedAlbum != null) {
@@ -4257,6 +4266,8 @@ private fun rememberLxDetailHeaderState(listState: LazyListState): LxDetailHeade
     }
 }
 
+private enum class LxDetailHeaderTitleMode { TopBar, Custom }
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun LxCollapsingDetailHeader(
@@ -4272,6 +4283,7 @@ private fun LxCollapsingDetailHeader(
     actions: @Composable RowScope.() -> Unit = {},
     expandedBottomContent: (@Composable () -> Unit)? = null,
     shuffleContentDescription: String? = null,
+    titleMode: LxDetailHeaderTitleMode = LxDetailHeaderTitleMode.TopBar,
 ) {
     val surfaceColor = MaterialTheme.colorScheme.surface
     val statusBarColor =
@@ -4280,15 +4292,26 @@ private fun LxCollapsingDetailHeader(
     val solidAlpha = (collapseFraction * 2f).coerceIn(0f, 1f)
     val expandedContentAlpha = 1f - solidAlpha
     val displayUrl = artworkUrl?.takeIf { it.isNotBlank() }
-    val headerOverlayBrush = remember(surfaceColor, expandedContentAlpha) {
-        Brush.verticalGradient(
-            colors = listOf(
-                Color.Transparent,
-                surfaceColor.copy(alpha = 0.22f * expandedContentAlpha),
-                surfaceColor.copy(alpha = 0.82f * expandedContentAlpha),
-                surfaceColor,
+    val headerOverlayBrush = remember(surfaceColor, expandedContentAlpha, titleMode) {
+        if (titleMode == LxDetailHeaderTitleMode.Custom) {
+            Brush.verticalGradient(
+                colors = listOf(
+                    Color.Transparent,
+                    surfaceColor.copy(alpha = 0.30f * expandedContentAlpha),
+                    surfaceColor.copy(alpha = 0.90f * expandedContentAlpha),
+                    surfaceColor.copy(alpha = expandedContentAlpha),
+                )
             )
-        )
+        } else {
+            Brush.verticalGradient(
+                colors = listOf(
+                    Color.Transparent,
+                    surfaceColor.copy(alpha = 0.22f * expandedContentAlpha),
+                    surfaceColor.copy(alpha = 0.82f * expandedContentAlpha),
+                    surfaceColor,
+                )
+            )
+        }
     }
     val statusBarBrush = remember(statusBarColor) {
         Brush.verticalGradient(colors = listOf(statusBarColor, Color.Transparent))
@@ -4303,6 +4326,24 @@ private fun LxCollapsingDetailHeader(
     val shuffleAlignment = BiasAlignment(horizontalBias = 1f, verticalBias = titleVerticalBias)
 
     PixelPlayerStatusBarStyle(color = fallbackStatusBarColor)
+
+    if (titleMode == LxDetailHeaderTitleMode.Custom) {
+        LxCollapsingDetailHeaderCustom(
+            title = title,
+            subtitle = subtitle,
+            collapseFraction = collapseFraction,
+            headerHeightDp = headerHeightDp,
+            onBack = onBack,
+            modifier = modifier,
+            actions = actions,
+            expandedBottomContent = expandedBottomContent,
+            displayUrl = displayUrl,
+            surfaceColor = surfaceColor,
+            headerOverlayBrush = headerOverlayBrush,
+            statusBarBrush = statusBarBrush,
+            expandedContentAlpha = expandedContentAlpha,
+        )
+    } else {
 
     Box(
         modifier = modifier
@@ -4405,6 +4446,187 @@ private fun LxCollapsingDetailHeader(
             }
         }
     }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun LxCollapsingDetailHeaderCustom(
+    title: String,
+    subtitle: String?,
+    collapseFraction: Float,
+    headerHeightDp: Dp,
+    onBack: () -> Unit,
+    modifier: Modifier,
+    actions: @Composable RowScope.() -> Unit,
+    expandedBottomContent: (@Composable () -> Unit)?,
+    displayUrl: String?,
+    surfaceColor: Color,
+    headerOverlayBrush: Brush,
+    statusBarBrush: Brush,
+    expandedContentAlpha: Float,
+) {
+    val titleScale = lerp(1f, 0.75f, collapseFraction)
+    val titleMaxLines = if (collapseFraction < 0.5f) 2 else 1
+    val titleVerticalBias = lerp(1f, -1f, collapseFraction)
+    val animatedTitleAlignment = BiasAlignment(horizontalBias = 0f, verticalBias = titleVerticalBias)
+    val titleContainerHeight = androidx.compose.ui.unit.lerp(88.dp, 56.dp, collapseFraction)
+    val yOffsetCorrection = androidx.compose.ui.unit.lerp((titleContainerHeight / 2) - 44.dp, 0.dp, collapseFraction)
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(headerHeightDp)
+            .clipToBounds()
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(headerHeightDp)
+                .background(surfaceColor.copy(alpha = collapseFraction))
+        ) {
+            if (expandedContentAlpha > 0.01f) {
+                if (displayUrl != null) {
+                    SmartImage(
+                        model = displayUrl,
+                        contentDescription = title,
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        allowHardware = true,
+                        crossfadeDurationMillis = 0,
+                        alpha = expandedContentAlpha,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else {
+                    MusicIconPattern(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer { alpha = expandedContentAlpha },
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(headerOverlayBrush)
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .background(statusBarBrush)
+                    .align(Alignment.TopCenter)
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+            ) {
+                FilledIconButton(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(start = 12.dp, top = 4.dp),
+                    onClick = onBack,
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = stringResource(R.string.auth_cd_back)
+                    )
+                }
+
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    actions()
+                }
+
+                Box(
+                    modifier = Modifier
+                        .align(animatedTitleAlignment)
+                        .height(titleContainerHeight)
+                        .fillMaxWidth()
+                        .offset(y = yOffsetCorrection)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(horizontal = 64.dp)
+                            .graphicsLayer {
+                                scaleX = titleScale
+                                scaleY = titleScale
+                            },
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontSize = 26.sp,
+                                textGeometricTransform = TextGeometricTransform(scaleX = 1.2f),
+                            ),
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            maxLines = titleMaxLines,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (!subtitle.isNullOrBlank()) {
+                            Text(
+                                text = subtitle,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+                expandedBottomContent?.let { content ->
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .fillMaxWidth()
+                            .padding(start = 24.dp, end = 136.dp, bottom = 14.dp)
+                            .graphicsLayer { alpha = expandedContentAlpha },
+                    ) {
+                        content()
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LxSongsSummary(songCount: Int, durationMs: Long, modifier: Modifier = Modifier) {
+    val totalMinutes = (durationMs / 60000L).toInt()
+    val durationText = if (totalMinutes >= 60) {
+        stringResource(R.string.lx_detail_duration_hours, totalMinutes / 60, totalMinutes % 60)
+    } else {
+        stringResource(R.string.lx_detail_duration_minutes, totalMinutes.coerceAtLeast(1))
+    }
+    Text(
+        text = listOfNotNull(
+            formatSongCount(songCount).takeIf { songCount > 0 },
+            durationText.takeIf { durationMs > 0L },
+        ).joinToString(" · "),
+        style = MaterialTheme.typography.titleSmall,
+        fontFamily = RoundedSans,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp),
+    )
 }
 
 @Composable
@@ -4444,6 +4666,38 @@ internal fun LxSearchArtistPage(
             state.albumSongs.map {
                 com.minoppol.music.data.lxmusic.LxSongMapper.unifiedSongId(it.source, it.songmid).toString()
             }
+        }
+        val heroContext = LocalContext.current
+        val heroPlayState = when {
+            stablePlayerState.currentSong != null && albumSongIds.contains(stablePlayerState.currentSong?.id) && stablePlayerState.isPlaying -> LxHeroPlayState.Playing
+            stablePlayerState.currentSong != null && albumSongIds.contains(stablePlayerState.currentSong?.id) -> LxHeroPlayState.Paused
+            else -> LxHeroPlayState.Idle
+        }
+        val playNextLabel = stringResource(R.string.cd_play_next_in_queue)
+        val addToQueueLabel = stringResource(R.string.action_add_to_queue)
+        val heroMenuActions = remember(state.albumSongs, playNextLabel, addToQueueLabel) {
+            listOf(
+                LxHeroMenuAction(playNextLabel, Icons.Rounded.SkipNext) {
+                    val uiSongs = state.albumSongs.map { LxSongMapper.toSong(it) }
+                    uiSongs.asReversed().forEach { playerViewModel.addSongNextToQueue(it) }
+                    val count = uiSongs.size
+                    Toast.makeText(
+                        heroContext,
+                        heroContext.resources.getQuantityString(R.plurals.n_songs_will_play_next, count, count),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                },
+                LxHeroMenuAction(addToQueueLabel, Icons.Rounded.QueueMusic) {
+                    val uiSongs = state.albumSongs.map { LxSongMapper.toSong(it) }
+                    uiSongs.forEach { playerViewModel.addSongToQueue(it) }
+                    val count = uiSongs.size
+                    Toast.makeText(
+                        heroContext,
+                        heroContext.resources.getQuantityString(R.plurals.n_songs_added_to_queue, count, count),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            )
         }
         LaunchedEffect(album.id) { viewModel.ensureCollectDataLoaded() }
         val albumKind = LxMusicViewModel.CollectKind.ALBUM
@@ -4496,8 +4750,96 @@ internal fun LxSearchArtistPage(
                     ),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    if (state.albumSongs.isNotEmpty() && showPlayAllFab) {
-                        item(key = "artist_album_play_all") {
+                    item(key = "artist_album_artist_chip") {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            val subArtistName = album.artistName?.takeIf { it.isNotBlank() }
+                            if (subArtistName != null) {
+                                Row(
+                                    modifier = Modifier
+                                        .clip(CircleShape)
+                                        .clickable { viewModel.openAlbumArtist(album, state.source) }
+                                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                                        .padding(start = 8.dp, end = 16.dp, top = 6.dp, bottom = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    if (!album.artistPic.isNullOrBlank()) {
+                                        SmartImage(
+                                            model = album.artistPic,
+                                            contentDescription = null,
+                                            shape = CircleShape,
+                                            modifier = Modifier.size(32.dp),
+                                        )
+                                    } else {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .clip(CircleShape)
+                                                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.rounded_artist_24),
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.size(20.dp),
+                                            )
+                                        }
+                                    }
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        text = subArtistName,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                            }
+                            val subAlbumYear = album.publishTime.takeIf { it > 0L }?.let { ts ->
+                                if (ts > 100_000_000_000L) {
+                                    java.time.Instant.ofEpochMilli(ts).atZone(java.time.ZoneOffset.UTC).year
+                                } else {
+                                    ts.toInt()
+                                }
+                            }?.takeIf { it in 1900..2100 }
+                            if (subAlbumYear != null) {
+                                Text(
+                                    text = subAlbumYear.toString(),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(top = 6.dp),
+                                )
+                            }
+                        }
+                    }
+                    item(key = "artist_album_hero_actions") {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            LxHeroActionGroup(
+                                onShuffle = { shuffleAllPlaylist(state.albumSongs, album.name) },
+                                onPlay = {
+                                    if (heroPlayState == LxHeroPlayState.Playing) {
+                                        playerViewModel.playPause()
+                                    } else {
+                                        playAllPlaylist(state.albumSongs, album.name)
+                                    }
+                                },
+                                playState = heroPlayState,
+                                menuActions = heroMenuActions,
+                                enabled = state.albumSongs.isNotEmpty()
+                            )
+                        }
+                    }
+                    if (state.albumSongs.isNotEmpty()) {
+                        item(key = "artist_album_selection") {
                             LxSelectionSwitch(
                                 inSelectionMode = isSelectionMode,
                                 selectedCount = selectedSongIds.size,
@@ -4509,25 +4851,13 @@ internal fun LxSearchArtistPage(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(start = 4.dp, end = 4.dp, bottom = 2.dp),
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.End,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    FilledIconButton(
-                                        onClick = { playAllPlaylist(state.albumSongs, album.name) },
-                                        shape = CircleShape,
-                                        modifier = Modifier.size(40.dp),
-                                    ) {
-                                        Icon(
-                                            Icons.Rounded.PlayArrow,
-                                            contentDescription = stringResource(R.string.lx_desc_play_all),
-                                            modifier = Modifier.size(22.dp),
-                                        )
-                                    }
-                                }
-                            }
+                            ) {}
+                        }
+                    }
+                    if (!state.albumLoading && state.albumSongs.isNotEmpty()) {
+                        item(key = "artist_album_songs_summary") {
+                            val durationMs = remember(state.albumSongs) { state.albumSongs.sumOf { it.interval } * 1000L }
+                            LxSongsSummary(songCount = state.albumSongs.size, durationMs = durationMs)
                         }
                     }
                     mineSongItems(
@@ -4558,9 +4888,7 @@ internal fun LxSearchArtistPage(
                 }
                 LxCollapsingDetailHeader(
                     title = album.name,
-                    subtitle = album.artistName?.takeIf { it.isNotBlank() }
-                        ?.let { "$it · ${formatSongCount(state.albumSongs.size)}" }
-                        ?: formatSongCount(state.albumSongs.size),
+                    subtitle = null,
                     artworkUrl = album.pic,
                     collapseFraction = albumCollapseFraction,
                     headerHeightDp = albumHeaderHeightDp,
@@ -4569,6 +4897,7 @@ internal fun LxSearchArtistPage(
                         { shuffleAllPlaylist(state.albumSongs, album.name) }
                     } else null,
                     shuffleContentDescription = stringResource(R.string.lx_desc_shuffle),
+                    titleMode = LxDetailHeaderTitleMode.Custom,
                     actions = {
                         Box(modifier = Modifier.padding(end = 12.dp, top = 4.dp)) {
                             LxFolderActionCapsule(
@@ -4595,7 +4924,7 @@ internal fun LxSearchArtistPage(
                         listState = albumListState,
                         currentSongId = stablePlayerState.currentSong?.id,
                         songIds = albumSongIds,
-                        leadingItems = 1,
+                        leadingItems = 4,
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 74.dp),
@@ -4636,10 +4965,52 @@ internal fun LxSearchArtistPage(
                 (listState.canScrollForward || listState.canScrollBackward)
         }
     }
-    val artistSubtitle = if (state.tab == "songs") {
-        formatSongCount(state.songsTotal.takeIf { it > 0 } ?: state.songs.size)
-    } else null
+    val artistSubtitle = if (state.albums.isNotEmpty()) {
+        stringResource(R.string.lx_subtitle_sub_albums_count, state.albums.size)
+    } else {
+        null
+    }
+    val artistSortedAlbums = remember(state.albums, state.albumsSortDesc) {
+        if (state.albumsSortDesc) {
+            state.albums.sortedByDescending { it.publishTime }
+        } else {
+            state.albums.sortedBy { it.publishTime }
+        }
+    }
     val artistHasBrief = !artist.briefDesc.isNullOrBlank()
+    val heroContext = LocalContext.current
+    val heroPlayState = when {
+        stablePlayerState.currentSong != null && songIds.contains(stablePlayerState.currentSong?.id) && stablePlayerState.isPlaying -> LxHeroPlayState.Playing
+        stablePlayerState.currentSong != null && songIds.contains(stablePlayerState.currentSong?.id) -> LxHeroPlayState.Paused
+        else -> LxHeroPlayState.Idle
+    }
+    val heroSongs = if (state.tab == "songs") state.songs else emptyList()
+    val playNextLabel = stringResource(R.string.cd_play_next_in_queue)
+    val addToQueueLabel = stringResource(R.string.action_add_to_queue)
+    val heroMenuActions = remember(heroSongs, playNextLabel, addToQueueLabel) {
+        listOf(
+            LxHeroMenuAction(playNextLabel, Icons.Rounded.SkipNext) {
+                val uiSongs = heroSongs.map { LxSongMapper.toSong(it) }
+                uiSongs.asReversed().forEach { playerViewModel.addSongNextToQueue(it) }
+                val count = uiSongs.size
+                Toast.makeText(
+                    heroContext,
+                    heroContext.resources.getQuantityString(R.plurals.n_songs_will_play_next, count, count),
+                    Toast.LENGTH_SHORT
+                ).show()
+            },
+            LxHeroMenuAction(addToQueueLabel, Icons.Rounded.QueueMusic) {
+                val uiSongs = heroSongs.map { LxSongMapper.toSong(it) }
+                uiSongs.forEach { playerViewModel.addSongToQueue(it) }
+                val count = uiSongs.size
+                Toast.makeText(
+                    heroContext,
+                    heroContext.resources.getQuantityString(R.plurals.n_songs_added_to_queue, count, count),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        )
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -4684,6 +5055,7 @@ internal fun LxSearchArtistPage(
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             ArtistTabChip(stringResource(R.string.lx_tab_hot_songs), state.tab == "songs") {
@@ -4693,20 +5065,56 @@ internal fun LxSearchArtistPage(
                             ArtistTabChip(stringResource(R.string.lx_tab_all_albums), state.tab == "albums") {
                                 viewModel.selectSearchArtistTab("albums")
                             }
-                            if (state.tab == "songs" && state.songs.isNotEmpty() && showPlayAllFab) {
-                                Spacer(Modifier.weight(1f))
-                                FilledIconButton(
-                                    onClick = { playAllPlaylist(state.songs, artist.name) },
-                                    shape = CircleShape,
-                                    modifier = Modifier.size(40.dp),
-                                ) {
-                                    Icon(
-                                        Icons.Rounded.PlayArrow,
-                                        contentDescription = stringResource(R.string.lx_desc_play_all),
-                                        modifier = Modifier.size(22.dp),
+                        }
+                    }
+                }
+                item(key = "artist_hero_actions") {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (state.tab == "albums") {
+                            val sortDesc = state.albumsSortDesc
+                            val clipboard = LocalClipboardManager.current
+                            LxHeroActionGroup(
+                                onShuffle = { viewModel.refreshSearchArtistAlbums() },
+                                onPlay = { viewModel.toggleSearchArtistAlbumsSort() },
+                                playState = LxHeroPlayState.Idle,
+                                menuActions = emptyList(),
+                                enabled = !state.albumsLoading,
+                                shuffleIcon = Icons.Rounded.Sync,
+                                playIcon = if (sortDesc) Icons.Rounded.ArrowDownward else Icons.Rounded.ArrowUpward,
+                                playLabel = stringResource(
+                                    if (sortDesc) R.string.lx_sort_newest_first else R.string.lx_sort_oldest_first
+                                ),
+                                trailingIcon = Icons.Rounded.Share,
+                                onTrailing = {
+                                    clipboard.setText(
+                                        AnnotatedString(LxShareUrls.artist(state.source, artist.id))
                                     )
-                                }
-                            }
+                                    android.widget.Toast.makeText(
+                                        heroContext,
+                                        heroContext.getString(R.string.lx_msg_share_link_copied),
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
+                                },
+                            )
+                        } else {
+                            LxHeroActionGroup(
+                                onShuffle = { shuffleAllPlaylist(heroSongs, artist.name) },
+                                onPlay = {
+                                    if (heroPlayState == LxHeroPlayState.Playing) {
+                                        playerViewModel.playPause()
+                                    } else {
+                                        playAllPlaylist(heroSongs, artist.name)
+                                    }
+                                },
+                                playState = heroPlayState,
+                                menuActions = heroMenuActions,
+                                enabled = heroSongs.isNotEmpty()
+                            )
                         }
                     }
                 }
@@ -4727,6 +5135,12 @@ internal fun LxSearchArtistPage(
                                     indication = null,
                                 ) { briefExpanded = !briefExpanded },
                         )
+                    }
+                }
+                if (state.tab == "songs" && !state.loading && state.songs.isNotEmpty()) {
+                    item(key = "artist_songs_summary") {
+                        val durationMs = remember(state.songs) { state.songs.sumOf { it.interval } * 1000L }
+                        LxSongsSummary(songCount = state.songs.size, durationMs = durationMs)
                     }
                 }
                 if (state.tab == "songs") {
@@ -4758,7 +5172,7 @@ internal fun LxSearchArtistPage(
                     }
                 } else {
                     mineAlbumItems(
-                        albums = state.albums,
+                        albums = artistSortedAlbums,
                         onClick = viewModel::openSearchArtistAlbum,
                         loading = state.albumsLoading,
                     )
@@ -4777,6 +5191,7 @@ internal fun LxSearchArtistPage(
                     { shuffleAllPlaylist(state.songs, artist.name) }
                 } else null,
                 shuffleContentDescription = stringResource(R.string.lx_desc_shuffle),
+                titleMode = LxDetailHeaderTitleMode.Custom,
                 actions = {
                     if (showFollow && state.followed != null) {
                         Box(modifier = Modifier.padding(end = 12.dp, top = 4.dp)) {
@@ -4809,7 +5224,7 @@ internal fun LxSearchArtistPage(
                     listState = listState,
                     currentSongId = stablePlayerState.currentSong?.id,
                     songIds = songIds,
-                    leadingItems = if (artistHasBrief) 2 else 1,
+                    leadingItems = if (artistHasBrief) 4 else 3,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 74.dp),
@@ -4878,9 +5293,39 @@ internal fun LxSearchAlbumPage(
                 (listState.canScrollForward || listState.canScrollBackward)
         }
     }
-    val albumSubtitle = album.artistName?.takeIf { it.isNotBlank() }
-        ?.let { "$it · ${formatSongCount(state.songs.size)}" }
-        ?: formatSongCount(state.songs.size)
+    val albumSubtitle: String? = null
+    val heroContext = LocalContext.current
+    val heroPlayState = when {
+        stablePlayerState.currentSong != null && songIds.contains(stablePlayerState.currentSong?.id) && stablePlayerState.isPlaying -> LxHeroPlayState.Playing
+        stablePlayerState.currentSong != null && songIds.contains(stablePlayerState.currentSong?.id) -> LxHeroPlayState.Paused
+        else -> LxHeroPlayState.Idle
+    }
+    val playNextLabel = stringResource(R.string.cd_play_next_in_queue)
+    val addToQueueLabel = stringResource(R.string.action_add_to_queue)
+    val heroMenuActions = remember(state.songs, playNextLabel, addToQueueLabel) {
+        listOf(
+            LxHeroMenuAction(playNextLabel, Icons.Rounded.SkipNext) {
+                val uiSongs = state.songs.map { LxSongMapper.toSong(it) }
+                uiSongs.asReversed().forEach { playerViewModel.addSongNextToQueue(it) }
+                val count = uiSongs.size
+                Toast.makeText(
+                    heroContext,
+                    heroContext.resources.getQuantityString(R.plurals.n_songs_will_play_next, count, count),
+                    Toast.LENGTH_SHORT
+                ).show()
+            },
+            LxHeroMenuAction(addToQueueLabel, Icons.Rounded.QueueMusic) {
+                val uiSongs = state.songs.map { LxSongMapper.toSong(it) }
+                uiSongs.forEach { playerViewModel.addSongToQueue(it) }
+                val count = uiSongs.size
+                Toast.makeText(
+                    heroContext,
+                    heroContext.resources.getQuantityString(R.plurals.n_songs_added_to_queue, count, count),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        )
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -4910,8 +5355,96 @@ internal fun LxSearchAlbumPage(
                 ),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                if (state.songs.isNotEmpty() && showPlayAllFab) {
-                    item(key = "search_album_play_all") {
+                item(key = "search_album_artist_chip") {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        val artistName = album.artistName?.takeIf { it.isNotBlank() }
+                        if (artistName != null) {
+                            Row(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .clickable { viewModel.openAlbumArtist(album) }
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                                    .padding(start = 8.dp, end = 16.dp, top = 6.dp, bottom = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                if (!album.artistPic.isNullOrBlank()) {
+                                    SmartImage(
+                                        model = album.artistPic,
+                                        contentDescription = null,
+                                        shape = CircleShape,
+                                        modifier = Modifier.size(32.dp),
+                                    )
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.rounded_artist_24),
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(20.dp),
+                                        )
+                                    }
+                                }
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = artistName,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+                        val albumYear = album.publishTime.takeIf { it > 0L }?.let { ts ->
+                            if (ts > 100_000_000_000L) {
+                                java.time.Instant.ofEpochMilli(ts).atZone(java.time.ZoneOffset.UTC).year
+                            } else {
+                                ts.toInt()
+                            }
+                        }?.takeIf { it in 1900..2100 }
+                        if (albumYear != null) {
+                            Text(
+                                text = albumYear.toString(),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 6.dp),
+                            )
+                        }
+                    }
+                }
+                item(key = "search_album_hero_actions") {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        LxHeroActionGroup(
+                            onShuffle = { shuffleAllPlaylist(state.songs, album.name) },
+                            onPlay = {
+                                if (heroPlayState == LxHeroPlayState.Playing) {
+                                    playerViewModel.playPause()
+                                } else {
+                                    playAllPlaylist(state.songs, album.name)
+                                }
+                            },
+                            playState = heroPlayState,
+                            menuActions = heroMenuActions,
+                            enabled = state.songs.isNotEmpty()
+                        )
+                    }
+                }
+                if (state.songs.isNotEmpty()) {
+                    item(key = "search_album_selection") {
                         LxSelectionSwitch(
                             inSelectionMode = isSelectionMode,
                             selectedCount = selectedSongIds.size,
@@ -4923,25 +5456,13 @@ internal fun LxSearchAlbumPage(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(start = 4.dp, end = 4.dp, bottom = 2.dp),
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                FilledIconButton(
-                                    onClick = { playAllPlaylist(state.songs, album.name) },
-                                    shape = CircleShape,
-                                    modifier = Modifier.size(40.dp),
-                                ) {
-                                    Icon(
-                                        Icons.Rounded.PlayArrow,
-                                        contentDescription = stringResource(R.string.lx_desc_play_all),
-                                        modifier = Modifier.size(22.dp),
-                                    )
-                                }
-                            }
-                        }
+                        ) {}
+                    }
+                }
+                if (!state.loading && state.songs.isNotEmpty()) {
+                    item(key = "search_album_songs_summary") {
+                        val durationMs = remember(state.songs) { state.songs.sumOf { it.interval } * 1000L }
+                        LxSongsSummary(songCount = state.songs.size, durationMs = durationMs)
                     }
                 }
                 mineSongItems(
@@ -4969,6 +5490,7 @@ internal fun LxSearchAlbumPage(
                     { shuffleAllPlaylist(state.songs, album.name) }
                 } else null,
                 shuffleContentDescription = stringResource(R.string.lx_desc_shuffle),
+                titleMode = LxDetailHeaderTitleMode.Custom,
                 actions = {
                     Box(modifier = Modifier.padding(end = 12.dp, top = 4.dp)) {
                         LxFolderActionCapsule(
@@ -5005,7 +5527,7 @@ internal fun LxSearchAlbumPage(
                     listState = listState,
                     currentSongId = stablePlayerState.currentSong?.id,
                     songIds = songIds,
-                    leadingItems = 1,
+                    leadingItems = 4,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 74.dp),

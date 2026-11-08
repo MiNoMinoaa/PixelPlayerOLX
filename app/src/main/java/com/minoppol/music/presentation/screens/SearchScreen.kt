@@ -216,6 +216,9 @@ import com.minoppol.music.presentation.screens.lxmusic.LxScrollToTopFab
 import com.minoppol.music.presentation.screens.lxmusic.LxLocateCurrentSongFab
 import com.minoppol.music.presentation.screens.lxmusic.sortLxSongs
 import com.minoppol.music.presentation.components.LibrarySortBottomSheet
+import com.minoppol.music.presentation.components.LxHeroActionGroup
+import com.minoppol.music.presentation.components.LxHeroMenuAction
+import com.minoppol.music.presentation.components.LxHeroPlayState
 import com.minoppol.music.data.model.SortOption
 
 private data class SearchUiSlice(
@@ -379,12 +382,21 @@ fun SearchScreen(
         }
     }
 
-    androidx.activity.compose.BackHandler(enabled = onlineSearchMode && onlineSelectionMode) {
+    val playerSheetState by playerViewModel.sheetState.collectAsStateWithLifecycle()
+    val queueSheetVisible by playerViewModel.isQueueSheetVisible.collectAsStateWithLifecycle()
+    val topLayerVisible by remember {
+        derivedStateOf {
+            playerSheetState == com.minoppol.music.presentation.viewmodel.PlayerSheetState.EXPANDED ||
+                queueSheetVisible
+        }
+    }
+
+    androidx.activity.compose.BackHandler(enabled = onlineSearchMode && onlineSelectionMode && !topLayerVisible) {
         onlineMultiSelection.clearSelection()
     }
 
     androidx.activity.compose.BackHandler(
-        enabled = onlineSearchMode && !onlineSelectionMode && !onlineInputFocused && onlineState.submittedQuery.isNotBlank()
+        enabled = onlineSearchMode && !onlineSelectionMode && !onlineInputFocused && !topLayerVisible && onlineState.submittedQuery.isNotBlank()
     ) {
         searchQuery = ""
         playerViewModel.updateSearchQuery("")
@@ -798,7 +810,7 @@ fun SearchScreen(
 
     if (onlineSearchMode) {
         onlinePlaylistDetail?.let { playlistDetail ->
-            androidx.activity.compose.BackHandler { onlineSearchViewModel.closePlaylist() }
+            androidx.activity.compose.BackHandler(enabled = !topLayerVisible) { onlineSearchViewModel.closePlaylist() }
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -830,7 +842,7 @@ fun SearchScreen(
         val showOnlineAlbumOverlay by lxViewModel.searchAlbumOverlay.collectAsStateWithLifecycle()
         if (showOnlineAlbumOverlay) {
             val albumPageState by lxViewModel.searchAlbumPageState.collectAsStateWithLifecycle()
-            androidx.activity.compose.BackHandler {
+            androidx.activity.compose.BackHandler(enabled = !topLayerVisible) {
                 if (onlineSelectionMode) {
                     onlineMultiSelection.clearSelection()
                 } else {
@@ -867,7 +879,7 @@ fun SearchScreen(
         val showOnlineArtistOverlay by lxViewModel.searchArtistOverlay.collectAsStateWithLifecycle()
         if (showOnlineArtistOverlay) {
             val artistPageState by lxViewModel.searchArtistPageState.collectAsStateWithLifecycle()
-            androidx.activity.compose.BackHandler {
+            androidx.activity.compose.BackHandler(enabled = !topLayerVisible) {
                 if (onlineSelectionMode) {
                     onlineMultiSelection.clearSelection()
                 } else if (artistPageState.selectedAlbum != null) {
@@ -1005,6 +1017,7 @@ fun SearchScreen(
                                 id = albumId,
                                 name = infoUiSong.album.orEmpty(),
                                 pic = infoLxSong.pic,
+                                artistName = infoLxSong.singer.takeIf { it.isNotBlank() },
                             ),
                             source = infoLxSong.source
                         )
@@ -2603,15 +2616,15 @@ internal fun OnlinePlaylistDetailPage(
     }
     val context = LocalContext.current
     val playState = when {
-        currentPlayingSongId != null && detailFabSongIds.contains(currentPlayingSongId) && isPlaying -> HeroPlayState.Playing
-        currentPlayingSongId != null && detailFabSongIds.contains(currentPlayingSongId) -> HeroPlayState.Paused
-        else -> HeroPlayState.Idle
+        currentPlayingSongId != null && detailFabSongIds.contains(currentPlayingSongId) && isPlaying -> LxHeroPlayState.Playing
+        currentPlayingSongId != null && detailFabSongIds.contains(currentPlayingSongId) -> LxHeroPlayState.Paused
+        else -> LxHeroPlayState.Idle
     }
     val playNextLabel = stringResource(R.string.cd_play_next_in_queue)
     val addToQueueLabel = stringResource(R.string.action_add_to_queue)
     val heroMenuActions = remember(sortedSongs, playNextLabel, addToQueueLabel) {
         listOf(
-            OnlineHeroMenuAction(playNextLabel, Icons.Rounded.SkipNext) {
+            LxHeroMenuAction(playNextLabel, Icons.Rounded.SkipNext) {
                 val uiSongs = sortedSongs.map { LxSongMapper.toSong(it) }
                 uiSongs.asReversed().forEach { playerViewModel.addSongNextToQueue(it) }
                 val count = uiSongs.size
@@ -2621,7 +2634,7 @@ internal fun OnlinePlaylistDetailPage(
                     android.widget.Toast.LENGTH_SHORT
                 ).show()
             },
-            OnlineHeroMenuAction(addToQueueLabel, Icons.Rounded.QueueMusic) {
+            LxHeroMenuAction(addToQueueLabel, Icons.Rounded.QueueMusic) {
                 val uiSongs = sortedSongs.map { LxSongMapper.toSong(it) }
                 uiSongs.forEach { playerViewModel.addSongToQueue(it) }
                 val count = uiSongs.size
@@ -2752,10 +2765,10 @@ internal fun OnlinePlaylistDetailPage(
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        OnlineHeroActionGroup(
+                        LxHeroActionGroup(
                             onShuffle = { shuffleAll(sortedSongs, detail.playlist.name) },
                             onPlay = {
-                                if (playState == HeroPlayState.Playing) {
+                                if (playState == LxHeroPlayState.Playing) {
                                     playerViewModel.playPause()
                                 } else {
                                     playAll(sortedSongs, detail.playlist.name)
@@ -2895,300 +2908,5 @@ internal fun OnlinePlaylistDetailPage(
                 )
             }
         }
-    }
-}
-
-private enum class HeroPlayState { Idle, Playing, Paused }
-
-private data class OnlineHeroMenuAction(
-    val label: String,
-    val icon: ImageVector,
-    val onClick: () -> Unit,
-)
-
-private val OnlineHeroSegmentHeight = 60.dp
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun OnlineHeroActionGroup(
-    onShuffle: () -> Unit,
-    onPlay: () -> Unit,
-    playState: HeroPlayState,
-    menuActions: List<OnlineHeroMenuAction>,
-    enabled: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    val colors = MaterialTheme.colorScheme
-    val motionScheme = remember { MotionScheme.expressive() }
-    var showMenu by remember { mutableStateOf(false) }
-    val shuffleInteraction = remember { MutableInteractionSource() }
-    val playInteraction = remember { MutableInteractionSource() }
-    val addInteraction = remember { MutableInteractionSource() }
-    ButtonGroup(
-        overflowIndicator = { menuState -> ButtonGroupDefaults.OverflowIndicator(menuState) },
-        modifier = modifier
-            .fillMaxWidth(0.86f)
-            .widthIn(max = 380.dp)
-            .height(OnlineHeroSegmentHeight),
-        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
-    ) {
-        customItem(
-            buttonGroupContent = {
-                OnlineHeroSegment(
-                    onClick = onShuffle,
-                    enabled = enabled,
-                    position = OnlineSegmentPosition.Leading,
-                    container = colors.surfaceContainerHighest,
-                    content = colors.onSurface,
-                    interactionSource = shuffleInteraction,
-                    motionScheme = motionScheme,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .weight(1f)
-                        .animateWidth(shuffleInteraction)
-                ) {
-                    Icon(Icons.Rounded.Shuffle, contentDescription = null)
-                }
-            },
-            menuContent = {}
-        )
-        customItem(
-            buttonGroupContent = {
-                val isActive = playState == HeroPlayState.Playing
-                val container by animateColorAsState(
-                    targetValue = if (isActive) colors.primary else colors.inverseSurface,
-                    animationSpec = motionScheme.defaultEffectsSpec(),
-                    label = "onlineHeroPlayContainer"
-                )
-                val content by animateColorAsState(
-                    targetValue = if (isActive) colors.onPrimary else colors.inverseOnSurface,
-                    animationSpec = motionScheme.defaultEffectsSpec(),
-                    label = "onlineHeroPlayContent"
-                )
-                OnlineHeroSegment(
-                    onClick = onPlay,
-                    enabled = enabled,
-                    position = OnlineSegmentPosition.Middle,
-                    container = container,
-                    content = content,
-                    interactionSource = playInteraction,
-                    motionScheme = motionScheme,
-                    restingInnerCorner = if (isActive) OnlineHeroSegmentHeight / 2 else 8.dp,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .weight(2f)
-                        .animateWidth(playInteraction)
-                ) {
-                    AnimatedContent(
-                        targetState = playState,
-                        contentAlignment = Alignment.Center,
-                        transitionSpec = {
-                            ((fadeIn(motionScheme.fastEffectsSpec()) +
-                                scaleIn(motionScheme.fastSpatialSpec(), initialScale = 0.7f)) togetherWith
-                                (fadeOut(motionScheme.fastEffectsSpec()) +
-                                    scaleOut(motionScheme.fastSpatialSpec(), targetScale = 0.7f)))
-                                .using(SizeTransform(clip = false))
-                        },
-                        label = "onlineHeroPlayLabel"
-                    ) { state ->
-                        val isPause = state == HeroPlayState.Playing
-                        OnlineHeroPlayLabel(
-                            icon = if (isPause) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                            glyphInsets = if (isPause) OnlinePauseGlyphInsets else OnlinePlayGlyphInsets,
-                            text = stringResource(
-                                when (state) {
-                                    HeroPlayState.Idle -> R.string.play_playback
-                                    HeroPlayState.Playing -> R.string.cd_pause
-                                    HeroPlayState.Paused -> R.string.play_playback
-                                }
-                            )
-                        )
-                    }
-                }
-            },
-            menuContent = {}
-        )
-        customItem(
-            buttonGroupContent = {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .animateWidth(addInteraction)
-                ) {
-                    OnlineHeroSegment(
-                        onClick = { showMenu = true },
-                        enabled = enabled && menuActions.isNotEmpty(),
-                        position = OnlineSegmentPosition.Trailing,
-                        container = colors.surfaceContainerHighest,
-                        content = colors.onSurface,
-                        interactionSource = addInteraction,
-                        motionScheme = motionScheme,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        val rotation by animateFloatAsState(
-                            targetValue = if (showMenu) 45f else 0f,
-                            animationSpec = motionScheme.fastSpatialSpec(),
-                            label = "onlineHeroAddRotation"
-                        )
-                        Icon(
-                            Icons.Rounded.Add,
-                            contentDescription = null,
-                            modifier = Modifier.graphicsLayer { rotationZ = rotation }
-                        )
-                    }
-                    DropdownMenuPopup(
-                        expanded = showMenu,
-                        onDismissRequest = { showMenu = false },
-                        popupPositionProvider = MenuDefaults.rememberDropdownMenuPopupPositionProvider(
-                            MenuAnchorPosition.Custom(
-                                xCandidates = {
-                                    androidx.collection.mutableIntListOf(
-                                        anchorBounds.right - menuSize.width,
-                                        anchorBounds.left
-                                    )
-                                },
-                                yCandidates = {
-                                    androidx.collection.mutableIntListOf(
-                                        anchorBounds.bottom,
-                                        anchorBounds.top - menuSize.height
-                                    )
-                                }
-                            )
-                        )
-                    ) {
-                        DropdownMenuGroup(
-                            shapes = MenuDefaults.groupShape(index = 0, count = 1),
-                            containerColor = MenuDefaults.groupVibrantContainerColor
-                        ) {
-                            menuActions.forEachIndexed { index, action ->
-                                DropdownMenuItem(
-                                    text = { Text(action.label) },
-                                    leadingIcon = { Icon(action.icon, contentDescription = null) },
-                                    shape = MenuDefaults.itemShape(index = index, count = menuActions.size).shape,
-                                    colors = MenuDefaults.itemColors(),
-                                    onClick = {
-                                        showMenu = false
-                                        action.onClick()
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            },
-            menuContent = {}
-        )
-    }
-}
-
-private class OnlineGlyphInsets(val start: Float, val end: Float)
-
-private val OnlinePlayGlyphInsets = OnlineGlyphInsets(start = 8f, end = 5.9f)
-
-private val OnlinePauseGlyphInsets = OnlineGlyphInsets(start = 6f, end = 6f)
-
-private const val OnlineIconViewport = 24f
-
-private const val OnlineCapHeightRatio = 0.7f
-
-@Composable
-private fun OnlineHeroPlayLabel(
-    icon: ImageVector,
-    glyphInsets: OnlineGlyphInsets,
-    text: String,
-    iconSize: Dp = 24.dp,
-    gap: Dp = 8.dp,
-) {
-    val style = MaterialTheme.typography.titleMedium
-    Layout(
-        content = {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(iconSize))
-            Text(
-                text = text,
-                style = style,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                softWrap = false
-            )
-        }
-    ) { measurables, constraints ->
-        val iconPlaceable = measurables[0].measure(Constraints())
-        val iconSizePx = iconPlaceable.width.toFloat()
-        val insetStart = (iconSizePx * glyphInsets.start / OnlineIconViewport).roundToInt()
-        val insetEnd = (iconSizePx * glyphInsets.end / OnlineIconViewport).roundToInt()
-        val gapPx = gap.roundToPx()
-        val visibleIconWidth = iconPlaceable.width - insetStart - insetEnd
-        val textPlaceable = measurables[1].measure(
-            constraints.copy(
-                minWidth = 0,
-                minHeight = 0,
-                maxWidth = (constraints.maxWidth - visibleIconWidth - gapPx).coerceAtLeast(0)
-            )
-        )
-        val baseline = textPlaceable[FirstBaseline].takeIf { it != AlignmentLine.Unspecified }
-            ?: textPlaceable.height
-        val capCenter = baseline - (style.fontSize.toPx() * OnlineCapHeightRatio / 2f).roundToInt()
-        val halfHeight = maxOf(
-            iconPlaceable.height / 2,
-            capCenter,
-            textPlaceable.height - capCenter
-        )
-        val width = visibleIconWidth + gapPx + textPlaceable.width
-        val height = halfHeight * 2
-        layout(width, height) {
-            iconPlaceable.placeRelative(-insetStart, halfHeight - iconPlaceable.height / 2)
-            textPlaceable.placeRelative(visibleIconWidth + gapPx, halfHeight - capCenter)
-        }
-    }
-}
-
-private enum class OnlineSegmentPosition { Leading, Middle, Trailing }
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun OnlineHeroSegment(
-    onClick: () -> Unit,
-    enabled: Boolean,
-    position: OnlineSegmentPosition,
-    container: Color,
-    content: Color,
-    interactionSource: MutableInteractionSource,
-    motionScheme: MotionScheme,
-    contentDescription: String?,
-    modifier: Modifier = Modifier,
-    restingInnerCorner: Dp = 8.dp,
-    body: @Composable RowScope.() -> Unit,
-) {
-    val pressed by interactionSource.collectIsPressedAsState()
-    val spatial = motionScheme.fastSpatialSpec<Dp>()
-    val outer by animateDpAsState(if (pressed) 18.dp else 30.dp, spatial, label = "onlineHeroOuterCorner")
-    val inner by animateDpAsState(if (pressed) 18.dp else restingInnerCorner, spatial, label = "onlineHeroInnerCorner")
-    val start = if (position == OnlineSegmentPosition.Leading) outer else inner
-    val end = if (position == OnlineSegmentPosition.Trailing) outer else inner
-    val shape = RoundedCornerShape(topStart = start, bottomStart = start, topEnd = end, bottomEnd = end)
-    Surface(
-        onClick = onClick,
-        enabled = enabled,
-        shape = shape,
-        color = container,
-        contentColor = content,
-        interactionSource = interactionSource,
-        modifier = modifier
-            .height(OnlineHeroSegmentHeight)
-            .then(
-                if (contentDescription != null) {
-                    Modifier.semantics { this.contentDescription = contentDescription }
-                } else {
-                    Modifier
-                }
-            )
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-            content = body
-        )
     }
 }

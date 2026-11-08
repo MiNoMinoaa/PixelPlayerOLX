@@ -467,6 +467,10 @@
 <string name="lx_subtitle_sub_albums_default">我收藏的专辑</string>
 <string name="lx_subtitle_sub_albums_count">%1$d 张专辑</string>
 <string name="lx_text_album_count_format">%1$d 张专辑</string>
+<string name="lx_detail_duration_minutes">%1$d 分钟</string>
+<string name="lx_detail_duration_hours">%1$d 小时 %2$d 分钟</string>
+<string name="lx_sort_newest_first">最新优先</string>
+<string name="lx_sort_oldest_first">最早优先</string>
 <string name="lx_msg_no_recommend_playlists">暂无推荐歌单</string>
 <string name="lx_msg_no_albums">暂无专辑</string>
 <string name="lx_msg_no_followed_artists">还没有收藏的歌手</string>
