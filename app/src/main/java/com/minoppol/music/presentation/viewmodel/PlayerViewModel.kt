@@ -1380,7 +1380,8 @@ class PlayerViewModel @Inject constructor(
             PlayerFavoriteKind.NETEASE, PlayerFavoriteKind.TENCENT,
             PlayerFavoriteKind.KUWO ->
                 songKey.second?.let { likedMap[songKey.first]?.contains(it) } ?: false
-            else -> localFavorite
+            PlayerFavoriteKind.LOCAL -> localFavorite
+            PlayerFavoriteKind.DISABLED -> false
         }
     }.distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
