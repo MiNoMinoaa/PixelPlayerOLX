@@ -2116,22 +2116,6 @@ class LxMusicViewModel @Inject constructor(
         }
     }
 
-    fun openAlbumArtist(album: LxAlbum, source: String? = null) {
-        val name = album.artistName?.takeIf { it.isNotBlank() } ?: return
-        val src = source ?: _searchAlbumPageState.value.source
-        if (!album.artistId.isNullOrBlank()) {
-            openArtistFromSearch(
-                LxArtist(id = album.artistId, name = name, pic = album.artistPic),
-                src,
-            )
-            return
-        }
-        viewModelScope.launch {
-            val match = findLxArtistByName(name, src) ?: return@launch
-            openArtistFromSearch(match, src)
-        }
-    }
-
     fun backFromSearchArtistAlbum() {
         val cur = _searchArtistPageState.value
         _searchArtistPageState.value = cur.copy(selectedAlbum = null, albumSongs = emptyList(), albumLoading = false)

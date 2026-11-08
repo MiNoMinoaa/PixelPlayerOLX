@@ -4630,6 +4630,7 @@ private fun LxSongsSummary(songCount: Int, durationMs: Long, modifier: Modifier 
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 internal fun LxSearchArtistPage(
     state: LxMusicViewModel.SearchArtistPageState,
     viewModel: LxMusicViewModel,
@@ -4668,6 +4669,10 @@ internal fun LxSearchArtistPage(
             }
         }
         val heroContext = LocalContext.current
+        val albumChipScope = rememberCoroutineScope()
+        var albumArtistCandidates by remember {
+            mutableStateOf<List<com.minoppol.music.data.lxmusic.LxArtist>>(emptyList())
+        }
         val heroPlayState = when {
             stablePlayerState.currentSong != null && albumSongIds.contains(stablePlayerState.currentSong?.id) && stablePlayerState.isPlaying -> LxHeroPlayState.Playing
             stablePlayerState.currentSong != null && albumSongIds.contains(stablePlayerState.currentSong?.id) -> LxHeroPlayState.Paused
@@ -4760,7 +4765,15 @@ internal fun LxSearchArtistPage(
                                 Row(
                                     modifier = Modifier
                                         .clip(CircleShape)
-                                        .clickable { viewModel.openAlbumArtist(album, state.source) }
+                                        .clickable {
+                                            albumChipScope.launch {
+                                                val candidates = playerViewModel.resolveLxAlbumArtists(album, state.source)
+                                                when {
+                                                    candidates.size == 1 -> viewModel.openArtistFromSearch(candidates.first(), state.source)
+                                                    candidates.size > 1 -> albumArtistCandidates = candidates
+                                                }
+                                            }
+                                        }
                                         .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                                         .padding(start = 8.dp, end = 16.dp, top = 6.dp, bottom = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically,
@@ -4937,6 +4950,18 @@ internal fun LxSearchArtistPage(
                     )
                 }
             }
+        }
+        if (albumArtistCandidates.isNotEmpty()) {
+            com.minoppol.music.presentation.components.LxArtistPickerBottomSheet(
+                artists = albumArtistCandidates,
+                source = state.source,
+                sheetState = rememberModalSheetState(skipPartiallyExpanded = true),
+                onDismiss = { albumArtistCandidates = emptyList() },
+                onArtistClick = { artist ->
+                    viewModel.openArtistFromSearch(artist, state.source)
+                    albumArtistCandidates = emptyList()
+                },
+            )
         }
         return
     }
@@ -5241,6 +5266,7 @@ internal fun LxSearchArtistPage(
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 internal fun LxSearchAlbumPage(
     state: LxMusicViewModel.SearchAlbumPageState,
     viewModel: LxMusicViewModel,
@@ -5263,6 +5289,10 @@ internal fun LxSearchAlbumPage(
 ) {
     val album = state.album ?: return
     val listState = rememberLazyListState()
+    val chipScope = rememberCoroutineScope()
+    var albumArtistCandidates by remember {
+        mutableStateOf<List<com.minoppol.music.data.lxmusic.LxArtist>>(emptyList())
+    }
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
     val showShuffleFab by playerViewModel.lxBoardShowShuffleFab.collectAsStateWithLifecycle()
     val showPlayAllFab by playerViewModel.lxBoardShowPlayAllFab.collectAsStateWithLifecycle()
@@ -5365,7 +5395,15 @@ internal fun LxSearchAlbumPage(
                             Row(
                                 modifier = Modifier
                                     .clip(CircleShape)
-                                    .clickable { viewModel.openAlbumArtist(album) }
+                                    .clickable {
+                                        chipScope.launch {
+                                            val candidates = playerViewModel.resolveLxAlbumArtists(album, state.source)
+                                            when {
+                                                candidates.size == 1 -> viewModel.openArtistFromSearch(candidates.first(), state.source)
+                                                candidates.size > 1 -> albumArtistCandidates = candidates
+                                            }
+                                        }
+                                    }
                                     .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                                     .padding(start = 8.dp, end = 16.dp, top = 6.dp, bottom = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -5539,6 +5577,18 @@ internal fun LxSearchAlbumPage(
                         .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
                 )
             }
+        }
+        if (albumArtistCandidates.isNotEmpty()) {
+            com.minoppol.music.presentation.components.LxArtistPickerBottomSheet(
+                artists = albumArtistCandidates,
+                source = state.source,
+                sheetState = rememberModalSheetState(skipPartiallyExpanded = true),
+                onDismiss = { albumArtistCandidates = emptyList() },
+                onArtistClick = { artist ->
+                    viewModel.openArtistFromSearch(artist, state.source)
+                    albumArtistCandidates = emptyList()
+                },
+            )
         }
     }
 }

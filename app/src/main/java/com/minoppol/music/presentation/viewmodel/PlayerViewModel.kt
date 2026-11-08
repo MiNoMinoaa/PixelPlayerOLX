@@ -1473,6 +1473,50 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
+    suspend fun resolveLxAlbumArtists(
+        album: com.minoppol.music.data.lxmusic.LxAlbum,
+        source: String?,
+    ): List<com.minoppol.music.data.lxmusic.LxArtist> {
+        if (source != "wy" && source != "kw" && source != "tx" && source != "kg") return emptyList()
+        val raw = album.artistName?.takeIf { it.isNotBlank() } ?: return emptyList()
+        val names = raw
+            .split(if (source == "kw") lxKwSingerNameSplitRegex else lxSingerNameSplitRegex)
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .distinct()
+        if (names.isEmpty()) return emptyList()
+        if (names.size == 1 && !album.artistId.isNullOrBlank()) {
+            return listOf(
+                com.minoppol.music.data.lxmusic.LxArtist(
+                    id = album.artistId,
+                    name = names.first(),
+                    pic = album.artistPic,
+                )
+            )
+        }
+        return coroutineScope {
+            names.map { name ->
+                async {
+                    val searched = searchLxArtistByName(source, name)
+                    val id = searched?.id ?: return@async null
+                    var resolved = com.minoppol.music.data.lxmusic.LxArtist(
+                        id = id,
+                        name = name,
+                        pic = searched.pic,
+                        albumSize = searched.albumSize,
+                        briefDesc = searched.briefDesc,
+                    )
+                    if (source == "kg" && resolved.pic.isNullOrBlank()) {
+                        fetchKgArtistPicCached(id)?.takeIf { it.isNotBlank() }?.let { pic ->
+                            resolved = resolved.copy(pic = pic)
+                        }
+                    }
+                    resolved
+                }
+            }.awaitAll().filterNotNull()
+        }
+    }
+
     suspend fun resolveLxSongAlbum(song: Song): com.minoppol.music.data.lxmusic.LxAlbum? {
         val source = song.lxMusicSource ?: return null
         if (source != "wy" && source != "kw" && source != "tx" && source != "kg") return null
