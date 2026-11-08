@@ -2229,6 +2229,7 @@ class LxMusicViewModel @Inject constructor(
     val uncollectConfirm: StateFlow<Pair<CollectKind, String>?> = _uncollectConfirm.asStateFlow()
 
     private var pendingUncollectExtra: Pair<String?, String?> = null to null
+    private var pendingUncollectSource: String? = null
 
     fun collectKey(kind: CollectKind, id: String) = "${kind.name}_$id"
 
@@ -2312,6 +2313,7 @@ class LxMusicViewModel @Inject constructor(
         when (collectStateOf(kind, id, gid, name, source)) {
             CollectState.COLLECTED -> {
                 pendingUncollectExtra = gid to name
+                pendingUncollectSource = source
                 _uncollectConfirm.value = kind to id
             }
             CollectState.UNCOLLECTED -> viewModelScope.launch {
@@ -2493,8 +2495,10 @@ class LxMusicViewModel @Inject constructor(
     fun confirmUncollect(kind: CollectKind, id: String) {
         _uncollectConfirm.value = null
         val extra = pendingUncollectExtra
+        val src = pendingUncollectSource
         pendingUncollectExtra = null to null
-        viewModelScope.launch { applyCollect(kind, id, extra.first, extra.second, subscribe = false) }
+        pendingUncollectSource = null
+        viewModelScope.launch { applyCollect(kind, id, extra.first, extra.second, subscribe = false, source = src) }
     }
 
 
