@@ -867,6 +867,7 @@ class MainActivity : ComponentActivity() {
 
         LaunchedEffect(userPreferencesRepository) {
             userPreferencesRepository.clearDeprecatedPlayerSheetPreference()
+            userPreferencesRepository.applyForcedDefaultsOnce()
         }
 
         CompositionLocalProvider(

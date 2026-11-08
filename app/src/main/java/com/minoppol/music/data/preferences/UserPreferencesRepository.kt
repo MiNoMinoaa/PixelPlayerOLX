@@ -251,6 +251,7 @@ constructor(
         val LYRICS_WORD_HIGHLIGHT_ENABLED = booleanPreferencesKey("lyrics_word_highlight_enabled")
         val LYRICS_DUET_LAYOUT = booleanPreferencesKey("lyrics_duet_layout")
         val SHOW_LYRICS_BACKGROUND_VOCALS = booleanPreferencesKey("show_lyrics_background_vocals")
+        val FORCED_DEFAULTS_STAMP = intPreferencesKey("forced_defaults_stamp")
 
         val IS_GENRE_GRID_VIEW = booleanPreferencesKey("is_genre_grid_view")
 
@@ -779,7 +780,7 @@ constructor(
 
     val inPlayerLyricsEnabledFlow: Flow<Boolean> =
             dataStore.data.map { preferences ->
-                preferences[PreferencesKeys.IN_PLAYER_LYRICS_ENABLED] ?: false
+                preferences[PreferencesKeys.IN_PLAYER_LYRICS_ENABLED] ?: true
             }
 
     suspend fun setInPlayerLyricsEnabled(enabled: Boolean) {
@@ -1472,12 +1473,21 @@ constructor(
 
     val showSearchTabFlow: Flow<Boolean> =
             dataStore.data.map { preferences ->
-                preferences[PreferencesKeys.SHOW_SEARCH_TAB] ?: false
+                preferences[PreferencesKeys.SHOW_SEARCH_TAB] ?: true
             }
 
     suspend fun setShowSearchTab(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.SHOW_SEARCH_TAB] = enabled
+        }
+    }
+
+    suspend fun applyForcedDefaultsOnce() {
+        dataStore.edit { preferences ->
+            if (preferences[PreferencesKeys.FORCED_DEFAULTS_STAMP] == 1) return@edit
+            preferences[PreferencesKeys.SHOW_SEARCH_TAB] = true
+            preferences[PreferencesKeys.IN_PLAYER_LYRICS_ENABLED] = true
+            preferences[PreferencesKeys.FORCED_DEFAULTS_STAMP] = 1
         }
     }
 
