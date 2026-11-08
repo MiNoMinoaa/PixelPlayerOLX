@@ -1966,9 +1966,9 @@ internal fun OnlineSearchSection(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp)
     ) {
         if (query.isBlank()) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
             OnlineSearchLanding(
                 history = history,
                 hotItems = hotItems,
@@ -1978,6 +1978,7 @@ internal fun OnlineSearchSection(
                 onDeleteHistoryItem = onDeleteHistoryItem,
                 onClearHistory = onClearHistory,
             )
+            }
         } else {
             OnlineSearchResults(
                 state = state,
@@ -2259,7 +2260,7 @@ private fun OnlineSearchResults(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 0.dp, bottom = 8.dp),
+                    .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 FilledTonalButton(
@@ -2367,7 +2368,11 @@ private fun OnlineSearchResults(
                                 smoothnessAsPercentBR = 60
                             )),
                         state = songsListState,
-                        contentPadding = PaddingValues(start = 8.dp, end = 20.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + 16.dp),
+                        contentPadding = PaddingValues(
+                            start = 12.dp,
+                            end = if (songsListState.canScrollForward || songsListState.canScrollBackward) 22.dp else 12.dp,
+                            bottom = MiniPlayerHeight + bottomBarHeightDp + 16.dp
+                        ),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         items(sortedSongs, key = { "${it.source}_${it.songmid}" }) { song ->
@@ -2417,7 +2422,7 @@ private fun OnlineSearchResults(
                     }
                     ExpressiveScrollBar(
                         listState = songsListState,
-                        paddingEnd = 0.dp,
+                        paddingEnd = 4.dp,
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
                             .padding(top = 8.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + 16.dp)
@@ -2428,12 +2433,12 @@ private fun OnlineSearchResults(
                         songIds = songsFabSongIds,
                         leadingItems = 0,
                         modifier = Modifier.align(Alignment.BottomEnd)
-                            .padding(end = 20.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + ListExtraBottomGap + 74.dp),
+                            .padding(end = 22.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + ListExtraBottomGap + 74.dp),
                     )
                     LxScrollToTopFab(
                         listState = songsListState,
                         modifier = Modifier.align(Alignment.BottomEnd)
-                            .padding(end = 20.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + ListExtraBottomGap + 14.dp),
+                            .padding(end = 22.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + ListExtraBottomGap + 14.dp),
                     )
                     if (!isSelectionMode && (showShuffleFab || showPlayAllFab || showSortFab)) {
                         LxBottomPlayActions(
@@ -2489,7 +2494,11 @@ private fun OnlineSearchResults(
                                 smoothnessAsPercentBR = 60
                             )),
                         state = playlistsListState,
-                        contentPadding = PaddingValues(start = 8.dp, end = 20.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + 16.dp),
+                        contentPadding = PaddingValues(
+                            start = 12.dp,
+                            end = if (playlistsListState.canScrollForward || playlistsListState.canScrollBackward) 22.dp else 12.dp,
+                            bottom = MiniPlayerHeight + bottomBarHeightDp + 16.dp
+                        ),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         items(state.playlists, key = { "${it.source}_${it.playlist.id}" }) { hit ->
@@ -2565,7 +2574,7 @@ private fun OnlineSearchResults(
                     }
                     ExpressiveScrollBar(
                         listState = playlistsListState,
-                        paddingEnd = 0.dp,
+                        paddingEnd = 4.dp,
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
                             .padding(top = 8.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + 16.dp)
@@ -2692,7 +2701,11 @@ internal fun OnlinePlaylistDetailPage(
                         smoothnessAsPercentBR = 60
                     )),
                 state = detailListState,
-                contentPadding = PaddingValues(start = 8.dp, end = 20.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + 16.dp),
+                contentPadding = PaddingValues(
+                    start = 12.dp,
+                    end = if (detailListState.canScrollForward || detailListState.canScrollBackward) 22.dp else 12.dp,
+                    bottom = MiniPlayerHeight + bottomBarHeightDp + 16.dp
+                ),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 item(key = "playlist_header_info") {
@@ -2820,10 +2833,10 @@ internal fun OnlinePlaylistDetailPage(
             }
             ExpressiveScrollBar(
                 listState = detailListState,
-                paddingEnd = 0.dp,
+                paddingEnd = 4.dp,
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(top = headerHeight + 8.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + 16.dp)
+                    .padding(top = statusBarTopInset + hm.searchBarHeight + 56.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + 16.dp)
             )
             LxLocateCurrentSongFab(
                 listState = detailListState,
@@ -2831,12 +2844,12 @@ internal fun OnlinePlaylistDetailPage(
                 songIds = detailFabSongIds,
                 leadingItems = 2,
                 modifier = Modifier.align(Alignment.BottomEnd)
-                    .padding(end = 20.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + ListExtraBottomGap + 74.dp),
+                    .padding(end = 22.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + ListExtraBottomGap + 74.dp),
             )
             LxScrollToTopFab(
                 listState = detailListState,
                 modifier = Modifier.align(Alignment.BottomEnd)
-                    .padding(end = 20.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + ListExtraBottomGap + 14.dp),
+                    .padding(end = 22.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + ListExtraBottomGap + 14.dp),
             )
             if (!isSelectionMode && sortedSongs.isNotEmpty() && (showShuffleFab || showPlayAllFab || showSortFab)) {
                 LxBottomPlayActions(

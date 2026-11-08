@@ -3025,8 +3025,8 @@ private fun LxBoardPage(
                     )
                     .lxVerticalDragGate(onScrollingChange),
                 contentPadding = PaddingValues(
-                    start = 8.dp,
-                    end = 14.dp,
+                    start = 12.dp,
+                    end = if (listState.canScrollForward || listState.canScrollBackward) 22.dp else 12.dp,
                     bottom = bottomBarHeightDp + MiniPlayerHeight + 16.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -3167,7 +3167,7 @@ private fun LxBoardPage(
         LxScrollToTopFab(
             listState = listState,
             modifier = Modifier.align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
+                .padding(end = 22.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
         )
         if (browseState.boardSongs.isNotEmpty() && (showShuffleFab || showPlayAllFab || showSortFab)) {
             Column(
@@ -3349,8 +3349,8 @@ private fun LxPlaylistPage(
                     )
                     .lxVerticalDragGate(onScrollingChange),
                 contentPadding = PaddingValues(
-                    start = 8.dp,
-                    end = 14.dp,
+                    start = 12.dp,
+                    end = if (listState.canScrollForward || listState.canScrollBackward) 22.dp else 12.dp,
                     bottom = bottomBarHeightDp + MiniPlayerHeight + 16.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -3624,7 +3624,7 @@ private fun LxPlaylistPage(
         LxScrollToTopFab(
             listState = listState,
             modifier = Modifier.align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
+                .padding(end = 22.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
         )
         if (browseState.selectedPlaylist != null && browseState.playlistSongs.isNotEmpty() && (showShuffleFab || showPlayAllFab || showSortFab)) {
             LxBottomPlayActions(
@@ -3868,8 +3868,8 @@ private fun LxSearchPage(
                     )
                     .lxVerticalDragGate(onScrollingChange),
                 contentPadding = PaddingValues(
-                    start = 8.dp,
-                    end = 14.dp,
+                    start = 12.dp,
+                    end = if (listState.canScrollForward || listState.canScrollBackward) 22.dp else 12.dp,
                     top = hm.searchHeaderHeight + 4.dp,
                     bottom = bottomBarHeightDp + MiniPlayerHeight + 16.dp,
                 ),
@@ -4026,12 +4026,12 @@ private fun LxSearchPage(
             songIds = searchSongIds,
             leadingItems = searchLeadingItems,
             modifier = Modifier.align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 74.dp),
+                .padding(end = 22.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 74.dp),
         )
         LxScrollToTopFab(
             listState = listState,
             modifier = Modifier.align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
+                .padding(end = 22.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
         )
         if (searchState.type == LxMusicViewModel.SearchType.SONG && searchState.results.isNotEmpty() && (showShuffleFab || showPlayAllFab || showSortFab)) {
             Column(
@@ -4749,8 +4749,8 @@ internal fun LxSearchArtistPage(
                         .lxVerticalDragGate(onScrollingChange),
                     contentPadding = PaddingValues(
                         top = albumMinHeaderDp + 8.dp,
-                        start = 16.dp,
-                        end = if (showAlbumScrollBar) 24.dp else 16.dp,
+                        start = 12.dp,
+                        end = if (showAlbumScrollBar) 22.dp else 12.dp,
                         bottom = albumBottomPadding,
                     ),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -4940,13 +4940,13 @@ internal fun LxSearchArtistPage(
                         leadingItems = 4,
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 74.dp),
+                            .padding(end = 22.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 74.dp),
                     )
                     LxScrollToTopFab(
                         listState = albumListState,
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
+                            .padding(end = 22.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
                     )
                 }
             }
@@ -5059,8 +5059,8 @@ internal fun LxSearchArtistPage(
                     .lxVerticalDragGate(onScrollingChange),
                 contentPadding = PaddingValues(
                     top = artistMinHeaderDp + 8.dp,
-                    start = 16.dp,
-                    end = if (showArtistScrollBar) 24.dp else 16.dp,
+                    start = 12.dp,
+                    end = if (showArtistScrollBar) 22.dp else 12.dp,
                     bottom = artistBottomPadding,
                 ),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -5252,13 +5252,13 @@ internal fun LxSearchArtistPage(
                     leadingItems = if (artistHasBrief) 4 else 3,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 74.dp),
+                        .padding(end = 22.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 74.dp),
                 )
                 LxScrollToTopFab(
                     listState = listState,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
+                        .padding(end = 22.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
                 )
             }
         }
@@ -5379,8 +5379,8 @@ internal fun LxSearchAlbumPage(
                     .lxVerticalDragGate(onScrollingChange),
                 contentPadding = PaddingValues(
                     top = albumMinHeaderDp + 8.dp,
-                    start = 16.dp,
-                    end = if (showAlbumScrollBar) 24.dp else 16.dp,
+                    start = 12.dp,
+                    end = if (showAlbumScrollBar) 22.dp else 12.dp,
                     bottom = albumBottomPadding,
                 ),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -5568,13 +5568,13 @@ internal fun LxSearchAlbumPage(
                     leadingItems = 4,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 74.dp),
+                        .padding(end = 22.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 74.dp),
                 )
                 LxScrollToTopFab(
                     listState = listState,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(end = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
+                        .padding(end = 22.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
                 )
             }
         }
