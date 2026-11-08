@@ -4919,12 +4919,12 @@ internal fun LxSearchArtistPage(
                                 collectState = if (state.source == LxSources.KUGOU ||
                                     (state.source != LxSources.NETEASE && !viewModel.accountWritesEnabled)
                                 ) null else
-                                    rememberCollectState(viewModel, albumKind, album.id, name = album.name),
+                                    rememberCollectState(viewModel, albumKind, album.id, name = album.name, source = state.source),
                                 collectBusy = albumCollectBusyKeys.contains(
                                     viewModel.collectKey(albumKind, album.id),
                                 ),
                                 onCollectClick = {
-                                    viewModel.onCollectButtonClick(albumKind, album.id, name = album.name)
+                                    viewModel.onCollectButtonClick(albumKind, album.id, name = album.name, source = state.source)
                                 },
                                 onShare = { albumOnFolderShare(albumKind, album.id) },
                             )
@@ -5537,10 +5537,10 @@ internal fun LxSearchAlbumPage(
                             collectState = if (state.source == LxSources.KUGOU ||
                                 (state.source != LxSources.NETEASE && !viewModel.accountWritesEnabled)
                             ) null else
-                                rememberCollectState(viewModel, collectKind, album.id, name = album.name),
+                                rememberCollectState(viewModel, collectKind, album.id, name = album.name, source = state.source),
                             collectBusy = collectBusyKeys.contains(viewModel.collectKey(collectKind, album.id)),
                             onCollectClick = {
-                                viewModel.onCollectButtonClick(collectKind, album.id, name = album.name)
+                                viewModel.onCollectButtonClick(collectKind, album.id, name = album.name, source = state.source)
                             },
                             onShare = { onFolderShare(collectKind, album.id) },
                         )

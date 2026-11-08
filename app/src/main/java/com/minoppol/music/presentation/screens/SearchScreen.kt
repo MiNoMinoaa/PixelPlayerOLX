@@ -244,6 +244,11 @@ fun SearchScreen(
     val onlineSearchMode by playerViewModel.onlineSearchMode.collectAsStateWithLifecycle()
     var onlineInputFocused by rememberSaveable { mutableStateOf(false) }
     val lxViewModel: com.minoppol.music.presentation.screens.lxmusic.LxMusicViewModel = hiltViewModel()
+    LaunchedEffect(Unit) {
+        lxViewModel.toastMessage.collect { msg ->
+            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
     val onlineSearchViewModel: com.minoppol.music.presentation.viewmodel.LxOnlineSearchViewModel = hiltViewModel()
     val onlineState by onlineSearchViewModel.uiState.collectAsStateWithLifecycle()
     val onlineSuggestions by onlineSearchViewModel.suggestions.collectAsStateWithLifecycle()
