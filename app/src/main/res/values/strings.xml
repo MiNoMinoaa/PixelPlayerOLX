@@ -596,4 +596,18 @@
         <item>Sleep Aid</item>
     </string-array>
 
+<string name="detail_hero_shuffle">Shuffle</string>
+<string name="detail_hero_play">Play</string>
+<string name="detail_hero_pause">Pause</string>
+<string name="detail_hero_resume">Resume</string>
+<string name="detail_hero_more_actions">More actions</string>
+<string name="detail_hero_add_to_playlist">Add to playlist</string>
+<string name="detail_hero_play_next">Play next</string>
+<string name="detail_hero_add_to_queue">Add to queue</string>
+<string name="detail_hero_album_count_many">%1$d Albums</string>
+<string name="detail_hero_album_count_one">1 Album</string>
+<string name="detail_hero_duration_minutes">%1$d min</string>
+<string name="detail_hero_duration_hours">%1$d h %2$d min</string>
+<string name="artist_page_collapse_all_albums">Collapse all</string>
+<string name="artist_page_expand_all_albums">Expand all</string>
 </resources>

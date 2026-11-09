@@ -212,6 +212,15 @@ private fun observeGridLayoutMetrics(
 }
 
 @Composable
+fun animatedScrollbarInset(visible: Boolean, shown: Dp, hidden: Dp = 0.dp): Dp {
+    val inset by animateDpAsState(
+        targetValue = if (visible) shown else hidden,
+        label = "scrollbarInset"
+    )
+    return inset
+}
+
+@Composable
 fun ExpressiveScrollBar(
     modifier: Modifier = Modifier,
     listState: LazyListState? = null,

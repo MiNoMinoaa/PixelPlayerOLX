@@ -27,4 +27,7 @@
     <plurals name="sleep_timer_play_count_times">
         <item quantity="other">%d 次</item>
     </plurals>
+<plurals name="cloud_download_selected_started">
+<item quantity="other">正在准备 %1$d 首云端歌曲以供离线播放</item>
+</plurals>
 </resources>

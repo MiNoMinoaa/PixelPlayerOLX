@@ -6,6 +6,7 @@ import com.minoppol.music.data.database.toEntity
 import com.minoppol.music.data.database.toPlaylist
 import com.minoppol.music.data.model.isSmartPlaylist
 import com.minoppol.music.data.model.SortOption
+import com.minoppol.music.data.playlist.mergeVisiblePlaylistOrder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -138,11 +139,15 @@ class PlaylistPreferencesRepository @Inject constructor(
         updatePlaylist(existing.copy(songIds = existing.songIds.filterNot { it == songIdToRemove }))
     }
 
-    suspend fun reorderSongsInPlaylist(playlistId: String, newSongOrderIds: List<String>) {
+    suspend fun reorderSongsInPlaylist(playlistId: String, newSongOrderIds: List<String>): List<String>? {
         ensureMigratedIfNeeded()
-        val existing = userPlaylistsFlow.first().find { it.id == playlistId } ?: return
-        if (existing.isSmartPlaylist) return
-        updatePlaylist(existing.copy(songIds = newSongOrderIds))
+        val existing = userPlaylistsFlow.first().find { it.id == playlistId } ?: return null
+        if (existing.isSmartPlaylist) return null
+        val merged = mergeVisiblePlaylistOrder(existing.songIds, newSongOrderIds) ?: return null
+        if (merged != existing.songIds) {
+            updatePlaylist(existing.copy(songIds = merged))
+        }
+        return merged
     }
 
     suspend fun setPlaylistSongOrderMode(playlistId: String, modeValue: String) =

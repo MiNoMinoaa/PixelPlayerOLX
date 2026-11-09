@@ -2,14 +2,26 @@
 
 package com.minoppol.music.presentation.screens
 
-import com.minoppol.music.R
+import com.minoppol.music.presentation.navigation.navigateSafely
 import com.minoppol.music.presentation.navigation.navigateSafelyReplacing
+import com.minoppol.music.presentation.components.DetailHeroFloatingLayer
+import com.minoppol.music.presentation.components.DetailHeroPinnedActionsHeight
+import com.minoppol.music.presentation.components.DetailSongsSummary
+import com.minoppol.music.presentation.components.HeroPlayState
+import com.minoppol.music.presentation.components.MediaDetailHero
+import com.minoppol.music.presentation.components.DetailHeroMenuAction
+import com.minoppol.music.presentation.components.ExpressiveDropdownMenu
+import com.minoppol.music.presentation.components.rememberDetailHeroDock
+import com.minoppol.music.presentation.components.rememberSongCollectionMenuActions
+import com.minoppol.music.presentation.utils.getSegmentedItemShape
+import com.minoppol.music.presentation.utils.SegmentedItemShapeDefaults
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -35,6 +47,8 @@ import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SurroundSound
+import androidx.compose.material.icons.rounded.UnfoldLess
+import androidx.compose.material.icons.rounded.UnfoldMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -61,6 +75,7 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.minoppol.music.ui.theme.LocalPixelPlayerDarkTheme
 import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.LocalShowScrollbar
 import com.minoppol.music.ui.theme.PixelPlayerStatusBarStyle
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.util.lerp
@@ -81,6 +96,9 @@ import com.minoppol.music.presentation.navigation.Screen
 import com.minoppol.music.presentation.viewmodel.ArtistDetailViewModel
 import com.minoppol.music.presentation.viewmodel.ArtistAlbumSection
 import com.minoppol.music.presentation.viewmodel.PlayerViewModel
+import com.minoppol.music.presentation.viewmodel.collapseKey
+import com.minoppol.music.presentation.viewmodel.isAlbumSectionExpanded
+import com.minoppol.music.presentation.viewmodel.isAnyAlbumSectionExpanded
 import com.minoppol.music.presentation.viewmodel.PlaylistViewModel
 import com.minoppol.music.utils.formatSongCount
 import com.minoppol.music.utils.shapes.RoundedStarShape
@@ -98,7 +116,10 @@ import coil.request.ImageRequest
 import coil.size.Size
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import androidx.compose.ui.res.stringResource
+import com.minoppol.music.R
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.ImmutableList
 
 private const val UseSharedCollapsibleTopBarProbe = true
 
@@ -113,6 +134,9 @@ fun ArtistDetailScreen(
     playlistViewModel: PlaylistViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    // Kept as State and read only by the album list and the expand-all button, so a header tap
+    // does not recompose the whole screen.
+    val albumExpansionOverrides = viewModel.albumExpansionOverrides.collectAsStateWithLifecycle()
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
     
     var isTransitionFinished by remember { mutableStateOf(false) }
@@ -129,6 +153,7 @@ fun ArtistDetailScreen(
     val systemNavBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val bottomBarHeightDp = resolveNavBarOccupiedHeight(systemNavBarInset, navBarCompactMode)
     var showPlaylistBottomSheet by remember { mutableStateOf(false) }
+    var showArtistPlaylistSheet by remember { mutableStateOf(false) }
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
     val coroutineScope = rememberCoroutineScope()
@@ -169,17 +194,29 @@ fun ArtistDetailScreen(
     }
 
     val topBarHeight = remember { Animatable(maxTopBarHeightPx) }
+
+    // Hiding the system bars drops the status-bar inset to zero, which shrinks
+    // minTopBarHeightPx. Pull the animated height back into range when the inset returns,
+    // otherwise the collapsed bar stays too short.
+    LaunchedEffect(minTopBarHeightPx, maxTopBarHeightPx) {
+        val clamped = topBarHeight.value.coerceIn(minTopBarHeightPx, maxTopBarHeightPx)
+        if (clamped != topBarHeight.value) topBarHeight.snapTo(clamped)
+    }
     val collapseFraction by remember(minTopBarHeightPx, maxTopBarHeightPx) {
         derivedStateOf {
             1f - ((topBarHeight.value - minTopBarHeightPx) / (maxTopBarHeightPx - minTopBarHeightPx)).coerceIn(0f, 1f)
         }
     }
 
-    val nestedScrollConnection = remember {
+    // Direction of the latest scroll delta. A gesture that ends while heading back to the top
+    // (a fling landing there included) must leave the header fully expanded.
+    var lastScrollTowardsTop by remember { mutableStateOf(true) }
+    val nestedScrollConnection = remember(minTopBarHeightPx, maxTopBarHeightPx) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 val delta = available.y
                 val isScrollingDown = delta < 0
+                if (delta != 0f) lastScrollTowardsTop = !isScrollingDown
 
                 if (!isScrollingDown && (lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 0)) {
                     return Offset.Zero
@@ -207,8 +244,9 @@ fun ArtistDetailScreen(
 
     LaunchedEffect(lazyListState.isScrollInProgress) {
         if (!lazyListState.isScrollInProgress) {
-            val shouldExpand = topBarHeight.value > (minTopBarHeightPx + maxTopBarHeightPx) / 2
             val canExpand = lazyListState.firstVisibleItemIndex == 0 && lazyListState.firstVisibleItemScrollOffset == 0
+            val shouldExpand = lastScrollTowardsTop ||
+                topBarHeight.value > (minTopBarHeightPx + maxTopBarHeightPx) / 2
 
             val targetValue = if (shouldExpand && canExpand) {
                 maxTopBarHeightPx
@@ -263,50 +301,181 @@ fun ArtistDetailScreen(
                 uiState.artist != null -> {
                     val artist = uiState.artist!!
                     val songs = uiState.songs
+                    val artistDurationMs = remember(songs) { songs.sumOf { it.duration } }
                     val currentTopBarHeightDp = with(density) { topBarHeight.value.toDp() }
 
                     val albumSections = uiState.albumSections
-                    val expandedSections = remember { mutableStateMapOf<String, Boolean>() }
-                    LaunchedEffect(albumSections) {
-                        val currentKeys = albumSections.map { it.collapseKey() }.toSet()
-                        currentKeys.forEach { key ->
-                            if (expandedSections[key] == null) {
-                                expandedSections[key] = true
+                    val heroOverlapPx = with(density) { ArtistHeroHeaderOverlap.toPx() }
+                    val listTopPadding = minTopBarHeight + 8.dp
+                    val listTopPaddingPx = with(density) { listTopPadding.toPx() }
+                    // The list rides down with the header, overlapping its artwork by the hero overlap.
+                    val listOffsetPx: () -> Int = {
+                        (topBarHeight.value - minTopBarHeightPx - heroOverlapPx * (1f - collapseFraction))
+                            .roundToInt()
+                            .coerceAtLeast(0)
+                    }
+                    val heroDock = rememberDetailHeroDock(
+                        heroTopPx = {
+                            if (lazyListState.firstVisibleItemIndex == 0) {
+                                listOffsetPx() + listTopPaddingPx - lazyListState.firstVisibleItemScrollOffset
+                            } else {
+                                null
                             }
+                        },
+                        // Docking starts once the header is collapsed and the list itself scrolls, so a
+                        // list too short to scroll never leaves the title half-way.
+                        dockStartHeroTopPx = listTopPaddingPx,
+                        heroStartPadding = 16.dp,
+                        collapsedBarBottom = minTopBarHeight,
+                        hasBarSubtitle = true,
+                        // The bar keeps the image menu on the right.
+                        collapsedTitleEndPadding = 88.dp
+                    )
+                    val artistMenuActions = rememberSongCollectionMenuActions(
+                        onAddToPlaylist = { showArtistPlaylistSheet = true },
+                        onPlayNext = { if (songs.isNotEmpty()) playerViewModel.addSelectedAsNext(songs) },
+                        onAddToQueue = { if (songs.isNotEmpty()) playerViewModel.addSelectedToQueue(songs) }
+                    )
+                    val songIdsInScope = remember(songs) { songs.mapTo(HashSet()) { it.id } }
+                    val currentSongId = stablePlayerState.currentSong?.id
+                    val heroPlayState = when {
+                        currentSongId == null || currentSongId !in songIdsInScope -> HeroPlayState.Idle
+                        stablePlayerState.isPlaying -> HeroPlayState.Playing
+                        else -> HeroPlayState.Paused
+                    }
+                    val onHeroShuffle: () -> Unit = {
+                        if (songs.isNotEmpty()) {
+                            playerViewModel.playSongsShuffled(songs, artist.name, startAtZero = true)
                         }
-                        expandedSections.keys
-                            .filterNot { it in currentKeys }
-                            .forEach { staleKey -> expandedSections.remove(staleKey) }
+                    }
+                    val onHeroPlay: () -> Unit = {
+                        if (heroPlayState == HeroPlayState.Idle) {
+                            songs.firstOrNull()?.let { first -> playerViewModel.showAndPlaySong(first, songs) }
+                        } else {
+                            playerViewModel.playPause()
+                        }
+                    }
+                    val barScrimFadePx = with(density) { 24.dp.toPx() }
+                    val barContainerAlpha by remember(barScrimFadePx) {
+                        derivedStateOf {
+                            if (lazyListState.firstVisibleItemIndex > 0) 1f
+                            else (lazyListState.firstVisibleItemScrollOffset / barScrimFadePx).coerceIn(0f, 1f)
+                        }
+                    }
+                    val visibleSections = remember(albumSections) { albumSections.filter { it.songs.isNotEmpty() } }
+                    val visibleSectionKeys = remember(visibleSections) { visibleSections.map { it.collapseKey() } }
+                    val albumCount = visibleSections.size
+                    val albumCountLabel = if (albumCount == 1) {
+                        stringResource(R.string.detail_hero_album_count_one)
+                    } else {
+                        stringResource(R.string.detail_hero_album_count_many, albumCount)
+                    }
+                    val albumsCollapsedByDefault = uiState.albumsCollapsedByDefault
+                    val isSectionExpanded: (String) -> Boolean = { sectionKey ->
+                        isAlbumSectionExpanded(
+                            key = sectionKey,
+                            overrides = albumExpansionOverrides.value,
+                            collapsedByDefault = albumsCollapsedByDefault,
+                            sectionCount = albumCount
+                        )
+                    }
+                    // Derived and read only by the summary row: this scope recomposes on every
+                    // frame of the header collapse, which should not re-check every album.
+                    val anySectionExpanded = remember(
+                        albumExpansionOverrides,
+                        visibleSectionKeys,
+                        albumsCollapsedByDefault
+                    ) {
+                        derivedStateOf {
+                            isAnyAlbumSectionExpanded(
+                                sectionKeys = visibleSectionKeys,
+                                overrides = albumExpansionOverrides.value,
+                                collapsedByDefault = albumsCollapsedByDefault
+                            )
+                        }
                     }
 
-                    val showScrollBar by remember {
+                    val isScrollbarEnabled = LocalShowScrollbar.current
+                    val showScrollBar by remember(isScrollbarEnabled) {
                         derivedStateOf {
+                            isScrollbarEnabled &&
                             collapseFraction > 0.95f &&
                                 (lazyListState.canScrollForward || lazyListState.canScrollBackward)
                         }
+                    }
+                    val scrollbarInset by animateDpAsState(
+                        targetValue = if (showScrollBar) 8.dp else 0.dp,
+                        label = "artistScrollbarInset"
+                    )
+
+                    // Artwork behind the list so the hero can ride up over its lower part.
+                    if (UseSharedCollapsibleTopBarProbe) {
+                        ArtistHeaderBackdrop(
+                            artistName = artist.name,
+                            effectiveImageUrl = uiState.effectiveImageUrl,
+                            collapseFraction = collapseFraction,
+                            headerHeight = currentTopBarHeightDp,
+                            headerImageRequestSize = headerImageRequestSize
+                        )
                     }
 
                     LazyColumn(
                         state = lazyListState,
                         modifier = Modifier
                             .fillMaxSize()
-                            .offset {
-                                val extraHeight =
-                                    (topBarHeight.value - minTopBarHeightPx).roundToInt()
-                                IntOffset(0, extraHeight)
-                            },
+                            .offset { IntOffset(0, listOffsetPx()) },
                         contentPadding = PaddingValues(
-                            top = minTopBarHeight + 8.dp,
+                            top = listTopPadding,
                             start = 16.dp,
-                            end = if (showScrollBar) 24.dp else 16.dp,
+                            // Fixed, so the hero never shifts; only album cards make room for
+                            // the scrollbar (scrollbarInset).
+                            end = 16.dp,
                             bottom = MiniPlayerHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 8.dp
                         )
                     ) {
-                        albumSections.forEachIndexed { index, section ->
-                            if (section.songs.isEmpty()) return@forEachIndexed
-
-                            val sectionKey = section.collapseKey()
-                            val isExpanded = expandedSections[sectionKey] ?: true
+                        item(key = "artist_hero", contentType = "artist_hero") {
+                            MediaDetailHero(
+                                title = artist.name,
+                                // Song count and total length live in the summary above the list.
+                                metaLine = albumCountLabel.takeIf { albumCount > 0 },
+                                onShuffle = onHeroShuffle,
+                                onPlay = onHeroPlay,
+                                playState = heroPlayState,
+                                menuActions = artistMenuActions,
+                                enabled = songs.isNotEmpty(),
+                                modifier = Modifier.padding(bottom = 8.dp),
+                                dock = heroDock
+                            )
+                        }
+                        if (songs.isNotEmpty()) {
+                            item(key = "artist_songs_summary", contentType = "detail_songs_summary") {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 8.dp, bottom = 12.dp)
+                                        .padding(end = scrollbarInset),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    DetailSongsSummary(
+                                        songCount = songs.size,
+                                        durationMs = artistDurationMs,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    if (albumCount > 1) {
+                                        val anyExpanded = anySectionExpanded.value
+                                        ArtistAlbumsExpandAllButton(
+                                            anyExpanded = anyExpanded,
+                                            onClick = { viewModel.setAllAlbumSectionsExpanded(!anyExpanded) }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        visibleSections.forEachIndexed { index, section ->
+                            val sectionKey = visibleSectionKeys[index]
+                            val isFirstSection = index == 0
+                            val isLastSection = index == visibleSections.lastIndex
+                            val isExpanded = isSectionExpanded(sectionKey)
                             val sectionSongs = if (isTransitionFinished) section.songs else section.songs.take(5)
 
                             item(
@@ -314,10 +483,13 @@ fun ArtistDetailScreen(
                                 contentType = "artist_section_header"
                             ) {
                                 CollapsibleAlbumSectionHeader(
+                                    modifier = Modifier.padding(end = scrollbarInset),
                                     section = section,
                                     isExpanded = isExpanded,
+                                    isFirstSection = isFirstSection,
+                                    isLastSection = isLastSection,
                                     onToggleExpanded = {
-                                        expandedSections[sectionKey] = !isExpanded
+                                        viewModel.setAlbumSectionExpanded(sectionKey, !isExpanded)
                                     },
                                     onPlayAlbum = {
                                         section.songs.firstOrNull()?.let { firstSong ->
@@ -339,6 +511,7 @@ fun ArtistDetailScreen(
                                                 fadeOutSpec = tween(durationMillis = 120),
                                                 placementSpec = tween(durationMillis = 180)
                                             )
+                                            .padding(end = scrollbarInset)
                                             .fillMaxWidth()
                                             .height(10.dp)
                                             .background(MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.5f))
@@ -351,14 +524,17 @@ fun ArtistDetailScreen(
                                     contentType = { _, _ -> "artist_section_song" }
                                 ) { songIndex, song ->
                                     ArtistAlbumSectionSongItem(
-                                        modifier = Modifier.animateItem(
-                                            fadeInSpec = tween(durationMillis = 180),
-                                            fadeOutSpec = tween(durationMillis = 120),
-                                            placementSpec = tween(durationMillis = 200)
-                                        ),
+                                        modifier = Modifier
+                                            .animateItem(
+                                                fadeInSpec = tween(durationMillis = 180),
+                                                fadeOutSpec = tween(durationMillis = 120),
+                                                placementSpec = tween(durationMillis = 200)
+                                            )
+                                            .padding(end = scrollbarInset),
                                         song = song,
                                         songIndex = songIndex,
                                         songCount = section.songs.size,
+                                        isLastSection = isLastSection,
                                         isCurrentSong = stablePlayerState.currentSong?.id == song.id,
                                         isPlaying = stablePlayerState.isPlaying,
                                         onSongClick = {
@@ -376,24 +552,19 @@ fun ArtistDetailScreen(
                                 key = "${sectionKey}_footer",
                                 contentType = "artist_section_footer"
                             ) {
-                                Spacer(
-                                    modifier = Modifier.height(
-                                        if (index == albumSections.lastIndex) 24.dp else 16.dp
-                                    )
-                                )
+                                // Album cards sit 4dp apart, as one segmented group.
+                                Spacer(modifier = Modifier.height(if (isLastSection) 24.dp else 4.dp))
                             }
                         }
-
-
                     }
 
-                    if (collapseFraction > 0.95f) {
+                    if (showScrollBar) {
                         ExpressiveScrollBar(
                             listState = lazyListState,
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
                                 .padding(
-                                    top = minTopBarHeight + 12.dp,
+                                    top = minTopBarHeight + DetailHeroPinnedActionsHeight + 4.dp,
                                     bottom = MiniPlayerHeight + systemNavBarInset + 8.dp
                                 )
                         )
@@ -402,22 +573,14 @@ fun ArtistDetailScreen(
                     if (UseSharedCollapsibleTopBarProbe) {
                         SharedArtistTopBarProbe(
                             artist = artist,
-                            effectiveImageUrl = uiState.effectiveImageUrl,
                             songsCount = songs.size,
                             collapseFraction = collapseFraction,
+                            titleAlpha = heroDock.barTitleAlpha,
+                            subtitleAlpha = heroDock.barSubtitleAlpha,
+                            containerAlpha = maxOf(barContainerAlpha, heroDock.barContainerAlpha),
                             headerHeight = currentTopBarHeightDp,
-                            headerImageRequestSize = headerImageRequestSize,
                             hasCustomImage = !artist.customImageUri.isNullOrBlank(),
                             onBackPressed = { navController.popBackStack() },
-                            onPlayClick = {
-                                if (songs.isNotEmpty()) {
-                                    playerViewModel.playSongsShuffled(
-                                        songs,
-                                        artist.name,
-                                        startAtZero = true
-                                    )
-                                }
-                            },
                             onChangeImage = { imagePickerLauncher.launch("image/*") },
                             onClearCustomImage = { viewModel.clearCustomImage() }
                         )
@@ -444,9 +607,33 @@ fun ArtistDetailScreen(
                             onClearCustomImage = { viewModel.clearCustomImage() }
                         )
                     }
+
+                    DetailHeroFloatingLayer(
+                        title = artist.name,
+                        dock = heroDock,
+                        listState = lazyListState,
+                        onShuffle = onHeroShuffle,
+                        onPlay = onHeroPlay,
+                        menuActions = artistMenuActions,
+                        playState = heroPlayState,
+                        enabled = songs.isNotEmpty(),
+                        metaLine = albumCountLabel.takeIf { albumCount > 0 }
+                    )
                 }
             }
         }
+    }
+
+    if (showArtistPlaylistSheet && uiState.songs.isNotEmpty()) {
+        val playlistUiState by playlistViewModel.uiState.collectAsStateWithLifecycle()
+        val artistSongs = remember(uiState.songs) { uiState.songs.toImmutableList() }
+        PlaylistBottomSheet(
+            playlistUiState = playlistUiState,
+            songs = artistSongs,
+            onDismiss = { showArtistPlaylistSheet = false },
+            bottomBarHeight = bottomBarHeightDp,
+            playerViewModel = playerViewModel,
+        )
     }
 
     if (showSongInfoBottomSheet && selectedSongForInfo != null) {
@@ -550,12 +737,44 @@ fun ArtistDetailScreen(
     }
 }
 
-private fun ArtistAlbumSection.collapseKey(): String = "artist_album_${albumId}_${title}"
+private val SectionOuterCorner = 24.dp
+private val SectionInnerCorner = 8.dp
+
+/** "Collapse all" while any album shows its songs, "Expand all" once every album is collapsed. */
+@Composable
+private fun ArtistAlbumsExpandAllButton(
+    anyExpanded: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val height = ButtonDefaults.ExtraSmallContainerHeight
+    TextButton(
+        onClick = onClick,
+        modifier = modifier.heightIn(min = height),
+        contentPadding = ButtonDefaults.contentPaddingFor(height, hasStartIcon = true)
+    ) {
+        Icon(
+            imageVector = if (anyExpanded) Icons.Rounded.UnfoldLess else Icons.Rounded.UnfoldMore,
+            contentDescription = null,
+            modifier = Modifier.size(ButtonDefaults.iconSizeFor(height))
+        )
+        Spacer(modifier = Modifier.width(ButtonDefaults.iconSpacingFor(height)))
+        Text(
+            text = stringResource(
+                if (anyExpanded) R.string.artist_page_collapse_all_albums else R.string.artist_page_expand_all_albums
+            ),
+            style = ButtonDefaults.textStyleFor(height),
+            maxLines = 1
+        )
+    }
+}
 
 @Composable
 private fun CollapsibleAlbumSectionHeader(
     section: ArtistAlbumSection,
     isExpanded: Boolean,
+    isFirstSection: Boolean,
+    isLastSection: Boolean,
     onToggleExpanded: () -> Unit,
     modifier: Modifier = Modifier,
     onPlayAlbum: () -> Unit
@@ -565,26 +784,31 @@ private fun CollapsibleAlbumSectionHeader(
         animationSpec = tween(durationMillis = 260),
         label = "ArtistAlbumExpandRotation"
     )
-    val subtitle = remember(section.year, section.songs.size) {
-        buildString {
-            section.year?.takeIf { it > 0 }?.let {
-                append(it.toString())
-                append(" • ")
-            }
-            append(formatSongCount(section.songs.size))
-        }
+    val songCountText = formatSongCount(section.songs.size)
+    val subtitle = remember(section.year, section.genre, songCountText) {
+        // The genre goes last so a long one is what gets ellipsized, not the song count.
+        listOfNotNull(
+            section.year?.takeIf { it > 0 }?.toString(),
+            songCountText,
+            section.genre
+        ).joinToString(" • ")
     }
 
     val containerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.5f)
-    val shape = if (isExpanded) {
+    // Album cards form one segmented group: only the group's outer corners stay round.
+    val top = if (isFirstSection) SectionOuterCorner else SectionInnerCorner
+    val bottom = when {
+        isExpanded -> 0.dp
+        isLastSection -> SectionOuterCorner
+        else -> SectionInnerCorner
+    }
+    val shape = remember(top, bottom) {
         AbsoluteSmoothCornerShape(
-            cornerRadiusTR = 24.dp, smoothnessAsPercentTR = 60,
-            cornerRadiusTL = 24.dp, smoothnessAsPercentTL = 60,
-            cornerRadiusBR = 0.dp, smoothnessAsPercentBR = 0,
-            cornerRadiusBL = 0.dp, smoothnessAsPercentBL = 0
+            cornerRadiusTR = top, smoothnessAsPercentTR = 60,
+            cornerRadiusTL = top, smoothnessAsPercentTL = 60,
+            cornerRadiusBR = bottom, smoothnessAsPercentBR = 60,
+            cornerRadiusBL = bottom, smoothnessAsPercentBL = 60
         )
-    } else {
-        AbsoluteSmoothCornerShape(24.dp, 60)
     }
 
     Box(
@@ -658,6 +882,7 @@ private fun ArtistAlbumSectionSongItem(
     song: Song,
     songIndex: Int,
     songCount: Int,
+    isLastSection: Boolean,
     isCurrentSong: Boolean,
     isPlaying: Boolean,
     onSongClick: () -> Unit,
@@ -665,32 +890,24 @@ private fun ArtistAlbumSectionSongItem(
 ) {
     val isLastSong = songIndex == songCount - 1
 
-    val songItemShape = when {
-        songCount == 1 -> RoundedCornerShape(16.dp)
-        songIndex == 0 -> RoundedCornerShape(
-            topStart = 16.dp,
-            topEnd = 16.dp,
-            bottomStart = 4.dp,
-            bottomEnd = 4.dp
-        )
-        isLastSong -> RoundedCornerShape(
-            topStart = 4.dp,
-            topEnd = 4.dp,
-            bottomStart = 16.dp,
-            bottomEnd = 16.dp
-        )
-        else -> RoundedCornerShape(4.dp)
-    }
+    val songItemShape = getSegmentedItemShape(
+        index = songIndex,
+        count = songCount,
+        outerRadius = SegmentedItemShapeDefaults.CardOuterCornerRadius
+    )
 
-    val containerShape = if (isLastSong) {
-        AbsoluteSmoothCornerShape(
-            cornerRadiusTR = 0.dp, smoothnessAsPercentTR = 0,
-            cornerRadiusTL = 0.dp, smoothnessAsPercentTL = 0,
-            cornerRadiusBR = 24.dp, smoothnessAsPercentBR = 60,
-            cornerRadiusBL = 24.dp, smoothnessAsPercentBL = 60
-        )
-    } else {
-        RectangleShape
+    val containerShape = remember(isLastSong, isLastSection) {
+        if (isLastSong) {
+            val bottom = if (isLastSection) SectionOuterCorner else SectionInnerCorner
+            AbsoluteSmoothCornerShape(
+                cornerRadiusTR = 0.dp, smoothnessAsPercentTR = 0,
+                cornerRadiusTL = 0.dp, smoothnessAsPercentTL = 0,
+                cornerRadiusBR = bottom, smoothnessAsPercentBR = 60,
+                cornerRadiusBL = bottom, smoothnessAsPercentBL = 60
+            )
+        } else {
+            RectangleShape
+        }
     }
 
     Box(
@@ -701,7 +918,7 @@ private fun ArtistAlbumSectionSongItem(
     ) {
         Column {
             if (songIndex > 0) {
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(4.dp))
             }
 
             EnhancedSongListItem(
@@ -723,26 +940,15 @@ private fun ArtistAlbumSectionSongItem(
 }
 
 @Composable
-private fun SharedArtistTopBarProbe(
-    artist: Artist,
+private fun ArtistHeaderBackdrop(
+    artistName: String,
     effectiveImageUrl: String?,
-    songsCount: Int,
     collapseFraction: Float,
     headerHeight: Dp,
     headerImageRequestSize: Size,
-    hasCustomImage: Boolean,
-    onBackPressed: () -> Unit,
-    onPlayClick: () -> Unit,
-    onChangeImage: () -> Unit,
-    onClearCustomImage: () -> Unit
 ) {
-    var showImageMenu by remember { mutableStateOf(false) }
     val surfaceColor = MaterialTheme.colorScheme.surface
-    val statusBarColor =
-        if (LocalPixelPlayerDarkTheme.current) Color.Black.copy(alpha = 0.6f)
-        else Color.White.copy(alpha = 0.4f)
-    val solidAlpha = (collapseFraction * 2f).coerceIn(0f, 1f)
-    val expandedContentAlpha = 1f - solidAlpha
+    val expandedContentAlpha = 1f - (collapseFraction * 2f).coerceIn(0f, 1f)
     val displayUrl = effectiveImageUrl?.takeIf { it.isNotBlank() }
     val headerOverlayBrush = remember(surfaceColor, expandedContentAlpha) {
         Brush.verticalGradient(
@@ -754,6 +960,62 @@ private fun SharedArtistTopBarProbe(
             )
         )
     }
+    if (expandedContentAlpha <= 0.01f) return
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(headerHeight)
+            .clipToBounds()
+    ) {
+        if (!displayUrl.isNullOrEmpty()) {
+            SmartImage(
+                model = displayUrl,
+                contentDescription = artistName,
+                contentScale = ContentScale.Crop,
+                targetSize = headerImageRequestSize,
+                allowHardware = true,
+                crossfadeDurationMillis = 0,
+                alpha = expandedContentAlpha,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            MusicIconPattern(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { alpha = expandedContentAlpha }
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(headerOverlayBrush)
+        )
+    }
+}
+
+/** How far the hero rides up over the bottom of the expanded artist header. */
+private val ArtistHeroHeaderOverlap = 120.dp
+
+@Composable
+private fun SharedArtistTopBarProbe(
+    artist: Artist,
+    songsCount: Int,
+    collapseFraction: Float,
+    titleAlpha: Float,
+    subtitleAlpha: Float,
+    containerAlpha: Float,
+    headerHeight: Dp,
+    hasCustomImage: Boolean,
+    onBackPressed: () -> Unit,
+    onChangeImage: () -> Unit,
+    onClearCustomImage: () -> Unit
+) {
+    var showImageMenu by remember { mutableStateOf(false) }
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val statusBarColor =
+        if (LocalPixelPlayerDarkTheme.current) Color.Black.copy(alpha = 0.6f)
+        else Color.White.copy(alpha = 0.4f)
+    val solidAlpha = (collapseFraction * 2f).coerceIn(0f, 1f)
     val statusBarBrush = remember(statusBarColor) {
         Brush.verticalGradient(colors = listOf(statusBarColor, Color.Transparent))
     }
@@ -763,8 +1025,6 @@ private fun SharedArtistTopBarProbe(
     val fallbackStatusBarColor = remember(expandedStatusBarFallback, surfaceColor, solidAlpha) {
         lerpColor(expandedStatusBarFallback, surfaceColor, solidAlpha)
     }
-    val titleVerticalBias = lerp(1f, -1f, collapseFraction)
-    val shuffleAlignment = BiasAlignment(horizontalBias = 1f, verticalBias = titleVerticalBias)
 
     PixelPlayerStatusBarStyle(color = fallbackStatusBarColor)
 
@@ -772,35 +1032,7 @@ private fun SharedArtistTopBarProbe(
         modifier = Modifier
             .fillMaxWidth()
             .height(headerHeight)
-            .clipToBounds()
     ) {
-        if (expandedContentAlpha > 0.01f) {
-            if (!displayUrl.isNullOrEmpty()) {
-                SmartImage(
-                    model = displayUrl,
-                    contentDescription = artist.name,
-                    contentScale = ContentScale.Crop,
-                    targetSize = headerImageRequestSize,
-                    allowHardware = true,
-                    crossfadeDurationMillis = 0,
-                    alpha = expandedContentAlpha,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                MusicIconPattern(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer { alpha = expandedContentAlpha }
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(headerOverlayBrush)
-            )
-        }
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -815,11 +1047,13 @@ private fun SharedArtistTopBarProbe(
             collapseFraction = collapseFraction,
             headerHeight = headerHeight,
             onBackClick = onBackPressed,
-            containerColor = surfaceColor.copy(alpha = solidAlpha),
+            // Transparent until something scrolls under the bar; the hero overlaps the
+            // header, so a collapse-driven fill would dim it mid-gesture.
+            containerColor = surfaceColor.copy(alpha = containerAlpha * solidAlpha),
             collapsedTitleStartPadding = 68.dp,
             expandedTitleStartPadding = 24.dp,
             collapsedTitleEndPadding = 88.dp,
-            expandedTitleEndPadding = 136.dp,
+            expandedTitleEndPadding = 88.dp,
             containerHeightRange = 112.dp to 56.dp,
             titleStyle = MaterialTheme.typography.headlineMedium.copy(
                 fontFamily = RoundedSans,
@@ -828,11 +1062,13 @@ private fun SharedArtistTopBarProbe(
             ),
             titleScaleRange = 1f to 1f,
             titleFontSizeRange = 30.sp to 18.sp,
-            maxLines = if (collapseFraction < 0.5f) 2 else 1,
+            maxLines = 1,
             collapsedSubtitleMaxLines = 1,
-            expandedSubtitleMaxLines = 2,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            expandedSubtitleMaxLines = 1,
+            // The hero title docks into this slot itself (DetailHeroFloatingLayer); the bar's
+            // own title only shows for titles too long to dock.
+            contentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = titleAlpha),
+            subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = subtitleAlpha),
             fadeSubtitleOnCollapse = false,
             syncStatusBarWithContainer = false,
             actions = {
@@ -851,52 +1087,18 @@ private fun SharedArtistTopBarProbe(
                         )
                     }
 
-                    DropdownMenu(
+                    ExpressiveDropdownMenu(
                         expanded = showImageMenu,
-                        onDismissRequest = { showImageMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.presentation_batch_d_change_photo)) },
-                            leadingIcon = {
-                                Icon(Icons.Rounded.AddAPhoto, contentDescription = null)
-                            },
-                            onClick = {
-                                showImageMenu = false
-                                onChangeImage()
-                            }
+                        onDismissRequest = { showImageMenu = false },
+                        actions = artistImageMenuActions(
+                            hasCustomImage = hasCustomImage,
+                            onChangeImage = onChangeImage,
+                            onClearCustomImage = onClearCustomImage
                         )
-                        if (hasCustomImage) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.presentation_batch_d_reset_to_default)) },
-                                leadingIcon = {
-                                    Icon(Icons.Rounded.Delete, contentDescription = null)
-                                },
-                                onClick = {
-                                    showImageMenu = false
-                                    onClearCustomImage()
-                                }
-                            )
-                        }
-                    }
+                    )
                 }
             }
         )
-
-        LargeExtendedFloatingActionButton(
-            onClick = onPlayClick,
-            shape = RoundedStarShape(sides = 8, curve = 0.05, rotation = 0f),
-            modifier = Modifier
-                .align(shuffleAlignment)
-                .statusBarsPadding()
-                .padding(end = 16.dp)
-                .graphicsLayer {
-                    scaleX = expandedContentAlpha
-                    scaleY = expandedContentAlpha
-                    alpha = expandedContentAlpha
-                }
-        ) {
-            Icon(Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.presentation_batch_d_cd_shuffle_play_artist))
-        }
     }
 }
 
@@ -1034,29 +1236,15 @@ private fun CustomCollapsingTopBar(
                         ) {
                             Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.presentation_batch_d_edit_artist_image_cd))
                         }
-                        DropdownMenu(
+                        ExpressiveDropdownMenu(
                             expanded = showImageMenu,
-                            onDismissRequest = { showImageMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.presentation_batch_d_change_photo)) },
-                                leadingIcon = { Icon(Icons.Rounded.AddAPhoto, contentDescription = null) },
-                                onClick = {
-                                    showImageMenu = false
-                                    onChangeImage()
-                                }
+                            onDismissRequest = { showImageMenu = false },
+                            actions = artistImageMenuActions(
+                                hasCustomImage = hasCustomImage,
+                                onChangeImage = onChangeImage,
+                                onClearCustomImage = onClearCustomImage
                             )
-                            if (hasCustomImage) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.presentation_batch_d_reset_to_default)) },
-                                    leadingIcon = { Icon(Icons.Rounded.Delete, contentDescription = null) },
-                                    onClick = {
-                                        showImageMenu = false
-                                        onClearCustomImage()
-                                    }
-                                )
-                            }
-                        }
+                        )
                     }
                 }
 
@@ -1187,5 +1375,26 @@ internal fun MusicIconPattern(modifier: Modifier = Modifier) {
                 .size(45.dp)
                 .graphicsLayer { rotationZ = -8f }
         )
+    }
+}
+
+@Composable
+private fun artistImageMenuActions(
+    hasCustomImage: Boolean,
+    onChangeImage: () -> Unit,
+    onClearCustomImage: () -> Unit
+): ImmutableList<DetailHeroMenuAction> {
+    val changePhoto = stringResource(R.string.presentation_batch_d_change_photo)
+    val resetToDefault = stringResource(R.string.presentation_batch_d_reset_to_default)
+    return remember(hasCustomImage, changePhoto, resetToDefault, onChangeImage, onClearCustomImage) {
+        val changePhotoAction = DetailHeroMenuAction(changePhoto, Icons.Rounded.AddAPhoto, onChangeImage)
+        if (hasCustomImage) {
+            persistentListOf(
+                changePhotoAction,
+                DetailHeroMenuAction(resetToDefault, Icons.Rounded.Delete, onClearCustomImage)
+            )
+        } else {
+            persistentListOf(changePhotoAction)
+        }
     }
 }

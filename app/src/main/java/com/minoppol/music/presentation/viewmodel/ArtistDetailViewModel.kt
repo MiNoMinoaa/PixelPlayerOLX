@@ -10,8 +10,10 @@ import com.minoppol.music.R
 import com.minoppol.music.data.model.Artist
 import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.model.cjkSortKey
+import com.minoppol.music.data.preferences.UserPreferencesRepository
 import com.minoppol.music.data.repository.ArtistImageRepository
 import com.minoppol.music.data.repository.MusicRepository
+import com.minoppol.music.utils.GenreParser
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
@@ -20,9 +22,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -37,6 +41,7 @@ data class ArtistDetailUiState(
     val artist: Artist? = null,
     val songs: List<Song> = emptyList(),
     val albumSections: List<ArtistAlbumSection> = emptyList(),
+    val albumsCollapsedByDefault: Boolean = false,
     val effectiveImageUrl: String? = null,
     val isLoading: Boolean = false,
     val error: String? = null
@@ -48,7 +53,8 @@ data class ArtistAlbumSection(
     val title: String,
     val year: Int?,
     val albumArtUriString: String?,
-    val songs: List<Song>
+    val songs: List<Song>,
+    val genre: String? = null
 )
 
 @HiltViewModel
@@ -56,6 +62,7 @@ class ArtistDetailViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val musicRepository: MusicRepository,
     private val artistImageRepository: ArtistImageRepository,
+    private val userPreferencesRepository: UserPreferencesRepository,
     val themeStateHolder: ThemeStateHolder,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -74,6 +81,9 @@ class ArtistDetailViewModel @Inject constructor(
      */
     private val _artistColorScheme = MutableStateFlow<ColorSchemePair?>(null)
     val artistColorScheme: StateFlow<ColorSchemePair?> = _artistColorScheme.asStateFlow()
+
+    private val _albumExpansionOverrides = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+    val albumExpansionOverrides: StateFlow<Map<String, Boolean>> = _albumExpansionOverrides.asStateFlow()
 
     init {
         savedStateHandle.getStateFlow<String?>("artistId", null)
@@ -102,6 +112,8 @@ class ArtistDetailViewModel @Inject constructor(
             Timber.tag("ArtistDebug").d("loadArtistData: id=$id")
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
+                val albumsCollapsedByDefault =
+                    userPreferencesRepository.artistAlbumsCollapsedByDefaultFlow.first()
                 val artistDetailsFlow = musicRepository.getArtistById(id)
                 val artistSongsFlow = musicRepository.getSongsForArtist(id)
 
@@ -148,12 +160,14 @@ class ArtistDetailViewModel @Inject constructor(
                         } else null
 
                         _artistColorScheme.value = newScheme
+                        pruneAlbumExpansionOverrides(albumSections)
                         _uiState.value = ArtistDetailUiState(
                             artist = artist.copy(
                                 imageUrl = if (artist.customImageUri.isNullOrBlank()) effectiveUrl else artist.imageUrl
                             ),
                             songs = orderedSongs,
                             albumSections = albumSections,
+                            albumsCollapsedByDefault = albumsCollapsedByDefault,
                             effectiveImageUrl = effectiveUrl,
                             isLoading = false
                         )
@@ -254,7 +268,7 @@ class ArtistDetailViewModel @Inject constructor(
     }
 
     fun removeSongFromAlbumSection(songId: String) {
-        _uiState.update { currentState ->
+        val updatedState = _uiState.updateAndGet { currentState ->
             val updatedAlbumSections = currentState.albumSections.map { section ->
                 val updatedSongs = section.songs.filterNot { it.id == songId }
                 section.copy(songs = updatedSongs)
@@ -265,6 +279,22 @@ class ArtistDetailViewModel @Inject constructor(
                 songs = currentState.songs.filterNot { it.id == songId }
             )
         }
+        pruneAlbumExpansionOverrides(updatedState.albumSections)
+    }
+
+    fun setAlbumSectionExpanded(sectionKey: String, expanded: Boolean) {
+        _albumExpansionOverrides.update { it + (sectionKey to expanded) }
+    }
+
+    fun setAllAlbumSectionsExpanded(expanded: Boolean) {
+        _albumExpansionOverrides.value = _uiState.value.albumSections
+            .filter { it.songs.isNotEmpty() }
+            .associate { it.collapseKey() to expanded }
+    }
+
+    private fun pruneAlbumExpansionOverrides(sections: List<ArtistAlbumSection>) {
+        val currentKeys = sections.mapTo(HashSet()) { it.collapseKey() }
+        _albumExpansionOverrides.update { overrides -> overrides.filterKeys { it in currentKeys } }
     }
 }
 
@@ -272,7 +302,7 @@ private val songDisplayComparator = compareBy<Song> { it.discNumber ?: 1 }
     .thenBy { if (it.trackNumber > 0) it.trackNumber else Int.MAX_VALUE }
     .thenBy { cjkSortKey(it.title) }
 
-private fun buildAlbumSections(songs: List<Song>): List<ArtistAlbumSection> {
+internal fun buildAlbumSections(songs: List<Song>): List<ArtistAlbumSection> {
     if (songs.isEmpty()) return emptyList()
 
     val sections = songs
@@ -286,7 +316,8 @@ private fun buildAlbumSections(songs: List<Song>): List<ArtistAlbumSection> {
                 title = (key.second.takeIf { it.isNotBlank() } ?: "Unknown Album"),
                 year = albumYear,
                 albumArtUriString = albumArtUri,
-                songs = sortedSongs
+                songs = sortedSongs,
+                genre = GenreParser.dominantGenre(sortedSongs.map { it.genre })
             )
         }
 

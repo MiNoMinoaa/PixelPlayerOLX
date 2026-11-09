@@ -2425,7 +2425,7 @@ private fun OnlineSearchResults(
                         paddingEnd = 4.dp,
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
-                            .padding(top = 8.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + 16.dp)
+                            .padding(end = 4.dp, top = 8.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + 16.dp)
                     )
                     LxLocateCurrentSongFab(
                         listState = songsListState,
@@ -2577,7 +2577,7 @@ private fun OnlineSearchResults(
                         paddingEnd = 4.dp,
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
-                            .padding(top = 8.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + 16.dp)
+                            .padding(end = 4.dp, top = 8.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + 16.dp)
                     )
                     }
                 }
@@ -2836,7 +2836,7 @@ internal fun OnlinePlaylistDetailPage(
                 paddingEnd = 4.dp,
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(top = statusBarTopInset + hm.searchBarHeight + 56.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + 16.dp)
+                    .padding(end = 4.dp, top = statusBarTopInset + hm.searchBarHeight + 56.dp, bottom = MiniPlayerHeight + bottomBarHeightDp + 16.dp)
             )
             LxLocateCurrentSongFab(
                 listState = detailListState,

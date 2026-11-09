@@ -557,4 +557,18 @@
         <item>助眠</item>
     </string-array>
 
+<string name="detail_hero_shuffle">随机播放</string>
+<string name="detail_hero_play">播放</string>
+<string name="detail_hero_pause">暂停</string>
+<string name="detail_hero_resume">继续播放</string>
+<string name="detail_hero_more_actions">更多操作</string>
+<string name="detail_hero_add_to_playlist">添加到歌单</string>
+<string name="detail_hero_play_next">下一首播放</string>
+<string name="detail_hero_add_to_queue">添加到队列</string>
+<string name="detail_hero_album_count_many">%1$d 张专辑</string>
+<string name="detail_hero_album_count_one">1 张专辑</string>
+<string name="detail_hero_duration_minutes">%1$d 分钟</string>
+<string name="detail_hero_duration_hours">%1$d 小时 %2$d 分钟</string>
+<string name="artist_page_collapse_all_albums">全部收起</string>
+<string name="artist_page_expand_all_albums">全部展开</string>
 </resources>

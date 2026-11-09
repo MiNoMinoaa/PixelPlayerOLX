@@ -684,7 +684,12 @@ class PlaylistViewModel @Inject constructor(
             playlistPreferencesRepository.removeSongFromPlaylist(playlistId, songIdToRemove)
             if (_uiState.value.currentPlaylistDetails?.id == playlistId) {
                 _uiState.update {
-                    it.copy(currentPlaylistSongs = it.currentPlaylistSongs.filterNot { s -> s.id == songIdToRemove })
+                    it.copy(
+                        currentPlaylistDetails = it.currentPlaylistDetails?.let { details ->
+                            details.copy(songIds = details.songIds.filterNot { id -> id == songIdToRemove })
+                        },
+                        currentPlaylistSongs = it.currentPlaylistSongs.filterNot { s -> s.id == songIdToRemove }
+                    )
                 }
             }
         }
@@ -699,15 +704,29 @@ class PlaylistViewModel @Inject constructor(
             if (fromIndex in currentSongs.indices && toIndex in currentSongs.indices) {
                 val item = currentSongs.removeAt(fromIndex)
                 currentSongs.add(toIndex, item)
-                val newSongOrderIds = currentSongs.map { it.id }
-                playlistPreferencesRepository.reorderSongsInPlaylist(playlistId, newSongOrderIds)
+                val fullOrder = playlistPreferencesRepository.reorderSongsInPlaylist(
+                    playlistId,
+                    currentSongs.map { it.id }
+                )
+                if (fullOrder == null) {
+                    Timber.tag("PlaylistVM").w("Reorder of playlist $playlistId rejected; reloading it.")
+                    if (_uiState.value.currentPlaylistDetails?.id == playlistId) {
+                        loadPlaylistDetails(playlistId)
+                    }
+                    return@launch
+                }
                 playlistPreferencesRepository.setPlaylistSongOrderMode(
                     playlistId,
                     MANUAL_ORDER_MODE
                 )
                 _uiState.update {
                     val updatedModes = it.playlistOrderModes + (playlistId to PlaylistSongsOrderMode.Manual)
+                    val details = it.currentPlaylistDetails
+                    if (details?.id != playlistId) {
+                        return@update it.copy(playlistOrderModes = updatedModes)
+                    }
                     it.copy(
+                        currentPlaylistDetails = details.copy(songIds = fullOrder),
                         currentPlaylistSongs = currentSongs,
                         playlistSongsOrderMode = PlaylistSongsOrderMode.Manual,
                         playlistOrderModes = updatedModes
@@ -1109,7 +1128,7 @@ class PlaylistViewModel @Inject constructor(
                     musicDir.mkdirs()
                 }
 
-                val exportDir = File(musicDir, "PixelPlayerOLX Exports")
+                val exportDir = File(musicDir, "PixelPlayerOSS Exports")
                 if (!exportDir.exists()) {
                     exportDir.mkdirs()
                 }

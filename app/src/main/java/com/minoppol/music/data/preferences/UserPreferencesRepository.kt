@@ -189,6 +189,8 @@ constructor(
         val GROUP_BY_ALBUM_ARTIST = booleanPreferencesKey("group_by_album_artist")
         val ARTIST_SETTINGS_RESCAN_REQUIRED =
                 booleanPreferencesKey("artist_settings_rescan_required")
+        val ARTIST_ALBUMS_COLLAPSED_BY_DEFAULT =
+                booleanPreferencesKey("artist_albums_collapsed_by_default")
 
         val EQUALIZER_ENABLED = booleanPreferencesKey("equalizer_enabled")
         val EQUALIZER_PRESET = stringPreferencesKey("equalizer_preset")
@@ -622,6 +624,17 @@ constructor(
     suspend fun clearArtistSettingsRescanRequired() {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.ARTIST_SETTINGS_RESCAN_REQUIRED] = false
+        }
+    }
+
+    val artistAlbumsCollapsedByDefaultFlow: Flow<Boolean> =
+            dataStore.data.map { preferences ->
+                preferences[PreferencesKeys.ARTIST_ALBUMS_COLLAPSED_BY_DEFAULT] ?: false
+            }.distinctUntilChanged()
+
+    suspend fun setArtistAlbumsCollapsedByDefault(collapsed: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.ARTIST_ALBUMS_COLLAPSED_BY_DEFAULT] = collapsed
         }
     }
 

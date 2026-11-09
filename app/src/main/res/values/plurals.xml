@@ -36,4 +36,8 @@
         <item quantity="one">%d time</item>
         <item quantity="other">%d times</item>
     </plurals>
+<plurals name="cloud_download_selected_started">
+<item quantity="one">Preparing %1$d cloud track for offline playback</item>
+<item quantity="other">Preparing %1$d cloud tracks for offline playback</item>
+</plurals>
 </resources>
