@@ -178,7 +178,7 @@
     <string name="no_genres_available">No genres available.</string>
 
     <string name="about_app_name">PixelPlayerOLX</string>
-    <string name="about_tagline">An open-source player based on Material 3.</string>
+    <string name="about_tagline">Local-first music, self-hosted streaming, and Material 3 craft in one FOSS player.</string>
     <string name="about_version_format">Version v%1$s</string>
     <string name="update_available_title">New version available: v%1$s</string>
     <string name="update_available_download">Download</string>
@@ -300,7 +300,7 @@
     <string name="search_online_tab_songs">Songs</string>
     <string name="search_online_tab_playlists">Playlists</string>
     <string name="search_online_clear_history_confirm">Clear all search history?</string>
-    <string name="search_online_prompt">Enter a keyword to search across platforms</string>
+    <string name="search_online_prompt">Enter keywords to search</string>
     <string name="search_online_play_all">Play all</string>
     <string name="search_online_shuffle">Shuffle</string>    <string name="search_online_selected_count">Selected %1$d</string>
     <string name="search_online_selection_options">Options</string>

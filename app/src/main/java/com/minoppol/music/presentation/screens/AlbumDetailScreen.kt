@@ -5,6 +5,7 @@ package com.minoppol.music.presentation.screens
 import com.minoppol.music.presentation.navigation.navigateSafely
 import com.minoppol.music.presentation.navigation.navigateSafelyReplacing
 import com.minoppol.music.presentation.components.DetailHeroArtistChip
+import com.minoppol.music.presentation.components.rememberSwipeToQueue
 import com.minoppol.music.presentation.components.DetailHeroFloatingLayer
 import com.minoppol.music.presentation.components.DetailHeroPinnedActionsHeight
 import com.minoppol.music.presentation.components.DetailSongsSummary
@@ -133,6 +134,7 @@ fun AlbumDetailScreen(
     viewModel: AlbumDetailViewModel = hiltViewModel(),
     playlistViewModel: PlaylistViewModel = hiltViewModel()
 ) {
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
     val isMiniPlayerVisible by remember {
@@ -527,7 +529,8 @@ fun AlbumDetailScreen(
                                         playerViewModel.selectSongForInfo(song)
                                         showSongInfoBottomSheet = true
                                     },
-                                    onClick = { playerViewModel.showAndPlaySong(song, songs) }
+                                    onClick = { playerViewModel.showAndPlaySong(song, songs) },
+                                    onSwipeToQueue = swipeToQueue?.let { { it(song) } }
                                 )
                             }
                         }

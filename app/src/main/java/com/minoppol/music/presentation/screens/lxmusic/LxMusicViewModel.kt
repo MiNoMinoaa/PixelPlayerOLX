@@ -1647,6 +1647,15 @@ class LxMusicViewModel @Inject constructor(
     }
 
     private suspend fun loadPlatformMineHome(source: String) {
+        if (source == LxSources.KUGOU &&
+            kugouCookieStore.loggedInFlow.value &&
+            !kugouCookieStore.cookieValidFlow.value
+        ) {
+            Timber.w("Kugou cookie already invalid on mine home entry, performing auto logout")
+            logoutKugou()
+            _toastMessage.tryEmit(context.getString(R.string.lx_msg_login_expired))
+            return
+        }
         val (nick, avatar) = runCatching {
             when (source) {
                 LxSources.TENCENT -> repository.fetchTxProfile()

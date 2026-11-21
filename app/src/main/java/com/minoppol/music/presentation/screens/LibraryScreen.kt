@@ -221,6 +221,9 @@ import androidx.compose.ui.platform.LocalLocale
 import android.widget.Toast
 import kotlinx.coroutines.flow.first
 import com.minoppol.music.presentation.components.ExpressiveScrollBar
+import com.minoppol.music.presentation.components.rememberSwipeToQueue
+import com.minoppol.music.presentation.components.animatedScrollbarInset
+import com.minoppol.music.ui.theme.LocalShowScrollbar
 import com.minoppol.music.presentation.components.LibrarySortBottomSheet
 import com.minoppol.music.presentation.components.pagerGestureCoordinator
 import com.minoppol.music.presentation.components.verticalDragGate
@@ -301,6 +304,7 @@ fun LibraryScreen(
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     val lastTabIndex by playerViewModel.lastLibraryTabIndexFlow.collectAsStateWithLifecycle()
     val favoriteIds by playerViewModel.favoriteSongIds.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
@@ -1474,6 +1478,7 @@ fun LibraryScreen(
                                             onSongLongPress = onSongLongPress,
                                             onSongSelectionToggle = onSongSelectionToggle,
                                             getSelectionIndex = playerViewModel.multiSelectionStateHolder::getSelectionIndex,
+                                            swipeToQueue = swipeToQueue,
                                             onLocateCurrentSongVisibilityChanged = { foldersShowLocateButton = it },
                                             onRegisterLocateCurrentSongAction = { foldersLocateAction = it },
                                             pendingLocatePath = pendingFoldersLocatePath,
@@ -2585,7 +2590,8 @@ fun LibraryFoldersTab(
     onRegisterLocateCurrentSongAction: ((() -> Unit)?) -> Unit = {},
     pendingLocatePath: String? = null,
     onClearPendingLocate: () -> Unit = {},
-    onRequestCrossFolderLocate: (String) -> Unit = {}
+    onRequestCrossFolderLocate: (String) -> Unit = {},
+    swipeToQueue: ((Song) -> Unit)? = null
 ) {
 
 
@@ -2780,7 +2786,7 @@ fun LibraryFoldersTab(
                         Box(modifier = Modifier.fillMaxSize()) {
                             LazyColumn(
                                 modifier = Modifier
-                                    .padding(start = 12.dp, end = if (listState.canScrollForward || listState.canScrollBackward) 22.dp else 12.dp)
+                                    .padding(start = 12.dp, end = animatedScrollbarInset(LocalShowScrollbar.current && (listState.canScrollForward || listState.canScrollBackward), 22.dp, 12.dp))
                                     .fillMaxSize()
                                     .clip(
                                         RoundedCornerShape(
@@ -2823,6 +2829,7 @@ fun LibraryFoldersTab(
                                         isSelectionMode = isSelectionMode,
                                         showSourceTag = true,
                                         onLongPress = { onSongLongPress(song) },
+                                        onSwipeToQueue = swipeToQueue?.let { { it(song) } },
                                         onClick = {
                                             if (isSelectionMode) {
                                                 onSongSelectionToggle(song)

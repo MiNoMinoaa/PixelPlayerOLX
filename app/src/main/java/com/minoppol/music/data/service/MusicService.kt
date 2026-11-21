@@ -45,6 +45,7 @@ import com.google.common.util.concurrent.SettableFuture
 import com.minoppol.music.PixelPlayerApplication
 import com.minoppol.music.MainActivity
 import com.minoppol.music.R
+import com.minoppol.music.data.navidrome.NavidromeSongUri
 import com.minoppol.music.data.diagnostics.AdvancedPerformanceDiagnostics
 import com.minoppol.music.data.model.PlayerInfo
 import com.minoppol.music.data.model.PlaybackQueueItemSnapshot
@@ -1372,7 +1373,7 @@ class MusicService : MediaSessionService() {
         return mediaItem.mediaMetadata.extras?.getString(MediaItemBuilder.EXTERNAL_EXTRA_NAVIDROME_ID)
             ?: mediaItem.mediaId.let { if (it.startsWith("navidrome_")) it.substringAfter("navidrome_") else null }
             ?: mediaItem.mediaMetadata.extras?.getString(MediaItemBuilder.EXTERNAL_EXTRA_CONTENT_URI)?.let {
-                if (it.startsWith("navidrome://")) it.substringAfter("navidrome://") else null
+                NavidromeSongUri.parseId(it)
             }
     }
 

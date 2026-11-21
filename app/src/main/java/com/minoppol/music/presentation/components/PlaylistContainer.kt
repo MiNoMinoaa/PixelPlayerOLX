@@ -82,6 +82,7 @@ import com.minoppol.music.presentation.viewmodel.PlayerViewModel
 import com.minoppol.music.presentation.viewmodel.PlaylistUiState
 import com.minoppol.music.presentation.viewmodel.PlaylistSelectionStateHolder
 import com.minoppol.music.utils.formatSongCount
+import com.minoppol.music.ui.theme.LocalShowScrollbar
 import com.minoppol.music.ui.theme.RoundedSans
 import kotlinx.coroutines.flow.map
 import kotlinx.collections.immutable.ImmutableList
@@ -265,7 +266,7 @@ fun PlaylistItems(
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier
-                .padding(start = 12.dp, end = if (listState.canScrollForward || listState.canScrollBackward) 22.dp else 12.dp, bottom = 6.dp)
+                .padding(start = 12.dp, end = animatedScrollbarInset(LocalShowScrollbar.current && (listState.canScrollForward || listState.canScrollBackward), 22.dp, 12.dp), bottom = 6.dp)
                 .fillMaxSize()
                 .clip(
                     RoundedCornerShape(

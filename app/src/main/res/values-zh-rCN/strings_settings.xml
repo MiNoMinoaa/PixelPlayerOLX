@@ -102,6 +102,8 @@
     <string name="setcat_theme_follow_system">跟随系统</string>
     <string name="setcat_smooth_corners_title">使用圆润圆角</string>
     <string name="setcat_smooth_corners_subtitle">使用高级圆角样式提升观感，低端设备可能出现性能下降</string>
+    <string name="setcat_show_scrollbar_title">显示滚动条</string>
+    <string name="setcat_show_scrollbar_subtitle">在音乐列表中显示侧边滚动条，便于快速滚动。</string>
     <string name="setcat_now_playing">正在播放</string>
     <string name="setcat_player_theme_label">播放器主题</string>
     <string name="setcat_player_theme_desc">选择悬浮播放器界面样式</string>
@@ -136,6 +138,10 @@
     <string name="setcat_navbar_style_default">悬浮胶囊</string>
     <string name="setcat_navbar_style_full_width">通栏铺满</string>
     <string name="setcat_navbar_style_floating">悬浮透镜</string>
+    <string name="setcat_floating_play_pos_label">悬浮透镜样式下播放按钮位置</string>
+    <string name="setcat_floating_play_pos_desc">选择播放/暂停按钮显示的位置</string>
+    <string name="setcat_floating_play_pos_dock">mini播放器下方</string>
+    <string name="setcat_floating_play_pos_mini">mini播放器内部</string>
     <string name="setcat_compact_mode_title">紧凑模式</string>
     <string name="setcat_compact_mode_subtitle">仅显示图标，缩小导航栏高度</string>
     <string name="setcat_show_lx_music_tab_title">启用发现页</string>
@@ -364,7 +370,7 @@
     <string name="lyrics_duet_layout_subtitle">当有对唱歌词时并排显示。</string>
     <string name="lyrics_background_vocals_title">和声显示</string>
     <string name="lyrics_background_vocals_subtitle">当有和声歌词时显示。</string>
-    <string name="setcat_lyrics_blur_requires_animated">需要先启用水动效歌词。</string>
+    <string name="setcat_lyrics_blur_requires_animated">需要先启用动画歌词。</string>
     <string name="setcat_playback_behavior">播放行为</string>
     <string name="setcat_previous_button_title">上一曲按钮</string>
     <string name="setcat_previous_button_description">选择上一曲按钮是重启当前歌曲还是直接跳到上一首。</string>

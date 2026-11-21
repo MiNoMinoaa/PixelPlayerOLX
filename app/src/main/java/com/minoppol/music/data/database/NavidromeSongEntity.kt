@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.minoppol.music.data.model.Song
+import com.minoppol.music.data.navidrome.NavidromeSongUri
 import com.minoppol.music.data.navidrome.model.NavidromeSong
 
 /**
@@ -73,7 +74,7 @@ fun NavidromeSongEntity.toSong(): Song {
         album = album,
         albumId = -1L,
         path = path,
-        contentUriString = "navidrome://$navidromeId",
+        contentUriString = NavidromeSongUri.build(navidromeId),
         albumArtUriString = coverArtId?.let { "navidrome_cover://$it" },
         duration = duration,
         genre = genre,

@@ -56,6 +56,7 @@ import coil.size.Size
 import com.minoppol.music.data.lxmusic.LxSources
 import com.minoppol.music.data.model.Song
 import com.minoppol.music.presentation.components.AutoScrollingText
+import com.minoppol.music.presentation.components.SwipeToQueueBox
 import com.minoppol.music.presentation.components.ShimmerBox
 import androidx.compose.ui.res.stringResource
 import com.minoppol.music.R
@@ -105,6 +106,7 @@ fun EnhancedSongListItem(
     showMoreOptionsButton: Boolean = true,
     showSourceTag: Boolean = false,
     onLongPress: () -> Unit = {},
+    onSwipeToQueue: (() -> Unit)? = null,
     onMoreOptionsClick: (Song) -> Unit,
     onClick: () -> Unit
 ) {
@@ -240,9 +242,12 @@ fun EnhancedSongListItem(
                 )
             }
         }
-    } else {
+    } else SwipeToQueueBox(
+        onSwipe = onSwipeToQueue?.takeUnless { isSelectionMode },
+        modifier = modifier
+    ) { rowModifier ->
         Surface(
-            modifier = modifier
+            modifier = rowModifier
                 .fillMaxWidth()
                 .scale(selectionScale)
                 .clip(surfaceShape)

@@ -213,6 +213,9 @@ import com.minoppol.music.presentation.components.LibrarySortBottomSheet
 import com.minoppol.music.data.lxmusic.LxSources
 import com.minoppol.music.presentation.components.MiniPlayerHeight
 import com.minoppol.music.presentation.components.ExpressiveScrollBar
+import com.minoppol.music.presentation.components.animatedScrollbarInset
+import com.minoppol.music.ui.theme.LocalShowScrollbar
+import com.minoppol.music.presentation.components.rememberSwipeToQueue
 import com.minoppol.music.presentation.components.SmartImage
 import com.minoppol.music.presentation.components.SmartImageListTargetSize
 import com.minoppol.music.presentation.components.resolveNavBarOccupiedHeight
@@ -293,6 +296,7 @@ fun LxMusicScreen(
     val loadState by viewModel.loadState.collectAsStateWithLifecycle()
 
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     LaunchedEffect(stablePlayerState.currentSong?.id) {
         val current = stablePlayerState.currentSong
         viewModel.onPlaybackSongChanged(current?.id, current)
@@ -368,29 +372,8 @@ fun LxMusicScreen(
     val platformOrder by viewModel.platformOrder.collectAsStateWithLifecycle()
 
     @Composable
-    fun platformName(source: String): String {
-        val aliasResId = when (source) {
-            "wy" -> R.string.lx_source_alias_netease
-            "kw" -> R.string.lx_source_alias_kuwo
-            "tx" -> R.string.lx_source_alias_qq
-            "kg" -> R.string.lx_source_alias_kugou
-            else -> null
-        }
-        val originalResId = when (source) {
-            "wy" -> R.string.lx_source_netease
-            "kw" -> R.string.lx_source_kuwo
-            "tx" -> R.string.lx_source_qq
-            "kg" -> R.string.lx_source_kugou
-            else -> null
-        }
-        return if (platformNameStyle == "alias" && aliasResId != null) {
-            stringResource(aliasResId)
-        } else if (originalResId != null) {
-            stringResource(originalResId)
-        } else {
-            source
-        }
-    }
+    fun platformName(source: String): String =
+        com.minoppol.music.presentation.components.lxSourceDisplayName(source, platformNameStyle)
 
     val orderedSearchTabs = remember(platformOrder) {
         val orderMap = platformOrder.withIndex().associate { it.value to it.index }
@@ -838,7 +821,7 @@ fun LxMusicScreen(
                                         }
                                         LxSources.KUGOU -> {
                                             mineNickname = kugouNickname
-                                            mineAvatar = kugouAvatar
+                                            mineAvatar = if (kugouCookieValid) kugouAvatar else null
                                             mineVipType = kugouVipType
                                             mineShowFollow = kugouLoggedIn && viewModel.accountWritesEnabled
                                             mineLogout = { viewModel.logoutKugou() }
@@ -1615,7 +1598,7 @@ fun LxMusicScreen(
                             PlatformLoginRow(
                                 title = platformName("kg"),
                                 statusText = platformStatusText(kugouCookie, kugouCookieValid, kugouNickname, appLoggedIn = kugouLoggedIn),
-                                avatarUrl = if (kugouLoggedIn) kugouAvatar else null,
+                                avatarUrl = if (kugouLoggedIn && kugouCookieValid) kugouAvatar else null,
                                 trailing = {
                                     Icon(Icons.Rounded.ChevronRight, contentDescription = null,
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
@@ -2949,6 +2932,7 @@ private fun LxBoardPage(
     multiSelectionState: MultiSelectionStateHolder = MultiSelectionStateHolder(),
     onSelectionOptionsClick: () -> Unit = {},
 ) {
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     val listState = rememberLazyListState()
     val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
     val boardQueueFallback = stringResource(R.string.lx_tab_board)
@@ -3026,7 +3010,7 @@ private fun LxBoardPage(
                     .lxVerticalDragGate(onScrollingChange),
                 contentPadding = PaddingValues(
                     start = 12.dp,
-                    end = if (listState.canScrollForward || listState.canScrollBackward) 22.dp else 12.dp,
+                    end = animatedScrollbarInset(LocalShowScrollbar.current && (listState.canScrollForward || listState.canScrollBackward), 22.dp, 12.dp),
                     bottom = bottomBarHeightDp + MiniPlayerHeight + 16.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -3046,6 +3030,7 @@ private fun LxBoardPage(
                         selectionIndex = selectionIndex,
                         onLongPress = { onSongLongPress(song) },
                         onMoreOptionsClick = { onSongMoreOptions(song) },
+                        onSwipeToQueue = swipeToQueue?.let { { it(uiSong) } },
                         onClick = {
                             if (isSelectionMode) {
                                 onSongSelectionToggle(song)
@@ -3252,6 +3237,7 @@ private fun LxPlaylistPage(
     onSelectionOptionsClick: () -> Unit = {},
 ) {
     val playlistListState = rememberLazyListState()
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     val detailListState = rememberLazyListState()
     val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
     val listState = if (browseState.selectedPlaylist != null) detailListState else playlistListState
@@ -3350,7 +3336,7 @@ private fun LxPlaylistPage(
                     .lxVerticalDragGate(onScrollingChange),
                 contentPadding = PaddingValues(
                     start = 12.dp,
-                    end = if (listState.canScrollForward || listState.canScrollBackward) 22.dp else 12.dp,
+                    end = animatedScrollbarInset(LocalShowScrollbar.current && (listState.canScrollForward || listState.canScrollBackward), 22.dp, 12.dp),
                     bottom = bottomBarHeightDp + MiniPlayerHeight + 16.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -3390,6 +3376,7 @@ private fun LxPlaylistPage(
                             selectionIndex = selectionIndex,
                             onLongPress = { onSongLongPress(song) },
                             onMoreOptionsClick = { onSongMoreOptions(song) },
+                            onSwipeToQueue = swipeToQueue?.let { { it(uiSong) } },
                             onClick = {
                                 if (isSelectionMode) {
                                     onSongSelectionToggle(song)
@@ -3789,6 +3776,7 @@ private fun LxSearchPage(
     multiSelectionState: MultiSelectionStateHolder = MultiSelectionStateHolder(),
     onSelectionOptionsClick: () -> Unit = {},
 ) {
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     val listState = rememberLazyListState()
     val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
     val searchResultsQueueName = stringResource(R.string.lx_text_search_results)
@@ -3869,7 +3857,7 @@ private fun LxSearchPage(
                     .lxVerticalDragGate(onScrollingChange),
                 contentPadding = PaddingValues(
                     start = 12.dp,
-                    end = if (listState.canScrollForward || listState.canScrollBackward) 22.dp else 12.dp,
+                    end = animatedScrollbarInset(LocalShowScrollbar.current && (listState.canScrollForward || listState.canScrollBackward), 22.dp, 12.dp),
                     top = hm.searchHeaderHeight + 4.dp,
                     bottom = bottomBarHeightDp + MiniPlayerHeight + 16.dp,
                 ),
@@ -3983,6 +3971,7 @@ private fun LxSearchPage(
                         selectionIndex = selectionIndex,
                         onLongPress = { onSongLongPress(song) },
                         onMoreOptionsClick = { onSongMoreOptions(song) },
+                        onSwipeToQueue = swipeToQueue?.let { { it(uiSong) } },
                         onClick = {
                             if (isSelectionMode) {
                                 onSongSelectionToggle(song)
@@ -4654,8 +4643,12 @@ internal fun LxSearchArtistPage(
 ) {
     val artist = state.artist ?: return
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     val showShuffleFab by playerViewModel.lxBoardShowShuffleFab.collectAsStateWithLifecycle()
     val showPlayAllFab by playerViewModel.lxBoardShowPlayAllFab.collectAsStateWithLifecycle()
+    val showSortFab by playerViewModel.lxDiscoverShowSortFab.collectAsStateWithLifecycle()
+    var artistSortOption by remember { mutableStateOf<SortOption>(SortOption.SongDefaultOrder) }
+    var showArtistSortSheet by remember { mutableStateOf(false) }
     state.selectedAlbum?.let { album ->
         BackHandler {
             if (isSelectionMode) multiSelectionState.clearSelection()
@@ -4667,6 +4660,9 @@ internal fun LxSearchArtistPage(
             state.albumSongs.map {
                 com.minoppol.music.data.lxmusic.LxSongMapper.unifiedSongId(it.source, it.songmid).toString()
             }
+        }
+        val sortedAlbumSongs = remember(state.albumSongs, artistSortOption) {
+            sortLxSongs(state.albumSongs, artistSortOption)
         }
         val heroContext = LocalContext.current
         val albumChipScope = rememberCoroutineScope()
@@ -4750,7 +4746,7 @@ internal fun LxSearchArtistPage(
                     contentPadding = PaddingValues(
                         top = albumMinHeaderDp + 8.dp,
                         start = 12.dp,
-                        end = if (showAlbumScrollBar) 22.dp else 12.dp,
+                        end = animatedScrollbarInset(LocalShowScrollbar.current && showAlbumScrollBar, 22.dp, 12.dp),
                         bottom = albumBottomPadding,
                     ),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -4874,17 +4870,18 @@ internal fun LxSearchArtistPage(
                         }
                     }
                     mineSongItems(
-                        songs = state.albumSongs,
+                        songs = sortedAlbumSongs,
                         loading = state.albumLoading,
                         error = null,
                         stablePlayerState = stablePlayerState,
-                        playLxSong = { song -> playPageSong(song, state.albumSongs, album.name) },
+                        playLxSong = { song -> playPageSong(song, sortedAlbumSongs, album.name) },
                         onSongMoreOptions = onSongMoreOptions,
                         isSelectionMode = isSelectionMode,
                         selectedSongIds = selectedSongIds,
                         onSongLongPress = onSongLongPress,
                         onSongSelectionToggle = onSongSelectionToggle,
                         getSelectionIndex = getSelectionIndex,
+                        onSwipeToQueue = swipeToQueue,
                     )
                 }
                 if (showAlbumScrollBar) {
@@ -4949,7 +4946,31 @@ internal fun LxSearchArtistPage(
                             .padding(end = 22.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
                     )
                 }
+                if (state.albumSongs.isNotEmpty() && !isSelectionMode &&
+                    (showShuffleFab || showPlayAllFab || showSortFab)
+                ) {
+                    LxBottomPlayActions(
+                        showShuffle = showShuffleFab,
+                        showPlayAll = showPlayAllFab,
+                        showSort = showSortFab,
+                        onSort = { showArtistSortSheet = true },
+                        onShuffle = { shuffleAllPlaylist(sortedAlbumSongs, album.name) },
+                        onPlayAll = { playAllPlaylist(sortedAlbumSongs, album.name) },
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(start = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
+                    )
+                }
             }
+        }
+        if (showArtistSortSheet) {
+            LibrarySortBottomSheet(
+                title = stringResource(R.string.presentation_batch_d_sort_by),
+                options = LxDiscoverSortOptions,
+                selectedOption = artistSortOption,
+                onDismiss = { showArtistSortSheet = false },
+                onOptionSelected = { artistSortOption = it },
+            )
         }
         if (albumArtistCandidates.isNotEmpty()) {
             com.minoppol.music.presentation.components.LxArtistPickerBottomSheet(
@@ -5010,6 +5031,9 @@ internal fun LxSearchArtistPage(
         else -> LxHeroPlayState.Idle
     }
     val heroSongs = if (state.tab == "songs") state.songs else emptyList()
+    val sortedArtistSongs = remember(state.songs, artistSortOption) {
+        sortLxSongs(state.songs, artistSortOption)
+    }
     val playNextLabel = stringResource(R.string.cd_play_next_in_queue)
     val addToQueueLabel = stringResource(R.string.action_add_to_queue)
     val heroMenuActions = remember(heroSongs, playNextLabel, addToQueueLabel) {
@@ -5060,7 +5084,7 @@ internal fun LxSearchArtistPage(
                 contentPadding = PaddingValues(
                     top = artistMinHeaderDp + 8.dp,
                     start = 12.dp,
-                    end = if (showArtistScrollBar) 22.dp else 12.dp,
+                    end = animatedScrollbarInset(LocalShowScrollbar.current && showArtistScrollBar, 22.dp, 12.dp),
                     bottom = artistBottomPadding,
                 ),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -5170,17 +5194,18 @@ internal fun LxSearchArtistPage(
                 }
                 if (state.tab == "songs") {
                     mineSongItems(
-                        songs = state.songs,
+                        songs = sortedArtistSongs,
                         loading = state.loading,
                         error = state.error,
                         stablePlayerState = stablePlayerState,
-                        playLxSong = { song -> playPageSong(song, state.songs, artist.name) },
+                        playLxSong = { song -> playPageSong(song, sortedArtistSongs, artist.name) },
                         onSongMoreOptions = onSongMoreOptions,
                         isSelectionMode = isSelectionMode,
                         selectedSongIds = selectedSongIds,
                         onSongLongPress = onSongLongPress,
                         onSongSelectionToggle = onSongSelectionToggle,
                         getSelectionIndex = getSelectionIndex,
+                        onSwipeToQueue = swipeToQueue,
                     )
                     if (!state.loading && state.songs.isNotEmpty() &&
                         (state.songsHasMore || state.songsLoadingMore)
@@ -5261,6 +5286,22 @@ internal fun LxSearchArtistPage(
                         .padding(end = 22.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
                 )
             }
+
+            if (state.tab == "songs" && state.songs.isNotEmpty() && !isSelectionMode &&
+                (showShuffleFab || showPlayAllFab || showSortFab)
+            ) {
+                LxBottomPlayActions(
+                    showShuffle = showShuffleFab,
+                    showPlayAll = showPlayAllFab,
+                    showSort = showSortFab,
+                    onSort = { showArtistSortSheet = true },
+                    onShuffle = { shuffleAllPlaylist(sortedArtistSongs, artist.name) },
+                    onPlayAll = { playAllPlaylist(sortedArtistSongs, artist.name) },
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
+                )
+            }
         }
     }
 }
@@ -5289,6 +5330,7 @@ internal fun LxSearchAlbumPage(
 ) {
     val album = state.album ?: return
     val listState = rememberLazyListState()
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     val chipScope = rememberCoroutineScope()
     var albumArtistCandidates by remember {
         mutableStateOf<List<com.minoppol.music.data.lxmusic.LxArtist>>(emptyList())
@@ -5296,8 +5338,14 @@ internal fun LxSearchAlbumPage(
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
     val showShuffleFab by playerViewModel.lxBoardShowShuffleFab.collectAsStateWithLifecycle()
     val showPlayAllFab by playerViewModel.lxBoardShowPlayAllFab.collectAsStateWithLifecycle()
+    val showSortFab by playerViewModel.lxDiscoverShowSortFab.collectAsStateWithLifecycle()
+    var albumSortOption by remember { mutableStateOf<SortOption>(SortOption.SongDefaultOrder) }
+    var showAlbumSortSheet by remember { mutableStateOf(false) }
     val songIds = remember(state.songs) {
         state.songs.map { com.minoppol.music.data.lxmusic.LxSongMapper.unifiedSongId(it.source, it.songmid).toString() }
+    }
+    val sortedAlbumPageSongs = remember(state.songs, albumSortOption) {
+        sortLxSongs(state.songs, albumSortOption)
     }
     val collectKind = LxMusicViewModel.CollectKind.ALBUM
     LaunchedEffect(album.id) { viewModel.ensureCollectDataLoaded() }
@@ -5380,7 +5428,7 @@ internal fun LxSearchAlbumPage(
                 contentPadding = PaddingValues(
                     top = albumMinHeaderDp + 8.dp,
                     start = 12.dp,
-                    end = if (showAlbumScrollBar) 22.dp else 12.dp,
+                    end = animatedScrollbarInset(LocalShowScrollbar.current && showAlbumScrollBar, 22.dp, 12.dp),
                     bottom = albumBottomPadding,
                 ),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -5504,17 +5552,18 @@ internal fun LxSearchAlbumPage(
                     }
                 }
                 mineSongItems(
-                    songs = state.songs,
+                    songs = sortedAlbumPageSongs,
                     loading = state.loading,
                     error = state.error,
                     stablePlayerState = stablePlayerState,
-                    playLxSong = { song -> playPageSong(song, state.songs, album.name) },
+                    playLxSong = { song -> playPageSong(song, sortedAlbumPageSongs, album.name) },
                     onSongMoreOptions = onSongMoreOptions,
                     isSelectionMode = isSelectionMode,
                     selectedSongIds = selectedSongIds,
                     onSongLongPress = onSongLongPress,
                     onSongSelectionToggle = onSongSelectionToggle,
                     getSelectionIndex = getSelectionIndex,
+                    onSwipeToQueue = swipeToQueue,
                 )
             }
             LxCollapsingDetailHeader(
@@ -5577,6 +5626,30 @@ internal fun LxSearchAlbumPage(
                         .padding(end = 22.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
                 )
             }
+            if (state.songs.isNotEmpty() && !isSelectionMode &&
+                (showShuffleFab || showPlayAllFab || showSortFab)
+            ) {
+                LxBottomPlayActions(
+                    showShuffle = showShuffleFab,
+                    showPlayAll = showPlayAllFab,
+                    showSort = showSortFab,
+                    onSort = { showAlbumSortSheet = true },
+                    onShuffle = { shuffleAllPlaylist(sortedAlbumPageSongs, album.name) },
+                    onPlayAll = { playAllPlaylist(sortedAlbumPageSongs, album.name) },
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = 20.dp, bottom = bottomBarHeightDp + MiniPlayerHeight + ListExtraBottomGap + 14.dp),
+                )
+            }
+        }
+        if (showAlbumSortSheet) {
+            LibrarySortBottomSheet(
+                title = stringResource(R.string.presentation_batch_d_sort_by),
+                options = LxDiscoverSortOptions,
+                selectedOption = albumSortOption,
+                onDismiss = { showAlbumSortSheet = false },
+                onOptionSelected = { albumSortOption = it },
+            )
         }
         if (albumArtistCandidates.isNotEmpty()) {
             com.minoppol.music.presentation.components.LxArtistPickerBottomSheet(

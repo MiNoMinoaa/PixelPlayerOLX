@@ -84,6 +84,7 @@ import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.lxmusic.LxQualities
 import com.minoppol.music.data.stats.StatsTimeRange
 import com.minoppol.music.presentation.components.MiniPlayerHeight
+import com.minoppol.music.presentation.components.rememberSwipeToQueue
 import com.minoppol.music.presentation.components.MultiSelectionBottomSheet
 import com.minoppol.music.presentation.components.PlaylistBottomSheet
 import com.minoppol.music.presentation.components.RecentlyPlayedRangeSelector
@@ -127,6 +128,7 @@ fun RecentlyPlayedScreen(
     showBackButton: Boolean = true,
     showSettingsButton: Boolean = false
 ) = traceSection("RecentlyPlayedScreen.Composition") {
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     val context = LocalContext.current
     val queueRecentlyPlayed = stringResource(R.string.presentation_batch_b_queue_recently_played)
     val shuffleLabel = stringResource(R.string.shortcut_shuffle_short)
@@ -330,6 +332,7 @@ fun RecentlyPlayedScreen(
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                     multiSelectionState.toggleSelection(item.song)
                                 },
+                                onSwipeToQueue = swipeToQueue?.let { { it(item.song) } },
                                 onClick = {
                                     if (isSelectionMode) {
                                         multiSelectionState.toggleSelection(item.song)

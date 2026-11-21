@@ -18,6 +18,7 @@ import com.minoppol.music.data.database.SongEntity
 import com.minoppol.music.data.database.SourceType
 import com.minoppol.music.data.database.toSong
 import com.minoppol.music.data.model.Song
+import com.minoppol.music.data.navidrome.NavidromeSongUri
 import com.minoppol.music.data.navidrome.model.NavidromeAuthMethod
 import com.minoppol.music.data.navidrome.model.NavidromeCredentials
 import com.minoppol.music.data.navidrome.model.NavidromeMusicFolder
@@ -844,7 +845,7 @@ class NavidromeRepository @Inject constructor(
                     albumArtistId = albumArtistId,
                     albumName = albumName,
                     albumId = albumId,
-                    contentUriString = "navidrome://${navidromeSong.navidromeId}",
+                    contentUriString = NavidromeSongUri.build(navidromeSong.navidromeId),
                     albumArtUriString = navidromeSong.coverArtId?.takeIf { it.isNotBlank() }
                         ?.let { "navidrome_cover://$it" },
                     duration = navidromeSong.duration,
@@ -1044,7 +1045,7 @@ fun NavidromeSong.toSong(): Song {
         album = album,
         albumId = -1L,
         path = path,
-        contentUriString = "navidrome://$id",
+        contentUriString = NavidromeSongUri.build(id),
         albumArtUriString = coverArt?.let { "navidrome_cover://$it" },
         duration = duration,
         genre = genre,

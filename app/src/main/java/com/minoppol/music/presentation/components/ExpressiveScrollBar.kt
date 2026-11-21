@@ -236,6 +236,8 @@ fun ExpressiveScrollBar(
     dragLabelSize: Dp = 40.dp,
     dragLabelGap: Dp = 10.dp
 ) {
+    if (!com.minoppol.music.ui.theme.LocalShowScrollbar.current) return
+
     val listMetricsTracker = remember(listState) { AxisObservationTracker() }
     val gridMetricsTracker = remember(gridState) { AxisObservationTracker() }
     var isPressed by remember { mutableStateOf(false) }

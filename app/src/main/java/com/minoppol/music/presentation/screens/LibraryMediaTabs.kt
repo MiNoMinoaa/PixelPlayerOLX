@@ -58,6 +58,8 @@ import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.model.SortOption
 import com.minoppol.music.data.model.StorageFilter
 import com.minoppol.music.presentation.components.ExpressiveScrollBar
+import com.minoppol.music.presentation.components.animatedScrollbarInset
+import com.minoppol.music.ui.theme.LocalShowScrollbar
 import com.minoppol.music.presentation.components.MiniPlayerHeight
 import com.minoppol.music.presentation.components.PlaylistContainer
 import com.minoppol.music.presentation.components.albumFastScrollLabel
@@ -323,7 +325,7 @@ fun LibraryAlbumsTab(
                         if (isListView) {
                             LazyColumn(
                                 modifier = Modifier
-                                    .padding(start = 14.dp, end = if (listState.canScrollForward || listState.canScrollBackward) 24.dp else 14.dp, bottom = 6.dp)
+                                    .padding(start = 14.dp, end = animatedScrollbarInset(LocalShowScrollbar.current && (listState.canScrollForward || listState.canScrollBackward), 24.dp, 14.dp), bottom = 6.dp)
                                     .clip(
                                         RoundedCornerShape(
                                             topStart = 16.dp,
@@ -395,7 +397,7 @@ fun LibraryAlbumsTab(
                         } else {
                             LazyVerticalGrid(
                                 modifier = Modifier
-                                    .padding(start = 14.dp, end = if (gridState.canScrollForward || gridState.canScrollBackward) 24.dp else 14.dp, bottom = 6.dp)
+                                    .padding(start = 14.dp, end = animatedScrollbarInset(LocalShowScrollbar.current && (gridState.canScrollForward || gridState.canScrollBackward), 24.dp, 14.dp), bottom = 6.dp)
                                     .clip(
                                         RoundedCornerShape(
                                             topStart = 16.dp,
@@ -618,7 +620,7 @@ fun LibraryArtistsTab(
                     Box(modifier = Modifier.fillMaxSize()) {
                         LazyColumn(
                             modifier = Modifier
-                                .padding(start = 12.dp, end = if (listState.canScrollForward || listState.canScrollBackward) 22.dp else 12.dp, bottom = 6.dp)
+                                .padding(start = 12.dp, end = animatedScrollbarInset(LocalShowScrollbar.current && (listState.canScrollForward || listState.canScrollBackward), 22.dp, 12.dp), bottom = 6.dp)
                                 .clip(
                                     RoundedCornerShape(
                                         topStart = 26.dp,

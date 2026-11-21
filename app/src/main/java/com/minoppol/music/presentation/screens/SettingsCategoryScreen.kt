@@ -81,6 +81,7 @@ import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.Science
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.rounded.UnfoldMore
 import androidx.compose.material.icons.rounded.Update
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
@@ -163,8 +164,10 @@ import com.minoppol.music.data.preferences.AppLanguage
 import com.minoppol.music.data.preferences.AppThemeMode
 import com.minoppol.music.data.preferences.CollagePattern
 import com.minoppol.music.data.preferences.CarouselStyle
+import com.minoppol.music.data.preferences.SwipeToQueueAction
 import com.minoppol.music.data.preferences.LaunchTab
 import com.minoppol.music.data.preferences.LibraryNavigationMode
+import com.minoppol.music.data.preferences.FloatingPlayButtonPosition
 import com.minoppol.music.data.preferences.NavBarStyle
 import com.minoppol.music.data.preferences.ThemePreference
 import com.minoppol.music.data.model.Song
@@ -674,6 +677,14 @@ fun SettingsCategoryScreen(
                                     leadingIcon = { Icon(painterResource(R.drawable.rounded_rounded_corner_24), null, tint = MaterialTheme.colorScheme.secondary) },
                                     modifier = Modifier.settingHighlight("item_appearance_smooth_corners", highlightKey)
                                 )
+                                SwitchSettingItem(
+                                    title = stringResource(R.string.setcat_show_scrollbar_title),
+                                    subtitle = stringResource(R.string.setcat_show_scrollbar_subtitle),
+                                    checked = uiState.showScrollbar,
+                                    onCheckedChange = { settingsViewModel.setShowScrollbar(it) },
+                                    leadingIcon = { Icon(Icons.Rounded.UnfoldMore, null, tint = MaterialTheme.colorScheme.secondary) },
+                                    modifier = Modifier.settingHighlight("item_appearance_show_scrollbar", highlightKey)
+                                )
                             }
 
                             SettingsSubsection(title = stringResource(R.string.setcat_now_playing)) {
@@ -754,6 +765,20 @@ fun SettingsCategoryScreen(
                                     leadingIcon = { Icon(Icons.Outlined.Style, null, tint = MaterialTheme.colorScheme.secondary) },
                                     modifier = Modifier.settingHighlight("item_appearance_navbar_style", highlightKey)
                                 )
+                                if (uiState.navBarStyle == NavBarStyle.FLOATING) {
+                                    ThemeSelectorItem(
+                                        label = stringResource(R.string.setcat_floating_play_pos_label),
+                                        description = stringResource(R.string.setcat_floating_play_pos_desc),
+                                        options = mapOf(
+                                            FloatingPlayButtonPosition.DOCK to stringResource(R.string.setcat_floating_play_pos_dock),
+                                            FloatingPlayButtonPosition.MINI_PLAYER to stringResource(R.string.setcat_floating_play_pos_mini)
+                                        ),
+                                        selectedKey = uiState.floatingPlayButtonPosition,
+                                        onSelectionChanged = { settingsViewModel.setFloatingPlayButtonPosition(it) },
+                                        leadingIcon = { Icon(painterResource(R.drawable.rounded_play_arrow_24), null, tint = MaterialTheme.colorScheme.secondary) },
+                                        modifier = Modifier.settingHighlight("item_appearance_floating_play_pos", highlightKey)
+                                    )
+                                }
                                 SwitchSettingItem(
                                     title = stringResource(R.string.setcat_compact_mode_title),
                                     subtitle = stringResource(R.string.setcat_compact_mode_subtitle),
@@ -1138,6 +1163,38 @@ fun SettingsCategoryScreen(
                                     onCheckedChange = { settingsViewModel.setMiniPlayerSwipeToSkip(it) },
                                     leadingIcon = { Icon(painterResource(R.drawable.rounded_skip_next_24), null, tint = MaterialTheme.colorScheme.secondary) },
                                     modifier = Modifier.settingHighlight("item_behavior_mini_swipe_skip", highlightKey)
+                                )
+                            }
+                            SettingsSubsection(
+                                title = stringResource(R.string.setcat_song_lists)
+                            ) {
+                                ThemeSelectorItem(
+                                    label = stringResource(R.string.setcat_swipe_to_queue_title),
+                                    description = stringResource(R.string.setcat_swipe_to_queue_description),
+                                    options = linkedMapOf(
+                                        SwipeToQueueAction.ADD_TO_QUEUE.storageKey to
+                                            stringResource(R.string.setcat_swipe_to_queue_add),
+                                        SwipeToQueueAction.PLAY_NEXT.storageKey to
+                                            stringResource(R.string.setcat_swipe_to_queue_next),
+                                        SwipeToQueueAction.OFF.storageKey to
+                                            stringResource(R.string.setcat_swipe_to_queue_off)
+                                    ),
+                                    optionDescriptions = mapOf(
+                                        SwipeToQueueAction.ADD_TO_QUEUE.storageKey to
+                                            stringResource(R.string.setcat_swipe_to_queue_add_description),
+                                        SwipeToQueueAction.PLAY_NEXT.storageKey to
+                                            stringResource(R.string.setcat_swipe_to_queue_next_description),
+                                        SwipeToQueueAction.OFF.storageKey to
+                                            stringResource(R.string.setcat_swipe_to_queue_off_description)
+                                    ),
+                                    selectedKey = uiState.swipeToQueueAction.storageKey,
+                                    onSelectionChanged = { key ->
+                                        settingsViewModel.setSwipeToQueueAction(
+                                            SwipeToQueueAction.fromStorageKey(key)
+                                        )
+                                    },
+                                    leadingIcon = { Icon(painterResource(R.drawable.rounded_queue_music_24), null, tint = MaterialTheme.colorScheme.secondary) },
+                                    modifier = Modifier.settingHighlight("item_behavior_swipe_to_queue", highlightKey)
                                 )
                             }
                             SettingsSubsection(

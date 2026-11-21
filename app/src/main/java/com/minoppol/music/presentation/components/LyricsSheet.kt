@@ -57,7 +57,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
+
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.drawscope.clipRect
@@ -1514,6 +1514,7 @@ fun LyricLineRow(
         animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing),
         label = "lineBlur"
     )
+    val lineBlurEffectCache = remember { BlurEffectCache() }
 
     // Keep line height stable while the visual focus moves. Scaling happens in a graphics layer,
     // so neither the word pulse nor the active-line transition can make the lazy list jump.
@@ -1542,8 +1543,10 @@ fun LyricLineRow(
                     },
                     pivotFractionY = 0.5f
                 )
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    renderEffect = lineBlurEffectCache.get(blurRadius.toPx().roundToInt().toFloat())
+                }
             }
-            .then(if (blurRadius > 0.dp) Modifier.blur(blurRadius) else Modifier)
     } else baseModifier
 
     val translationText = line.translation

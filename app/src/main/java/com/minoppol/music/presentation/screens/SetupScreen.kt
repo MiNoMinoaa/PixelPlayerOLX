@@ -633,7 +633,8 @@ fun WelcomePage() {
         ){
             MaterialYouVectorDrawable(
                 modifier = Modifier.fillMaxSize(),
-                drawableResId = R.drawable.welcome_art
+                drawableResId = R.drawable.welcome_art,
+                contentScale = androidx.compose.ui.layout.ContentScale.FillBounds
             )
             SineWaveLine(
                 modifier = Modifier

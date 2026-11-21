@@ -36,6 +36,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
@@ -67,9 +69,31 @@ class JellyfinRepository @Inject constructor(
         private const val JELLYFIN_GENRE = "Jellyfin"
         private const val JELLYFIN_PLAYLIST_PREFIX = "jellyfin_playlist:"
         private const val LIBRARY_PLAYLIST_ID = "__library__"
+        private const val KEY_LAST_FULL_SYNC = "last_full_sync"
+        private const val KEY_SONG_CACHE_REVISION = "song_cache_revision"
+        private const val KEY_UNIFIED_LIBRARY_STATE = "unified_library_state"
     }
 
     private val prefs: SharedPreferences = createCredentialPrefs()
+
+    var lastFullSyncTime: Long
+        get() = prefs.getLong(KEY_LAST_FULL_SYNC, 0L)
+        private set(value) = prefs.edit().putLong(KEY_LAST_FULL_SYNC, value).apply()
+
+    val isFullSyncDue: Boolean
+        get() = isJellyfinFullSyncDue(lastFullSyncTime, System.currentTimeMillis())
+
+    private val songCacheRevision: Long
+        get() = prefs.getLong(KEY_SONG_CACHE_REVISION, 0L)
+
+    private val songCacheMutex = Mutex()
+
+    private suspend fun <T> writeSongCache(write: suspend () -> T): T = songCacheMutex.withLock {
+        withContext(Dispatchers.IO) {
+            prefs.edit().putLong(KEY_SONG_CACHE_REVISION, songCacheRevision + 1).commit()
+        }
+        write()
+    }
 
     private fun createEncryptedPrefs(): SharedPreferences {
         val masterKey = MasterKey.Builder(context)
@@ -274,7 +298,7 @@ class JellyfinRepository @Inject constructor(
                 if (stalePlaylists.isNotEmpty()) {
                     Timber.d("$TAG: Removing ${stalePlaylists.size} stale playlists")
                     stalePlaylists.forEach { stale ->
-                        dao.deleteSongsByPlaylist(stale.id)
+                        writeSongCache { dao.deleteSongsByPlaylist(stale.id) }
                         dao.deletePlaylist(stale.id)
                         deleteAppPlaylistForJellyfinPlaylist(stale.id)
                     }
@@ -320,12 +344,14 @@ class JellyfinRepository @Inject constructor(
                 }
 
                 if (entities.isNotEmpty()) {
-                    dao.deleteSongsByPlaylist(playlistId)
-                    dao.insertSongs(entities)
+                    writeSongCache {
+                        dao.deleteSongsByPlaylist(playlistId)
+                        dao.insertSongs(entities)
+                    }
                     val playlistName = dao.getPlaylistById(playlistId)?.name ?: "Playlist"
                     updateAppPlaylistForJellyfinPlaylist(playlistId, playlistName, entities)
                 } else if (songJsons.isEmpty()) {
-                    dao.deleteSongsByPlaylist(playlistId)
+                    writeSongCache { dao.deleteSongsByPlaylist(playlistId) }
                     val playlistName = dao.getPlaylistById(playlistId)?.name ?: "Playlist"
                     updateAppPlaylistForJellyfinPlaylist(playlistId, playlistName, emptyList())
                 }
@@ -401,7 +427,7 @@ class JellyfinRepository @Inject constructor(
                 val uniqueSongs = allSongs.distinctBy { it.id }
                 val entities = uniqueSongs.map { song -> song.toEntity(LIBRARY_PLAYLIST_ID) }
 
-                dao.replaceLibrarySongs(entities)
+                writeSongCache { dao.replaceLibrarySongs(entities) }
 
                 Timber.d("$TAG: Synced ${entities.size} library songs")
                 Result.success(entities.size)
@@ -447,11 +473,17 @@ class JellyfinRepository @Inject constructor(
                 )
             }
 
+            var unifiedLibrarySynced = false
             try {
                 syncUnifiedLibrarySongsFromJellyfin()
+                unifiedLibrarySynced = true
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 Timber.e(e, "$TAG: Failed to sync unified library")
+            }
+
+            if (libResult.isSuccess && failedPlaylistCount == 0 && unifiedLibrarySynced) {
+                lastFullSyncTime = System.currentTimeMillis()
             }
 
             Result.success(
@@ -473,7 +505,7 @@ class JellyfinRepository @Inject constructor(
     }
 
     suspend fun deletePlaylist(playlistId: String) {
-        dao.clearSongsByPlaylist(playlistId)
+        writeSongCache { dao.clearSongsByPlaylist(playlistId) }
         dao.deletePlaylist(playlistId)
         syncUnifiedLibrarySongsFromJellyfin()
     }
@@ -536,8 +568,28 @@ class JellyfinRepository @Inject constructor(
         }
     }
 
-    suspend fun syncUnifiedLibrarySongsFromJellyfin() {
-        val jellyfinSongs = dao.getAllJellyfinSongsList()
+    suspend fun syncUnifiedLibrarySongsFromJellyfinIfChanged() = songCacheMutex.withLock {
+        val groupByAlbumArtist = userPreferencesRepository.groupByAlbumArtistFlow.first()
+        val currentState = unifiedJellyfinLibraryState(
+            songCacheRevision = songCacheRevision,
+            groupByAlbumArtist = groupByAlbumArtist,
+            appBuild = APP_BUILD,
+            unifiedSongCount = musicDao.getJellyfinSongCount()
+        )
+        if (prefs.getString(KEY_UNIFIED_LIBRARY_STATE, null) == currentState) {
+            Timber.d("$TAG: Cached songs unchanged since the last unified library rebuild")
+            return@withLock
+        }
+        rebuildAndSaveState()
+    }
+
+    suspend fun syncUnifiedLibrarySongsFromJellyfin() = songCacheMutex.withLock {
+        rebuildAndSaveState()
+    }
+
+    private suspend fun rebuildAndSaveState() {
+        val revision = songCacheRevision
+        val jellyfinSongs = dao.getDistinctJellyfinSongs(LIBRARY_PLAYLIST_ID)
         val existingUnifiedIds = musicDao.getAllJellyfinSongIds()
 
         if (jellyfinSongs.isEmpty()) {
@@ -659,6 +711,14 @@ class JellyfinRepository @Inject constructor(
             crossRefs = crossRefs,
             deletedSongIds = deletedUnifiedIds
         )
+
+        val state = unifiedJellyfinLibraryState(
+            songCacheRevision = revision,
+            groupByAlbumArtist = groupByAlbumArtist,
+            appBuild = APP_BUILD,
+            unifiedSongCount = musicDao.getJellyfinSongCount()
+        )
+        prefs.edit().putString(KEY_UNIFIED_LIBRARY_STATE, state).apply()
     }
 
     private fun parseArtistNames(rawArtist: String): List<String> =
@@ -753,3 +813,17 @@ internal fun selectedJellyfinLibraryIds(
     val validSavedIds = savedLibraryIds.intersect(availableIds)
     return validSavedIds.ifEmpty { availableIds }
 }
+
+private val APP_BUILD = "${com.minoppol.music.BuildConfig.VERSION_CODE}-${com.minoppol.music.BuildConfig.VERSION_NAME}"
+
+internal fun unifiedJellyfinLibraryState(
+    songCacheRevision: Long,
+    groupByAlbumArtist: Boolean,
+    appBuild: String,
+    unifiedSongCount: Int
+): String = "$songCacheRevision|$groupByAlbumArtist|$appBuild|$unifiedSongCount"
+
+internal const val JELLYFIN_SYNC_THRESHOLD_MS = 24 * 60 * 60 * 1000L
+
+internal fun isJellyfinFullSyncDue(lastFullSyncMs: Long, nowMs: Long): Boolean =
+    nowMs - lastFullSyncMs > JELLYFIN_SYNC_THRESHOLD_MS

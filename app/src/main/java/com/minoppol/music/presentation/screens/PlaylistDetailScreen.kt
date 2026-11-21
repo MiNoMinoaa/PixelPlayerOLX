@@ -122,6 +122,8 @@ import com.minoppol.music.data.model.Song
 import com.minoppol.music.presentation.components.MiniPlayerHeight
 import com.minoppol.music.presentation.components.PlaylistBottomSheet
 import com.minoppol.music.presentation.components.QueuePlaylistSongItem
+import com.minoppol.music.presentation.components.SwipeToQueueBox
+import com.minoppol.music.presentation.components.rememberSwipeToQueue
 import com.minoppol.music.presentation.components.SongPickerBottomSheet
 import com.minoppol.music.presentation.components.ExpressiveScrollBar
 import com.minoppol.music.presentation.components.animatedScrollbarInset
@@ -171,6 +173,7 @@ fun PlaylistDetailScreen(
     cloudDownloadsViewModel: CloudDownloadsViewModel = hiltViewModel(),
     navController: NavController
 ) {
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     val uiState by playlistViewModel.uiState.collectAsStateWithLifecycle()
     val playerStableState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
     val hasCurrentSong by remember {
@@ -776,9 +779,14 @@ fun PlaylistDetailScreen(
                                         label = "scale"
                                     )
 
-                                    QueuePlaylistSongItem(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
+                                    SwipeToQueueBox(
+                                        onSwipe = swipeToQueue
+                                            ?.takeUnless { isReorderModeEnabled || isRemoveModeEnabled }
+                                            ?.let { { it(song) } },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) { rowModifier ->
+                                        QueuePlaylistSongItem(
+                                        modifier = rowModifier
                                             .padding(horizontal = 0.dp)
                                             .graphicsLayer {
                                                 scaleX = scale
@@ -838,6 +846,7 @@ fun PlaylistDetailScreen(
                                             }
                                         }
                                     )
+                                    }
                                 }
                             }
                         }

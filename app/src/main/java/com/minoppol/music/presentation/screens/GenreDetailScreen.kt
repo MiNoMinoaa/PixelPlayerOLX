@@ -47,6 +47,7 @@ import coil.request.ImageRequest
 import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.preferences.AlbumArtPaletteStyle
 import com.minoppol.music.presentation.components.AutoScrollingTextOnDemand
+import com.minoppol.music.presentation.components.rememberSwipeToQueue
 import com.minoppol.music.presentation.components.ExpressiveTopBarContent
 import com.minoppol.music.presentation.components.ExpressiveScrollBar
 import com.minoppol.music.presentation.components.GenreSortBottomSheet
@@ -82,6 +83,7 @@ fun GenreDetailScreen(
     viewModel: GenreDetailViewModel = hiltViewModel(),
     playlistViewModel: com.minoppol.music.presentation.viewmodel.PlaylistViewModel = hiltViewModel()
 ) {
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
     val favoriteSongIds by playerViewModel.favoriteSongIds.collectAsStateWithLifecycle()
@@ -295,6 +297,7 @@ fun GenreDetailScreen(
                                 onSongClick = { song ->
                                     playerViewModel.showAndPlaySong(song, uiState.sortedSongs, genreDisplayName)
                                 },
+                                onSwipeToQueue = swipeToQueue,
                                 onMoreOptionsClick = { song -> showSongOptionsSheet = song }
                             )
                         }
@@ -810,6 +813,7 @@ fun GenreSongItemWrapper(
     item: com.minoppol.music.presentation.viewmodel.GenreDetailListItem.SongItem,
     stablePlayerState: StablePlayerState,
     onSongClick: (Song) -> Unit,
+    onSwipeToQueue: ((Song) -> Unit)? = null,
     onMoreOptionsClick: (Song) -> Unit
 ) {
     val song = item.song
@@ -860,7 +864,8 @@ fun GenreSongItemWrapper(
                  showAlbumArt = false,
                  customShape = songItemShape,
                  onClick = { onSongClick(song) },
-                 onMoreOptionsClick = onMoreOptionsClick
+                 onMoreOptionsClick = onMoreOptionsClick,
+                 onSwipeToQueue = onSwipeToQueue?.let { { it(song) } }
              )
              
              if (isLastInAlbum) Spacer(Modifier.height(8.dp))

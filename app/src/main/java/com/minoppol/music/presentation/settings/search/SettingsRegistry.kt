@@ -271,6 +271,31 @@ object SettingsRegistry {
                 onToggle = { viewModel, checked -> viewModel.setCollageAutoRotate(checked) }
             ),
             SettingSpec(
+                id = "appearance_show_scrollbar",
+                itemKey = "item_appearance_show_scrollbar",
+                titleRes = R.string.setcat_show_scrollbar_title,
+                subtitleRes = R.string.setcat_show_scrollbar_subtitle,
+                category = SettingsCategory.APPEARANCE,
+                subscreenRoute = Screen.SettingsCategory.createRoute("appearance"),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf("scrollbar", "scroll bar", "scroll", "滚动条", "滾動條", "滚动", "显示", "顯示"),
+                getValue = { it.showScrollbar },
+                onToggle = { viewModel, checked -> viewModel.setShowScrollbar(checked) }
+            ),
+            SettingSpec(
+                id = "appearance_floating_play_pos",
+                itemKey = "item_appearance_floating_play_pos",
+                titleRes = R.string.setcat_floating_play_pos_label,
+                subtitleRes = R.string.setcat_floating_play_pos_desc,
+                category = SettingsCategory.APPEARANCE,
+                subscreenRoute = Screen.SettingsCategory.createRoute("appearance"),
+                type = SettingType.NAVIGABLE_CARD,
+                keywordsStatic = listOf(
+                    "floating", "play button", "dock", "mini player", "position",
+                    "悬浮", "懸浮", "播放按钮", "播放按鈕", "位置"
+                )
+            ),
+            SettingSpec(
                 id = "appearance_navbar_style",
                 itemKey = "item_appearance_navbar_style",
                 titleRes = R.string.setcat_navbar_style_label,
@@ -399,6 +424,19 @@ object SettingsRegistry {
                 onToggle = { viewModel, checked ->
                     viewModel.setKeepScreenAwakeWhilePlaying(checked)
                 }
+            ),
+            SettingSpec(
+                id = "playback_battery_optimization",
+                itemKey = "item_playback_battery_optimization",
+                titleRes = R.string.setcat_battery_optimization_title,
+                subtitleRes = R.string.setcat_battery_optimization_subtitle,
+                category = SettingsCategory.PLAYBACK,
+                subscreenRoute = Screen.SettingsCategory.createRoute("playback"),
+                type = SettingType.ACTION,
+                keywordsStatic = listOf(
+                    "battery", "optimization", "background", "doze", "kill",
+                    "电池", "電池", "优化", "優化", "后台", "後台", "被杀", "被殺"
+                )
             ),
             SettingSpec(
                 id = "playback_replaygain",
@@ -795,6 +833,47 @@ object SettingsRegistry {
                 keywordsStatic = listOf("autoplay", "auto play", "skip", "next song", "previous song", "paused", "resume"),
                 getValue = { it.autoplayOnSkip },
                 onToggle = { viewModel, checked -> viewModel.setAutoplayOnSkip(checked) }
+            ),
+            SettingSpec(
+                id = "behavior_swipe_to_queue",
+                itemKey = "item_behavior_swipe_to_queue",
+                titleRes = R.string.setcat_swipe_to_queue_title,
+                subtitleRes = R.string.setcat_swipe_to_queue_description,
+                category = SettingsCategory.BEHAVIOR,
+                subscreenRoute = Screen.SettingsCategory.createRoute("behavior"),
+                type = SettingType.NAVIGABLE_CARD,
+                keywordsStatic = listOf(
+                    "swipe", "song lists", "queue", "play next", "add to queue", "gesture",
+                    "滑动", "滑動", "滑动歌曲", "滑動歌曲", "队列", "佇列", "下一首播放", "切歌", "手势", "手勢"
+                )
+            ),
+            SettingSpec(
+                id = "behavior_mini_swipe_skip",
+                itemKey = "item_behavior_mini_swipe_skip",
+                titleRes = R.string.setcat_mini_player_swipe_to_skip_title,
+                subtitleRes = R.string.setcat_mini_player_swipe_to_skip_subtitle,
+                category = SettingsCategory.BEHAVIOR,
+                subscreenRoute = Screen.SettingsCategory.createRoute("behavior"),
+                type = SettingType.SWITCH,
+                keywordsStatic = listOf(
+                    "swipe", "mini player", "skip", "switch song", "gesture",
+                    "滑动", "滑動", "滑动切换歌曲", "滑動切換歌曲", "迷你播放器", "切歌", "切换歌曲", "切換歌曲", "手势", "手勢"
+                ),
+                getValue = { it.miniPlayerSwipeToSkip },
+                onToggle = { viewModel, checked -> viewModel.setMiniPlayerSwipeToSkip(checked) }
+            ),
+            SettingSpec(
+                id = "behavior_previous_button",
+                itemKey = "item_behavior_previous_button",
+                titleRes = R.string.setcat_previous_button_title,
+                subtitleRes = R.string.setcat_previous_button_description,
+                category = SettingsCategory.BEHAVIOR,
+                subscreenRoute = Screen.SettingsCategory.createRoute("behavior"),
+                type = SettingType.NAVIGABLE_CARD,
+                keywordsStatic = listOf(
+                    "previous", "restart", "rewind", "back button",
+                    "上一首", "上一首按钮", "上一首按鈕", "重新播放", "返回"
+                )
             ),
 
             // --- BACKUP & RESTORE CATEGORY ---

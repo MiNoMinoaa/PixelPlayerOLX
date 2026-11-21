@@ -90,6 +90,8 @@
     <string name="setcat_theme_follow_system">跟隨系統</string>
     <string name="setcat_smooth_corners_title">使用圓潤圓角</string>
     <string name="setcat_smooth_corners_subtitle">使用高級圓角樣式提升觀感，低端設備可能出現性能下降</string>
+    <string name="setcat_show_scrollbar_title">顯示滾動條</string>
+    <string name="setcat_show_scrollbar_subtitle">在音樂列表中顯示側邊滾動條，便於快速滾動。</string>
     <string name="setcat_now_playing">正在播放</string>
     <string name="setcat_player_theme_label">播放器主題</string>
     <string name="setcat_player_theme_desc">選擇懸浮播放器界面樣式</string>
@@ -114,6 +116,10 @@
     <string name="setcat_navbar_style_default">懸浮膠囊</string>
     <string name="setcat_navbar_style_full_width">通欄鋪滿</string>
     <string name="setcat_navbar_style_floating">懸浮透鏡</string>
+    <string name="setcat_floating_play_pos_label">懸浮透鏡樣式下播放按鈕位置</string>
+    <string name="setcat_floating_play_pos_desc">選擇播放/暫停按鈕顯示的位置</string>
+    <string name="setcat_floating_play_pos_dock">mini播放器下方</string>
+    <string name="setcat_floating_play_pos_mini">mini播放器內部</string>
     <string name="setcat_compact_mode_title">緊湊模式</string>
     <string name="setcat_compact_mode_subtitle">僅顯示圖標，縮小導航欄高度</string>
     <string name="setcat_show_lx_music_tab_title">啟用發現頁</string>

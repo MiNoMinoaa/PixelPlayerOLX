@@ -16,6 +16,20 @@ interface JellyfinDao {
     @Query("SELECT * FROM jellyfin_songs ORDER BY date_added DESC")
     suspend fun getAllJellyfinSongsList(): List<JellyfinSongEntity>
 
+    @Query("""
+        SELECT * FROM jellyfin_songs
+        WHERE playlist_id = :libraryPlaylistId
+            OR id IN (
+                SELECT MIN(id) FROM jellyfin_songs
+                WHERE jellyfin_id NOT IN (
+                    SELECT jellyfin_id FROM jellyfin_songs WHERE playlist_id = :libraryPlaylistId
+                )
+                GROUP BY jellyfin_id
+            )
+        ORDER BY date_added DESC
+    """)
+    suspend fun getDistinctJellyfinSongs(libraryPlaylistId: String): List<JellyfinSongEntity>
+
     @Query("SELECT * FROM jellyfin_songs WHERE playlist_id = :playlistId ORDER BY date_added DESC")
     fun getSongsByPlaylist(playlistId: String): Flow<List<JellyfinSongEntity>>
 

@@ -87,8 +87,10 @@ internal fun resolveNavBarSurfaceHeight(
 
 internal fun resolveFloatingNavBarOccupiedHeight(
     systemNavBarInset: Dp,
-    compactMode: Boolean
-): Dp = FloatingNavBarMetrics.ShadowRoom + resolveFloatingNavBarHeight(compactMode) +
+    compactMode: Boolean,
+    scale: Float = 1f
+): Dp = FloatingNavBarMetrics.ShadowRoom * scale +
+    resolveFloatingNavBarHeight(compactMode, scale) +
     maxOf(FloatingNavBarMetrics.EdgeMargin, sanitizeNavigationBarBottomInset(systemNavBarInset))
 
 internal fun resolveNavBarOccupiedHeight(
@@ -96,8 +98,12 @@ internal fun resolveNavBarOccupiedHeight(
     compactMode: Boolean
 ): Dp = resolveNavBarContentHeight(compactMode) + systemNavBarInset
 
-internal fun resolveFloatingNavBarHeight(compactMode: Boolean): Dp =
-    if (compactMode) FloatingNavBarMetrics.CompactBarHeight else FloatingNavBarMetrics.BarHeight
+internal fun resolveFloatingNavBarHeight(compactMode: Boolean, scale: Float = 1f): Dp =
+    if (compactMode) {
+        FloatingNavBarMetrics.CompactBarHeight * scale
+    } else {
+        FloatingNavBarMetrics.BarHeight * scale
+    }
 
 internal class NavRowTapState {
     var lastSearchTapTimestamp: Long by mutableStateOf(0L)

@@ -45,6 +45,9 @@ internal fun rememberSheetInteractionState(
     playerContentActualBottomRadiusProvider: () -> Dp,
     useSmoothCorners: Boolean,
     isDragging: Boolean,
+    collapsedDismissOffsetY: Animatable<Float, AnimationVector1D>,
+    collapsedDismissEnabled: Boolean,
+    collapsedDismissTravelPx: Float,
     onAnimateSheet: suspend (
         targetExpanded: Boolean,
         animationSpec: AnimationSpec<Float>?,
@@ -53,7 +56,9 @@ internal fun rememberSheetInteractionState(
     onExpandSheetState: () -> Unit,
     onCollapseSheetState: () -> Unit,
     onDraggingChange: (Boolean) -> Unit,
-    onDraggingPlayerAreaChange: (Boolean) -> Unit
+    onDraggingPlayerAreaChange: (Boolean) -> Unit,
+    onCollapsedDismissStarted: () -> Unit,
+    onCollapsedDismissCommitted: () -> Unit
 ): SheetInteractionState {
     val useSmoothCornersState = rememberUpdatedState(useSmoothCorners)
     val isDraggingState = rememberUpdatedState(isDragging)
@@ -83,6 +88,10 @@ internal fun rememberSheetInteractionState(
     val onCollapseSheetStateState = rememberUpdatedState(onCollapseSheetState)
     val onDraggingChangeState = rememberUpdatedState(onDraggingChange)
     val onDraggingPlayerAreaChangeState = rememberUpdatedState(onDraggingPlayerAreaChange)
+    val collapsedDismissEnabledState = rememberUpdatedState(collapsedDismissEnabled)
+    val collapsedDismissTravelPxState = rememberUpdatedState(collapsedDismissTravelPx)
+    val onCollapsedDismissStartedState = rememberUpdatedState(onCollapsedDismissStarted)
+    val onCollapsedDismissCommittedState = rememberUpdatedState(onCollapsedDismissCommitted)
 
     val sheetVerticalDragGestureHandler = remember(
         scope,
@@ -90,7 +99,8 @@ internal fun rememberSheetInteractionState(
         sheetMotionController,
         playerContentExpansionFraction,
         currentSheetTranslationY,
-        visualOvershootScaleY
+        visualOvershootScaleY,
+        collapsedDismissOffsetY
     ) {
         SheetVerticalDragGestureHandler(
             scope = scope,
@@ -110,7 +120,12 @@ internal fun rememberSheetInteractionState(
                 onAnimateSheetState.value(targetExpanded, animationSpec, initialVelocity)
             },
             onExpandSheetState = { onExpandSheetStateState.value() },
-            onCollapseSheetState = { onCollapseSheetStateState.value() }
+            onCollapseSheetState = { onCollapseSheetStateState.value() },
+            dismissOffsetY = collapsedDismissOffsetY,
+            collapsedDismissEnabledProvider = { collapsedDismissEnabledState.value },
+            collapsedDismissTravelPxProvider = { collapsedDismissTravelPxState.value },
+            onCollapsedDismissStarted = { onCollapsedDismissStartedState.value() },
+            onCollapsedDismissCommitted = { onCollapsedDismissCommittedState.value() }
         )
     }
 

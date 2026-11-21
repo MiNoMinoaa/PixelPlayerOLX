@@ -131,7 +131,7 @@ object MediaStorePermissionHelper {
             }
             parsedMediaStoreUri?.let(::add)
             if (filePath.isNotBlank()) {
-                getMediaStoreUri(context, filePath)?.let(::add)
+                runCatching { getMediaStoreUri(context, filePath) }.getOrNull()?.let(::add)
             }
         }.distinctBy { it.toString() }
 
@@ -294,7 +294,7 @@ object MediaStorePermissionHelper {
     ): IntentSender? {
         return try {
             MediaStore.createDeleteRequest(context.contentResolver, uris).intentSender
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             null
         }
     }

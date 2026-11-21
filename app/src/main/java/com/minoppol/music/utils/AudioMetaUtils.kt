@@ -78,6 +78,13 @@ object AudioMetaUtils {
 
     }
 
+    fun resolveCodecMimeType(mimeType: String?, filePath: String?): String? {
+        val normalized = mimeType?.trim()?.lowercase(Locale.ROOT)?.substringBefore(';')
+        val isOggContainer = normalized == "audio/ogg" || normalized == "application/ogg"
+        val isOpusFile = filePath?.substringAfterLast('.', "")?.equals("opus", ignoreCase = true) == true
+        return if (isOggContainer && isOpusFile) "audio/opus" else mimeType
+    }
+
     fun mimeTypeToFormat(mimeType: String?): String {
         val normalized = mimeType
             ?.trim()

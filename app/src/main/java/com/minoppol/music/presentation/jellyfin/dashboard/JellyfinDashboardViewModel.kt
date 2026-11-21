@@ -56,6 +56,9 @@ class JellyfinDashboardViewModel @Inject constructor(
 
     init {
         loadLibraries()
+        if (repository.isFullSyncDue) {
+            syncAllPlaylistsAndSongs()
+        }
         syncAllPlaylistsAndSongs()
     }
 

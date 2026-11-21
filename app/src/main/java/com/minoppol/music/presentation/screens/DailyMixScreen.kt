@@ -69,6 +69,7 @@ import androidx.navigation.NavController
 import com.minoppol.music.R
 import com.minoppol.music.data.model.Song
 import com.minoppol.music.presentation.components.MiniPlayerHeight
+import com.minoppol.music.presentation.components.rememberSwipeToQueue
 import com.minoppol.music.presentation.components.PlaylistBottomSheet
 import com.minoppol.music.presentation.components.SmartImage
 import com.minoppol.music.presentation.components.SongInfoBottomSheet
@@ -96,6 +97,7 @@ fun DailyMixScreen(
     playerViewModel: PlayerViewModel,
     navController: NavController,
 ) = traceSection("DailyMixScreen.Composition") {
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     val dailyMixTitle = stringResource(R.string.presentation_batch_b_daily_mix_title)
     val playItLabel = stringResource(R.string.presentation_batch_b_play_it)
     val shuffleLabel = stringResource(R.string.shortcut_shuffle_short)
@@ -305,7 +307,8 @@ fun DailyMixScreen(
                         onMoreOptionsClick = {
                             playerViewModel.selectSongForInfo(song)
                             showSongInfoSheet = true
-                        }
+                        },
+                        onSwipeToQueue = swipeToQueue?.let { { it(song) } }
                     )
                 }
             }

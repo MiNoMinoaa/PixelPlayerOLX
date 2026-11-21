@@ -22,6 +22,11 @@ class AudioBookmarkRepositoryImpl @Inject constructor(
     override suspend fun deleteBookmark(id: Long) =
         audioBookmarkDao.deleteBookmark(id)
 
+    override suspend fun deleteBookmarks(ids: Collection<Long>) {
+        if (ids.isEmpty()) return
+        ids.distinct().chunked(500).forEach { audioBookmarkDao.deleteBookmarks(it) }
+    }
+
     override suspend fun getBookmarkById(id: Long): AudioBookmarkEntity? =
         audioBookmarkDao.getBookmarkById(id)
 }

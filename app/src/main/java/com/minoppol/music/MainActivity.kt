@@ -113,6 +113,7 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.minoppol.music.data.preferences.AppThemeMode
+import com.minoppol.music.data.preferences.FloatingPlayButtonPosition
 import com.minoppol.music.data.preferences.NavBarStyle
 import com.minoppol.music.data.preferences.sanitizeNavBarCornerRadius
 import com.minoppol.music.data.preferences.ThemePreferencesRepository
@@ -128,6 +129,7 @@ import com.minoppol.music.presentation.components.MiniPlayerBottomSpacer
 import com.minoppol.music.presentation.components.MiniPlayerHeight
 import com.minoppol.music.presentation.components.FloatingNavBar
 import com.minoppol.music.presentation.components.FloatingNavBarMetrics
+import com.minoppol.music.presentation.components.floatingDockScaleFor
 import com.minoppol.music.presentation.components.PlayerInternalNavigationBar
 import com.minoppol.music.presentation.components.resolveFloatingNavBarOccupiedHeight
 import com.minoppol.music.presentation.components.PlayerNavigationRail
@@ -387,10 +389,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            PixelPlayerTheme(
-                darkTheme = useDarkTheme,
-                colorSchemePairOverride = appWideNowPlayingScheme
+            val showScrollbar by userPreferencesRepository.showScrollbarFlow.collectAsStateWithLifecycle(initialValue = true)
+
+            CompositionLocalProvider(
+                com.minoppol.music.ui.theme.LocalShowScrollbar provides showScrollbar
             ) {
+                PixelPlayerTheme(
+                    darkTheme = useDarkTheme,
+                    colorSchemePairOverride = appWideNowPlayingScheme
+                ) {
                 var contentVisible by remember { mutableStateOf(false) }
                 val contentAlpha by animateFloatAsState(
                     targetValue = if (contentVisible) 1f else 0f,
@@ -450,6 +457,7 @@ class MainActivity : ComponentActivity() {
                             systemSplashGone = systemSplashGone.value,
                             onFinished = { showAnimatedSplash = false }
                         )
+                    }
                     }
                 }
             }
@@ -761,6 +769,7 @@ class MainActivity : ComponentActivity() {
         }
 
         val navBarStyle by playerViewModel.navBarStyle.collectAsStateWithLifecycle()
+        val floatingPlayButtonPosition by playerViewModel.floatingPlayButtonPosition.collectAsStateWithLifecycle()
         val navBarCompactMode by playerViewModel.navBarCompactMode.collectAsStateWithLifecycle()
         val navBarCornerRadiusRaw by playerViewModel.navBarCornerRadius.collectAsStateWithLifecycle()
         val navBarCornerRadius = sanitizeNavBarCornerRadius(navBarCornerRadiusRaw)
@@ -792,19 +801,22 @@ class MainActivity : ComponentActivity() {
 
         val horizontalPadding = when {
             navBarStyle == NavBarStyle.FLOATING -> {
-                val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+                val configuration = LocalConfiguration.current
+                val screenWidth = configuration.screenWidthDp.dp
+                val dockScale = floatingDockScaleFor(configuration.screenWidthDp)
                 val alignedMargin = if (navBarCompactMode) {
                     FloatingNavBarMetrics.MiniAlignedMarginCompact
                 } else {
                     FloatingNavBarMetrics.MiniAlignedMargin
                 }
+                val includeFab = floatingPlayButtonPosition == FloatingPlayButtonPosition.DOCK
                 val dockTotalWidth = FloatingNavBarMetrics.dockTotalMaxWidth(
-                    commonNavItems.size, navBarCompactMode
-                )
+                    commonNavItems.size, navBarCompactMode, includeFab
+                ) * dockScale
                 val maxMiniWidth = screenWidth - alignedMargin * 2
                 val rawMiniWidth = if (maxMiniWidth > dockTotalWidth) dockTotalWidth else maxMiniWidth
                 val floorWidth = minOf(
-                    FloatingNavBarMetrics.dockTotalMaxWidth(4, false),
+                    FloatingNavBarMetrics.dockTotalMaxWidth(4, false, includeFab) * dockScale,
                     screenWidth - FloatingNavBarMetrics.MiniAlignedMargin * 2
                 )
                 val miniWidth = maxOf(rawMiniWidth, floorWidth)
@@ -818,13 +830,18 @@ class MainActivity : ComponentActivity() {
             label = "BottomBarPadding"
         )
         val bottomBarPadding = animatedBottomBarPadding
+        val dockScaleForHeight = floatingDockScaleFor(LocalConfiguration.current.screenWidthDp)
         val navBarHeight = resolveNavBarSurfaceHeight(navBarStyle, 0.dp, navBarCompactMode)
         val navBarOccupiedHeight by remember(floatingBottomInset, navBarCompactMode, useNavigationRail, navBarStyle) {
             derivedStateOf {
                 if (useNavigationRail) {
                     0.dp
                 } else if (navBarStyle == NavBarStyle.FLOATING) {
-                    resolveFloatingNavBarOccupiedHeight(floatingBottomInset, navBarCompactMode)
+                    resolveFloatingNavBarOccupiedHeight(
+                        floatingBottomInset,
+                        navBarCompactMode,
+                        dockScaleForHeight
+                    )
                 } else {
                     resolveNavBarOccupiedHeight(floatingBottomInset, navBarCompactMode)
                 }
@@ -1111,6 +1128,7 @@ class MainActivity : ComponentActivity() {
                             dockCenterControlsVisible = !useNavigationRail &&
                                 shouldRenderNavigationBar &&
                                 navBarStyle == NavBarStyle.FLOATING &&
+                                floatingPlayButtonPosition == FloatingPlayButtonPosition.DOCK &&
                                 showPlayerContentInitially &&
                                 !isMiniPlayerDismissing
                         )
@@ -1153,6 +1171,7 @@ class MainActivity : ComponentActivity() {
                                     currentRoute = currentRoute,
                                     compactMode = navBarCompactMode,
                                     hasMiniPlayer = showPlayerContentInitially && !isMiniPlayerDismissing,
+                                    showPlayPauseFab = floatingPlayButtonPosition == FloatingPlayButtonPosition.DOCK,
                                     isPlaying = dockIsPlaying,
                                     exitDirectionSign = dockExitDirectionSign,
                                     cornerRadius = navBarCornerRadius.dp,

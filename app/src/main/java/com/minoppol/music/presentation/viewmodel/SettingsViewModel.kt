@@ -18,6 +18,7 @@ import com.minoppol.music.data.model.AudioOutputMode
 import com.minoppol.music.data.preferences.AppLanguage
 import com.minoppol.music.data.preferences.AppThemeMode
 import com.minoppol.music.data.preferences.CarouselStyle
+import com.minoppol.music.data.preferences.SwipeToQueueAction
 import com.minoppol.music.data.preferences.LibraryNavigationMode
 import com.minoppol.music.data.preferences.PreviousButtonBehavior
 import com.minoppol.music.data.preferences.ThemePreference
@@ -44,6 +45,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 import com.minoppol.music.R
+import com.minoppol.music.data.preferences.FloatingPlayButtonPosition
 import com.minoppol.music.data.preferences.NavBarStyle
 import com.minoppol.music.data.preferences.LaunchTab
 import com.minoppol.music.data.preferences.LyricsWordHighlightStyle
@@ -66,6 +68,7 @@ data class SettingsUiState(
     val navBarCornerRadius: Int = 32,
     val navBarStyle: String = NavBarStyle.DEFAULT,
     val navBarCompactMode: Boolean = false,
+    val floatingPlayButtonPosition: String = FloatingPlayButtonPosition.DOCK,
     val showSearchTab: Boolean = true,
     val showRecentTab: Boolean = true,
     val showLxMusicTab: Boolean = true,
@@ -83,6 +86,8 @@ data class SettingsUiState(
     val autoplayOnSkip: Boolean = true,
     val previousButtonBehavior: PreviousButtonBehavior = PreviousButtonBehavior.DEFAULT,
     val miniPlayerSwipeToSkip: Boolean = true,
+    val swipeToQueueAction: SwipeToQueueAction = SwipeToQueueAction.DEFAULT,
+    val showScrollbar: Boolean = true,
     val resumeOnHeadsetReconnect: Boolean = false,
     val showQueueHistory: Boolean = true,
     val isCrossfadeEnabled: Boolean = false,
@@ -167,6 +172,7 @@ private sealed interface SettingsUiUpdate {
         val navBarCornerRadius: Int,
         val navBarStyle: String,
         val navBarCompactMode: Boolean,
+        val floatingPlayButtonPosition: String,
         val libraryNavigationMode: String,
         val carouselStyle: String,
         val launchTab: String,
@@ -307,7 +313,8 @@ class SettingsViewModel @Inject constructor(
                 userPreferencesRepository.lxDiscoverShowSortFabFlow,
                 userPreferencesRepository.splashAnimationEnabledFlow,
                 userPreferencesRepository.autoCheckUpdatesFlow,
-                userPreferencesRepository.showLxMusicTabFlow
+                userPreferencesRepository.showLxMusicTabFlow,
+                userPreferencesRepository.floatingPlayButtonPositionFlow
             ) { values ->
                 SettingsUiUpdate.Group1(
                     appRebrandDialogShown = values[0] as Boolean,
@@ -332,7 +339,8 @@ class SettingsViewModel @Inject constructor(
                     lxDiscoverShowSortFab = values[19] as Boolean,
                     splashAnimationEnabled = values[20] as Boolean,
                     autoCheckUpdates = values[21] as Boolean,
-                    showLxMusicTab = values[22] as Boolean
+                    showLxMusicTab = values[22] as Boolean,
+                    floatingPlayButtonPosition = values[23] as String
                 )
             }.collect { update ->
                 _uiState.update { state ->
@@ -359,7 +367,8 @@ class SettingsViewModel @Inject constructor(
                         lxDiscoverShowSortFab = update.lxDiscoverShowSortFab,
                         splashAnimationEnabled = update.splashAnimationEnabled,
                         autoCheckUpdates = update.autoCheckUpdates,
-                        showLxMusicTab = update.showLxMusicTab
+                        showLxMusicTab = update.showLxMusicTab,
+                        floatingPlayButtonPosition = update.floatingPlayButtonPosition
                     )
                 }
             }
@@ -465,6 +474,12 @@ class SettingsViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            userPreferencesRepository.swipeToQueueActionFlow.collect { action ->
+                _uiState.update { it.copy(swipeToQueueAction = action) }
+            }
+        }
+
+        viewModelScope.launch {
             userPreferencesRepository.fullPlayerLoadingTweaksFlow.collect { tweaks ->
                 _uiState.update { it.copy(fullPlayerLoadingTweaks = tweaks) }
             }
@@ -551,6 +566,12 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.backupInfoDismissedFlow.collect { dismissed ->
                 _uiState.update { it.copy(backupInfoDismissed = dismissed) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.showScrollbarFlow.collect { enabled ->
+                _uiState.update { it.copy(showScrollbar = enabled) }
             }
         }
 
@@ -733,6 +754,12 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun setFloatingPlayButtonPosition(position: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.setFloatingPlayButtonPosition(position)
+        }
+    }
+
     fun setShowSearchTab(enabled: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setShowSearchTab(enabled)
@@ -841,9 +868,21 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun setSwipeToQueueAction(action: SwipeToQueueAction) {
+        viewModelScope.launch {
+            userPreferencesRepository.setSwipeToQueueAction(action)
+        }
+    }
+
     fun setResumeOnHeadsetReconnect(enabled: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setResumeOnHeadsetReconnect(enabled)
+        }
+    }
+
+    fun setShowScrollbar(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setShowScrollbar(enabled)
         }
     }
 

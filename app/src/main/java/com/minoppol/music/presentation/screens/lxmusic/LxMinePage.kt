@@ -82,6 +82,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.lxmusic.LxAlbum
 import com.minoppol.music.data.lxmusic.LxArtist
 import com.minoppol.music.data.lxmusic.LxPlaylist
@@ -90,6 +91,7 @@ import com.minoppol.music.data.lxmusic.LxSongMapper
 import com.minoppol.music.data.lxmusic.LxSources
 import com.minoppol.music.R
 import com.minoppol.music.presentation.components.ExpressiveScrollBar
+import com.minoppol.music.presentation.components.rememberSwipeToQueue
 import com.minoppol.music.presentation.components.MiniPlayerHeight
 import com.minoppol.music.presentation.components.SmartImage
 import com.minoppol.music.presentation.components.SmartImageListTargetSize
@@ -130,6 +132,7 @@ fun LxMinePage(
     onSortClick: () -> Unit = {},
 ) {
     val density = LocalDensity.current
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
     var headerHeightPx by remember { mutableIntStateOf(0) }
     val headerHeight = with(density) { headerHeightPx.toDp() }.takeIf { it > 0.dp } ?: 72.dp
@@ -345,6 +348,7 @@ fun LxMinePage(
                                 onSongLongPress = onSongLongPress,
                                 onSongSelectionToggle = onSongSelectionToggle,
                                 getSelectionIndex = getSelectionIndex,
+                                                            onSwipeToQueue = swipeToQueue,
                             )
                             if (!mineState.pageLoading && mineState.pageSongs.isNotEmpty() &&
                                 (mineState.pageSongsHasMore || mineState.pageLoadingMore)
@@ -388,6 +392,7 @@ fun LxMinePage(
                                     onSongLongPress = onSongLongPress,
                                     onSongSelectionToggle = onSongSelectionToggle,
                                     getSelectionIndex = getSelectionIndex,
+                                                                    onSwipeToQueue = swipeToQueue,
                                 )
                                 if (!mineState.pageLoading && mineState.pageSongs.isNotEmpty() &&
                                     (mineState.artistSongsHasMore || mineState.artistLoadingMore)
@@ -1155,6 +1160,7 @@ internal fun LazyListScope.mineSongItems(
     onSongLongPress: (LxSong) -> Unit = {},
     onSongSelectionToggle: (LxSong) -> Unit = {},
     getSelectionIndex: (String) -> Int? = { null },
+    onSwipeToQueue: ((Song) -> Unit)? = null,
 ) {
     items(songs, key = { "mine_song_${it.source}_${it.songmid}" }) { song ->
         val uiSong = remember(song.source, song.songmid, song.pic) { LxSongMapper.toSong(song) }
@@ -1173,6 +1179,7 @@ internal fun LazyListScope.mineSongItems(
             selectionIndex = selectionIndex,
             onLongPress = { onSongLongPress(song) },
             onMoreOptionsClick = { onSongMoreOptions(song) },
+            onSwipeToQueue = onSwipeToQueue?.let { { it(uiSong) } },
             onClick = {
                 if (isSelectionMode) {
                     onSongSelectionToggle(song)

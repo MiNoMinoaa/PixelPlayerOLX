@@ -33,6 +33,7 @@ class FolderNavigationStateHolder @Inject constructor() {
         path: String,
         getUiState: () -> PlayerUiState,
         updateUiState: (((PlayerUiState) -> PlayerUiState) -> Unit),
+        cachedSongsById: () -> Map<String, Song>,
         onFolderChanged: (String) -> Unit
     ) {
         val storageRootPath = getUiState().folderSourceRootPath.ifBlank {
@@ -48,7 +49,7 @@ class FolderNavigationStateHolder @Inject constructor() {
             return
         }
 
-        val folder = findFolder(path, getUiState().musicFolders)
+        val folder = findFolder(path, getUiState().musicFolders)?.withCachedSongs(cachedSongsById())
         if (folder != null) {
             updateUiState {
                 it.copy(
@@ -63,11 +64,12 @@ class FolderNavigationStateHolder @Inject constructor() {
     fun navigateBackFolder(
         getUiState: () -> PlayerUiState,
         updateUiState: (((PlayerUiState) -> PlayerUiState) -> Unit),
+        cachedSongsById: () -> Map<String, Song>,
         onFolderChanged: (String) -> Unit
     ) {
         val state = getUiState()
         val currentFolder = state.currentFolder ?: return
-        val parentPath = File(currentFolder.path).parent
+        val parentPath = File(currentFolder.path).parent?.replace('\\', '/')
         val sourceRoot = state.folderSourceRootPath.ifBlank {
             Environment.getExternalStorageDirectory().path
         }
@@ -81,7 +83,7 @@ class FolderNavigationStateHolder @Inject constructor() {
             return
         }
 
-        val parentFolder = findFolder(parentPath, state.musicFolders)
+        val parentFolder = findFolder(parentPath, state.musicFolders)?.withCachedSongs(cachedSongsById())
         updateUiState {
             it.copy(
                 currentFolderPath = parentPath,
@@ -113,6 +115,11 @@ class FolderNavigationStateHolder @Inject constructor() {
                 )
             }
         }
+    }
+
+    private fun MusicFolder.withCachedSongs(songsById: Map<String, Song>): MusicFolder {
+        if (songs.isEmpty() || songsById.isEmpty()) return this
+        return copy(songs = songs.map { stub -> songsById[stub.id] ?: stub }.toImmutableList())
     }
 
     private fun findFolder(path: String?, folders: List<MusicFolder>): MusicFolder? {

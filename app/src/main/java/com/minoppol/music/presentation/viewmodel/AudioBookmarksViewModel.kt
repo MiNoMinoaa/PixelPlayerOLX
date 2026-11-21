@@ -45,6 +45,12 @@ class AudioBookmarksViewModel @Inject constructor(
         }
     }
 
+    fun deleteBookmarks(ids: Collection<Long>) {
+        viewModelScope.launch {
+            bookmarkRepository.deleteBookmarks(ids)
+        }
+    }
+
     fun deleteBookmark(id: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             bookmarkRepository.deleteBookmark(id)

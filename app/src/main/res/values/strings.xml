@@ -454,6 +454,7 @@
     <string name="lx_source_qq">QQ Music</string>
     <string name="lx_source_wechat">WeChat</string>
     <string name="lx_source_kugou">Kugou Music</string>
+    <string name="lx_source_jh">Aggregated search</string>
     <string name="lx_desc_clear">Clear</string>
     <string name="lx_desc_search">Search</string>
     <string name="lx_text_track_count_format">%1$d tracks</string>

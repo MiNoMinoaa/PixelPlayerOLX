@@ -67,10 +67,33 @@ data class LxOnlineSearchUiState(
 @HiltViewModel
 class LxOnlineSearchViewModel @Inject constructor(
     private val repository: LxMusicRepository,
+    private val userPreferencesRepository: com.minoppol.music.data.preferences.UserPreferencesRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LxOnlineSearchUiState())
     val uiState: StateFlow<LxOnlineSearchUiState> = _uiState.asStateFlow()
+
+    private val _searchSource = MutableStateFlow("jh")
+    val searchSource: StateFlow<String> = _searchSource.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            userPreferencesRepository.lxOnlineSearchSourceFlow
+                .distinctUntilChanged()
+                .collect { saved -> _searchSource.value = saved }
+        }
+    }
+
+    fun setSearchSource(source: String) {
+        if (source == _searchSource.value) return
+        _searchSource.value = source
+        viewModelScope.launch { userPreferencesRepository.saveLxOnlineSearchSource(source) }
+    }
+
+    fun activeSources(): List<String> =
+        if (searchSource.value == "jh") LxSources.ALL else listOf(searchSource.value)
+
+    private fun sourceAt(index: Int): String = activeSources().getOrElse(index) { LxSources.ALL.first() }
 
     private val suggestionInput = MutableStateFlow("")
 
@@ -115,22 +138,28 @@ class LxOnlineSearchViewModel @Inject constructor(
         if (_hotLoading.value) return
         viewModelScope.launch {
             _hotLoading.value = true
+            val mergedSources = activeSources()
             val merged = withContext(Dispatchers.IO) {
                 coroutineScope {
-                    LxSources.ALL.map { source ->
+                    mergedSources.map { source ->
                         async {
                             withTimeoutOrNull(6_000L) {
                                 runCatching { repository.fetchHotSearches(source) }.getOrDefault(emptyList())
-                            }?.take(5).orEmpty()
+                            }?.take(if (mergedSources.size == 1) 15 else 5).orEmpty()
                         }
                     }.awaitAll()
                 }
             }
             _hotItems.value = interleaveLists(merged.mapIndexed { index, list ->
-                list.map { keyword -> LxOnlineHotItem(keyword, LxSources.ALL[index]) }
+                list.map { keyword -> LxOnlineHotItem(keyword, mergedSources[index]) }
             }).distinctBy { it.keyword.lowercase() }.take(15)
             _hotLoading.value = false
         }
+    }
+
+    fun onSourceChangedRefreshHot() {
+        _hotItems.value = emptyList()
+        refreshHotSearches(force = true)
     }
 
     fun onQueryInput(keyword: String) {
@@ -151,7 +180,7 @@ class LxOnlineSearchViewModel @Inject constructor(
             val songsDeferred = async {
                 withContext(Dispatchers.IO) {
                     coroutineScope {
-                        LxSources.ALL.map { source ->
+                        activeSources().map { source ->
                             async {
                                 withTimeoutOrNull(10_000L) {
                                     runCatching { repository.searchMusic("", source, trimmed, 1) }
@@ -165,7 +194,7 @@ class LxOnlineSearchViewModel @Inject constructor(
             val playlistsDeferred = async {
                 withContext(Dispatchers.IO) {
                     coroutineScope {
-                        LxSources.ALL.map { source ->
+                        activeSources().map { source ->
                             async {
                                 withTimeoutOrNull(10_000L) {
                                     runCatching { repository.searchPlaylists(source, trimmed, 1) }
@@ -178,7 +207,7 @@ class LxOnlineSearchViewModel @Inject constructor(
             }
 
             val songs = songsDeferred.await()
-            songsBySource = songs
+            songsBySource = songs.map { exactMatchFirst(it, trimmed) }
             songsPage = 1
             songsHasMore = songs.any { it.isNotEmpty() }
             val mergedSongs = interleaveListsWithLead(songsBySource, 2)
@@ -265,7 +294,7 @@ class LxOnlineSearchViewModel @Inject constructor(
             val nextPage = songsPage + 1
             val lists = withContext(Dispatchers.IO) {
                 coroutineScope {
-                    LxSources.ALL.map { source ->
+                    activeSources().map { source ->
                         async {
                             withTimeoutOrNull(10_000L) {
                                 runCatching { repository.searchMusic("", source, query, nextPage) }
@@ -277,7 +306,7 @@ class LxOnlineSearchViewModel @Inject constructor(
             }
             songsLoadingMore = false
             if (jobId != searchJobId) return@launch
-            songsBySource = songsBySource.mapIndexed { index, acc -> acc + lists[index] }
+            songsBySource = songsBySource.mapIndexed { index, acc -> acc + exactMatchFirst(lists[index], query) }
             songsPage = nextPage
             songsHasMore = lists.any { it.isNotEmpty() }
             val merged = interleaveListsWithLead(songsBySource, 2)
@@ -324,7 +353,7 @@ class LxOnlineSearchViewModel @Inject constructor(
             val nextPage = playlistsPage + 1
             val lists = withContext(Dispatchers.IO) {
                 coroutineScope {
-                    LxSources.ALL.map { source ->
+                    activeSources().map { source ->
                         async {
                             withTimeoutOrNull(10_000L) {
                                 runCatching { repository.searchPlaylists(source, query, nextPage) }
@@ -349,7 +378,7 @@ class LxOnlineSearchViewModel @Inject constructor(
 
     private fun mergePlaylists(): List<LxOnlinePlaylistHit> =
         interleaveLists(playlistsBySource.mapIndexed { index, list ->
-            list.map { LxOnlinePlaylistHit(LxSources.ALL[index], it) }
+            list.map { LxOnlinePlaylistHit(sourceAt(index), it) }
         }).distinctBy { "${it.source}:${it.playlist.id}" }.take(20 * playlistsPage)
 
     fun openPlaylist(hit: LxOnlinePlaylistHit) {
@@ -420,7 +449,7 @@ class LxOnlineSearchViewModel @Inject constructor(
 
     private suspend fun fetchMergedSuggestions(keyword: String): List<String> = withContext(Dispatchers.IO) {
         coroutineScope {
-            LxSources.ALL.map { source ->
+            activeSources().map { source ->
                 async {
                     withTimeoutOrNull(5_000L) {
                         runCatching { repository.fetchSearchSuggestions(source, keyword) }
@@ -433,10 +462,11 @@ class LxOnlineSearchViewModel @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun fetchSuggestionsFlow(keyword: String): Flow<List<String>> = channelFlow {
-        val lists = MutableList<List<String>?>(LxSources.ALL.size) { null }
+        val sources = activeSources()
+        val lists = MutableList<List<String>?>(sources.size) { null }
         withContext(Dispatchers.IO) {
             coroutineScope {
-                LxSources.ALL.forEachIndexed { index, source ->
+                sources.forEachIndexed { index, source ->
                     launch {
                         val result = withTimeoutOrNull(5_000L) {
                             runCatching { repository.fetchSearchSuggestions(source, keyword) }
@@ -495,5 +525,12 @@ class LxOnlineSearchViewModel @Inject constructor(
             index++
         }
         return result
+    }
+
+    private fun exactMatchFirst(songs: List<LxSong>, query: String): List<LxSong> {
+        if (songs.size < 2) return songs
+        val exact = songs.filter { it.name.trim().equals(query, ignoreCase = true) }
+        if (exact.isEmpty() || exact.size == songs.size) return songs
+        return exact + songs.filterNot { it.name.trim().equals(query, ignoreCase = true) }
     }
 }

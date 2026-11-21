@@ -37,6 +37,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import com.minoppol.music.utils.AudioMetaUtils
 import timber.log.Timber
 
 data class CodecInfo(
@@ -373,7 +374,7 @@ class DeviceCapabilitiesViewModel @Inject constructor(
         val unsupportedFormats = linkedSetOf<String>()
 
         rows.forEach { row ->
-            val mimeType = row.mimeType?.let(::normalizeMimeType)
+            val mimeType = row.codecMimeType()
             when {
                 mimeType.isNullOrBlank() -> unknownCount += 1
                 isMimeTypeSupported(mimeType, supportedTypes) -> supportedCount += 1
@@ -414,7 +415,7 @@ class DeviceCapabilitiesViewModel @Inject constructor(
             .toSet()
         val offloadFormats = audioCapabilities.offloadSupportedFormats.toSet()
         val libraryCountsByMime = rows
-            .mapNotNull { it.mimeType?.let(::normalizeMimeType) }
+            .mapNotNull { it.codecMimeType() }
             .groupingBy { it }
             .eachCount()
 
@@ -592,6 +593,9 @@ private fun audioFormatCandidates(): List<AudioFormatCandidate> {
         add(AudioFormatCandidate("IMA-ADPCM", "audio/x-ima-adpcm", null))
     }
 }
+
+private fun DeviceCapabilitySongRow.codecMimeType(): String? =
+    AudioMetaUtils.resolveCodecMimeType(mimeType, filePath)?.let(::normalizeMimeType)
 
 private fun normalizeMimeType(mimeType: String): String {
     return when (val mime = mimeType.lowercase(Locale.US).substringBefore(";").trim()) {

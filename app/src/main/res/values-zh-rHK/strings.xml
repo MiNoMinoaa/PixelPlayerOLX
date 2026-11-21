@@ -398,6 +398,7 @@
 <string name="lx_source_qq">QQ音樂</string>
 <string name="lx_source_wechat">微信</string>
 <string name="lx_source_kugou">酷狗音樂</string>
+<string name="lx_source_jh">聚合搜索</string>
 <string name="lx_desc_clear">清空</string>
 <string name="lx_desc_search">搜尋</string>
 <string name="lx_text_track_count_format">%1$d 首</string>

@@ -119,6 +119,7 @@ constructor(
         val NAV_BAR_CORNER_RADIUS = intPreferencesKey("nav_bar_corner_radius")
         val NAV_BAR_STYLE = stringPreferencesKey("nav_bar_style")
         val NAV_BAR_STYLE_FLOATING_MIGRATED = booleanPreferencesKey("nav_bar_style_floating_migrated_v1")
+        val FLOATING_PLAY_BUTTON_POSITION = stringPreferencesKey("floating_play_button_position")
         val NAV_BAR_COMPACT_MODE = booleanPreferencesKey("nav_bar_compact_mode")
         val SHOW_SEARCH_TAB = booleanPreferencesKey("show_search_tab")
         val SHOW_RECENT_TAB = booleanPreferencesKey("show_recent_tab")
@@ -137,6 +138,7 @@ constructor(
         val LIBRARY_TABS_ORDER = stringPreferencesKey("library_tabs_order")
         val LX_PLATFORM_NAME_STYLE = stringPreferencesKey("lx_platform_name_style")
         val LX_PLATFORM_ORDER = stringPreferencesKey("lx_platform_order")
+        val LX_ONLINE_SEARCH_SOURCE = stringPreferencesKey("lx_online_search_source")
         val IS_FOLDER_FILTER_ACTIVE = booleanPreferencesKey("is_folder_filter_active")
         val IS_FOLDERS_PLAYLIST_VIEW = booleanPreferencesKey("is_folders_playlist_view")
         val HIDE_LOCAL_MEDIA = booleanPreferencesKey("hide_local_media")
@@ -158,6 +160,8 @@ constructor(
         val AUTOPLAY_ON_SKIP = booleanPreferencesKey("autoplay_on_skip")
         val PREVIOUS_BUTTON_BEHAVIOR = stringPreferencesKey("previous_button_behavior")
         val MINI_PLAYER_SWIPE_TO_SKIP = booleanPreferencesKey("mini_player_swipe_to_skip")
+        val SWIPE_TO_QUEUE_ACTION = stringPreferencesKey("swipe_to_queue_action")
+        val SHOW_SCROLLBAR = booleanPreferencesKey("show_scrollbar")
         val HI_FI_MODE_ENABLED = booleanPreferencesKey("hi_fi_mode_enabled")
         val CROSSFADE_DURATION = intPreferencesKey("crossfade_duration")
         val PLAYBACK_SPEED = androidx.datastore.preferences.core.floatPreferencesKey("playback_speed")
@@ -1031,6 +1035,16 @@ constructor(
                 preferences[PreferencesKeys.MINI_PLAYER_SWIPE_TO_SKIP] ?: true
             }.distinctUntilChanged()
 
+    val swipeToQueueActionFlow: Flow<SwipeToQueueAction> =
+            dataStore.data.map { preferences ->
+                SwipeToQueueAction.fromStorageKey(preferences[PreferencesKeys.SWIPE_TO_QUEUE_ACTION])
+            }.distinctUntilChanged()
+
+    val showScrollbarFlow: Flow<Boolean> =
+            dataStore.data.map { preferences ->
+                preferences[PreferencesKeys.SHOW_SCROLLBAR] ?: true
+            }.distinctUntilChanged()
+
     val resumeOnHeadsetReconnectFlow: Flow<Boolean> =
             dataStore.data.map { preferences ->
                 preferences[PreferencesKeys.RESUME_ON_HEADSET_RECONNECT] ?: false
@@ -1473,6 +1487,18 @@ constructor(
         }
     }
 
+    val floatingPlayButtonPositionFlow: Flow<String> =
+            dataStore.data.map { preferences ->
+                preferences[PreferencesKeys.FLOATING_PLAY_BUTTON_POSITION]
+                        ?: FloatingPlayButtonPosition.DOCK
+            }
+
+    suspend fun setFloatingPlayButtonPosition(position: String) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.FLOATING_PLAY_BUTTON_POSITION] = position
+        }
+    }
+
     val navBarCompactModeFlow: Flow<Boolean> =
             dataStore.data.map { preferences ->
                 preferences[PreferencesKeys.NAV_BAR_COMPACT_MODE] ?: false
@@ -1652,9 +1678,21 @@ constructor(
         }
     }
 
+    suspend fun setSwipeToQueueAction(action: SwipeToQueueAction) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.SWIPE_TO_QUEUE_ACTION] = action.storageKey
+        }
+    }
+
     suspend fun setResumeOnHeadsetReconnect(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.RESUME_ON_HEADSET_RECONNECT] = enabled
+        }
+    }
+
+    suspend fun setShowScrollbar(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.SHOW_SCROLLBAR] = enabled
         }
     }
 
@@ -1849,6 +1887,13 @@ constructor(
 
     suspend fun saveLxPlatformNameStyle(style: String) {
         dataStore.edit { preferences -> preferences[PreferencesKeys.LX_PLATFORM_NAME_STYLE] = style }
+    }
+
+    val lxOnlineSearchSourceFlow: Flow<String> = dataStore.data
+        .map { preferences -> preferences[PreferencesKeys.LX_ONLINE_SEARCH_SOURCE] ?: "jh" }
+
+    suspend fun saveLxOnlineSearchSource(source: String) {
+        dataStore.edit { preferences -> preferences[PreferencesKeys.LX_ONLINE_SEARCH_SOURCE] = source }
     }
 
     val lxPlatformOrderFlow: Flow<String?> = dataStore.data

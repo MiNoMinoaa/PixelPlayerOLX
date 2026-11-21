@@ -6,6 +6,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -68,7 +69,9 @@ fun PlayingEqIcon(
     val speeds = remember(bars) { List(bars) { (it + 1).toFloat() } }
     val shifts = remember(bars) { List(bars) { i -> i * 0.9f } }
 
-    Canvas(modifier = modifier) {
+    Canvas(
+        modifier = modifier.graphicsLayer { alpha = activity }
+    ) {
         val phase = phaseAnim.value
         val wander = wanderAnim.value
         val w = size.width

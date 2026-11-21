@@ -52,6 +52,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import com.minoppol.music.R
 import com.minoppol.music.data.model.Song
+import com.minoppol.music.presentation.components.rememberSwipeToQueue
 import com.minoppol.music.presentation.components.subcomps.EnhancedSongListItem
 import com.minoppol.music.presentation.viewmodel.PlayerViewModel
 import com.minoppol.music.presentation.viewmodel.PlaylistViewModel
@@ -72,6 +73,7 @@ fun DailyMixSection(
     onNavigateToAlbum: (Song) -> Unit = {},
     onNavigateToArtist: (Song) -> Unit = {},
     onNavigateToGenre: (Song) -> Unit = {},
+    topSpacing: Dp = 16.dp,
 ) {
     val playlistViewModel: PlaylistViewModel = hiltViewModel()
     val favoriteSongIds by playerViewModel.favoriteSongIds.collectAsStateWithLifecycle()
@@ -89,7 +91,9 @@ fun DailyMixSection(
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
     ) {
-        Spacer(Modifier.height(16.dp))
+        if (topSpacing > 0.dp) {
+            Spacer(Modifier.height(topSpacing))
+        }
         DailyMixCard(
             songs = songs,
             playerViewModel = playerViewModel,
@@ -335,6 +339,7 @@ private fun DailyMixSongList(
     val dailyMixQueueName = stringResource(R.string.presentation_batch_g_daily_mix_queue_name)
     val stablePlayerState by playerViewModel.stablePlayerState.collectAsStateWithLifecycle()
     val itemContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
 
     Column(
         modifier = Modifier
@@ -350,6 +355,8 @@ private fun DailyMixSongList(
                 isPlaying = stablePlayerState.isPlaying && stablePlayerState.currentSong?.id == song.id,
                 containerColorOverride = itemContainerColor,
                 onMoreOptionsClick = onMoreOptionsClick,
+                onLongPress = { onMoreOptionsClick(song) },
+                onSwipeToQueue = swipeToQueue?.let { { it(song) } },
                 customShape = RoundedCornerShape(10.dp),
                 showAlbumArt = false,
                 onClick = {

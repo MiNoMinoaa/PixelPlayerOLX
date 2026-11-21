@@ -37,6 +37,7 @@ internal fun LibraryPlaybackAwareSongItem(
     isSelectionMode: Boolean = false,
     showSourceTag: Boolean = true,
     onLongPress: () -> Unit = {},
+    onSwipeToQueue: (() -> Unit)? = null,
     onMoreOptionsClick: (Song) -> Unit,
     onClick: () -> Unit
 ) {
@@ -66,6 +67,7 @@ internal fun LibraryPlaybackAwareSongItem(
         isSelectionMode = isSelectionMode,
         showSourceTag = showSourceTag,
         onLongPress = onLongPress,
+        onSwipeToQueue = onSwipeToQueue,
         onMoreOptionsClick = onMoreOptionsClick,
         onClick = onClick
     )

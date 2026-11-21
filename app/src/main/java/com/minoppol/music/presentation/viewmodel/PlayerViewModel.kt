@@ -52,7 +52,9 @@ import com.minoppol.music.data.model.cjkSortKey
 import com.minoppol.music.data.model.toLibraryTabIdOrNull
 import com.minoppol.music.data.provider.SharedArtworkContentProvider
 import com.minoppol.music.data.preferences.CarouselStyle
+import com.minoppol.music.data.preferences.SwipeToQueueAction
 import com.minoppol.music.data.preferences.LibraryNavigationMode
+import com.minoppol.music.data.preferences.FloatingPlayButtonPosition
 import com.minoppol.music.data.preferences.NavBarStyle
 import com.minoppol.music.data.preferences.FullPlayerLoadingTweaks
 import com.minoppol.music.data.preferences.AlbumArtPaletteStyle
@@ -506,6 +508,14 @@ class PlayerViewModel @Inject constructor(
             initialValue = NavBarStyle.DEFAULT
         )
 
+    val floatingPlayButtonPosition: StateFlow<String> =
+        userPreferencesRepository.floatingPlayButtonPositionFlow
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Eagerly,
+                initialValue = FloatingPlayButtonPosition.DOCK
+            )
+
     val navBarCompactMode: StateFlow<Boolean> = userPreferencesRepository.navBarCompactModeFlow
         .stateIn(
             scope = viewModelScope,
@@ -539,6 +549,13 @@ class PlayerViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
             initialValue = true
+        )
+
+    val swipeToQueueAction: StateFlow<SwipeToQueueAction> = userPreferencesRepository.swipeToQueueActionFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = SwipeToQueueAction.DEFAULT
         )
 
     val lxBoardShowShuffleFab: StateFlow<Boolean> = userPreferencesRepository.lxBoardShowShuffleFabFlow
@@ -4022,6 +4039,20 @@ class PlayerViewModel @Inject constructor(
         return uri.takeIf { it.scheme == "file" }?.path?.takeIf { it.isNotBlank() }
     }
 
+    fun queueSongFromSwipe(song: Song) {
+        when (swipeToQueueAction.value) {
+            SwipeToQueueAction.OFF -> return
+            SwipeToQueueAction.ADD_TO_QUEUE -> {
+                addSongToQueue(song)
+                sendToast(context.getString(R.string.toast_added_to_queue))
+            }
+            SwipeToQueueAction.PLAY_NEXT -> {
+                addSongNextToQueue(song)
+                sendToast(context.getString(R.string.toast_playing_next))
+            }
+        }
+    }
+
     fun addSongToQueue(song: Song) {
         mediaController?.let { controller ->
             val mediaItem = buildPlaybackMediaItem(song)
@@ -4877,6 +4908,10 @@ class PlayerViewModel @Inject constructor(
         playbackStateHolder.previousSong()
     }
 
+    fun forcePreviousSong() {
+        playbackStateHolder.forcePreviousSong()
+    }
+
     private fun startProgressUpdates() {
         playbackStateHolder.startProgressUpdates()
     }
@@ -4944,6 +4979,7 @@ class PlayerViewModel @Inject constructor(
             path = path,
             getUiState = { _playerUiState.value },
             updateUiState = { mutation -> _playerUiState.update(mutation) },
+            cachedSongsById = { libraryStateHolder.allSongsById.value },
             onFolderChanged = { folderPath ->
                 folderNavigationStateHolder.hydrateCurrentFolderSongsIfNeeded(
                     scope = viewModelScope,
@@ -4961,6 +4997,7 @@ class PlayerViewModel @Inject constructor(
         folderNavigationStateHolder.navigateBackFolder(
             getUiState = { _playerUiState.value },
             updateUiState = { mutation -> _playerUiState.update(mutation) },
+            cachedSongsById = { libraryStateHolder.allSongsById.value },
             onFolderChanged = { folderPath ->
                 folderNavigationStateHolder.hydrateCurrentFolderSongsIfNeeded(
                     scope = viewModelScope,

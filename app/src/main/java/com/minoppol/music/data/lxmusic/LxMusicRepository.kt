@@ -1034,7 +1034,10 @@ class LxMusicRepository @Inject constructor(
                                 albumName = decodeHtmlEntities(jsonStr(o, "album") ?: albumName),
                                 interval = o.get("duration")?.takeIf { it.isJsonPrimitive }?.asLong ?: 0L,
                                 pic = null,
-                                extraFields = if (kwArtistId != null) mapOf("artistIds" to kwArtistId) else emptyMap(),
+                                extraFields = buildMap {
+                                    kwArtistId?.let { put("artistIds", it) }
+                                    put("albumId", albumId)
+                                },
                             )
                         }.getOrNull()
                     } ?: emptyList()

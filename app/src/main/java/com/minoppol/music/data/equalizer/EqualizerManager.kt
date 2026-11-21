@@ -420,11 +420,7 @@ class EqualizerManager @Inject constructor() {
         _loudnessEnhancerEnabled.value = loudnessEnabled
         _loudnessEnhancerStrength.value = loudnessStrength.coerceIn(0, MAX_LOUDNESS_GAIN_MB)
         
-        val preset = if (presetName == "custom") {
-            EqualizerPreset.custom(customBands)
-        } else {
-            EqualizerPreset.fromName(presetName)
-        }
+        val preset = EqualizerPreset.resolve(presetName, customBands, emptyList())
         
         _currentPresetName.value = preset.name
         _bandLevels.value = preset.bandLevels

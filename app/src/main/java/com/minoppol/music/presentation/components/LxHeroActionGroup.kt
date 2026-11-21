@@ -247,7 +247,7 @@ internal fun LxHeroActionGroup(
                     ) {
                         DropdownMenuGroup(
                             shapes = MenuDefaults.groupShape(index = 0, count = 1),
-                            containerColor = MenuDefaults.groupVibrantContainerColor
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
                         ) {
                             menuActions.forEachIndexed { index, action ->
                                 DropdownMenuItem(

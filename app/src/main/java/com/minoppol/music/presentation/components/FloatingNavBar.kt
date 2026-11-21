@@ -74,12 +74,14 @@ import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -120,9 +122,61 @@ object FloatingNavBarMetrics {
     val DockElevation = 3.dp
     const val MaxPressGrowthPx = 16f
 
-    fun dockTotalMaxWidth(itemCount: Int, compactMode: Boolean): Dp {
+    fun dockTotalMaxWidth(itemCount: Int, compactMode: Boolean, includeFab: Boolean = true): Dp {
         val pillMax = if (compactMode) MaxItemExtentCompact else MaxItemExtent
-        return pillMax * itemCount + BarPadding * 2 + FabSize + FabGap
+        val fabWidth = if (includeFab) FabSize + FabGap else 0.dp
+        return pillMax * itemCount + BarPadding * 2 + fabWidth
+    }
+}
+
+data class FloatingDockMetrics(
+    val barHeight: Dp,
+    val compactBarHeight: Dp,
+    val barPadding: Dp,
+    val fabGap: Dp,
+    val fabSize: Dp,
+    val maxItemExtent: Dp,
+    val maxItemExtentCompact: Dp,
+    val iconSize: Dp,
+    val trailingIconSize: Dp,
+    val labelGap: Dp,
+    val labelInset: Dp,
+    val labelSize: TextUnit,
+    val lensGrowth: Dp,
+    val slotBlur: Dp,
+    val exitTranslate: Dp,
+    val dockElevation: Dp,
+    val shadowRoom: Dp
+)
+
+fun floatingDockScaleFor(screenWidthDp: Int): Float =
+    ((screenWidthDp - 300) / 60f).coerceIn(0.8f, 1f)
+
+fun buildFloatingDockMetrics(scale: Float): FloatingDockMetrics = FloatingDockMetrics(
+    barHeight = FloatingNavBarMetrics.BarHeight * scale,
+    compactBarHeight = FloatingNavBarMetrics.CompactBarHeight * scale,
+    barPadding = FloatingNavBarMetrics.BarPadding * scale,
+    fabGap = FloatingNavBarMetrics.FabGap * scale,
+    fabSize = FloatingNavBarMetrics.FabSize * scale,
+    maxItemExtent = FloatingNavBarMetrics.MaxItemExtent * scale,
+    maxItemExtentCompact = FloatingNavBarMetrics.MaxItemExtentCompact * scale,
+    iconSize = FloatingNavBarMetrics.IconSize * scale,
+    trailingIconSize = FloatingNavBarMetrics.TrailingIconSize * scale,
+    labelGap = FloatingNavBarMetrics.LabelGap * scale,
+    labelInset = FloatingNavBarMetrics.LabelInset * scale,
+    labelSize = FloatingNavBarMetrics.LabelSize * scale,
+    lensGrowth = FloatingNavBarMetrics.LensGrowth * scale,
+    slotBlur = FloatingNavBarMetrics.SlotBlur * scale,
+    exitTranslate = FloatingNavBarMetrics.ExitTranslate * scale,
+    dockElevation = FloatingNavBarMetrics.DockElevation * scale,
+    shadowRoom = FloatingNavBarMetrics.ShadowRoom * scale
+)
+
+@Composable
+fun rememberFloatingDockMetrics(): FloatingDockMetrics {
+    val screenWidthDp = LocalConfiguration.current.screenWidthDp
+    return remember(screenWidthDp) {
+        buildFloatingDockMetrics(floatingDockScaleFor(screenWidthDp))
     }
 }
 
@@ -206,11 +260,11 @@ private fun rubberBand(overshoot: Float, limit: Float): Float {
     return limit * pull * overshoot.sign
 }
 
-private fun dockPillMaxWidth(itemCount: Int): Dp =
-    FloatingNavBarMetrics.MaxItemExtent * itemCount + FloatingNavBarMetrics.BarPadding * 2
+private fun dockPillMaxWidth(itemCount: Int, metrics: FloatingDockMetrics): Dp =
+    metrics.maxItemExtent * itemCount + metrics.barPadding * 2
 
-private fun dockPillMaxWidthCompact(itemCount: Int): Dp =
-    FloatingNavBarMetrics.MaxItemExtentCompact * itemCount + FloatingNavBarMetrics.BarPadding * 2
+private fun dockPillMaxWidthCompact(itemCount: Int, metrics: FloatingDockMetrics): Dp =
+    metrics.maxItemExtentCompact * itemCount + metrics.barPadding * 2
 
 @Composable
 fun FloatingNavBar(
@@ -220,13 +274,15 @@ fun FloatingNavBar(
     modifier: Modifier = Modifier,
     compactMode: Boolean = false,
     hasMiniPlayer: Boolean = false,
+    showPlayPauseFab: Boolean = true,
     isPlaying: Boolean = false,
     exitDirectionSign: Float = 0f,
     cornerRadius: Dp = 32.dp,
     onPlayPauseClick: () -> Unit = {},
     onSearchIconDoubleTap: () -> Unit = {}
 ) {
-    val barHeight = resolveFloatingNavBarHeight(compactMode)
+    val metrics = rememberFloatingDockMetrics()
+    val barHeight = if (compactMode) metrics.compactBarHeight else metrics.barHeight
     val tapState = remember { NavRowTapState() }
     val scope = rememberCoroutineScope()
     val systemNavBarInset = sanitizeNavigationBarBottomInset(
@@ -295,7 +351,7 @@ fun FloatingNavBar(
                 .padding(
                     start = startMargin,
                     end = endMargin,
-                    top = FloatingNavBarMetrics.ShadowRoom,
+                    top = metrics.shadowRoom,
                     bottom = bottomMargin
                 ),
             horizontalArrangement = Arrangement.Center,
@@ -313,8 +369,8 @@ fun FloatingNavBar(
                             .weight(1f, fill = false)
                             .fillMaxHeight()
                             .widthIn(
-                                max = if (compactMode) dockPillMaxWidthCompact(navItems.size)
-                                else dockPillMaxWidth(navItems.size)
+                                max = if (compactMode) dockPillMaxWidthCompact(navItems.size, metrics)
+                                else dockPillMaxWidth(navItems.size, metrics)
                             )
                     ) {
                         FloatingDockPill(
@@ -322,14 +378,16 @@ fun FloatingNavBar(
                             selectedIndex = selectedIndex,
                             compactMode = compactMode,
                             cornerRadius = cornerRadius,
+                            metrics = metrics,
                             onItemCommit = commitPage
                         )
                     }
                     DockTrailing(
-                        visible = hasMiniPlayer,
+                        visible = hasMiniPlayer && showPlayPauseFab,
                         barHeight = barHeight,
                         isPlaying = isPlaying,
                         exitDirectionSign = exitDirectionSign,
+                        metrics = metrics,
                         onPlayPauseClick = onPlayPauseClick
                     )
                 }
@@ -344,6 +402,7 @@ private fun FloatingDockPill(
     selectedIndex: Int,
     compactMode: Boolean,
     cornerRadius: Dp,
+    metrics: FloatingDockMetrics,
     onItemCommit: (Int) -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -355,7 +414,7 @@ private fun FloatingDockPill(
     val view = LocalView.current
     val hapticsConfig = LocalAppHapticsConfig.current
     val density = LocalDensity.current
-    val lensGrowthPx = with(density) { FloatingNavBarMetrics.LensGrowth.toPx() }
+    val lensGrowthPx = with(density) { metrics.lensGrowth.toPx() }
     val colorScheme = MaterialTheme.colorScheme
     val dockShape = RoundedCornerShape(cornerRadius)
     val latestOnItemCommit by rememberUpdatedState(onItemCommit)
@@ -394,7 +453,7 @@ private fun FloatingDockPill(
                 translationX = stretch.value
             }
             .shadow(
-                elevation = FloatingNavBarMetrics.DockElevation,
+                elevation = metrics.dockElevation,
                 shape = dockShape,
                 clip = false
             )
@@ -403,7 +462,7 @@ private fun FloatingDockPill(
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(FloatingNavBarMetrics.BarPadding)
+                .padding(metrics.barPadding)
                 .pointerInput(navItems.size, selectedIndex) {
                     awaitEachGesture {
                         val down = awaitFirstDown(
@@ -561,7 +620,8 @@ private fun FloatingDockPill(
                     compactMode = compactMode,
                     tintColor = colorScheme.onSurfaceVariant,
                     lens = lens,
-                    lift = lift
+                    lift = lift,
+                    metrics = metrics
                 )
             }
 
@@ -610,7 +670,8 @@ private fun FloatingDockPill(
                     compactMode = compactMode,
                     tintColor = colorScheme.primary,
                     lens = lens,
-                    lift = lift
+                    lift = lift,
+                    metrics = metrics
                 )
             }
         }
@@ -663,7 +724,8 @@ private fun DockItemsRow(
     compactMode: Boolean,
     tintColor: Color,
     lens: DockSpring,
-    lift: Animatable<Float, *>
+    lift: Animatable<Float, *>,
+    metrics: FloatingDockMetrics
 ) {
     Row(modifier = Modifier.fillMaxSize()) {
         navItems.forEachIndexed { index, item ->
@@ -678,22 +740,22 @@ private fun DockItemsRow(
                         scaleX = scale
                         scaleY = scale
                     }
-                    .padding(horizontal = FloatingNavBarMetrics.LabelInset),
+                    .padding(horizontal = metrics.labelInset),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
                 Icon(
                     painter = painterResource(id = glyphRes),
                     contentDescription = stringResource(id = item.labelResId),
-                    modifier = Modifier.size(FloatingNavBarMetrics.IconSize),
+                    modifier = Modifier.size(metrics.iconSize),
                     tint = tintColor
                 )
                 if (!compactMode) {
-                    Spacer(modifier = Modifier.height(FloatingNavBarMetrics.LabelGap))
+                    Spacer(modifier = Modifier.height(metrics.labelGap))
                     Text(
                         text = stringResource(id = item.labelResId),
                         color = tintColor,
-                        fontSize = FloatingNavBarMetrics.LabelSize,
+                        fontSize = metrics.labelSize,
                         fontWeight = FontWeight.Medium,
                         letterSpacing = 0.sp,
                         maxLines = 1,
@@ -716,6 +778,7 @@ private fun DockTrailing(
     barHeight: Dp,
     isPlaying: Boolean,
     exitDirectionSign: Float,
+    metrics: FloatingDockMetrics,
     onPlayPauseClick: () -> Unit
 ) {
     var mounted by remember { mutableStateOf(visible) }
@@ -723,7 +786,7 @@ private fun DockTrailing(
     val popScale = remember { Animatable(if (visible) 1f else SlotEnterScale) }
     val exiting = remember { Animatable(1f) }
     val density = LocalDensity.current
-    val exitTranslatePx = with(density) { FloatingNavBarMetrics.ExitTranslate.toPx() }
+    val exitTranslatePx = with(density) { metrics.exitTranslate.toPx() }
 
     var skipInitialEnter by remember { mutableStateOf(visible) }
 
@@ -766,7 +829,7 @@ private fun DockTrailing(
 
     val slotWidth by animateDpAsState(
         targetValue = if (visible) {
-            FloatingNavBarMetrics.FabSize + FloatingNavBarMetrics.FabGap
+            metrics.fabSize + metrics.fabGap
         } else {
             0.dp
         },
@@ -792,8 +855,8 @@ private fun DockTrailing(
             Box(
                 modifier = Modifier
                     .wrapContentSize(Alignment.CenterEnd, unbounded = true)
-                    .padding(start = FloatingNavBarMetrics.FabGap)
-                    .size(FloatingNavBarMetrics.FabSize)
+                    .padding(start = metrics.fabGap)
+                    .size(metrics.fabSize)
             ) {
                 DockFab(
                     isPlaying = isPlaying,
@@ -801,8 +864,9 @@ private fun DockTrailing(
                     reveal = revealValue,
                     translationXPx = exitDirectionSign * exitTranslatePx * (1f - exiting.value),
                     blurRadiusPx = with(density) {
-                        FloatingNavBarMetrics.SlotBlur.toPx() * (1f - revealValue)
+                        metrics.slotBlur.toPx() * (1f - revealValue)
                     },
+                    metrics = metrics,
                     onClick = onPlayPauseClick
                 )
             }
@@ -817,6 +881,7 @@ private fun DockFab(
     reveal: Float,
     translationXPx: Float,
     blurRadiusPx: Float,
+    metrics: FloatingDockMetrics,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -862,7 +927,7 @@ private fun DockFab(
         shape = CircleShape,
         color = MaterialTheme.colorScheme.primary,
         tonalElevation = 0.dp,
-        shadowElevation = FloatingNavBarMetrics.DockElevation
+        shadowElevation = metrics.dockElevation
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -871,7 +936,7 @@ private fun DockFab(
             MorphingPlayPauseIcon(
                 isPlaying = isPlaying,
                 tint = MaterialTheme.colorScheme.onPrimary,
-                size = FloatingNavBarMetrics.TrailingIconSize
+                size = metrics.trailingIconSize
             )
         }
     }

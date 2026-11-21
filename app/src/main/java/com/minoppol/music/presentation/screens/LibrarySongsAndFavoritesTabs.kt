@@ -60,6 +60,9 @@ import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.model.SortOption
 import com.minoppol.music.data.model.StorageFilter
 import com.minoppol.music.presentation.components.ExpressiveScrollBar
+import com.minoppol.music.presentation.components.rememberSwipeToQueue
+import com.minoppol.music.presentation.components.animatedScrollbarInset
+import com.minoppol.music.ui.theme.LocalShowScrollbar
 import com.minoppol.music.presentation.components.MiniPlayerHeight
 import com.minoppol.music.presentation.components.songFastScrollLabel
 import com.minoppol.music.presentation.components.subcomps.EnhancedSongListItem
@@ -89,6 +92,7 @@ fun LibraryFavoritesTab(
     storageFilter: StorageFilter = StorageFilter.ALL,
     hasCurrentSong: Boolean = false
 ) {
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     val listState = rememberLazyListState()
     val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
     val coroutineScope = rememberCoroutineScope()
@@ -228,7 +232,7 @@ fun LibraryFavoritesTab(
                     LazyColumn(
                         modifier = Modifier
                             .align(Alignment.TopCenter)
-                            .padding(start = 12.dp, end = if (listState.canScrollForward || listState.canScrollBackward) 22.dp else 12.dp, bottom = 6.dp)
+                            .padding(start = 12.dp, end = animatedScrollbarInset(LocalShowScrollbar.current && (listState.canScrollForward || listState.canScrollBackward), 22.dp, 12.dp), bottom = 6.dp)
                             .clip(
                                 RoundedCornerShape(
                                     topStart = 26.dp,
@@ -256,6 +260,7 @@ fun LibraryFavoritesTab(
                                     selectionIndex = if (isSelectionMode) getSelectionIndex(song.id) else null,
                                     isSelectionMode = isSelectionMode,
                                     onLongPress = { onSongLongPress(song) },
+                                    onSwipeToQueue = swipeToQueue?.let { { it(song) } },
                                     onClick = {
                                         if (isSelectionMode) {
                                             onSongSelectionToggle(song)
@@ -306,6 +311,7 @@ fun LibrarySongsTabPaginated(
     isRefreshing: Boolean,
     onRefresh: () -> Unit
 ) {
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     val listState = rememberLazyListState()
     val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
     val pullToRefreshState = rememberPullToRefreshState()
@@ -314,7 +320,7 @@ fun LibrarySongsTabPaginated(
         paginatedSongs.loadState.refresh is LoadState.Loading && paginatedSongs.itemCount == 0 -> {
             LazyColumn(
                 modifier = Modifier
-                    .padding(start = 12.dp, end = if (listState.canScrollForward || listState.canScrollBackward) 22.dp else 12.dp, bottom = 6.dp)
+                    .padding(start = 12.dp, end = animatedScrollbarInset(LocalShowScrollbar.current && (listState.canScrollForward || listState.canScrollBackward), 22.dp, 12.dp), bottom = 6.dp)
                     .clip(
                         RoundedCornerShape(
                             topStart = 26.dp,
@@ -411,7 +417,7 @@ fun LibrarySongsTabPaginated(
                     Box(modifier = Modifier.fillMaxSize()) {
                         LazyColumn(
                             modifier = Modifier
-                                .padding(start = 12.dp, end = if (listState.canScrollForward || listState.canScrollBackward) 22.dp else 12.dp, bottom = 6.dp)
+                                .padding(start = 12.dp, end = animatedScrollbarInset(LocalShowScrollbar.current && (listState.canScrollForward || listState.canScrollBackward), 22.dp, 12.dp), bottom = 6.dp)
                                 .clip(
                                     RoundedCornerShape(
                                         topStart = 26.dp,
@@ -451,7 +457,8 @@ fun LibrarySongsTabPaginated(
                                         isCurrentSong = stablePlayerState.currentSong?.id == song.id,
                                         isLoading = false,
                                         onMoreOptionsClick = rememberedOnMoreOptionsClick,
-                                        onClick = rememberedOnClick
+                                        onClick = rememberedOnClick,
+                                        onSwipeToQueue = swipeToQueue?.let { { it(song) } }
                                     )
                                 } else {
                                     EnhancedSongListItem(

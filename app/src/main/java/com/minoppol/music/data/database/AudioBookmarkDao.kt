@@ -30,6 +30,9 @@ interface AudioBookmarkDao {
     @Query("DELETE FROM audio_bookmarks WHERE id = :id")
     suspend fun deleteBookmark(id: Long)
 
+    @Query("DELETE FROM audio_bookmarks WHERE id IN (:ids)")
+    suspend fun deleteBookmarks(ids: List<Long>)
+
     @Query("SELECT * FROM audio_bookmarks ORDER BY created_time DESC")
     fun getAllBookmarksFlow(): Flow<List<AudioBookmarkEntity>>
 

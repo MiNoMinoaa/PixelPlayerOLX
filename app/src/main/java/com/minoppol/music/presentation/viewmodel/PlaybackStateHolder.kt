@@ -418,6 +418,14 @@ class PlaybackStateHolder @Inject constructor(
         if (hadNext) resumeAfterSkip(controller, wasPaused)
     }
 
+    fun forcePreviousSong() {
+        val controller = activeLocalPlayer()
+        val wasPaused = !controller.playWhenReady
+        val hadPrevious = controller.hasPreviousMediaItem()
+        controller.seekToPreviousMediaItem()
+        if (hadPrevious) resumeAfterSkip(controller, wasPaused)
+    }
+
     private fun resumeAfterSkip(player: Player, wasPaused: Boolean) {
         if (!wasPaused || !autoplayOnSkip) return
         if (player.playbackState == Player.STATE_IDLE && player.mediaItemCount > 0) {

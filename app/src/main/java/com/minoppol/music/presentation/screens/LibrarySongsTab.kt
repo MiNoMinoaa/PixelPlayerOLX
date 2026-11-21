@@ -53,6 +53,9 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.LoadState
 import com.minoppol.music.R
 import com.minoppol.music.presentation.components.ExpressiveScrollBar
+import com.minoppol.music.presentation.components.rememberSwipeToQueue
+import com.minoppol.music.presentation.components.animatedScrollbarInset
+import com.minoppol.music.ui.theme.LocalShowScrollbar
 import com.minoppol.music.presentation.components.songFastScrollLabel
 import androidx.compose.ui.text.style.TextOverflow
 
@@ -80,6 +83,7 @@ fun LibrarySongsTab(
     hasCurrentSong: Boolean = false
 ) {
     val listState = rememberLazyListState()
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     val listBottomCornerRadius = rememberListBottomCornerRadius(playerViewModel)
     val pullToRefreshState = rememberPullToRefreshState()
     val coroutineScope = rememberCoroutineScope()
@@ -284,7 +288,7 @@ fun LibrarySongsTab(
                     Box(modifier = Modifier.fillMaxSize()) {
                         LazyColumn(
                             modifier = Modifier
-                                .padding(start = 12.dp, end = if (listState.canScrollForward || listState.canScrollBackward) 22.dp else 12.dp, bottom = 6.dp)
+                                .padding(start = 12.dp, end = animatedScrollbarInset(LocalShowScrollbar.current && (listState.canScrollForward || listState.canScrollBackward), 22.dp, 12.dp), bottom = 6.dp)
                                 .clip(
                                     RoundedCornerShape(
                                         topStart = 26.dp,
@@ -332,7 +336,8 @@ fun LibrarySongsTab(
                                         selectionIndex = if (isSelectionMode) getSelectionIndex(song.id) else null,
                                         onLongPress = rememberedOnLongPress,
                                         onMoreOptionsClick = rememberedOnMoreOptionsClick,
-                                        onClick = rememberedOnClick
+                                        onClick = rememberedOnClick,
+                                        onSwipeToQueue = swipeToQueue?.let { { it(song) } }
                                     )
                                 } else {
                                      EnhancedSongListItem(

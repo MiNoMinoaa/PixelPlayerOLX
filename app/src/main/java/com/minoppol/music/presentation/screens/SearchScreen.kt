@@ -184,6 +184,9 @@ import com.minoppol.music.presentation.components.subcomps.EnhancedSongListItem
 import com.minoppol.music.presentation.components.subcomps.SelectionActionRow
 import com.minoppol.music.presentation.components.subcomps.SelectionCountPill
 import com.minoppol.music.presentation.components.ExpressiveScrollBar
+import com.minoppol.music.presentation.components.animatedScrollbarInset
+import com.minoppol.music.ui.theme.LocalShowScrollbar
+import com.minoppol.music.presentation.components.rememberSwipeToQueue
 import com.minoppol.music.presentation.screens.lxmusic.rememberLxHeaderMetrics
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.rounded.MusicNote
@@ -363,8 +366,12 @@ fun SearchScreen(
         }
     }
 
-    val onlineDiscoverSortOption by lxViewModel.discoverSortOption.collectAsStateWithLifecycle()
+    var onlineSortOption by remember { mutableStateOf<SortOption>(SortOption.SongDefaultOrder) }
     var showOnlineSortSheet by remember { mutableStateOf(false) }
+
+    val platformNameStyle by lxViewModel.platformNameStyle.collectAsStateWithLifecycle()
+    val onlineSearchSource by onlineSearchViewModel.searchSource.collectAsStateWithLifecycle()
+    var showSourceMenu by remember { mutableStateOf(false) }
 
     val toggleOnlineSongSelection: (com.minoppol.music.data.lxmusic.LxSong) -> Unit = { song ->
         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -583,10 +590,13 @@ fun SearchScreen(
                                     )
                                 },
                                 leadingIcon = {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Row(
+                                        modifier = Modifier.padding(start = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
                                         Box(
                                             modifier = Modifier
-                                                .size(40.dp)
+                                                .size(32.dp)
                                                 .clip(CircleShape)
                                                 .clickable {
                                                     val nextMode = !onlineSearchMode
@@ -621,6 +631,7 @@ fun SearchScreen(
                                             },
                                             modifier = Modifier.size(24.dp)
                                         )
+                                        Spacer(modifier = Modifier.width(4.dp))
                                     }
                                 },
                                 trailingIcon = {
@@ -661,18 +672,103 @@ fun SearchScreen(
                     )
                 }
 
-                FilledIconButton(
-                    modifier = Modifier.padding(bottom = 2.dp),
-                    colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    ),
-                    onClick = { navController.navigateSafely(Screen.Settings.route) }
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.rounded_settings_24),
-                        contentDescription = stringResource(R.string.presentation_batch_d_open_settings_cd)
-                    )
+                if (onlineSearchMode) {
+                    Box {
+                        FilledIconButton(
+                            modifier = Modifier.padding(bottom = 2.dp),
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            ),
+                            onClick = { showSourceMenu = true }
+                        ) {
+                            Text(
+                                text = if (onlineSearchSource == "jh") "JH"
+                                else LxSources.shortLabel(onlineSearchSource).uppercase(),
+                                style = MaterialTheme.typography.labelLarge,
+                                maxLines = 1
+                            )
+                        }
+                        DropdownMenuPopup(
+                            expanded = showSourceMenu,
+                            onDismissRequest = { showSourceMenu = false },
+                            popupPositionProvider = MenuDefaults.rememberDropdownMenuPopupPositionProvider(
+                                MenuAnchorPosition.Custom(
+                                    xCandidates = {
+                                        androidx.collection.mutableIntListOf(
+                                            anchorBounds.right - menuSize.width,
+                                            anchorBounds.left
+                                        )
+                                    },
+                                    yCandidates = {
+                                        androidx.collection.mutableIntListOf(
+                                            anchorBounds.bottom,
+                                            anchorBounds.top - menuSize.height
+                                        )
+                                    }
+                                )
+                            )
+                        ) {
+                            val sourceEntries = listOf("jh") + LxSources.ALL
+                            DropdownMenuGroup(
+                                shapes = MenuDefaults.groupShape(index = 0, count = 1),
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            ) {
+                                sourceEntries.forEachIndexed { index, source ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                if (source == "jh") stringResource(R.string.lx_source_jh)
+                                                else com.minoppol.music.presentation.components.lxSourceDisplayName(source, platformNameStyle)
+                                            )
+                                        },
+                                        leadingIcon = {
+                                            if (source == "jh") {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Public,
+                                                    contentDescription = null
+                                                )
+                                            } else {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(14.dp)
+                                                        .clip(CircleShape)
+                                                        .background(LxSources.brandColor(source))
+                                                )
+                                            }
+                                        },
+                                        shape = MenuDefaults.itemShape(index = index, count = sourceEntries.size).shape,
+                                        colors = MenuDefaults.itemColors(),
+                                        onClick = {
+                                            showSourceMenu = false
+                                            if (onlineSearchSource != source) {
+                                                onlineSearchViewModel.setSearchSource(source)
+                                                if (onlineState.submittedQuery.isNotBlank()) {
+                                                    onlineSearchViewModel.searchOnline(onlineState.submittedQuery)
+                                                } else {
+                                                    onlineSearchViewModel.onSourceChangedRefreshHot()
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    FilledIconButton(
+                        modifier = Modifier.padding(bottom = 2.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ),
+                        onClick = { navController.navigateSafely(Screen.Settings.route) }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.rounded_settings_24),
+                            contentDescription = stringResource(R.string.presentation_batch_d_open_settings_cd)
+                        )
+                    }
                 }
             }
 
@@ -717,7 +813,7 @@ fun SearchScreen(
                     playPageSong = onlinePlayPageSong,
                     playAll = onlinePlayAll,
                     shuffleAll = onlineShuffleAll,
-                    sortOption = onlineDiscoverSortOption,
+                    sortOption = onlineSortOption,
                     onSortClick = { showOnlineSortSheet = true },
                     onLoadMoreSongs = { onlineSearchViewModel.loadMoreSongs() },
                     onLoadMorePlaylists = { onlineSearchViewModel.loadMorePlaylists() },
@@ -836,7 +932,7 @@ fun SearchScreen(
                     playPageSong = onlinePlayPageSong,
                     playAll = onlinePlayAll,
                     shuffleAll = onlineShuffleAll,
-                    sortOption = onlineDiscoverSortOption,
+                    sortOption = onlineSortOption,
                     onSortClick = { showOnlineSortSheet = true },
                     bottomBarHeightDp = bottomBarHeightDp,
                     lxViewModel = lxViewModel,
@@ -930,9 +1026,9 @@ fun SearchScreen(
             LibrarySortBottomSheet(
                 title = stringResource(R.string.presentation_batch_d_sort_by),
                 options = LxDiscoverSortOptions,
-                selectedOption = onlineDiscoverSortOption,
+                selectedOption = onlineSortOption,
                 onDismiss = { showOnlineSortSheet = false },
-                onOptionSelected = { lxViewModel.setDiscoverSortOption(it) },
+                onOptionSelected = { onlineSortOption = it },
             )
         }
         val onlineUncollectConfirm by lxViewModel.uncollectConfirm.collectAsStateWithLifecycle()
@@ -1027,6 +1123,20 @@ fun SearchScreen(
                             source = infoLxSong.source
                         )
                         onlineInfoSong = null
+                    } else {
+                        onlineScope.launch {
+                            val resolved = playerViewModel.resolveLxSongAlbum(infoUiSong)
+                            if (resolved != null) {
+                                lxViewModel.openAlbumFromSearch(resolved, source = infoLxSong.source)
+                                onlineInfoSong = null
+                            } else {
+                                android.widget.Toast.makeText(
+                                    context,
+                                    context.getString(R.string.lx_msg_album_not_found),
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
                     }
                 },
                 onNavigateToArtist = {
@@ -1468,6 +1578,7 @@ fun SearchResultsList(
                 }
         }
     }
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     val searchQueueName = remember(searchQuery) {
         searchQuery.trim()
             .takeIf { it.isNotEmpty() }
@@ -1555,6 +1666,7 @@ fun SearchResultsList(
                                     isPlaying = isPlaying,
                                     isCurrentSong = currentPlayingSongId == item.song.id,
                                     onMoreOptionsClick = onSongMoreOptionsClick,
+                                    onSwipeToQueue = swipeToQueue?.let { { it(item.song) } },
                                     onClick = { onSongResultClick(item.song) }
                                 )
                             }
@@ -2173,6 +2285,7 @@ private fun OnlineSearchResults(
     bottomBarHeightDp: androidx.compose.ui.unit.Dp,
     playerViewModel: PlayerViewModel,
 ) {
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     val submitted = state.submittedQuery.isNotBlank()
     if (inputFocused && query.isNotBlank()) {
         if (suggestions.isNotEmpty()) {
@@ -2370,7 +2483,7 @@ private fun OnlineSearchResults(
                         state = songsListState,
                         contentPadding = PaddingValues(
                             start = 12.dp,
-                            end = if (songsListState.canScrollForward || songsListState.canScrollBackward) 22.dp else 12.dp,
+                            end = animatedScrollbarInset(LocalShowScrollbar.current && (songsListState.canScrollForward || songsListState.canScrollBackward), 22.dp, 12.dp),
                             bottom = MiniPlayerHeight + bottomBarHeightDp + 16.dp
                         ),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -2390,6 +2503,7 @@ private fun OnlineSearchResults(
                                 selectionIndex = getSelectionIndex(uiSong.id),
                                 onLongPress = { onSongLongPress(song) },
                                 onMoreOptionsClick = { onSongMoreOptions(song) },
+                                onSwipeToQueue = swipeToQueue?.let { { it(uiSong) } },
                                 onClick = {
                                     if (isSelectionMode) {
                                         onSongSelectionToggle(song)
@@ -2496,7 +2610,7 @@ private fun OnlineSearchResults(
                         state = playlistsListState,
                         contentPadding = PaddingValues(
                             start = 12.dp,
-                            end = if (playlistsListState.canScrollForward || playlistsListState.canScrollBackward) 22.dp else 12.dp,
+                            end = animatedScrollbarInset(LocalShowScrollbar.current && (playlistsListState.canScrollForward || playlistsListState.canScrollBackward), 22.dp, 12.dp),
                             bottom = MiniPlayerHeight + bottomBarHeightDp + 16.dp
                         ),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -2610,6 +2724,7 @@ internal fun OnlinePlaylistDetailPage(
     lxViewModel: com.minoppol.music.presentation.screens.lxmusic.LxMusicViewModel,
     playerViewModel: PlayerViewModel,
 ) {
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     val hm = rememberLxHeaderMetrics()
     val statusBarTopInset = WindowInsets.systemBars.asPaddingValues().calculateTopPadding()
     var headerHeight by remember { mutableStateOf(hm.searchBarHeight + 8.dp + statusBarTopInset) }
@@ -2703,7 +2818,7 @@ internal fun OnlinePlaylistDetailPage(
                 state = detailListState,
                 contentPadding = PaddingValues(
                     start = 12.dp,
-                    end = if (detailListState.canScrollForward || detailListState.canScrollBackward) 22.dp else 12.dp,
+                    end = animatedScrollbarInset(LocalShowScrollbar.current && (detailListState.canScrollForward || detailListState.canScrollBackward), 22.dp, 12.dp),
                     bottom = MiniPlayerHeight + bottomBarHeightDp + 16.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -2813,6 +2928,7 @@ internal fun OnlinePlaylistDetailPage(
                         selectionIndex = getSelectionIndex(uiSong.id),
                         onLongPress = { onSongLongPress(song) },
                         onMoreOptionsClick = { onSongMoreOptions(song) },
+                        onSwipeToQueue = swipeToQueue?.let { { it(uiSong) } },
                         onClick = {
                             if (isSelectionMode) {
                                 onSongSelectionToggle(song)

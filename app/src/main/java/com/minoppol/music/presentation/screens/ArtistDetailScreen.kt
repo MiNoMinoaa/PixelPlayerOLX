@@ -5,6 +5,7 @@ package com.minoppol.music.presentation.screens
 import com.minoppol.music.presentation.navigation.navigateSafely
 import com.minoppol.music.presentation.navigation.navigateSafelyReplacing
 import com.minoppol.music.presentation.components.DetailHeroFloatingLayer
+import com.minoppol.music.presentation.components.rememberSwipeToQueue
 import com.minoppol.music.presentation.components.DetailHeroPinnedActionsHeight
 import com.minoppol.music.presentation.components.DetailSongsSummary
 import com.minoppol.music.presentation.components.HeroPlayState
@@ -133,6 +134,7 @@ fun ArtistDetailScreen(
     viewModel: ArtistDetailViewModel = hiltViewModel(),
     playlistViewModel: PlaylistViewModel = hiltViewModel()
 ) {
+    val swipeToQueue = rememberSwipeToQueue(playerViewModel)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     // Kept as State and read only by the album list and the expand-all button, so a header tap
     // does not recompose the whole screen.
@@ -540,6 +542,7 @@ fun ArtistDetailScreen(
                                         onSongClick = {
                                             playerViewModel.showAndPlaySong(song, section.songs)
                                         },
+                                        onSwipeToQueue = swipeToQueue?.let { { it(song) } },
                                         onMoreOptionsClick = {
                                             playerViewModel.selectSongForInfo(song)
                                             showSongInfoBottomSheet = true
@@ -886,6 +889,7 @@ private fun ArtistAlbumSectionSongItem(
     isCurrentSong: Boolean,
     isPlaying: Boolean,
     onSongClick: () -> Unit,
+    onSwipeToQueue: (() -> Unit)?,
     onMoreOptionsClick: () -> Unit
 ) {
     val isLastSong = songIndex == songCount - 1
@@ -929,7 +933,8 @@ private fun ArtistAlbumSectionSongItem(
                 showAlbumArt = false,
                 customShape = songItemShape,
                 onMoreOptionsClick = { onMoreOptionsClick() },
-                onClick = onSongClick
+                onClick = onSongClick,
+                onSwipeToQueue = onSwipeToQueue
             )
 
             if (isLastSong) {

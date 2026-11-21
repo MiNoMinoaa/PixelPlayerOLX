@@ -178,14 +178,14 @@ fun AutoScrollingText(
         }
 
         val contentPlaceable = subcompose("content", content)[0].measure(constraints)
-        val targetWidth = if (constraints.maxWidth == Constraints.Infinity) {
-            contentPlaceable.width
+        val targetWidth = if (isOverflowing) {
+            constraints.maxWidth.takeIf { it != Constraints.Infinity } ?: contentPlaceable.width
         } else {
-            minOf(contentPlaceable.width, constraints.maxWidth)
+            contentPlaceable.width
         }
 
         layout(targetWidth, contentPlaceable.height) {
-            contentPlaceable.place(0, 0)
+            contentPlaceable.placeRelative(0, 0)
         }
     }
 }

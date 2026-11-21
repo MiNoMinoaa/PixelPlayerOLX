@@ -177,7 +177,7 @@
     <string name="no_genres_available">暫無可用流派。</string>
 
     <string name="about_app_name">PixelPlayerOLX</string>
-    <string name="about_tagline">基於 Material 3 的開源播放器。</string>
+    <string name="about_tagline">本地優先播放、支援自建流媒體，基於 Material 3 的開源播放器。</string>
     <string name="about_version_format">版本 v%1$s</string>
     <string name="update_available_title">发现新版本 v%1$s</string>
     <string name="update_available_download">去下载</string>
@@ -292,7 +292,7 @@
     <string name="search_online_tab_songs">歌曲</string>
     <string name="search_online_tab_playlists">歌單</string>
     <string name="search_online_clear_history_confirm">清空全部搜索歷史？</string>
-    <string name="search_online_prompt">輸入關鍵詞，聚合搜索各平台歌曲與歌單</string>
+    <string name="search_online_prompt">輸入關鍵詞進行搜索</string>
     <string name="search_online_play_all">播放全部</string>
     <string name="search_online_shuffle">隨機播放</string>    <string name="search_online_selected_count">已選 %1$d 首</string>
     <string name="search_online_selection_options">批量操作</string>
