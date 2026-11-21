@@ -108,6 +108,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.input.pointer.pointerInput
@@ -120,15 +121,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.FormatAlignLeft
+import androidx.compose.material.icons.automirrored.rounded.FormatAlignRight
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.FormatAlignCenter
 import androidx.compose.material.icons.rounded.Headphones
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.minoppol.music.presentation.viewmodel.AudioBookmarksViewModel
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import com.minoppol.music.R
@@ -142,6 +148,8 @@ import com.minoppol.music.data.preferences.CarouselStyle
 import com.minoppol.music.data.preferences.FullPlayerLoadingTweaks
 import com.minoppol.music.data.preferences.LyricsWordHighlightStyle
 import com.minoppol.music.data.preferences.dataStore
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -2521,6 +2529,15 @@ private fun InPlayerLyrics(
 ) {
     if (lines.isEmpty()) return
 
+    val context = LocalContext.current
+    val playerLyricsAlignmentFlow = remember(context) {
+        context.dataStore.data.map { it[stringPreferencesKey("player_lyrics_alignment")] ?: "center" }
+    }
+    val playerLyricsAlignment by playerLyricsAlignmentFlow.collectAsStateWithLifecycle(initialValue = "center")
+    val alignmentScope = rememberCoroutineScope()
+    val haptics = LocalHapticFeedback.current
+    var showAlignmentPopup by remember { mutableStateOf(false) }
+
     var lastValidIndex by remember(lines) { mutableIntStateOf(0) }
     if (currentIndex in lines.indices) {
         lastValidIndex = currentIndex
@@ -2532,18 +2549,94 @@ private fun InPlayerLyrics(
     val lineHeightUnit = (fontSize * 1.2f).dp
 
     BoxWithConstraints(
-        modifier = modifier.clickable(
-            interactionSource = remember { MutableInteractionSource() },
-            indication = null,
-            onClick = onClick
-        )
+        modifier = modifier
+            .pointerInput(lines) {
+                detectTapGestures(
+                    onTap = { onClick() },
+                    onLongPress = {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        showAlignmentPopup = true
+                    }
+                )
+            }
     ) {
         val lyricsBlockMax = if (isLandscape) 200.dp else {
             val padTotal = (fontSize * 1.2f).dp
             minOf(lineHeightUnit * 3f + padTotal, maxWidth * 0.42f)
         }
 
+        if (showAlignmentPopup) {
+            Popup(
+                alignment = Alignment.Center,
+                onDismissRequest = { showAlignmentPopup = false },
+                properties = PopupProperties(focusable = true)
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = LocalMaterialTheme.current.primaryContainer,
+                    tonalElevation = 6.dp,
+                    shadowElevation = 8.dp
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(R.string.lyrics_more_alignment),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = LocalMaterialTheme.current.onPrimaryContainer,
+                            modifier = Modifier.padding(end = 2.dp)
+                        )
+                        listOf(
+                            "left" to Icons.AutoMirrored.Rounded.FormatAlignLeft,
+                            "center" to Icons.Rounded.FormatAlignCenter,
+                            "right" to Icons.AutoMirrored.Rounded.FormatAlignRight
+                        ).forEach { (align, icon) ->
+                            ToggleSegmentButton(
+                                modifier = Modifier.size(40.dp),
+                                active = playerLyricsAlignment == align,
+                                activeColor = LocalMaterialTheme.current.primary,
+                                inactiveColor = LocalMaterialTheme.current.primaryContainer,
+                                activeContentColor = LocalMaterialTheme.current.onPrimary,
+                                inactiveContentColor = LocalMaterialTheme.current.onPrimaryContainer.copy(alpha = 0.78f),
+                                activeCornerRadius = 50.dp,
+                                onClick = {
+                                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    alignmentScope.launch {
+                                        context.dataStore.edit { prefs ->
+                                            prefs[stringPreferencesKey("player_lyrics_alignment")] = align
+                                        }
+                                    }
+                                    showAlignmentPopup = false
+                                },
+                                imageVector = icon,
+                                contentDesc = stringResource(
+                                    when (align) {
+                                        "left" -> R.string.cd_lyrics_align_left
+                                        "right" -> R.string.cd_lyrics_align_right
+                                        else -> R.string.cd_lyrics_align_center
+                                    }
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         val listState = rememberLazyListState()
+        val lyricsTextAlign = when (playerLyricsAlignment) {
+            "left" -> TextAlign.Left
+            "right" -> TextAlign.Right
+            else -> TextAlign.Center
+        }
+        val lyricsRowAlignment = when (playerLyricsAlignment) {
+            "left" -> Alignment.Start
+            "right" -> Alignment.End
+            else -> Alignment.CenterHorizontally
+        }
     var viewportHeightPx by remember { mutableIntStateOf(0) }
     var itemHeightPx by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
@@ -2583,7 +2676,7 @@ private fun InPlayerLyrics(
                         )
                     )
                 },
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = lyricsRowAlignment,
             contentPadding = PaddingValues(vertical = (fontSize * 0.6f).dp)
         ) {
             item {
@@ -2618,7 +2711,7 @@ private fun InPlayerLyrics(
                             unhighlightedColor = textColor.copy(alpha = 0.55f),
                             highlightStyle = highlightStyle,
                             emphasisEnabled = false,
-                            lyricsAlignment = "center",
+                            lyricsAlignment = playerLyricsAlignment,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .onSizeChanged { itemHeightPx = it.height }
@@ -2633,7 +2726,7 @@ private fun InPlayerLyrics(
                                 fontWeight = FontWeight.SemiBold,
                                 color = textColor
                             ),
-                            textAlign = TextAlign.Center,
+                            textAlign = lyricsTextAlign,
                             gradientEdgeColor = backgroundColor,
                             timeBudgetMs = nextLineTime?.let { next ->
                                 (next - line.time).toLong().takeIf { it > 0 }
@@ -2655,7 +2748,7 @@ private fun InPlayerLyrics(
                                 .fillMaxWidth()
                                 .onSizeChanged { if (idx == displayIndex) itemHeightPx = it.height }
                                 .padding(vertical = lineVerticalPadding),
-                            textAlign = TextAlign.Center
+                            textAlign = lyricsTextAlign
                         )
                     }
                 } else {
