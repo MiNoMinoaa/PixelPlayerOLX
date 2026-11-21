@@ -81,6 +81,7 @@ import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.Science
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.rounded.TextFields
 import androidx.compose.material.icons.rounded.UnfoldMore
 import androidx.compose.material.icons.rounded.Update
 import androidx.compose.material3.AlertDialog
@@ -181,7 +182,7 @@ import com.minoppol.music.presentation.settings.search.settingHighlight
 import com.minoppol.music.presentation.viewmodel.M3uSyncViewModel
 import com.minoppol.music.presentation.viewmodel.PlayerViewModel
 import com.minoppol.music.presentation.viewmodel.SettingsViewModel
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import com.minoppol.music.presentation.components.rememberModalSheetState
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -294,6 +295,33 @@ fun SettingsCategoryScreen(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
         if (uri != null) m3uSyncViewModel.selectFolder(uri)
+    }
+
+    var customFontPickerSuccess by remember { mutableStateOf(false) }
+    val customFontPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (e: SecurityException) {
+            }
+            val copied = com.minoppol.music.ui.theme.copyCustomFontToFiles(context, uri)
+            if (copied) {
+                settingsViewModel.setAppFontCustomUri(uri.toString())
+                settingsViewModel.setAppFontFamily(com.minoppol.music.data.preferences.AppFontFamily.CUSTOM)
+                customFontPickerSuccess = true
+            } else {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.setcat_app_font_apply_failed),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
     }
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -684,6 +712,45 @@ fun SettingsCategoryScreen(
                                     onCheckedChange = { settingsViewModel.setShowScrollbar(it) },
                                     leadingIcon = { Icon(Icons.Rounded.UnfoldMore, null, tint = MaterialTheme.colorScheme.secondary) },
                                     modifier = Modifier.settingHighlight("item_appearance_show_scrollbar", highlightKey)
+                                )
+                                ThemeSelectorItem(
+                                    label = stringResource(R.string.setcat_app_font_label),
+                                    hasDescription = false,
+                                    description = "",
+                                    options = mapOf(
+                                        com.minoppol.music.data.preferences.AppFontFamily.GOOGLE_SANS_FLEX.storageKey to
+                                            stringResource(R.string.setcat_app_font_desc_flex),
+                                        com.minoppol.music.data.preferences.AppFontFamily.SYSTEM.storageKey to
+                                            stringResource(R.string.setcat_app_font_desc_system),
+                                        com.minoppol.music.data.preferences.AppFontFamily.CUSTOM.storageKey to
+                                            stringResource(R.string.setcat_app_font_desc_custom)
+                                    ),
+                                    selectedKey = uiState.appFontFamily.storageKey,
+                                    onSelectionChanged = { key ->
+                                        val selected = com.minoppol.music.data.preferences.AppFontFamily.fromStorageKey(key)
+                                        if (selected == com.minoppol.music.data.preferences.AppFontFamily.CUSTOM) {
+                                            if (uiState.appFontCustomUri != null) {
+                                                settingsViewModel.setAppFontFamily(
+                                                    com.minoppol.music.data.preferences.AppFontFamily.CUSTOM
+                                                )
+                                            } else {
+                                                customFontPicker.launch(
+                                                    arrayOf(
+                                                        "font/ttf",
+                                                        "font/otf",
+                                                        "application/x-font-ttf",
+                                                        "application/x-font-otf",
+                                                        "font/*",
+                                                        "application/octet-stream"
+                                                    )
+                                                )
+                                            }
+                                        } else {
+                                            settingsViewModel.setAppFontFamily(selected)
+                                        }
+                                    },
+                                    leadingIcon = { Icon(Icons.Rounded.TextFields, null, tint = MaterialTheme.colorScheme.secondary) },
+                                    modifier = Modifier.settingHighlight("item_appearance_app_font", highlightKey)
                                 )
                             }
 
@@ -1937,7 +2004,7 @@ private fun BackupSectionSelectionDialog(
                                             fontSize = 24.sp,
                                             textGeometricTransform = TextGeometricTransform(scaleX = 1.2f),
                                         ),
-                                        fontFamily = RoundedSans,
+                                        fontFamily = AppRoundedSans,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
@@ -2212,7 +2279,7 @@ private fun BackupSectionSelectableCard(
                     Text(
                         text = section.label,
                         style = MaterialTheme.typography.titleMedium.copy(
-                            fontFamily = RoundedSans
+                            fontFamily = AppRoundedSans
                         ),
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -2483,7 +2550,7 @@ private fun ImportFileSelectionDialog(
                                             fontSize = 24.sp,
                                             textGeometricTransform = TextGeometricTransform(scaleX = 1.2f),
                                         ),
-                                        fontFamily = RoundedSans,
+                                        fontFamily = AppRoundedSans,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
@@ -2699,7 +2766,7 @@ private fun BackupHistoryCard(
                     Text(
                         text = entry.displayName,
                         style = MaterialTheme.typography.titleSmall.copy(
-                            fontFamily = RoundedSans
+                            fontFamily = AppRoundedSans
                         ),
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,

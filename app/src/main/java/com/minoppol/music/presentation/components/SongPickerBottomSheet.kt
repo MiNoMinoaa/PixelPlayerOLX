@@ -80,7 +80,7 @@ import com.minoppol.music.data.model.LibraryTabId
 import com.minoppol.music.data.model.Song
 import com.minoppol.music.presentation.screens.TabAnimation
 import com.minoppol.music.presentation.viewmodel.PlayerViewModel
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import com.minoppol.music.ui.theme.ShapeCache
 import kotlinx.coroutines.flow.map
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
@@ -147,7 +147,7 @@ fun SongPickerContent(
                 Text(
                     stringResource(R.string.song_picker_title),
                     style = MaterialTheme.typography.displaySmall,
-                    fontFamily = RoundedSans
+                    fontFamily = AppRoundedSans
                 )
             }
         },
@@ -206,7 +206,7 @@ fun SongPickerContent(
                                     Spacer(Modifier.width(8.dp))
                                     Text(
                                         text = stringResource(labelRes),
-                                        fontFamily = RoundedSans,
+                                        fontFamily = AppRoundedSans,
                                         fontWeight = FontWeight.Bold,
                                         modifier = Modifier.padding(end = 4.dp)
                                     )
@@ -253,7 +253,7 @@ fun SongPickerContent(
                         Spacer(Modifier.width(10.dp))
                         Text(
                             text = stringResource(R.string.song_picker_action_add),
-                            fontFamily = RoundedSans,
+                            fontFamily = AppRoundedSans,
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleMedium
                         )
@@ -345,7 +345,7 @@ fun SongPickerSelectionPane(
                 label = {
                     Text(
                         text = stringResource(R.string.song_picker_filter_favorites),
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         fontWeight = if (favoritesOnly) FontWeight.Bold else FontWeight.Medium
                     )
                 },
@@ -754,7 +754,7 @@ fun SongPickerEmptyState(
                 Text(
                     text = stringResource(spec.second),
                     style = MaterialTheme.typography.titleLarge,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center
                 )
@@ -828,7 +828,7 @@ fun SongPickerList(
                         else
                             stringResource(R.string.search_no_results_found),
                         style = MaterialTheme.typography.titleLarge,
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         fontWeight = FontWeight.SemiBold,
                         textAlign = TextAlign.Center
                     )

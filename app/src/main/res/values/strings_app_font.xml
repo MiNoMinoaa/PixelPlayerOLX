@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="setcat_app_font_label">Font</string>
+    <string name="setcat_app_font_desc_system">Follow system</string>
+    <string name="setcat_app_font_desc_flex">Google Sans Flex</string>
+    <string name="setcat_app_font_desc_custom">Custom font</string>
+    <string name="setcat_app_font_custom_no_file">Custom font · no file selected</string>
+    <string name="setcat_app_font_custom_loading">Custom font</string>
+    <string name="setcat_app_font_apply_failed">Could not load the selected font file</string>
+</resources>

@@ -84,7 +84,7 @@ import kotlinx.coroutines.launch
 
 import androidx.compose.ui.graphics.TransformOrigin
 import com.minoppol.music.presentation.screens.TabAnimation
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import com.minoppol.music.utils.AudioMetaUtils
 import androidx.compose.ui.res.stringResource
 
@@ -928,7 +928,7 @@ fun SongInfoBottomSheet(
                             Spacer(Modifier.width(4.dp))
                             Text(
                                 stringResource(R.string.song_info_tab_options_badge),
-                                fontFamily = RoundedSans,
+                                fontFamily = AppRoundedSans,
                                 fontWeight = FontWeight.Bold,
                             )
                         }
@@ -954,7 +954,7 @@ fun SongInfoBottomSheet(
                             Spacer(Modifier.width(4.dp))
                             Text(
                                 stringResource(R.string.song_info_tab_info_badge),
-                                fontFamily = RoundedSans,
+                                fontFamily = AppRoundedSans,
                                 fontWeight = FontWeight.Bold
                             )
                         }

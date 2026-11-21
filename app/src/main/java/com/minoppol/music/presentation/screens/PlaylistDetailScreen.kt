@@ -141,7 +141,7 @@ import com.minoppol.music.presentation.viewmodel.PlaylistViewModel.Companion.FOL
 import com.minoppol.music.presentation.utils.LocalAppHapticsConfig
 import com.minoppol.music.presentation.utils.getSegmentedItemShape
 import com.minoppol.music.presentation.utils.performAppCompatHapticFeedback
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import com.minoppol.music.presentation.viewmodel.PlaylistSongsOrderMode
 import com.minoppol.music.utils.formatSongCount
 import com.minoppol.music.utils.formatTotalDuration
@@ -315,7 +315,7 @@ fun PlaylistDetailScreen(
                     Text(
                         modifier = Modifier.padding(start = 8.dp),
                         text = currentPlaylist?.name ?: fallbackPlaylistName,
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -332,7 +332,7 @@ fun PlaylistDetailScreen(
                             formatSongCount(songsInPlaylist.size),
                             formatTotalDuration(songsInPlaylist)
                         ),
-                        style = MaterialTheme.typography.labelMedium.copy(fontFamily = RoundedSans),
+                        style = MaterialTheme.typography.labelMedium.copy(fontFamily = AppRoundedSans),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },

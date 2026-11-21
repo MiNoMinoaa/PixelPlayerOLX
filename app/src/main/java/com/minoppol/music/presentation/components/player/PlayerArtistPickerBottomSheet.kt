@@ -41,7 +41,7 @@ import com.minoppol.music.R
 import com.minoppol.music.data.model.Artist
 import com.minoppol.music.data.model.Song
 import com.minoppol.music.presentation.components.SmartImage
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import kotlinx.collections.immutable.ImmutableList
 
 private data class PlayerArtistShortcutItem(
@@ -110,7 +110,7 @@ internal fun PlayerArtistPickerBottomSheet(
             Text(
                 text = stringResource(R.string.artist_picker_title),
                 style = MaterialTheme.typography.headlineMedium,
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 fontWeight = FontWeight.Bold,
                 color = colorScheme.onSurface
             )
@@ -216,7 +216,7 @@ private fun PlayerArtistShortcutCard(
                 Text(
                     text = artist.name,
                     style = MaterialTheme.typography.titleMedium,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     fontWeight = FontWeight.SemiBold,
                     color = contentColor,
                     maxLines = 1,

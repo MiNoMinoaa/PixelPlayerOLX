@@ -33,7 +33,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.minoppol.music.R
 import com.minoppol.music.data.media.CoverArtUpdate
 import com.minoppol.music.data.model.Song
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import androidx.compose.ui.graphics.ImageBitmap
 import android.net.Uri
@@ -213,7 +213,7 @@ private fun EditMultipleSongsContent(
                     Text(
                         modifier = Modifier.padding(start = 10.dp),
                         text = stringResource(R.string.batch_edit_toolbar_title, songs.size),
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         style = MaterialTheme.typography.displaySmall
                     )
                 }

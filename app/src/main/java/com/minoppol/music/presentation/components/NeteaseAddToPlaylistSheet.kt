@@ -51,7 +51,7 @@ import androidx.compose.ui.unit.dp
 import com.minoppol.music.R
 import com.minoppol.music.data.lxmusic.LxPlaylist
 import com.minoppol.music.presentation.screens.lxmusic.LxMusicViewModel
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,7 +94,7 @@ fun NeteaseAddToPlaylistSheet(
                     Text(
                         stringResource(R.string.playlist_picker_select_playlists),
                         style = MaterialTheme.typography.displaySmall,
-                        fontFamily = RoundedSans
+                        fontFamily = AppRoundedSans
                     )
                 }
 

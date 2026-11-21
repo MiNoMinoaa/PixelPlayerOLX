@@ -34,7 +34,7 @@ import com.minoppol.music.data.model.Song
 import com.minoppol.music.presentation.components.SongPickerList
 import com.minoppol.music.presentation.components.SmartImage
 import com.minoppol.music.presentation.utils.GenreIconProvider
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import androidx.compose.ui.res.stringResource
 import kotlinx.collections.immutable.ImmutableList
@@ -95,7 +95,7 @@ fun QuickFillContent(
                             else stringResource(R.string.presentation_batch_b_quick_fill_choose_genre),
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Bold,
-                                fontFamily = RoundedSans,
+                                fontFamily = AppRoundedSans,
                                 textGeometricTransform = TextGeometricTransform(scaleX = 1.1f)
                             )
                         )

@@ -228,7 +228,7 @@ import com.minoppol.music.presentation.screens.MusicIconPattern
 import com.minoppol.music.presentation.viewmodel.PlayerViewModel
 import com.minoppol.music.ui.theme.LocalPixelPlayerDarkTheme
 import com.minoppol.music.ui.theme.PixelPlayerStatusBarStyle
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import com.minoppol.music.utils.formatSongCount
 import com.minoppol.music.utils.shapes.RoundedStarShape
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
@@ -598,7 +598,7 @@ fun LxMusicScreen(
                                 append(moodWord)
                             }
                         },
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.primary,
                         letterSpacing = 1.sp,
@@ -1334,7 +1334,7 @@ fun LxMusicScreen(
                 ) {
                     Text(
                         text = stringResource(R.string.lx_title_source_scripts),
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 24.sp,
                         color = MaterialTheme.colorScheme.primary,
@@ -4386,7 +4386,7 @@ private fun LxCollapsingDetailHeader(
             expandedTitleEndPadding = 136.dp,
             containerHeightRange = 112.dp to 56.dp,
             titleStyle = MaterialTheme.typography.headlineMedium.copy(
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 fontWeight = FontWeight.SemiBold,
                 textGeometricTransform = TextGeometricTransform(scaleX = 1.08f)
             ),
@@ -4608,7 +4608,7 @@ private fun LxSongsSummary(songCount: Int, durationMs: Long, modifier: Modifier 
             durationText.takeIf { durationMs > 0L },
         ).joinToString(" · "),
         style = MaterialTheme.typography.titleSmall,
-        fontFamily = RoundedSans,
+        fontFamily = AppRoundedSans,
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = androidx.compose.ui.text.style.TextAlign.Center,

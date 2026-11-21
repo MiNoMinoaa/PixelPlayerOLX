@@ -34,7 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import androidx.compose.ui.res.stringResource
 import com.minoppol.music.R
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
@@ -119,7 +119,7 @@ fun SelectionActionRow(
                     text = stringResource(R.string.presentation_batch_g_selection_all),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Medium,
-                    fontFamily = RoundedSans
+                    fontFamily = AppRoundedSans
                 )
             }
             
@@ -144,7 +144,7 @@ fun SelectionActionRow(
                     text = stringResource(R.string.presentation_batch_g_selection_deselect),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Medium,
-                    fontFamily = RoundedSans
+                    fontFamily = AppRoundedSans
                 )
             }
         }
@@ -224,7 +224,7 @@ fun SelectionCountPill(
                     text = selectedCount.toString(),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }

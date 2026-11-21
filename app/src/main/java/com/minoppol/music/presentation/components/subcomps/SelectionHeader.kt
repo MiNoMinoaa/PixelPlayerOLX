@@ -51,7 +51,7 @@ import com.minoppol.music.data.model.Song
 import com.minoppol.music.presentation.components.SmartImage
 import androidx.compose.ui.res.stringResource
 import com.minoppol.music.R
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import androidx.compose.runtime.remember
@@ -110,7 +110,7 @@ fun SelectionHeader(
                         text = count.toString(),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -118,7 +118,7 @@ fun SelectionHeader(
                     text = if (selectedSongs.size == 1) stringResource(R.string.presentation_batch_g_selection_one_song) else stringResource(R.string.presentation_batch_g_selection_n_songs),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontFamily = RoundedSans
+                    fontFamily = AppRoundedSans
                 )
             }
         }
@@ -173,7 +173,7 @@ fun SelectionHeader(
                     text = stringResource(R.string.presentation_batch_g_selection_play),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
-                    fontFamily = RoundedSans
+                    fontFamily = AppRoundedSans
                 )
             }
         }
@@ -248,7 +248,7 @@ private fun StackedCoverArts(
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onTertiaryContainer,
-                    fontFamily = RoundedSans
+                    fontFamily = AppRoundedSans
                 )
             }
         }

@@ -30,7 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.minoppol.music.R
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import androidx.compose.ui.text.style.TextOverflow
 
@@ -73,7 +73,7 @@ fun DismissUndoBar(
                     text = stringResource(R.string.playlist_dismissed_message),
                     style = MaterialTheme.typography.titleSmall
                         .copy(
-                            fontFamily = RoundedSans
+                            fontFamily = AppRoundedSans
                         ),
                     color = MaterialTheme.colorScheme.onSurface
                 )

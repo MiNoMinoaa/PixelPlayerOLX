@@ -283,6 +283,20 @@ object SettingsRegistry {
                 onToggle = { viewModel, checked -> viewModel.setShowScrollbar(checked) }
             ),
             SettingSpec(
+                id = "appearance_app_font",
+                itemKey = "item_appearance_app_font",
+                titleRes = R.string.setcat_app_font_label,
+                subtitleRes = R.string.setcat_app_font_desc_flex,
+                category = SettingsCategory.APPEARANCE,
+                subscreenRoute = Screen.SettingsCategory.createRoute("appearance"),
+                type = SettingType.NAVIGABLE_CARD,
+                keywordsStatic = listOf(
+                    "font", "typeface", "custom font", "ttf",
+                    "字体", "字體", "自定义字体", "自訂字體", "系统字体", "系統字體",
+                    "Google Sans", "Roboto"
+                )
+            ),
+            SettingSpec(
                 id = "appearance_floating_play_pos",
                 itemKey = "item_appearance_floating_play_pos",
                 titleRes = R.string.setcat_floating_play_pos_label,

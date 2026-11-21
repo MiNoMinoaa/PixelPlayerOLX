@@ -149,7 +149,7 @@ import com.minoppol.music.presentation.viewmodel.PlayerViewModel
 import com.minoppol.music.ui.theme.GenreThemeUtils
 import com.minoppol.music.ui.theme.LocalPixelPlayerDarkTheme
 import com.minoppol.music.ui.theme.PixelPlayerStatusBarStyle
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import coil.size.Size
 import kotlinx.coroutines.delay
 import java.util.Locale
@@ -575,7 +575,7 @@ private fun BookmarkFolderTopBar(
             expandedTitleEndPadding = 28.dp,
             containerHeightRange = 116.dp to 56.dp,
             titleStyle = MaterialTheme.typography.headlineMedium.copy(
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 fontWeight = FontWeight.SemiBold,
                 textGeometricTransform = TextGeometricTransform(scaleX = 1.04f)
             ),
@@ -1020,7 +1020,7 @@ private fun BookmarkKeepSearchTopBar(
                         modifier = Modifier.weight(1f),
                         singleLine = true,
                         textStyle = MaterialTheme.typography.bodyLarge.copy(
-                            fontFamily = RoundedSans,
+                            fontFamily = AppRoundedSans,
                             color = contentColor,
                             lineHeight = 20.sp,
                             letterSpacing = 0.sp
@@ -1039,7 +1039,7 @@ private fun BookmarkKeepSearchTopBar(
                                 Text(
                                     text = "Search bookmarks",
                                     style = MaterialTheme.typography.bodyLarge.copy(
-                                        fontFamily = RoundedSans,
+                                        fontFamily = AppRoundedSans,
                                         lineHeight = 20.sp,
                                         letterSpacing = 0.sp
                                     ),
@@ -1658,7 +1658,7 @@ private fun BookmarkMomentActionsBottomSheet(
                         Text(
                             text = bookmark.title,
                             style = MaterialTheme.typography.titleLarge,
-                            fontFamily = RoundedSans,
+                            fontFamily = AppRoundedSans,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -1847,7 +1847,7 @@ private fun BookmarkMomentDeleteAction(
         Text(
             text = "Delete",
             style = MaterialTheme.typography.titleMedium,
-            fontFamily = RoundedSans,
+            fontFamily = AppRoundedSans,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
@@ -1889,7 +1889,7 @@ private fun BookmarkMomentExpressiveActionButton(
             Text(
                 text = label,
                 style = MaterialTheme.typography.titleMedium,
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 fontWeight = FontWeight.Bold,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
@@ -1914,7 +1914,7 @@ private fun RenameBookmarkDialog(
         title = {
             Text(
                 text = "Rename bookmark",
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 fontWeight = FontWeight.Bold
             )
         },

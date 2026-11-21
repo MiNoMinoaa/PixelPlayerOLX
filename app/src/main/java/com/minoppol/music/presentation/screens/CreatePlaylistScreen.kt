@@ -107,7 +107,7 @@ import com.minoppol.music.presentation.components.ImageCropView
 import com.minoppol.music.data.model.PlaylistShapeType
 import com.minoppol.music.data.model.SmartPlaylistRule
 import com.minoppol.music.presentation.components.SongPickerSelectionPane
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import androidx.compose.material3.Slider
 import androidx.compose.material3.FilterChip
 import com.minoppol.music.utils.shapes.RoundedStarShape
@@ -353,7 +353,7 @@ private fun CreatePlaylistContent(
                                 fontSize = 24.sp,
                                 textGeometricTransform = TextGeometricTransform(scaleX = 1.2f),
                             ),
-                            fontFamily = RoundedSans,
+                            fontFamily = AppRoundedSans,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -547,7 +547,7 @@ private fun CreatePlaylistContent(
                                     Spacer(Modifier.width(8.dp))
                                     Text(
                                         text = stringResource(labelRes),
-                                        fontFamily = RoundedSans,
+                                        fontFamily = AppRoundedSans,
                                         fontWeight = FontWeight.Bold,
                                         modifier = Modifier.padding(end = 4.dp)
                                     )
@@ -770,7 +770,7 @@ fun EditPlaylistContent(
                             fontSize = 24.sp,
                             textGeometricTransform = TextGeometricTransform(scaleX = 1.2f),
                         ),
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         fontWeight = FontWeight.Bold
                     )
                 },

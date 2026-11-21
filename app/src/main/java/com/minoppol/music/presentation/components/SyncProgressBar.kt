@@ -26,7 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.minoppol.music.R
 import com.minoppol.music.data.worker.SyncProgress
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import kotlin.math.roundToInt
 
 /**
@@ -67,7 +67,7 @@ fun SyncProgressBar(
                 Text(
                     text = getPhaseText(syncProgress),
                     style = MaterialTheme.typography.titleMedium,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -75,7 +75,7 @@ fun SyncProgressBar(
                 Text(
                     text = stringResource(R.string.presentation_batch_g_sync_percent, percentage),
                     style = MaterialTheme.typography.titleMedium,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )

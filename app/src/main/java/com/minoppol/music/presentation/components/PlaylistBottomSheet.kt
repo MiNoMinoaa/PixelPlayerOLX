@@ -47,7 +47,7 @@ import com.minoppol.music.presentation.components.subcomps.LibraryActionRow
 import com.minoppol.music.presentation.viewmodel.PlayerViewModel
 import com.minoppol.music.presentation.viewmodel.PlaylistUiState
 import com.minoppol.music.presentation.viewmodel.PlaylistViewModel
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
@@ -125,7 +125,7 @@ fun PlaylistBottomSheet(
                             stringResource(R.string.playlist_picker_select_playlists)
                         },
                         style = MaterialTheme.typography.displaySmall,
-                        fontFamily = RoundedSans
+                        fontFamily = AppRoundedSans
                     )
                 }
                 OutlinedTextField(

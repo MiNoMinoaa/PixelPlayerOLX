@@ -131,7 +131,7 @@ import com.minoppol.music.presentation.components.SmartImageListTargetSize
 import com.minoppol.music.presentation.components.SongInfoBottomSheet
 import com.minoppol.music.presentation.viewmodel.PlayerViewModel
 import com.minoppol.music.ui.theme.LocalPixelPlayerDarkTheme
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material3.TextButton
@@ -2856,7 +2856,7 @@ internal fun OnlinePlaylistDetailPage(
                                 Text(
                                     text = detail.playlist.name,
                                     style = MaterialTheme.typography.titleLarge.copy(
-                                        fontFamily = RoundedSans,
+                                        fontFamily = AppRoundedSans,
                                         fontWeight = FontWeight.Bold
                                     ),
                                     color = MaterialTheme.colorScheme.onSurface,

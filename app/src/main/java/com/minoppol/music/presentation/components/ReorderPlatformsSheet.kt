@@ -49,7 +49,7 @@ import androidx.compose.ui.unit.dp
 import com.minoppol.music.R
 import com.minoppol.music.presentation.utils.LocalAppHapticsConfig
 import com.minoppol.music.presentation.utils.performAppCompatHapticFeedback
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.delay
@@ -137,7 +137,7 @@ fun ReorderPlatformsSheet(
                     Text(
                         stringResource(R.string.lx_platform_order_title),
                         style = MaterialTheme.typography.displaySmall,
-                        fontFamily = RoundedSans
+                        fontFamily = AppRoundedSans
                     )
                 }
             },

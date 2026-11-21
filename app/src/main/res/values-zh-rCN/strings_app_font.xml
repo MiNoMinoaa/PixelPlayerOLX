@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="setcat_app_font_label">字体</string>
+    <string name="setcat_app_font_desc_system">跟随系统</string>
+    <string name="setcat_app_font_desc_flex">Google Sans Flex</string>
+    <string name="setcat_app_font_desc_custom">自定义字体</string>
+    <string name="setcat_app_font_custom_no_file">自定义字体 · 未选择文件</string>
+    <string name="setcat_app_font_custom_loading">自定义字体</string>
+    <string name="setcat_app_font_apply_failed">无法加载所选的字体文件</string>
+</resources>

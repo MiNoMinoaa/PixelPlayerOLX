@@ -215,7 +215,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.ui.input.pointer.pointerInput
 import com.minoppol.music.presentation.components.PlaylistBottomSheet
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import java.util.Locale
 import androidx.compose.ui.platform.LocalLocale
 import android.widget.Toast
@@ -772,7 +772,7 @@ fun LibraryScreen(
                             Text(
                                 modifier = Modifier.padding(start = 8.dp),
                                 text = stringResource(R.string.presentation_batch_d_library_title),
-                                fontFamily = RoundedSans,
+                                fontFamily = AppRoundedSans,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.primary,
                                 fontSize = 40.sp,
@@ -1269,7 +1269,7 @@ fun LibraryScreen(
                                         Text(
                                             text = stringResource(R.string.presentation_batch_d_cloud_sources_heading),
                                             style = MaterialTheme.typography.headlineSmall,
-                                            fontFamily = com.minoppol.music.ui.theme.RoundedSans,
+                                            fontFamily = AppRoundedSans,
                                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                                             modifier = Modifier.padding(start = 2.dp, bottom = 8.dp)
                                         )
@@ -2385,7 +2385,7 @@ private fun LibraryTabSwitcherSheet(
             Text(
                 text = stringResource(R.string.presentation_batch_d_library_tabs_sheet_title),
                 style = MaterialTheme.typography.headlineSmall,
-                fontFamily = RoundedSans
+                fontFamily = AppRoundedSans
             )
             Text(
                 text = stringResource(R.string.presentation_batch_d_library_tabs_sheet_subtitle),
@@ -2886,7 +2886,7 @@ fun FolderPlaylistItem(folder: MusicFolder, onClick: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     folder.name,
-                    style = MaterialTheme.typography.titleMedium.copy(fontFamily = RoundedSans),
+                    style = MaterialTheme.typography.titleMedium.copy(fontFamily = AppRoundedSans),
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis

@@ -128,7 +128,7 @@ import com.minoppol.music.presentation.viewmodel.SetupEvent
 import com.minoppol.music.presentation.viewmodel.SetupUiState
 import com.minoppol.music.presentation.viewmodel.SetupViewModel
 import com.minoppol.music.ui.theme.ExpTitleTypography
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import com.minoppol.music.utils.StorageInfo
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -617,7 +617,7 @@ fun WelcomePage() {
             Text(
                 text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.displayLarge.copy(
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     fontSize = 46.sp,
                     color = MaterialTheme.colorScheme.primary,
                     lineHeight = 1.1.em
@@ -937,7 +937,7 @@ fun ThemeSelectionPage(
             Text(
                 text = stringResource(R.string.setup_theme_title),
                 style = MaterialTheme.typography.displayMedium.copy(
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     fontSize = 32.sp
                 ),
                 textAlign = TextAlign.Center
@@ -1150,7 +1150,7 @@ fun PermissionPageLayout(
             Text(
                 text = title,
                 style = MaterialTheme.typography.displayMedium.copy(
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     fontSize = 32.sp
                 ),
                 textAlign = TextAlign.Center
@@ -1294,7 +1294,7 @@ private fun SetupRestoreDialog(
                     Text(
                         text = stringResource(R.string.setup_restore_backup_title),
                         style = MaterialTheme.typography.displaySmall.copy(
-                            fontFamily = RoundedSans
+                            fontFamily = AppRoundedSans
                         ),
                         fontWeight = FontWeight.Bold
                     )
@@ -1668,7 +1668,7 @@ fun NavBarLayoutPage(
             Text(
                 text = stringResource(R.string.setup_app_navigation_title),
                 style = MaterialTheme.typography.displayMedium.copy(
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     fontSize = 32.sp
                 ),
                 textAlign = TextAlign.Center

@@ -53,7 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.minoppol.music.data.model.Playlist
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import com.minoppol.music.utils.resolvePlaylistCoverContentColor
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import androidx.compose.ui.res.stringResource
@@ -135,7 +135,7 @@ fun PlaylistMultiSelectionBottomSheet(
                             text = stringResource(R.string.multi_selection_playlists_count_upper, selectedPlaylists.size),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
-                            fontFamily = RoundedSans,
+                            fontFamily = AppRoundedSans,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
@@ -143,7 +143,7 @@ fun PlaylistMultiSelectionBottomSheet(
                             text = stringResource(R.string.multi_selection_selected),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontFamily = RoundedSans
+                            fontFamily = AppRoundedSans
                         )
                     }
                 }

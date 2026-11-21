@@ -82,7 +82,7 @@ import com.minoppol.music.R
 import com.minoppol.music.data.jellyfin.model.JellyfinCredentials
 import com.minoppol.music.presentation.components.CloudLibraryPickerItem
 import com.minoppol.music.presentation.components.CloudLibraryPickerSheet
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import com.minoppol.music.ui.theme.PixelPlayerTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.collections.immutable.toImmutableList
@@ -208,7 +208,7 @@ fun JellyfinLoginScreen(
                 title = {
                     Text(
                         text = stringResource(R.string.auth_jellyfin_title),
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         fontWeight = FontWeight.SemiBold
                     )
                 },
@@ -273,7 +273,7 @@ fun JellyfinLoginScreen(
             Text(
                 text = stringResource(R.string.auth_jellyfin_title),
                 style = MaterialTheme.typography.headlineSmall,
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -298,7 +298,7 @@ fun JellyfinLoginScreen(
                     modifier = Modifier.padding(16.dp),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontFamily = RoundedSans
+                    fontFamily = AppRoundedSans
                 )
             }
 
@@ -317,7 +317,7 @@ fun JellyfinLoginScreen(
                     Text(
                         text = stringResource(R.string.auth_connection_details),
                         style = MaterialTheme.typography.titleMedium,
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         fontWeight = FontWeight.Bold
                     )
 
@@ -326,7 +326,7 @@ fun JellyfinLoginScreen(
                     Text(
                         text = stringResource(R.string.auth_jellyfin_connection_subtitle),
                         style = MaterialTheme.typography.bodySmall,
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
@@ -430,7 +430,7 @@ fun JellyfinLoginScreen(
                     ) {
                         Text(
                             text = stringResource(R.string.auth_use_http),
-                            fontFamily = RoundedSans,
+                            fontFamily = AppRoundedSans,
                             fontWeight = FontWeight.Medium
                         )
                     }
@@ -453,9 +453,9 @@ fun JellyfinLoginScreen(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.auth_connecting), fontFamily = RoundedSans)
+                    Text(stringResource(R.string.auth_connecting), fontFamily = AppRoundedSans)
                 } else {
-                    Text(stringResource(R.string.auth_connect), fontFamily = RoundedSans, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.auth_connect), fontFamily = AppRoundedSans, fontWeight = FontWeight.SemiBold)
                 }
             }
 
@@ -465,7 +465,7 @@ fun JellyfinLoginScreen(
                 text = stringResource(R.string.auth_jellyfin_footer),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontFamily = RoundedSans
+                fontFamily = AppRoundedSans
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -497,24 +497,24 @@ private fun JellyfinLoginField(
         singleLine = true,
         shape = shape,
         textStyle = MaterialTheme.typography.bodyLarge.copy(
-            fontFamily = RoundedSans
+            fontFamily = AppRoundedSans
         ),
         label = {
             Text(
                 text = label,
-                fontFamily = RoundedSans
+                fontFamily = AppRoundedSans
             )
         },
         placeholder = {
             Text(
                 text = placeholder,
-                fontFamily = RoundedSans
+                fontFamily = AppRoundedSans
             )
         },
         supportingText = {
             Text(
                 text = supportingText,
-                fontFamily = RoundedSans
+                fontFamily = AppRoundedSans
             )
         },
         leadingIcon = {

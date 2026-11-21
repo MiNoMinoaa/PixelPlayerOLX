@@ -45,6 +45,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -167,7 +168,7 @@ import com.minoppol.music.presentation.components.player.AudioOutputBottomSheet
 import com.minoppol.music.presentation.viewmodel.PlaybackOrigin
 import com.minoppol.music.presentation.viewmodel.PlayerSheetState
 import com.minoppol.music.presentation.viewmodel.PlayerViewModel
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import com.minoppol.music.utils.AudioMetaUtils.mimeTypeToFormat
 import com.minoppol.music.utils.LyricsImportFailureReason
 import com.minoppol.music.utils.LyricsImportSecurity
@@ -405,8 +406,8 @@ fun FullPlayerContent(
     val placeholderColor = playerOnBaseColor.copy(alpha = 0.1f)
     val placeholderOnColor = playerOnBaseColor.copy(alpha = 0.2f)
 
-    val isLandscape =
-        LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val isLandscape = LocalConfiguration.current.orientation ==
+        Configuration.ORIENTATION_LANDSCAPE
 
 
     val onLyricsClick = {
@@ -1588,6 +1589,8 @@ private fun FullPlayerLandscapeContent(
     playerProgressSection: @Composable () -> Unit,
     controlsSection: @Composable () -> Unit
 ) {
+    val verticalCenterCompensation =
+        (paddingValues.calculateTopPadding() - paddingValues.calculateBottomPadding()) / 2
     Row(
         modifier = Modifier
             .fillMaxSize()
@@ -1598,27 +1601,34 @@ private fun FullPlayerLandscapeContent(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        albumCoverSection(
-            Modifier
-                .fillMaxHeight()
-                .weight(1f)
-        )
-        Spacer(Modifier.width(9.dp))
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f)
-                .padding(
-                    horizontal = 0.dp,
-                    vertical = 0.dp
-                ),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceEvenly
+                .offset(y = -verticalCenterCompensation),
+            contentAlignment = Alignment.Center
         ) {
-            songMetadataSection()
-            lyricsSection()
-            playerProgressSection()
-            controlsSection()
+            albumCoverSection(Modifier.fillMaxWidth(0.756f))
+        }
+        Spacer(Modifier.width(9.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .weight(1f),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .widthIn(max = 470.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceEvenly
+            ) {
+                songMetadataSection()
+                lyricsSection()
+                playerProgressSection()
+                controlsSection()
+            }
         }
     }
 }
@@ -2684,7 +2694,7 @@ private fun PlayerSongInfo(
     }
     val titleStyle = MaterialTheme.typography.headlineSmall.copy(
         fontWeight = FontWeight.Bold,
-        fontFamily = RoundedSans,
+        fontFamily = AppRoundedSans,
         color = textColor
     )
 

@@ -97,7 +97,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.minoppol.music.R
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import com.minoppol.music.utils.formatSongCount
 import kotlin.math.roundToInt
 import kotlinx.collections.immutable.ImmutableList
@@ -122,7 +122,7 @@ data class DetailHeroMenuAction(
 
 @Composable
 private fun heroTitleStyle(): TextStyle = MaterialTheme.typography.headlineMedium.copy(
-    fontFamily = RoundedSans,
+    fontFamily = AppRoundedSans,
     fontWeight = FontWeight.Bold
 )
 
@@ -592,7 +592,7 @@ fun DetailHeroArtistChip(
             }
             Text(
                 text = name,
-                style = MaterialTheme.typography.titleMedium.copy(fontFamily = RoundedSans),
+                style = MaterialTheme.typography.titleMedium.copy(fontFamily = AppRoundedSans),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.widthIn(max = 260.dp)
@@ -868,7 +868,7 @@ fun DetailSongsSummary(
     }
     Text(
         text = listOfNotNull(formatSongCount(songCount), duration).joinToString(" · "),
-        style = MaterialTheme.typography.titleSmall.copy(fontFamily = RoundedSans),
+        style = MaterialTheme.typography.titleSmall.copy(fontFamily = AppRoundedSans),
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         maxLines = 1,

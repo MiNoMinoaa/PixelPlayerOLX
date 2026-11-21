@@ -53,7 +53,7 @@ import com.minoppol.music.R
 import com.minoppol.music.presentation.library.LibraryTabId
 import com.minoppol.music.presentation.utils.LocalAppHapticsConfig
 import com.minoppol.music.presentation.utils.performAppCompatHapticFeedback
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
@@ -143,7 +143,7 @@ fun ReorderTabsSheet(
                     Text(
                         stringResource(R.string.reorder_tabs_sheet_title),
                         style = MaterialTheme.typography.displaySmall,
-                        fontFamily = RoundedSans
+                        fontFamily = AppRoundedSans
                     )
                 }
             },

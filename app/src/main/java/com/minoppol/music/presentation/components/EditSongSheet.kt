@@ -64,7 +64,7 @@ import java.net.URLEncoder
 import timber.log.Timber
 import com.minoppol.music.R
 import com.minoppol.music.data.model.Song
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -318,7 +318,7 @@ private fun EditSongContent(
                     Text(
                         modifier = Modifier.padding(start = 10.dp),
                         text = stringResource(R.string.edit_song_toolbar_title),
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         style = MaterialTheme.typography.displaySmall
                     )
                 },

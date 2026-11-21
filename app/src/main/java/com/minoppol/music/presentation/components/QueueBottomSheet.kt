@@ -133,7 +133,7 @@ import com.minoppol.music.presentation.viewmodel.PlaylistViewModel
 import com.minoppol.music.presentation.viewmodel.SettingsViewModel
 import com.minoppol.music.presentation.utils.LocalAppHapticsConfig
 import com.minoppol.music.presentation.utils.performAppCompatHapticFeedback
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -1255,7 +1255,7 @@ private fun QueueHeader(
                 },
                 text = stringResource(R.string.presentation_batch_e_next_up),
                 style = MaterialTheme.typography.headlineLarge.copy(
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     fontWeight = FontWeight.SemiBold
                 ),
                 color = MaterialTheme.colorScheme.onSurface
@@ -1468,7 +1468,7 @@ fun SaveQueueAsPlaylistSheet(
                                     modifier = Modifier.padding(start = 4.dp),
                                     text = stringResource(R.string.presentation_batch_e_save_as_playlist_sheet_title),
                                     style = MaterialTheme.typography.headlineMedium,
-                                    fontFamily = RoundedSans,
+                                    fontFamily = AppRoundedSans,
                                     fontWeight = FontWeight.SemiBold,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis

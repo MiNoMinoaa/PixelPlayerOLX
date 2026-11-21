@@ -1,13 +1,16 @@
 package com.minoppol.music.presentation.components
 
+import android.content.res.Configuration
 import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -21,9 +24,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.zIndex
@@ -115,6 +120,9 @@ internal fun UnifiedPlayerQueueLayer(
         }
 
         if (shouldRenderQueueSheet) {
+            val queueConfiguration = LocalConfiguration.current
+            val isTabletLandscapeQueue = queueConfiguration.screenWidthDp >= 600 &&
+                queueConfiguration.orientation == Configuration.ORIENTATION_LANDSCAPE
             MaterialTheme(
                 colorScheme = albumColorScheme,
                 typography = MaterialTheme.typography,
@@ -122,7 +130,14 @@ internal fun UnifiedPlayerQueueLayer(
             ) {
                 QueueBottomSheet(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .then(
+                            if (isTabletLandscapeQueue) {
+                                Modifier.align(Alignment.Center).widthIn(max = 720.dp)
+                            } else {
+                                Modifier.fillMaxSize()
+                            }
+                        )
+                        .fillMaxHeight()
                         .offset { IntOffset(0, queueSheetOffset.value.roundToInt()) }
                         .graphicsLayer {
                             alpha = if (showQueueSheet) 1f else 0f

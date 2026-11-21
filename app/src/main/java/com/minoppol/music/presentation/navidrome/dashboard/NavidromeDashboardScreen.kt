@@ -46,7 +46,7 @@ import com.minoppol.music.data.navidrome.NavidromeRepository
 import com.minoppol.music.data.navidrome.model.NavidromeMusicFolder
 import com.minoppol.music.data.navidrome.selectedNavidromeMusicFolderIds
 import com.minoppol.music.presentation.components.SmartImage
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import com.minoppol.music.utils.formatTimeAgo
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -84,7 +84,7 @@ fun NavidromeDashboardScreen(
                 title = {
                     Text(
                         stringResource(R.string.screen_subsonic_dashboard_title),
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -200,14 +200,14 @@ private fun DashboardContent(
                             Text(
                                 text = message,
                                 style = MaterialTheme.typography.bodyMedium,
-                                fontFamily = RoundedSans,
+                                fontFamily = AppRoundedSans,
                                 modifier = Modifier.weight(1f)
                             )
                             if (isSyncing && syncProgress != null) {
                                 Text(
                                     text = "${(syncProgress * 100).toInt()}%",
                                     style = MaterialTheme.typography.bodySmall,
-                                    fontFamily = RoundedSans,
+                                    fontFamily = AppRoundedSans,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
                                 )
@@ -263,19 +263,19 @@ private fun DashboardContent(
                         Text(
                             text = name,
                             style = MaterialTheme.typography.titleMedium,
-                            fontFamily = RoundedSans,
+                            fontFamily = AppRoundedSans,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = stringResource(R.string.dash_playlists_synced_count, playlists.size),
                             style = MaterialTheme.typography.bodySmall,
-                            fontFamily = RoundedSans,
+                            fontFamily = AppRoundedSans,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = stringResource(R.string.dash_last_synced_format, formatTimeAgo(lastSyncTime)),
                             style = MaterialTheme.typography.bodySmall,
-                            fontFamily = RoundedSans,
+                            fontFamily = AppRoundedSans,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
                     }
@@ -307,7 +307,7 @@ private fun DashboardContent(
             Text(
                 text = stringResource(R.string.dash_title_playlists),
                 style = MaterialTheme.typography.titleMedium,
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 fontWeight = FontWeight.Bold
             )
             if (playlists.isEmpty()) {
@@ -318,7 +318,7 @@ private fun DashboardContent(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(Modifier.width(4.dp))
-                    Text(stringResource(R.string.dash_action_sync), fontFamily = RoundedSans, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(stringResource(R.string.dash_action_sync), fontFamily = AppRoundedSans, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
@@ -343,14 +343,14 @@ private fun DashboardContent(
                     Text(
                         text = stringResource(R.string.dash_playlists_empty_title),
                         style = MaterialTheme.typography.bodyLarge,
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
                         text = stringResource(R.string.dash_playlists_empty_hint_subsonic),
                         style = MaterialTheme.typography.bodyMedium,
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
                 }
@@ -382,7 +382,7 @@ private fun DashboardContent(
                         Text(
                             text = selectedPlaylistName,
                             style = MaterialTheme.typography.titleMedium,
-                            fontFamily = RoundedSans,
+                            fontFamily = AppRoundedSans,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(start = 8.dp, top = 14.dp, bottom = 4.dp)
                         )
@@ -456,14 +456,14 @@ private fun SubsonicMenuCard(
             Text(
                 text = stringResource(R.string.dash_quick_actions),
                 style = MaterialTheme.typography.titleMedium,
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = stringResource(R.string.dash_quick_actions_subsonic_subtitle),
                 style = MaterialTheme.typography.bodySmall,
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -497,7 +497,7 @@ private fun SubsonicMenuCard(
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.dash_status_syncing), fontFamily = RoundedSans)
+                        Text(stringResource(R.string.dash_status_syncing), fontFamily = AppRoundedSans)
                     } else {
                         Icon(
                             Icons.Rounded.CloudSync,
@@ -505,7 +505,7 @@ private fun SubsonicMenuCard(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.dash_action_sync_library), fontFamily = RoundedSans)
+                        Text(stringResource(R.string.dash_action_sync_library), fontFamily = AppRoundedSans)
                     }
                 }
 
@@ -523,7 +523,7 @@ private fun SubsonicMenuCard(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.dash_action_disconnect), fontFamily = RoundedSans)
+                    Text(stringResource(R.string.dash_action_disconnect), fontFamily = AppRoundedSans)
                 }
             }
         }
@@ -592,7 +592,7 @@ private fun NavidromeLibrarySummaryPanel(
                     Text(
                         text = stringResource(R.string.dash_libraries_title),
                         style = MaterialTheme.typography.titleMedium,
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -600,7 +600,7 @@ private fun NavidromeLibrarySummaryPanel(
                     Text(
                         text = librarySummary,
                         style = MaterialTheme.typography.bodyMedium,
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -612,7 +612,7 @@ private fun NavidromeLibrarySummaryPanel(
                         label = {
                             Text(
                                 stringResource(R.string.dash_libraries_change),
-                                fontFamily = RoundedSans
+                                fontFamily = AppRoundedSans
                             )
                         },
                         leadingIcon = {
@@ -638,7 +638,7 @@ private fun NavidromeLibrarySummaryPanel(
                             label = {
                                 Text(
                                     stringResource(R.string.dash_libraries_sync_needed),
-                                    fontFamily = RoundedSans
+                                    fontFamily = AppRoundedSans
                                 )
                             },
                             icon = {
@@ -662,7 +662,7 @@ private fun NavidromeLibrarySummaryPanel(
                                         selectedCount,
                                         totalCount
                                     ),
-                                    fontFamily = RoundedSans
+                                    fontFamily = AppRoundedSans
                                 )
                             }
                         )
@@ -675,7 +675,7 @@ private fun NavidromeLibrarySummaryPanel(
                             label = {
                                 Text(
                                     folderName,
-                                    fontFamily = RoundedSans,
+                                    fontFamily = AppRoundedSans,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
@@ -698,7 +698,7 @@ private fun NavidromeLibrarySummaryPanel(
                             label = {
                                 Text(
                                     stringResource(R.string.dash_libraries_more_count, hiddenCount),
-                                    fontFamily = RoundedSans
+                                    fontFamily = AppRoundedSans
                                 )
                             }
                         )
@@ -731,14 +731,14 @@ private fun LibrarySelectorSheet(
             Text(
                 text = stringResource(R.string.dash_libraries_title),
                 style = MaterialTheme.typography.titleLarge,
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = stringResource(R.string.dash_libraries_sheet_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -835,7 +835,7 @@ private fun LibrarySelectorChoice(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     fontWeight = FontWeight.SemiBold,
                     color = contentColor,
                     maxLines = 1,
@@ -844,7 +844,7 @@ private fun LibrarySelectorChoice(
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     color = contentColor.copy(alpha = 0.72f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -910,7 +910,7 @@ private fun SongCard(
                 Text(
                     text = song.title,
                     style = MaterialTheme.typography.titleSmall,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -918,7 +918,7 @@ private fun SongCard(
                 Text(
                     text = song.artist,
                     style = MaterialTheme.typography.bodySmall,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -984,7 +984,7 @@ private fun PlaylistCard(
                 Text(
                     text = playlist.name,
                     style = MaterialTheme.typography.titleSmall,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -992,7 +992,7 @@ private fun PlaylistCard(
                 Text(
                     text = stringResource(R.string.dash_song_count, playlist.songCount),
                     style = MaterialTheme.typography.bodySmall,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

@@ -41,7 +41,7 @@ import com.minoppol.music.data.database.JellyfinPlaylistEntity
 import com.minoppol.music.data.jellyfin.model.JellyfinLibrary
 import com.minoppol.music.data.jellyfin.selectedJellyfinLibraryIds
 import com.minoppol.music.presentation.components.CloudLibrarySelectorChoice
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.stringResource
@@ -75,7 +75,7 @@ fun JellyfinDashboardScreen(
                 title = {
                     Text(
                         stringResource(R.string.auth_jellyfin_title),
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -183,7 +183,7 @@ private fun JellyfinDashboardContent(
                         Text(
                             text = message,
                             style = MaterialTheme.typography.bodyMedium,
-                            fontFamily = RoundedSans
+                            fontFamily = AppRoundedSans
                         )
                     }
                 }
@@ -225,13 +225,13 @@ private fun JellyfinDashboardContent(
                         Text(
                             text = name,
                             style = MaterialTheme.typography.titleMedium,
-                            fontFamily = RoundedSans,
+                            fontFamily = AppRoundedSans,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = stringResource(R.string.dash_playlists_synced_count, playlists.size),
                             style = MaterialTheme.typography.bodySmall,
-                            fontFamily = RoundedSans,
+                            fontFamily = AppRoundedSans,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -263,7 +263,7 @@ private fun JellyfinDashboardContent(
             Text(
                 text = stringResource(R.string.dash_title_playlists),
                 style = MaterialTheme.typography.titleMedium,
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 fontWeight = FontWeight.Bold
             )
             if (playlists.isEmpty()) {
@@ -274,7 +274,7 @@ private fun JellyfinDashboardContent(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(Modifier.width(4.dp))
-                    Text(stringResource(R.string.dash_action_sync), fontFamily = RoundedSans, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(stringResource(R.string.dash_action_sync), fontFamily = AppRoundedSans, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
@@ -299,14 +299,14 @@ private fun JellyfinDashboardContent(
                     Text(
                         text = stringResource(R.string.dash_playlists_empty_title),
                         style = MaterialTheme.typography.bodyLarge,
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
                         text = stringResource(R.string.dash_playlists_empty_hint_jellyfin),
                         style = MaterialTheme.typography.bodyMedium,
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
                 }
@@ -391,14 +391,14 @@ private fun JellyfinMenuCard(
             Text(
                 text = stringResource(R.string.dash_quick_actions),
                 style = MaterialTheme.typography.titleMedium,
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = stringResource(R.string.dash_quick_actions_jellyfin_subtitle),
                 style = MaterialTheme.typography.bodySmall,
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -432,7 +432,7 @@ private fun JellyfinMenuCard(
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.dash_status_syncing), fontFamily = RoundedSans)
+                        Text(stringResource(R.string.dash_status_syncing), fontFamily = AppRoundedSans)
                     } else {
                         Icon(
                             Icons.Rounded.CloudSync,
@@ -440,7 +440,7 @@ private fun JellyfinMenuCard(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.dash_action_sync_library), fontFamily = RoundedSans)
+                        Text(stringResource(R.string.dash_action_sync_library), fontFamily = AppRoundedSans)
                     }
                 }
 
@@ -458,7 +458,7 @@ private fun JellyfinMenuCard(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.dash_action_disconnect), fontFamily = RoundedSans)
+                    Text(stringResource(R.string.dash_action_disconnect), fontFamily = AppRoundedSans)
                 }
             }
         }
@@ -527,7 +527,7 @@ private fun JellyfinLibrarySummaryPanel(
                     Text(
                         text = stringResource(R.string.dash_libraries_title),
                         style = MaterialTheme.typography.titleMedium,
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -535,7 +535,7 @@ private fun JellyfinLibrarySummaryPanel(
                     Text(
                         text = librarySummary,
                         style = MaterialTheme.typography.bodyMedium,
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -547,7 +547,7 @@ private fun JellyfinLibrarySummaryPanel(
                         label = {
                             Text(
                                 stringResource(R.string.dash_libraries_change),
-                                fontFamily = RoundedSans
+                                fontFamily = AppRoundedSans
                             )
                         },
                         leadingIcon = {
@@ -573,7 +573,7 @@ private fun JellyfinLibrarySummaryPanel(
                             label = {
                                 Text(
                                     stringResource(R.string.dash_libraries_sync_needed),
-                                    fontFamily = RoundedSans
+                                    fontFamily = AppRoundedSans
                                 )
                             },
                             icon = {
@@ -597,7 +597,7 @@ private fun JellyfinLibrarySummaryPanel(
                                         selectedCount,
                                         totalCount
                                     ),
-                                    fontFamily = RoundedSans
+                                    fontFamily = AppRoundedSans
                                 )
                             }
                         )
@@ -610,7 +610,7 @@ private fun JellyfinLibrarySummaryPanel(
                             label = {
                                 Text(
                                     libraryName,
-                                    fontFamily = RoundedSans,
+                                    fontFamily = AppRoundedSans,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
@@ -633,7 +633,7 @@ private fun JellyfinLibrarySummaryPanel(
                             label = {
                                 Text(
                                     stringResource(R.string.dash_libraries_more_count, hiddenCount),
-                                    fontFamily = RoundedSans
+                                    fontFamily = AppRoundedSans
                                 )
                             }
                         )
@@ -667,14 +667,14 @@ private fun JellyfinLibrarySelectorSheet(
             Text(
                 text = stringResource(R.string.dash_libraries_title),
                 style = MaterialTheme.typography.titleLarge,
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = stringResource(R.string.dash_libraries_sheet_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -767,7 +767,7 @@ private fun JellyfinPlaylistCard(
                 Text(
                     text = playlist.name,
                     style = MaterialTheme.typography.titleSmall,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -775,7 +775,7 @@ private fun JellyfinPlaylistCard(
                 Text(
                     text = stringResource(R.string.dash_song_count, playlist.songCount),
                     style = MaterialTheme.typography.bodySmall,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

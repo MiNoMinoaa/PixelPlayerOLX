@@ -38,7 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.minoppol.music.BuildConfig
 import com.minoppol.music.R
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import com.minoppol.music.ui.theme.PixelPlayerStatusBarStyle
 import androidx.compose.ui.res.stringResource
 
@@ -65,7 +65,7 @@ fun GenreGradientTopBar(
                 modifier = Modifier.padding(start = 6.dp),
                 text = title,
                 color = contentColor,
-                fontFamily = RoundedSans
+                fontFamily = AppRoundedSans
             )
         },
         expandedHeight = 160.dp,

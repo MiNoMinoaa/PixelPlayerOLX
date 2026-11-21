@@ -44,7 +44,7 @@ import androidx.compose.ui.res.stringResource
 import coil.size.Size
 import com.minoppol.music.R
 import com.minoppol.music.data.model.Album
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import androidx.compose.runtime.remember
@@ -90,13 +90,13 @@ fun AlbumMultiSelectionOptionSheet(
                         text = stringResource(R.string.presentation_batch_g_album_sel_count, selectedAlbums.size),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        fontFamily = RoundedSans
+                        fontFamily = AppRoundedSans
                     )
                     Text(
                         text = stringResource(R.string.presentation_batch_g_album_sel_selected),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontFamily = RoundedSans
+                        fontFamily = AppRoundedSans
                     )
                 }
             }

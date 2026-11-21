@@ -86,7 +86,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.minoppol.music.presentation.screens.TabAnimation
 import com.minoppol.music.presentation.viewmodel.DirectoryEntry
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import com.minoppol.music.utils.StorageInfo
 import java.io.File
 import kotlinx.collections.immutable.ImmutableList
@@ -235,7 +235,7 @@ fun FileExplorerContent(
                 title = {
                     Text(
                         text = title,
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontSize = 22.sp,
                         ),
@@ -328,7 +328,7 @@ fun FileExplorerContent(
                                 text = storage.displayName,
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1,
-                                fontFamily = RoundedSans
+                                fontFamily = AppRoundedSans
                             )
                         }
                     }

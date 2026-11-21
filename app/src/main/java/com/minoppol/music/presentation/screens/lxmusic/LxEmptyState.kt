@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.minoppol.music.R
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 
 @Composable
 internal fun LxEmptyState(
@@ -56,7 +56,7 @@ internal fun LxEmptyState(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center
             )

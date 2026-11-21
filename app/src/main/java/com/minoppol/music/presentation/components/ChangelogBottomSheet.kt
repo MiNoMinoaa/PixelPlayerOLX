@@ -47,7 +47,7 @@ import androidx.core.net.toUri
 import com.minoppol.music.R
 import com.minoppol.music.presentation.components.subcomps.SineWaveLine
 import com.minoppol.music.ui.theme.ExpTitleTypography
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 
 data class ChangelogSection(
@@ -107,7 +107,7 @@ fun ChangelogBottomSheet(
         ) {
             Text(
                 text = stringResource(R.string.presentation_batch_g_changelog_title),
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 style = ExpTitleTypography.displaySmall,
                 color = MaterialTheme.colorScheme.onSurface
             )

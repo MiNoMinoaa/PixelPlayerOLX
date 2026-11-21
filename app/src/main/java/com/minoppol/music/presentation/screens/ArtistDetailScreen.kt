@@ -75,7 +75,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.minoppol.music.ui.theme.LocalPixelPlayerDarkTheme
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import com.minoppol.music.ui.theme.LocalShowScrollbar
 import com.minoppol.music.ui.theme.PixelPlayerStatusBarStyle
 import androidx.compose.ui.unit.lerp
@@ -1061,7 +1061,7 @@ private fun SharedArtistTopBarProbe(
             expandedTitleEndPadding = 88.dp,
             containerHeightRange = 112.dp to 56.dp,
             titleStyle = MaterialTheme.typography.headlineMedium.copy(
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 fontWeight = FontWeight.SemiBold,
                 textGeometricTransform = TextGeometricTransform(scaleX = 1.08f)
             ),

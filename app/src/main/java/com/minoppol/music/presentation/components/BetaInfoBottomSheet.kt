@@ -64,7 +64,7 @@ import com.minoppol.music.BuildConfig
 import com.minoppol.music.R
 import com.minoppol.music.presentation.components.subcomps.SineWaveLine
 import com.minoppol.music.ui.theme.ExpTitleTypography
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -94,7 +94,7 @@ fun BetaInfoBottomSheet(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = BuildConfig.VERSION_NAME,
-                        fontFamily = RoundedSans,
+                        fontFamily = AppRoundedSans,
                         style = ExpTitleTypography.displaySmall,
                         color = MaterialTheme.colorScheme.onSurface
                     )

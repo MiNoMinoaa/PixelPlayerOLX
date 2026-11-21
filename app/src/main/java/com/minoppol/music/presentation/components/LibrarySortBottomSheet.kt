@@ -55,7 +55,7 @@ import androidx.compose.ui.unit.Dp
 import com.minoppol.music.R
 import com.minoppol.music.data.model.SortDirection
 import com.minoppol.music.data.model.SortOption
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import kotlinx.collections.immutable.ImmutableList
 
@@ -127,7 +127,7 @@ fun LibrarySortBottomSheet(
             Text(
                 text = title,
                 style = MaterialTheme.typography.headlineMedium,
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(start = 2.dp, top = 0.dp, bottom = 16.dp)
             )
@@ -236,7 +236,7 @@ fun LibrarySortBottomSheet(
                 Text(
                     text = viewSectionTitle,
                     style = MaterialTheme.typography.headlineSmall,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(start = 2.dp, top = 8.dp, bottom = 8.dp)
                 )
@@ -259,7 +259,7 @@ fun LibrarySortBottomSheet(
                 Text(
                     text = stringResource(R.string.presentation_batch_g_sort_source),
                     style = MaterialTheme.typography.headlineSmall,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(start = 2.dp, top = 8.dp, bottom = 8.dp)
                 )

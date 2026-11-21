@@ -26,7 +26,7 @@ import com.minoppol.music.R
 import com.minoppol.music.data.model.LibraryTabId
 import com.minoppol.music.data.model.StorageFilter
 import com.minoppol.music.presentation.components.MiniPlayerHeight
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 
 private data class LibraryEmptySpec(
     val iconRes: Int,
@@ -174,7 +174,7 @@ internal fun LibraryExpressiveEmptyState(
                 Text(
                     text = stringResource(spec.titleRes),
                     style = MaterialTheme.typography.titleLarge,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center
                 )

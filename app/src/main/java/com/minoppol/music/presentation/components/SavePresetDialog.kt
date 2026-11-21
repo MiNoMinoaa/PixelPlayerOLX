@@ -16,7 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import androidx.compose.ui.res.stringResource
 import com.minoppol.music.R
 import androidx.compose.ui.text.style.TextOverflow
@@ -32,7 +32,7 @@ fun SavePresetDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(text = stringResource(R.string.equalizer_save_custom_preset_title), fontFamily = RoundedSans)
+            Text(text = stringResource(R.string.equalizer_save_custom_preset_title), fontFamily = AppRoundedSans)
         },
         text = {
             Column {
@@ -96,7 +96,7 @@ fun RenamePresetDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(text = stringResource(R.string.equalizer_rename_preset_title), fontFamily = RoundedSans)
+            Text(text = stringResource(R.string.equalizer_rename_preset_title), fontFamily = AppRoundedSans)
         },
         text = {
             Column {

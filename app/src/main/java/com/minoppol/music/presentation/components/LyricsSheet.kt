@@ -2,6 +2,7 @@ package com.minoppol.music.presentation.components
 
 import android.animation.ValueAnimator
 import android.content.ClipData
+import android.content.res.Configuration
 import android.os.Build
 import android.widget.Toast
 import com.minoppol.music.R
@@ -65,6 +66,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -711,6 +713,14 @@ fun LyricsSheet(
                 initialFirstVisibleItemIndex = initialSyncedLineIndex
             )
             val staticListState = rememberLazyListState()
+            val lyricsConfiguration = LocalConfiguration.current
+            val isTabletLandscapeLyrics = lyricsConfiguration.screenWidthDp >= 600 &&
+                lyricsConfiguration.orientation == Configuration.ORIENTATION_LANDSCAPE
+            val lyricsWidthModifier = if (isTabletLandscapeLyrics) {
+                Modifier.widthIn(max = 720.dp).align(Alignment.CenterHorizontally)
+            } else {
+                Modifier.fillMaxWidth()
+            }
 
             Box(
                 modifier = Modifier
@@ -789,8 +799,8 @@ fun LyricsSheet(
                         lyrics?.synced?.let { synced ->
                             val syncedLines = remember(synced) { synced.toImmutableList() }
                             SyncedLyricsList(
-                                modifier = Modifier
-                                    .fillMaxSize()
+                                modifier = lyricsWidthModifier
+                                    .fillMaxHeight()
                                     .padding(horizontal = 24.dp),
                                 contentPadding = PaddingValues(top = 130.dp, bottom = 100.dp),
                                 lines = syncedLines,
@@ -858,7 +868,7 @@ fun LyricsSheet(
                     false -> {
                         lyrics?.plain?.let { plain ->
                             LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = lyricsWidthModifier.fillMaxHeight(),
                                 state = staticListState,
                                 contentPadding = PaddingValues(
                                     start = 24.dp,

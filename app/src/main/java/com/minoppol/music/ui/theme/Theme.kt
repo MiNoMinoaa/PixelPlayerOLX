@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.font.FontFamily
 import androidx.core.view.WindowCompat
 import com.minoppol.music.presentation.viewmodel.ColorSchemePair
 import androidx.core.graphics.ColorUtils
@@ -27,6 +28,8 @@ import androidx.core.graphics.ColorUtils
 val LocalPixelPlayerDarkTheme = staticCompositionLocalOf { false }
 
 val LocalShowScrollbar = staticCompositionLocalOf { true }
+
+val LocalAppFontFamily = staticCompositionLocalOf { RoundedSans }
 
 private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
@@ -113,6 +116,7 @@ val LightColorScheme = lightColorScheme(
 fun PixelPlayerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     colorSchemePairOverride: ColorSchemePair? = null,
+    appFontFamily: FontFamily = RoundedSans,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
@@ -136,11 +140,14 @@ fun PixelPlayerTheme(
         navigationColor = finalColorScheme.background
     )
 
-    CompositionLocalProvider(LocalPixelPlayerDarkTheme provides darkTheme) {
+    CompositionLocalProvider(
+        LocalPixelPlayerDarkTheme provides darkTheme,
+        LocalAppFontFamily provides appFontFamily
+    ) {
         MaterialTheme(
             colorScheme = finalColorScheme,
             motionScheme = MotionScheme.expressive(),
-            typography = Typography,
+            typography = appTypography(),
             shapes = Shapes,
             content = content
         )

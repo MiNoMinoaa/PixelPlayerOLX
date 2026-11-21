@@ -96,7 +96,7 @@ import com.minoppol.music.presentation.components.subcomps.SelectionCountPill
 import com.minoppol.music.presentation.screens.lxmusic.LxBatchDownloadQualityDialog
 import com.minoppol.music.presentation.navigation.Screen
 import com.minoppol.music.presentation.screens.lxmusic.LxScrollToTopFab
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import androidx.compose.ui.res.painterResource
 import com.minoppol.music.presentation.model.RecentlyPlayedSongUiModel
 import com.minoppol.music.presentation.model.collectRecentlyPlayedSongIds
@@ -637,9 +637,10 @@ private fun ExpressiveRecentlyPlayedHeader(
 
 @Composable
 private fun rememberRecentlyPlayedTitleStyle(): TextStyle {
-    return remember {
+    val fontFamily = AppRoundedSans
+    return remember(fontFamily) {
         TextStyle(
-            fontFamily = RoundedSans,
+            fontFamily = fontFamily,
             fontWeight = FontWeight.ExtraBold,
             fontSize = 40.sp,
             lineHeight = 44.sp,

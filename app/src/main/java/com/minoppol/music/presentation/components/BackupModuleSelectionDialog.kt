@@ -71,7 +71,7 @@ import com.minoppol.music.R
 import com.minoppol.music.data.backup.model.BackupSection
 import com.minoppol.music.data.backup.model.ModuleRestoreDetail
 import com.minoppol.music.data.backup.model.RestorePlan
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -150,7 +150,7 @@ fun BackupModuleSelectionDialog(
                                             fontSize = 24.sp,
                                             textGeometricTransform = TextGeometricTransform(scaleX = 1.2f),
                                         ),
-                                        fontFamily = RoundedSans,
+                                        fontFamily = AppRoundedSans,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
@@ -517,7 +517,7 @@ private fun BackupSectionSelectableCardShared(
                     Text(
                         text = section.label,
                         style = MaterialTheme.typography.titleMedium.copy(
-                            fontFamily = RoundedSans
+                            fontFamily = AppRoundedSans
                         ),
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface

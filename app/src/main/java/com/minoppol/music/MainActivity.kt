@@ -390,13 +390,23 @@ class MainActivity : ComponentActivity() {
             }
 
             val showScrollbar by userPreferencesRepository.showScrollbarFlow.collectAsStateWithLifecycle(initialValue = true)
+            val appFontFamilyPref by userPreferencesRepository.appFontFamilyFlow.collectAsStateWithLifecycle(initialValue = com.minoppol.music.data.preferences.AppFontFamily.DEFAULT)
+            val appFontCustomUri by userPreferencesRepository.appFontCustomUriFlow.collectAsStateWithLifecycle(initialValue = null as String?)
+            val appFontFileAvailable = remember(appFontCustomUri) {
+                getFileStreamPath("custom_font.ttf").exists()
+            }
+            val appFontFamily = com.minoppol.music.ui.theme.resolveAppFontFamily(
+                preference = appFontFamilyPref,
+                customFileAvailable = appFontFileAvailable
+            )
 
             CompositionLocalProvider(
                 com.minoppol.music.ui.theme.LocalShowScrollbar provides showScrollbar
             ) {
                 PixelPlayerTheme(
                     darkTheme = useDarkTheme,
-                    colorSchemePairOverride = appWideNowPlayingScheme
+                    colorSchemePairOverride = appWideNowPlayingScheme,
+                    appFontFamily = appFontFamily
                 ) {
                 var contentVisible by remember { mutableStateOf(false) }
                 val contentAlpha by animateFloatAsState(
@@ -717,6 +727,9 @@ class MainActivity : ComponentActivity() {
         val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
         val useNavigationRail =
             windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
+        val mainConfiguration = LocalConfiguration.current
+        val isTabletLandscape = useNavigationRail &&
+            mainConfiguration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
         val routesWithHiddenNavigationBar = remember {
             setOf(
@@ -750,9 +763,15 @@ class MainActivity : ComponentActivity() {
                 Screen.AudioBookmarkFolder.route
             )
         }
-        val shouldHideNavigationBar by remember(currentRoute, isSearchBarActive) {
+        val playerContentExpansionFraction = playerViewModel.playerContentExpansionFraction
+        val shouldHideNavigationBar by remember(currentRoute, isSearchBarActive, mainConfiguration.orientation, useNavigationRail) {
             derivedStateOf {
-                if (currentRoute == Screen.Search.route && isSearchBarActive) {
+                if (
+                    mainConfiguration.orientation == Configuration.ORIENTATION_LANDSCAPE &&
+                    playerContentExpansionFraction.value > 0.01f
+                ) {
+                    true
+                } else if (currentRoute == Screen.Search.route && isSearchBarActive) {
                     true
                 } else {
                     currentRoute?.let { route ->
@@ -800,6 +819,11 @@ class MainActivity : ComponentActivity() {
         }
 
         val horizontalPadding = when {
+            isTabletLandscape -> {
+                val screenWidth = mainConfiguration.screenWidthDp.dp
+                val tabletLandscapeMiniWidth = screenWidth * 0.45f
+                ((screenWidth - tabletLandscapeMiniWidth) / 2).coerceAtLeast(14.dp)
+            }
             navBarStyle == NavBarStyle.FLOATING -> {
                 val configuration = LocalConfiguration.current
                 val screenWidth = configuration.screenWidthDp.dp

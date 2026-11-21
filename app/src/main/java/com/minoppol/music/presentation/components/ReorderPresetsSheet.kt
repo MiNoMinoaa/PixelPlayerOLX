@@ -71,7 +71,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.minoppol.music.R
 import com.minoppol.music.data.equalizer.EqualizerPreset
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import kotlinx.coroutines.launch
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import sh.calvin.reorderable.ReorderableItem
@@ -178,7 +178,7 @@ fun ReorderPresetsSheet(
                             title = {
                                 Text(
                                     text = stringResource(R.string.presentation_batch_e_manage_presets_title),
-                                    fontFamily = RoundedSans,
+                                    fontFamily = AppRoundedSans,
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontSize = 22.sp,
                                         textGeometricTransform = TextGeometricTransform(scaleX = 1.2f),

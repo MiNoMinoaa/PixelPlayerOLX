@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.minoppol.music.R
 import com.minoppol.music.data.equalizer.EqualizerPreset
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import kotlinx.collections.immutable.ImmutableList
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,7 +65,7 @@ fun CustomPresetsSheet(
             Text(
                 text = stringResource(R.string.presentation_batch_g_presets_saved_title),
                 style = MaterialTheme.typography.titleLarge,
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
             )
@@ -140,7 +140,7 @@ private fun CustomPresetItem(
                     text = preset.displayName.firstOrNull()?.toString()?.uppercase() ?: "C",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    fontFamily = RoundedSans
+                    fontFamily = AppRoundedSans
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))
@@ -148,7 +148,7 @@ private fun CustomPresetItem(
                 Text(
                     text = preset.displayName,
                     style = MaterialTheme.typography.bodyLarge,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     fontWeight = FontWeight.Medium
                 )
             }

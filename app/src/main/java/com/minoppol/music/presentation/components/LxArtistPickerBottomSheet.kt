@@ -39,7 +39,7 @@ import coil.size.Size
 import com.minoppol.music.R
 import com.minoppol.music.data.lxmusic.LxArtist
 import com.minoppol.music.data.lxmusic.LxSources
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,7 +77,7 @@ fun LxArtistPickerBottomSheet(
             Text(
                 text = stringResource(R.string.artist_picker_title),
                 style = MaterialTheme.typography.headlineMedium,
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 fontWeight = FontWeight.Bold,
                 color = colorScheme.onSurface
             )
@@ -161,7 +161,7 @@ private fun LxArtistPickerCard(
                 Text(
                     text = artist.name,
                     style = MaterialTheme.typography.titleMedium,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     fontWeight = FontWeight.SemiBold,
                     color = contentColor,
                     maxLines = 1,

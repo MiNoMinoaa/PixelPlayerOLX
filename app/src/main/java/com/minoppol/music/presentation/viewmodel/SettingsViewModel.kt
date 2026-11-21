@@ -18,6 +18,7 @@ import com.minoppol.music.data.model.AudioOutputMode
 import com.minoppol.music.data.preferences.AppLanguage
 import com.minoppol.music.data.preferences.AppThemeMode
 import com.minoppol.music.data.preferences.CarouselStyle
+import com.minoppol.music.data.preferences.AppFontFamily
 import com.minoppol.music.data.preferences.SwipeToQueueAction
 import com.minoppol.music.data.preferences.LibraryNavigationMode
 import com.minoppol.music.data.preferences.PreviousButtonBehavior
@@ -88,6 +89,8 @@ data class SettingsUiState(
     val miniPlayerSwipeToSkip: Boolean = true,
     val swipeToQueueAction: SwipeToQueueAction = SwipeToQueueAction.DEFAULT,
     val showScrollbar: Boolean = true,
+    val appFontFamily: AppFontFamily = AppFontFamily.DEFAULT,
+    val appFontCustomUri: String? = null,
     val resumeOnHeadsetReconnect: Boolean = false,
     val showQueueHistory: Boolean = true,
     val isCrossfadeEnabled: Boolean = false,
@@ -576,6 +579,18 @@ class SettingsViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            userPreferencesRepository.appFontFamilyFlow.collect { family ->
+                _uiState.update { it.copy(appFontFamily = family) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.appFontCustomUriFlow.collect { uri ->
+                _uiState.update { it.copy(appFontCustomUri = uri) }
+            }
+        }
+
+        viewModelScope.launch {
             fileExplorerStateHolder.isLoading.collect { loading ->
                 _uiState.update { it.copy(isLoadingDirectories = loading) }
             }
@@ -883,6 +898,18 @@ class SettingsViewModel @Inject constructor(
     fun setShowScrollbar(enabled: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setShowScrollbar(enabled)
+        }
+    }
+
+    fun setAppFontFamily(family: AppFontFamily) {
+        viewModelScope.launch {
+            userPreferencesRepository.setAppFontFamily(family)
+        }
+    }
+
+    fun setAppFontCustomUri(uri: String?) {
+        viewModelScope.launch {
+            userPreferencesRepository.setAppFontCustomUri(uri)
         }
     }
 

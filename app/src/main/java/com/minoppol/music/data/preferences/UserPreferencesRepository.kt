@@ -162,6 +162,8 @@ constructor(
         val MINI_PLAYER_SWIPE_TO_SKIP = booleanPreferencesKey("mini_player_swipe_to_skip")
         val SWIPE_TO_QUEUE_ACTION = stringPreferencesKey("swipe_to_queue_action")
         val SHOW_SCROLLBAR = booleanPreferencesKey("show_scrollbar")
+        val APP_FONT_FAMILY = stringPreferencesKey("app_font_family")
+        val APP_FONT_CUSTOM_URI = stringPreferencesKey("app_font_custom_uri")
         val HI_FI_MODE_ENABLED = booleanPreferencesKey("hi_fi_mode_enabled")
         val CROSSFADE_DURATION = intPreferencesKey("crossfade_duration")
         val PLAYBACK_SPEED = androidx.datastore.preferences.core.floatPreferencesKey("playback_speed")
@@ -1045,6 +1047,16 @@ constructor(
                 preferences[PreferencesKeys.SHOW_SCROLLBAR] ?: true
             }.distinctUntilChanged()
 
+    val appFontFamilyFlow: Flow<AppFontFamily> =
+            dataStore.data.map { preferences ->
+                AppFontFamily.fromStorageKey(preferences[PreferencesKeys.APP_FONT_FAMILY])
+            }.distinctUntilChanged()
+
+    val appFontCustomUriFlow: Flow<String?> =
+            dataStore.data.map { preferences ->
+                preferences[PreferencesKeys.APP_FONT_CUSTOM_URI]
+            }.distinctUntilChanged()
+
     val resumeOnHeadsetReconnectFlow: Flow<Boolean> =
             dataStore.data.map { preferences ->
                 preferences[PreferencesKeys.RESUME_ON_HEADSET_RECONNECT] ?: false
@@ -1693,6 +1705,22 @@ constructor(
     suspend fun setShowScrollbar(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.SHOW_SCROLLBAR] = enabled
+        }
+    }
+
+    suspend fun setAppFontFamily(family: AppFontFamily) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.APP_FONT_FAMILY] = family.storageKey
+        }
+    }
+
+    suspend fun setAppFontCustomUri(uri: String?) {
+        dataStore.edit { preferences ->
+            if (uri == null) {
+                preferences.remove(PreferencesKeys.APP_FONT_CUSTOM_URI)
+            } else {
+                preferences[PreferencesKeys.APP_FONT_CUSTOM_URI] = uri
+            }
         }
     }
 

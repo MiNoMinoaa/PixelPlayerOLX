@@ -233,6 +233,7 @@ fun ThemeSelectorItem(
         options: Map<String, String>,
         optionDescriptions: Map<String, String> = emptyMap(),
         disabledOptionKeys: Set<String> = emptySet(),
+        hasDescription: Boolean = true,
         selectedKey: String,
         onSelectionChanged: (String) -> Unit,
         leadingIcon: @Composable () -> Unit,
@@ -264,13 +265,15 @@ fun ThemeSelectorItem(
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    
+                    if (hasDescription) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(10.dp))
                     
                     Surface(

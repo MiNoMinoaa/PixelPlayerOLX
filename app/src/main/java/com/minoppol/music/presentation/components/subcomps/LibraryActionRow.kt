@@ -89,7 +89,7 @@ import androidx.compose.ui.unit.dp
 import com.minoppol.music.R
 import com.minoppol.music.data.model.MusicFolder
 import com.minoppol.music.data.model.StorageFilter
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import java.io.File
 import androidx.compose.ui.res.stringResource
 
@@ -622,7 +622,7 @@ fun Breadcrumbs(
                     text = name,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = if (isLast) FontWeight.Bold else FontWeight.Normal,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     color = if (isLast) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
                         .clip(CircleShape)

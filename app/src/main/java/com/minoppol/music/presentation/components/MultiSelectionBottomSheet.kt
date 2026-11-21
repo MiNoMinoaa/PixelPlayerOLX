@@ -67,7 +67,7 @@ import coil.size.Size
 import com.minoppol.music.data.lxmusic.LxSources
 import com.minoppol.music.data.model.Song
 import com.minoppol.music.data.offline.CloudOfflineRepository
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 
 /**
@@ -205,7 +205,7 @@ fun MultiSelectionBottomSheet(
                             text = stringResource(R.string.multi_selection_songs_count_upper, selectedSongs.size),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
-                            fontFamily = RoundedSans,
+                            fontFamily = AppRoundedSans,
                             modifier = Modifier.padding(end = 4.dp),
                             maxFontSizeLimit = 30.sp,
                         )
@@ -216,7 +216,7 @@ fun MultiSelectionBottomSheet(
                         Text(
                             text = stringResource(R.string.multi_selection_selected),
                             style = MaterialTheme.typography.bodyLarge,
-                            fontFamily = RoundedSans,
+                            fontFamily = AppRoundedSans,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         if (platformSources.isNotEmpty()) {
@@ -230,7 +230,7 @@ fun MultiSelectionBottomSheet(
                                     }
                                 },
                                 style = MaterialTheme.typography.bodyMedium,
-                                fontFamily = RoundedSans,
+                                fontFamily = AppRoundedSans,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }

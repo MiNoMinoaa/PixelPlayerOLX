@@ -83,7 +83,7 @@ import com.minoppol.music.presentation.viewmodel.PlaylistUiState
 import com.minoppol.music.presentation.viewmodel.PlaylistSelectionStateHolder
 import com.minoppol.music.utils.formatSongCount
 import com.minoppol.music.ui.theme.LocalShowScrollbar
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import kotlinx.coroutines.flow.map
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -434,7 +434,7 @@ fun PlaylistItem(
                 ) {
                     Text(
                         text = playlist.name,
-                        style = MaterialTheme.typography.titleMedium.copy(fontFamily = RoundedSans),
+                        style = MaterialTheme.typography.titleMedium.copy(fontFamily = AppRoundedSans),
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -523,7 +523,7 @@ fun CreatePlaylistDialogRedesigned(
                     text = stringResource(R.string.create_playlist_dialog_title),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 

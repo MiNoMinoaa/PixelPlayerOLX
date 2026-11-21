@@ -43,7 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.minoppol.music.R
-import com.minoppol.music.ui.theme.RoundedSans
+import com.minoppol.music.ui.theme.AppRoundedSans
 import kotlinx.collections.immutable.ImmutableList
 
 /**
@@ -85,14 +85,14 @@ fun CloudLibraryPickerSheet(
             Text(
                 text = stringResource(R.string.auth_select_libraries_title),
                 style = MaterialTheme.typography.titleLarge,
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = stringResource(R.string.auth_select_libraries_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
-                fontFamily = RoundedSans,
+                fontFamily = AppRoundedSans,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -150,7 +150,7 @@ fun CloudLibraryPickerSheet(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     stringResource(R.string.auth_select_libraries_confirm),
-                    fontFamily = RoundedSans
+                    fontFamily = AppRoundedSans
                 )
             }
         }
@@ -224,7 +224,7 @@ fun CloudLibrarySelectorChoice(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     fontWeight = FontWeight.SemiBold,
                     color = contentColor,
                     maxLines = 1,
@@ -233,7 +233,7 @@ fun CloudLibrarySelectorChoice(
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    fontFamily = RoundedSans,
+                    fontFamily = AppRoundedSans,
                     color = contentColor.copy(alpha = 0.72f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
