@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -74,7 +75,8 @@ fun AutoScrollingText(
     textAlign: TextAlign? = null,
     gradientEdgeColor: Color,
     gradientWidth: Dp = 24.dp,
-    canScroll: Boolean = true
+    canScroll: Boolean = true,
+    timeBudgetMs: Long? = null
 ) {
     SubcomposeLayout(modifier = modifier.clipToBounds()) { constraints ->
         val textPlaceable = subcompose("text") {
@@ -83,9 +85,21 @@ fun AutoScrollingText(
 
         val isOverflowing = textPlaceable.width > constraints.maxWidth
 
+        val marqueeDistancePx = (textPlaceable.width - constraints.maxWidth).coerceAtLeast(0)
+        val marqueeVelocity: Dp
+        val marqueeInitialDelayMillis: Int
+        if (timeBudgetMs != null && timeBudgetMs > 0 && marqueeDistancePx > 0) {
+            marqueeInitialDelayMillis = (timeBudgetMs / 4).coerceIn(400L, 2000L).toInt()
+            val usableMs = (timeBudgetMs - marqueeInitialDelayMillis - 300L).coerceAtLeast(400L)
+            marqueeVelocity = (marqueeDistancePx.toDp() / (usableMs / 1000f)).coerceIn(25.dp, 240.dp)
+        } else {
+            marqueeVelocity = 25.dp
+            marqueeInitialDelayMillis = 2000
+        }
+
         val content = @Composable {
             if (isOverflowing && canScroll) {
-                val initialDelayMillis = 2000
+                val initialDelayMillis = marqueeInitialDelayMillis
                 val fadeAnimationDuration = 500
 
                 var isScrolling by remember(text, canScroll) { mutableStateOf(false) }
@@ -126,18 +140,20 @@ fun AutoScrollingText(
                             )
                         }
                 ) {
-                    Text(
-                        text = text,
-                        style = style,
-                        textAlign = textAlign,
-                        maxLines = 1,
-                        modifier = Modifier.basicMarquee(
-                            iterations = Int.MAX_VALUE,
-                            spacing = MarqueeSpacing(gradientWidth + 6.dp),
-                            velocity = 25.dp,
-                            initialDelayMillis = initialDelayMillis
+                    key(text) {
+                        Text(
+                            text = text,
+                            style = style,
+                            textAlign = textAlign,
+                            maxLines = 1,
+                            modifier = Modifier.basicMarquee(
+                                iterations = Int.MAX_VALUE,
+                                spacing = MarqueeSpacing(gradientWidth + 6.dp),
+                                velocity = marqueeVelocity,
+                                initialDelayMillis = initialDelayMillis
+                            )
                         )
-                    )
+                    }
                 }
             } else if (isOverflowing) {
                 Box(

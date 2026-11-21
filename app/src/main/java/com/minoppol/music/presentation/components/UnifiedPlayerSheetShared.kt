@@ -75,6 +75,7 @@ internal fun MiniPlayerContentInternal(
     onPrevious: () -> Unit,
     onNext: () -> Unit,
     currentLyricLine: String? = null,
+    currentLyricLineDurationMs: Long? = null,
     modifier: Modifier = Modifier,
     canScroll: Boolean = true,
     showCenterControls: Boolean = true
@@ -154,7 +155,12 @@ internal fun MiniPlayerContentInternal(
                 },
                 style = artistStyle,
                 gradientEdgeColor = LocalMaterialTheme.current.primaryContainer,
-                canScroll = canScroll
+                canScroll = canScroll,
+                timeBudgetMs = if (!showLoading && !currentLyricLine.isNullOrBlank()) {
+                    currentLyricLineDurationMs
+                } else {
+                    null
+                }
             )
         }
         Spacer(modifier = Modifier.width(8.dp))

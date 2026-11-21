@@ -154,6 +154,7 @@ import com.minoppol.music.presentation.components.sanitizeSyncedWords
 import com.minoppol.music.presentation.components.resolveLineEndTimeMs
 import kotlinx.coroutines.flow.map
 import com.minoppol.music.presentation.components.AlbumCarouselSection
+import com.minoppol.music.presentation.components.AutoScrollingText
 import com.minoppol.music.presentation.components.AutoScrollingTextOnDemand
 import com.minoppol.music.presentation.components.LocalMaterialTheme
 import com.minoppol.music.presentation.components.LxArtistPickerBottomSheet
@@ -2623,11 +2624,30 @@ private fun InPlayerLyrics(
                                 .onSizeChanged { itemHeightPx = it.height }
                                 .padding(vertical = lineVerticalPadding)
                         )
+                    } else if (idx == displayIndex) {
+                        val nextLineTime = lines.getOrNull(idx + 1)?.time
+                        AutoScrollingText(
+                            text = line.line,
+                            style = TextStyle(
+                                fontSize = textSizeSp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = textColor
+                            ),
+                            textAlign = TextAlign.Center,
+                            gradientEdgeColor = backgroundColor,
+                            timeBudgetMs = nextLineTime?.let { next ->
+                                (next - line.time).toLong().takeIf { it > 0 }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .onSizeChanged { itemHeightPx = it.height }
+                                .padding(vertical = lineVerticalPadding)
+                        )
                     } else {
                         Text(
                             text = line.line,
                             fontSize = textSizeSp,
-                            fontWeight = if (idx == displayIndex) FontWeight.SemiBold else FontWeight.Normal,
+                            fontWeight = FontWeight.Normal,
                             color = textColor.copy(alpha = alpha),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,

@@ -98,11 +98,15 @@ internal fun BoxScope.UnifiedPlayerMiniAndFullLayers(
                     val miniLyricsSyncOffset by playerViewModel.currentSongLyricsSyncOffset.collectAsStateWithLifecycle()
                     val miniLyrics = infrequentPlayerState.lyrics
                     val miniPlayerLyricsOn by playerViewModel.miniPlayerLyricsEnabled.collectAsStateWithLifecycle()
-                    val miniCurrentLine = remember(miniLyrics, miniPlaybackPosition, miniPlayerLyricsOn, miniLyricsSyncOffset) {
+                    val miniCurrentLineInfo = remember(miniLyrics, miniPlaybackPosition, miniPlayerLyricsOn, miniLyricsSyncOffset) {
                         if (!miniPlayerLyricsOn) null
                         else miniLyrics?.synced?.let { lines ->
                             val idx = resolveCurrentLineIndex(lines, (miniPlaybackPosition + miniLyricsSyncOffset).coerceAtLeast(0L))
-                            lines.getOrNull(idx)?.line?.takeIf { it.isNotBlank() }
+                            val line = lines.getOrNull(idx)?.line?.takeIf { it.isNotBlank() }
+                            val durationMs = lines.getOrNull(idx + 1)?.time?.let { next ->
+                                (next - lines[idx].time).toLong().takeIf { it > 0 }
+                            }
+                            if (line == null) null else line to durationMs
                         }
                     }
                     MiniPlayerContentInternal(
@@ -115,7 +119,8 @@ internal fun BoxScope.UnifiedPlayerMiniAndFullLayers(
                         onPlayPause = { playerViewModel.playPause() },
                         onPrevious = { playerViewModel.previousSong() },
                         onNext = { playerViewModel.nextSong() },
-                        currentLyricLine = miniCurrentLine,
+                        currentLyricLine = miniCurrentLineInfo?.first,
+                        currentLyricLineDurationMs = miniCurrentLineInfo?.second,
                         canScroll = isMiniPlayerVisible && infrequentPlayerState.isPlaying,
                         showCenterControls = miniNavBarStyle != NavBarStyle.FLOATING || !dockCenterControlsVisible,
                         modifier = Modifier.fillMaxSize()
