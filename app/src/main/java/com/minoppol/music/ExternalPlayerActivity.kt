@@ -16,10 +16,13 @@ import dagger.hilt.android.AndroidEntryPoint
 import com.minoppol.music.presentation.viewmodel.PlayerViewModel
 import com.minoppol.music.presentation.components.external.ExternalPlayerOverlay
 import com.minoppol.music.ui.theme.PixelPlayerTheme
+import com.minoppol.music.ui.theme.resolveAppFontFamily
 import android.content.Intent.EXTRA_STREAM
 import androidx.media3.common.util.UnstableApi
+import com.minoppol.music.data.preferences.AppFontFamily
 import com.minoppol.music.data.preferences.AppThemeMode
 import com.minoppol.music.data.preferences.ThemePreferencesRepository
+import com.minoppol.music.data.preferences.UserPreferencesRepository
 import javax.inject.Inject
 
 @androidx.annotation.OptIn(UnstableApi::class)
@@ -33,6 +36,8 @@ class ExternalPlayerActivity : ComponentActivity() {
     private val playerViewModel: PlayerViewModel by viewModels()
     @Inject
     lateinit var themePreferencesRepository: ThemePreferencesRepository
+    @Inject
+    lateinit var userPreferencesRepository: UserPreferencesRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge(
@@ -55,7 +60,13 @@ class ExternalPlayerActivity : ComponentActivity() {
                 AppThemeMode.LIGHT -> false
                 else -> systemDarkTheme
             }
-            PixelPlayerTheme(darkTheme = useDarkTheme) {
+            val appFontFamilyPref by userPreferencesRepository.appFontFamilyFlow.collectAsStateWithLifecycle(initialValue = AppFontFamily.DEFAULT)
+            val appFontCustomFile by userPreferencesRepository.appFontCustomFileFlow.collectAsStateWithLifecycle(initialValue = null as String?)
+            val appFontFamily = resolveAppFontFamily(
+                preference = appFontFamilyPref,
+                customFontFileName = appFontCustomFile
+            )
+            PixelPlayerTheme(darkTheme = useDarkTheme, appFontFamily = appFontFamily) {
                 ExternalPlayerOverlay(
                     playerViewModel = playerViewModel,
                     onDismiss = { finish() },

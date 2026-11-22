@@ -91,6 +91,7 @@ import com.minoppol.music.presentation.navigation.Screen
 import com.minoppol.music.presentation.navigation.navigateToTopLevelSafely
 import com.minoppol.music.presentation.utils.LocalAppHapticsConfig
 import com.minoppol.music.presentation.utils.performAppHapticFeedback
+import com.minoppol.music.ui.theme.AppRoundedSans
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -760,6 +761,7 @@ private fun DockItemsRow(
                         letterSpacing = 0.sp,
                         maxLines = 1,
                         softWrap = false,
+                        fontFamily = AppRoundedSans,
                         style = androidx.compose.ui.text.TextStyle(
                             platformStyle = androidx.compose.ui.text.PlatformTextStyle(
                                 includeFontPadding = false

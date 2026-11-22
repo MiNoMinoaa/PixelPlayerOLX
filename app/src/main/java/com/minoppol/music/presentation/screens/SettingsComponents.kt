@@ -235,12 +235,13 @@ fun ThemeSelectorItem(
         disabledOptionKeys: Set<String> = emptySet(),
         hasDescription: Boolean = true,
         selectedKey: String,
+        selectedLabelOverride: String? = null,
         onSelectionChanged: (String) -> Unit,
         leadingIcon: @Composable () -> Unit,
         modifier: Modifier = Modifier
 ) {
     var showSheet by remember { mutableStateOf(false) }
-    val selectedOption = options[selectedKey] ?: selectedKey
+    val selectedOption = selectedLabelOverride ?: options[selectedKey] ?: selectedKey
 
     Surface(
             color = MaterialTheme.colorScheme.surfaceContainer,

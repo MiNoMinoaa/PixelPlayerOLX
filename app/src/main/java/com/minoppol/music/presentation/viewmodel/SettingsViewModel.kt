@@ -90,7 +90,8 @@ data class SettingsUiState(
     val swipeToQueueAction: SwipeToQueueAction = SwipeToQueueAction.DEFAULT,
     val showScrollbar: Boolean = true,
     val appFontFamily: AppFontFamily = AppFontFamily.DEFAULT,
-    val appFontCustomUri: String? = null,
+    val appFontCustomFile: String? = null,
+    val appFontCustomDisplayName: String? = null,
     val resumeOnHeadsetReconnect: Boolean = false,
     val showQueueHistory: Boolean = true,
     val isCrossfadeEnabled: Boolean = false,
@@ -585,8 +586,14 @@ class SettingsViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            userPreferencesRepository.appFontCustomUriFlow.collect { uri ->
-                _uiState.update { it.copy(appFontCustomUri = uri) }
+            userPreferencesRepository.appFontCustomFileFlow.collect { fileName ->
+                _uiState.update { it.copy(appFontCustomFile = fileName) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.appFontCustomDisplayNameFlow.collect { displayName ->
+                _uiState.update { it.copy(appFontCustomDisplayName = displayName) }
             }
         }
 
@@ -903,14 +910,38 @@ class SettingsViewModel @Inject constructor(
 
     fun setAppFontFamily(family: AppFontFamily) {
         viewModelScope.launch {
+            if (family != AppFontFamily.CUSTOM) {
+                clearCustomFontSelection()
+            }
             userPreferencesRepository.setAppFontFamily(family)
         }
     }
 
-    fun setAppFontCustomUri(uri: String?) {
+    fun applyCustomFont(uri: Uri) {
         viewModelScope.launch {
-            userPreferencesRepository.setAppFontCustomUri(uri)
+            val fileName = com.minoppol.music.ui.theme.createCustomFontFileName()
+            val copied = com.minoppol.music.ui.theme.copyCustomFontToFiles(context, uri, fileName)
+            if (!copied) {
+                _dataTransferEvents.send(context.getString(R.string.setcat_app_font_apply_failed))
+                return@launch
+            }
+            com.minoppol.music.ui.theme.deleteOtherCustomFontFiles(context, fileName)
+            val displayName = com.minoppol.music.ui.theme.resolveCustomFontDisplayName(context, uri)
+            userPreferencesRepository.setAppFontCustomSelection(fileName, displayName)
+            userPreferencesRepository.setAppFontFamily(AppFontFamily.CUSTOM)
         }
+    }
+
+    private suspend fun clearCustomFontSelection() {
+        val fileName = userPreferencesRepository.appFontCustomFileFlow.first()
+        com.minoppol.music.ui.theme.deleteOtherCustomFontFiles(context, null)
+        if (fileName != null) {
+            try {
+                context.getFileStreamPath(fileName).delete()
+            } catch (e: Exception) {
+            }
+        }
+        userPreferencesRepository.setAppFontCustomSelection(null, null)
     }
 
     fun setAudioOutputMode(mode: AudioOutputMode) {

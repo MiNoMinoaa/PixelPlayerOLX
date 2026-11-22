@@ -772,6 +772,7 @@ fun FullPlayerContent(
                     } else {
                         LyricsWordHighlightStyle.CLASSIC
                     },
+                    isPlayingProvider = isPlayingProvider,
                     onClick = onLyricsClick,
                     modifier = Modifier.padding(top = 2.dp, bottom = 4.dp)
                 )
@@ -1691,11 +1692,15 @@ private fun SongMetadataDisplaySection(
             )
         }
         
-        val isBuffering = stablePlayerState.isBuffering
+        val stablePlayerStateValue = stablePlayerState
+        val isBuffering = stablePlayerStateValue.isBuffering
+        val isPreparingPlayback by playerViewModel.playerUiState
+            .map { it.preparingSongId != null && it.preparingSongId == song?.id }
+            .collectAsStateWithLifecycle(initialValue = false)
 
 
         AnimatedVisibility(
-            visible = isBuffering,
+            visible = isBuffering || isPreparingPlayback,
             enter = scaleIn(
                 initialScale = 0.85f,
                 animationSpec = tween(
@@ -2524,6 +2529,7 @@ private fun InPlayerLyrics(
     isLandscape: Boolean,
     positionProvider: () -> Long,
     highlightStyle: LyricsWordHighlightStyle,
+    isPlayingProvider: () -> Boolean = { true },
     onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -2704,7 +2710,7 @@ private fun InPlayerLyrics(
                             positionProvider = positionProvider,
                             rangeStartMs = line.time.toLong(),
                             rangeEndMs = lineEndTime,
-                            style = TextStyle(fontSize = textSizeSp),
+                            style = TextStyle(fontSize = textSizeSp, fontFamily = AppRoundedSans),
                             fontWeight = FontWeight.SemiBold,
                             reserveBoldWidth = false,
                             highlightedColor = textColor,
@@ -2724,10 +2730,12 @@ private fun InPlayerLyrics(
                             style = TextStyle(
                                 fontSize = textSizeSp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = textColor
+                                color = textColor,
+                                fontFamily = AppRoundedSans
                             ),
                             textAlign = lyricsTextAlign,
                             gradientEdgeColor = backgroundColor,
+                            canScroll = isPlayingProvider(),
                             timeBudgetMs = nextLineTime?.let { next ->
                                 (next - line.time).toLong().takeIf { it > 0 }
                             },
@@ -2741,6 +2749,7 @@ private fun InPlayerLyrics(
                             text = line.line,
                             fontSize = textSizeSp,
                             fontWeight = FontWeight.Normal,
+                            fontFamily = AppRoundedSans,
                             color = textColor.copy(alpha = alpha),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,

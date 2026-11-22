@@ -309,18 +309,8 @@ fun SettingsCategoryScreen(
                 )
             } catch (e: SecurityException) {
             }
-            val copied = com.minoppol.music.ui.theme.copyCustomFontToFiles(context, uri)
-            if (copied) {
-                settingsViewModel.setAppFontCustomUri(uri.toString())
-                settingsViewModel.setAppFontFamily(com.minoppol.music.data.preferences.AppFontFamily.CUSTOM)
-                customFontPickerSuccess = true
-            } else {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.setcat_app_font_apply_failed),
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
+            settingsViewModel.applyCustomFont(uri)
+            customFontPickerSuccess = true
         }
     }
 
@@ -713,6 +703,23 @@ fun SettingsCategoryScreen(
                                     leadingIcon = { Icon(Icons.Rounded.UnfoldMore, null, tint = MaterialTheme.colorScheme.secondary) },
                                     modifier = Modifier.settingHighlight("item_appearance_show_scrollbar", highlightKey)
                                 )
+                                val customFontDisplayName = uiState.appFontCustomDisplayName
+                                    ?: remember(uiState.appFontCustomFile) {
+                                        com.minoppol.music.ui.theme.resolveCustomFontFileFamilyName(
+                                            context,
+                                            uiState.appFontCustomFile
+                                        )
+                                    }
+                                val customFontOptionLabel = customFontDisplayName?.let { displayName ->
+                                    stringResource(R.string.setcat_app_font_desc_custom_named, displayName)
+                                } ?: stringResource(R.string.setcat_app_font_desc_custom)
+                                val customFontSelectedLabel = if (
+                                    uiState.appFontFamily == com.minoppol.music.data.preferences.AppFontFamily.CUSTOM
+                                ) {
+                                    customFontDisplayName ?: stringResource(R.string.setcat_app_font_desc_custom)
+                                } else {
+                                    null
+                                }
                                 ThemeSelectorItem(
                                     label = stringResource(R.string.setcat_app_font_label),
                                     hasDescription = false,
@@ -723,28 +730,23 @@ fun SettingsCategoryScreen(
                                         com.minoppol.music.data.preferences.AppFontFamily.SYSTEM.storageKey to
                                             stringResource(R.string.setcat_app_font_desc_system),
                                         com.minoppol.music.data.preferences.AppFontFamily.CUSTOM.storageKey to
-                                            stringResource(R.string.setcat_app_font_desc_custom)
+                                            customFontOptionLabel
                                     ),
                                     selectedKey = uiState.appFontFamily.storageKey,
+                                    selectedLabelOverride = customFontSelectedLabel,
                                     onSelectionChanged = { key ->
                                         val selected = com.minoppol.music.data.preferences.AppFontFamily.fromStorageKey(key)
                                         if (selected == com.minoppol.music.data.preferences.AppFontFamily.CUSTOM) {
-                                            if (uiState.appFontCustomUri != null) {
-                                                settingsViewModel.setAppFontFamily(
-                                                    com.minoppol.music.data.preferences.AppFontFamily.CUSTOM
+                                            customFontPicker.launch(
+                                                arrayOf(
+                                                    "font/ttf",
+                                                    "font/otf",
+                                                    "application/x-font-ttf",
+                                                    "application/x-font-otf",
+                                                    "font/*",
+                                                    "application/octet-stream"
                                                 )
-                                            } else {
-                                                customFontPicker.launch(
-                                                    arrayOf(
-                                                        "font/ttf",
-                                                        "font/otf",
-                                                        "application/x-font-ttf",
-                                                        "application/x-font-otf",
-                                                        "font/*",
-                                                        "application/octet-stream"
-                                                    )
-                                                )
-                                            }
+                                            )
                                         } else {
                                             settingsViewModel.setAppFontFamily(selected)
                                         }

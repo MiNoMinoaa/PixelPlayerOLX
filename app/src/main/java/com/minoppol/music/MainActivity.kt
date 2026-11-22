@@ -272,6 +272,26 @@ class MainActivity : ComponentActivity() {
         val splashAnimationEnabled = runBlocking {
             userPreferencesRepository.splashAnimationEnabledFlow.first()
         }
+        lifecycleScope.launch {
+            val storedCustomFile = userPreferencesRepository.appFontCustomFileFlow.first()
+            if (storedCustomFile == null) {
+                val migrated = com.minoppol.music.ui.theme.migrateLegacyCustomFontFile(this@MainActivity)
+                if (migrated != null) {
+                    userPreferencesRepository.setAppFontCustomFile(migrated)
+                }
+            }
+            val storedDisplayName = userPreferencesRepository.appFontCustomDisplayNameFlow.first()
+            val currentCustomFile = userPreferencesRepository.appFontCustomFileFlow.first()
+            if (storedDisplayName.isNullOrBlank() && !currentCustomFile.isNullOrBlank()) {
+                val familyName = com.minoppol.music.ui.theme.resolveCustomFontFileFamilyName(
+                    this@MainActivity,
+                    currentCustomFile
+                )
+                if (!familyName.isNullOrBlank()) {
+                    userPreferencesRepository.setAppFontCustomDisplayName(familyName)
+                }
+            }
+        }
         val playAnimatedSplash = savedInstanceState == null &&
             !isBenchmarkMode &&
             splashAnimationEnabled &&
@@ -391,13 +411,10 @@ class MainActivity : ComponentActivity() {
 
             val showScrollbar by userPreferencesRepository.showScrollbarFlow.collectAsStateWithLifecycle(initialValue = true)
             val appFontFamilyPref by userPreferencesRepository.appFontFamilyFlow.collectAsStateWithLifecycle(initialValue = com.minoppol.music.data.preferences.AppFontFamily.DEFAULT)
-            val appFontCustomUri by userPreferencesRepository.appFontCustomUriFlow.collectAsStateWithLifecycle(initialValue = null as String?)
-            val appFontFileAvailable = remember(appFontCustomUri) {
-                getFileStreamPath("custom_font.ttf").exists()
-            }
+            val appFontCustomFile by userPreferencesRepository.appFontCustomFileFlow.collectAsStateWithLifecycle(initialValue = null as String?)
             val appFontFamily = com.minoppol.music.ui.theme.resolveAppFontFamily(
                 preference = appFontFamilyPref,
-                customFileAvailable = appFontFileAvailable
+                customFontFileName = appFontCustomFile
             )
 
             CompositionLocalProvider(

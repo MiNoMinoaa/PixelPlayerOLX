@@ -103,8 +103,10 @@ internal fun BoxScope.UnifiedPlayerMiniAndFullLayers(
                         else miniLyrics?.synced?.let { lines ->
                             val idx = resolveCurrentLineIndex(lines, (miniPlaybackPosition + miniLyricsSyncOffset).coerceAtLeast(0L))
                             val line = lines.getOrNull(idx)?.line?.takeIf { it.isNotBlank() }
-                            val durationMs = lines.getOrNull(idx + 1)?.time?.let { next ->
-                                (next - lines[idx].time).toLong().takeIf { it > 0 }
+                            val durationMs = line?.let {
+                                lines.getOrNull(idx + 1)?.time?.let { next ->
+                                    (next - lines[idx].time).toLong().takeIf { it > 0 }
+                                }
                             }
                             if (line == null) null else line to durationMs
                         }

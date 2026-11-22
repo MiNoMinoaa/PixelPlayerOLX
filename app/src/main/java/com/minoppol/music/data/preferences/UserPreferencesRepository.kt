@@ -163,7 +163,9 @@ constructor(
         val SWIPE_TO_QUEUE_ACTION = stringPreferencesKey("swipe_to_queue_action")
         val SHOW_SCROLLBAR = booleanPreferencesKey("show_scrollbar")
         val APP_FONT_FAMILY = stringPreferencesKey("app_font_family")
-        val APP_FONT_CUSTOM_URI = stringPreferencesKey("app_font_custom_uri")
+        val APP_FONT_CUSTOM_FILE = stringPreferencesKey("app_font_custom_file")
+        val APP_FONT_CUSTOM_DISPLAY_NAME = stringPreferencesKey("app_font_custom_display_name")
+        val APP_FONT_CUSTOM_URI_LEGACY = stringPreferencesKey("app_font_custom_uri")
         val HI_FI_MODE_ENABLED = booleanPreferencesKey("hi_fi_mode_enabled")
         val CROSSFADE_DURATION = intPreferencesKey("crossfade_duration")
         val PLAYBACK_SPEED = androidx.datastore.preferences.core.floatPreferencesKey("playback_speed")
@@ -1052,9 +1054,14 @@ constructor(
                 AppFontFamily.fromStorageKey(preferences[PreferencesKeys.APP_FONT_FAMILY])
             }.distinctUntilChanged()
 
-    val appFontCustomUriFlow: Flow<String?> =
+    val appFontCustomFileFlow: Flow<String?> =
             dataStore.data.map { preferences ->
-                preferences[PreferencesKeys.APP_FONT_CUSTOM_URI]
+                preferences[PreferencesKeys.APP_FONT_CUSTOM_FILE]
+            }.distinctUntilChanged()
+
+    val appFontCustomDisplayNameFlow: Flow<String?> =
+            dataStore.data.map { preferences ->
+                preferences[PreferencesKeys.APP_FONT_CUSTOM_DISPLAY_NAME]
             }.distinctUntilChanged()
 
     val resumeOnHeadsetReconnectFlow: Flow<Boolean> =
@@ -1714,12 +1721,39 @@ constructor(
         }
     }
 
-    suspend fun setAppFontCustomUri(uri: String?) {
+    suspend fun setAppFontCustomFile(fileName: String?) {
         dataStore.edit { preferences ->
-            if (uri == null) {
-                preferences.remove(PreferencesKeys.APP_FONT_CUSTOM_URI)
+            if (fileName == null) {
+                preferences.remove(PreferencesKeys.APP_FONT_CUSTOM_FILE)
             } else {
-                preferences[PreferencesKeys.APP_FONT_CUSTOM_URI] = uri
+                preferences[PreferencesKeys.APP_FONT_CUSTOM_FILE] = fileName
+            }
+            preferences.remove(PreferencesKeys.APP_FONT_CUSTOM_URI_LEGACY)
+        }
+    }
+
+    suspend fun setAppFontCustomSelection(fileName: String?, displayName: String?) {
+        dataStore.edit { preferences ->
+            if (fileName == null) {
+                preferences.remove(PreferencesKeys.APP_FONT_CUSTOM_FILE)
+            } else {
+                preferences[PreferencesKeys.APP_FONT_CUSTOM_FILE] = fileName
+            }
+            if (displayName.isNullOrBlank()) {
+                preferences.remove(PreferencesKeys.APP_FONT_CUSTOM_DISPLAY_NAME)
+            } else {
+                preferences[PreferencesKeys.APP_FONT_CUSTOM_DISPLAY_NAME] = displayName
+            }
+            preferences.remove(PreferencesKeys.APP_FONT_CUSTOM_URI_LEGACY)
+        }
+    }
+
+    suspend fun setAppFontCustomDisplayName(displayName: String?) {
+        dataStore.edit { preferences ->
+            if (displayName.isNullOrBlank()) {
+                preferences.remove(PreferencesKeys.APP_FONT_CUSTOM_DISPLAY_NAME)
+            } else {
+                preferences[PreferencesKeys.APP_FONT_CUSTOM_DISPLAY_NAME] = displayName
             }
         }
     }

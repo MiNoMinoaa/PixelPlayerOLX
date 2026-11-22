@@ -54,7 +54,8 @@ internal fun resolveMiniPlayerGestureOutcome(
     velocityX: Float,
     screenWidthPx: Float,
     density: Float,
-    layoutDirection: LayoutDirection
+    layoutDirection: LayoutDirection,
+    swipeToSkipEnabled: Boolean = true
 ): MiniPlayerGestureOutcome {
     val absoluteDistance = abs(displacementX)
     if (
@@ -68,10 +69,9 @@ internal fun resolveMiniPlayerGestureOutcome(
         }
     }
 
+    if (!swipeToSkipEnabled) return MiniPlayerGestureOutcome.None
+
     val safeDensity = density.coerceAtLeast(0.1f)
-    if (absoluteDistance > MINI_PLAYER_SKIP_MAX_DISTANCE_DP * safeDensity) {
-        return MiniPlayerGestureOutcome.None
-    }
     val crossedDistanceThreshold = absoluteDistance >= MINI_PLAYER_SKIP_DISTANCE_DP * safeDensity
     val crossedFlingThreshold =
         absoluteDistance >= MINI_PLAYER_FLING_MIN_DISTANCE_DP * safeDensity &&
@@ -101,8 +101,10 @@ internal class MiniPlayerDismissGestureHandler(
     private val offsetAnimatable: Animatable<Float, AnimationVector1D>,
     private val screenWidthPx: Float,
     private val layoutDirection: LayoutDirection,
+    private val swipeToSkipEnabled: () -> Boolean,
     private val onDismissPlaylistAndShowUndo: () -> Unit,
     private val onDismissStarted: () -> Unit = {},
+    private val onDismissDirection: (Float) -> Unit = {},
     private val onPrevious: () -> Unit,
     private val onNext: () -> Unit
 ) {
@@ -180,7 +182,8 @@ internal class MiniPlayerDismissGestureHandler(
             velocityX = velocityX,
             screenWidthPx = screenWidthPx,
             density = density.density,
-            layoutDirection = layoutDirection
+            layoutDirection = layoutDirection,
+            swipeToSkipEnabled = swipeToSkipEnabled()
         )
         dragPhase = MiniDismissDragPhase.IDLE
         offsetJob?.cancel()
@@ -191,6 +194,9 @@ internal class MiniPlayerDismissGestureHandler(
             MiniPlayerGestureOutcome.DismissRight -> {
                 performGestureHapticOnce()
                 onDismissStarted()
+                onDismissDirection(
+                    if (outcome == MiniPlayerGestureOutcome.DismissLeft) -1f else 1f
+                )
                 val targetDismissOffset = when (outcome) {
                     MiniPlayerGestureOutcome.DismissLeft -> -screenWidthPx
                     else -> screenWidthPx
@@ -204,7 +210,6 @@ internal class MiniPlayerDismissGestureHandler(
                         )
                     )
                     onDismissPlaylistAndShowUndo()
-                    offsetAnimatable.snapTo(0f)
                 }
             }
 
@@ -257,14 +262,17 @@ internal fun rememberMiniPlayerDismissGestureHandler(
     hapticFeedback: HapticFeedback,
     offsetAnimatable: Animatable<Float, AnimationVector1D>,
     screenWidthPx: Float,
+    swipeToSkipEnabled: () -> Boolean,
     onDismissPlaylistAndShowUndo: () -> Unit,
     onDismissStarted: () -> Unit,
+    onDismissDirection: (Float) -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit
 ): MiniPlayerDismissGestureHandler {
     val layoutDirection = LocalLayoutDirection.current
     val onDismissPlaylistAndShowUndoState = rememberUpdatedState(onDismissPlaylistAndShowUndo)
     val onDismissStartedState = rememberUpdatedState(onDismissStarted)
+    val onDismissDirectionState = rememberUpdatedState(onDismissDirection)
     val onPreviousState = rememberUpdatedState(onPrevious)
     val onNextState = rememberUpdatedState(onNext)
     return remember(scope, density, hapticFeedback, offsetAnimatable, screenWidthPx, layoutDirection) {
@@ -275,58 +283,35 @@ internal fun rememberMiniPlayerDismissGestureHandler(
             offsetAnimatable = offsetAnimatable,
             screenWidthPx = screenWidthPx,
             layoutDirection = layoutDirection,
+            swipeToSkipEnabled = swipeToSkipEnabled,
             onDismissPlaylistAndShowUndo = { onDismissPlaylistAndShowUndoState.value() },
             onDismissStarted = { onDismissStartedState.value() },
+            onDismissDirection = { sign -> onDismissDirectionState.value(sign) },
             onPrevious = { onPreviousState.value() },
             onNext = { onNextState.value() }
         )
     }
 }
 
-/**
- * Single pointer-input node for the collapsed mini player's horizontal gesture.
- *
- * Which handler receives the drag depends on [skipMode], so flipping the "swipe to change song"
- * preference swaps the behavior without changing the shape of the modifier chain around the
- * player card. With [skipMode] on, every horizontal swipe changes track and dismissal moves to a
- * downward swipe; otherwise short swipes change track and long swipes dismiss.
- */
-internal fun Modifier.miniPlayerHorizontalGesture(
+internal fun Modifier.miniPlayerDismissHorizontalGesture(
     enabled: Boolean,
-    skipMode: Boolean,
-    dismissHandler: MiniPlayerDismissGestureHandler,
-    skipHandler: MiniPlayerSkipGestureHandler
+    handler: MiniPlayerDismissGestureHandler
 ): Modifier {
     if (!enabled) return this
-    return this.pointerInput(skipMode, dismissHandler, skipHandler) {
-        if (skipMode) {
-            detectHorizontalDragGestures(
-                onDragStart = { skipHandler.onDragStart() },
-                onHorizontalDrag = { change, dragAmount ->
-                    change.consume()
-                    skipHandler.onHorizontalDrag(
-                        uptimeMillis = change.uptimeMillis,
-                        dragAmount = dragAmount
-                    )
-                },
-                onDragEnd = { skipHandler.onDragEnd() },
-                onDragCancel = { skipHandler.onDragCancel() }
-            )
-        } else {
-            val velocityTracker = VelocityTracker()
-            detectHorizontalDragGestures(
-                onDragStart = {
-                    velocityTracker.resetTracking()
-                    dismissHandler.onDragStart()
-                },
-                onHorizontalDrag = { change, dragAmount ->
-                    velocityTracker.addPosition(change.uptimeMillis, change.position)
-                    change.consume()
-                    dismissHandler.onHorizontalDrag(dragAmount)
-                },
-                onDragEnd = { dismissHandler.onDragEnd(velocityTracker.calculateVelocity().x) },
-                onDragCancel = { dismissHandler.onDragCancel() }
-            )
-        }
+    return this.pointerInput(enabled, handler) {
+        val velocityTracker = VelocityTracker()
+        detectHorizontalDragGestures(
+            onDragStart = {
+                velocityTracker.resetTracking()
+                handler.onDragStart()
+            },
+            onHorizontalDrag = { change, dragAmount ->
+                velocityTracker.addPosition(change.uptimeMillis, change.position)
+                change.consume()
+                handler.onHorizontalDrag(dragAmount)
+            },
+            onDragEnd = { handler.onDragEnd(velocityTracker.calculateVelocity().x) },
+            onDragCancel = { handler.onDragCancel() }
+        )
     }
 }

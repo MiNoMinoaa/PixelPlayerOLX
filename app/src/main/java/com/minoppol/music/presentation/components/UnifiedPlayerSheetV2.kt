@@ -63,12 +63,11 @@ import com.minoppol.music.presentation.components.scoped.PlayerLxTabNavigationEf
 import com.minoppol.music.presentation.components.scoped.PlayerSheetPredictiveBackHandler
 import com.minoppol.music.presentation.components.scoped.QueueSheetRuntimeEffects
 import com.minoppol.music.presentation.components.scoped.SheetMotionController
-import com.minoppol.music.presentation.components.scoped.miniPlayerHorizontalGesture
+import com.minoppol.music.presentation.components.scoped.miniPlayerDismissHorizontalGesture
 import com.minoppol.music.presentation.components.scoped.playerSheetVerticalDragGesture
 import com.minoppol.music.presentation.components.scoped.rememberFullPlayerCompositionPolicy
 import com.minoppol.music.presentation.components.scoped.rememberFullPlayerVisualState
 import com.minoppol.music.presentation.components.scoped.rememberMiniPlayerDismissGestureHandler
-import com.minoppol.music.presentation.components.scoped.rememberMiniPlayerSkipGestureHandler
 import com.minoppol.music.presentation.components.scoped.rememberPrewarmFullPlayer
 import com.minoppol.music.presentation.components.scoped.rememberQueueSheetState
 import com.minoppol.music.presentation.components.scoped.rememberSheetActionHandlers
@@ -202,8 +201,6 @@ fun UnifiedPlayerSheetV2(
         with(density) { configuration.screenWidthDp.dp.toPx() }
     }
     val dismissThresholdPx = remember(screenWidthPx) { screenWidthPx * 0.4f }
-    val skipOffsetX = remember { Animatable(0f) }
-    val skipContentAlpha = remember { Animatable(1f) }
     val collapsedDismissOffsetY = remember { Animatable(0f) }
     val collapsedDismissTravelPx = remember(containerHeight, sheetCollapsedTargetY, density) {
         with(density) {
@@ -435,23 +432,14 @@ fun UnifiedPlayerSheetV2(
         hapticFeedback = hapticFeedback,
         offsetAnimatable = offsetAnimatable,
         screenWidthPx = screenWidthPx,
+        swipeToSkipEnabled = { miniPlayerSwipeToSkip },
         onDismissPlaylistAndShowUndo = { playerViewModel.dismissPlaylistAndShowUndo() },
         onDismissStarted = { playerViewModel.setMiniPlayerDismissing(true) },
+        onDismissDirection = { sign -> playerViewModel.setDockExitDirectionSign(sign) },
         onPrevious = { playerViewModel.previousSong() },
         onNext = { playerViewModel.nextSong() }
     )
-    val miniSkipGestureHandler = rememberMiniPlayerSkipGestureHandler(
-        scope = scope,
-        hapticFeedback = hapticFeedback,
-        translationXAnimatable = skipOffsetX,
-        contentAlphaAnimatable = skipContentAlpha,
-        screenWidthPx = screenWidthPx,
-        onSkipToNext = { playerViewModel.nextSong() },
-        onSkipToPrevious = { playerViewModel.forcePreviousSong() }
-    )
     LaunchedEffect(miniPlayerSwipeToSkip) {
-        if (skipOffsetX.value != 0f) skipOffsetX.snapTo(0f)
-        if (skipContentAlpha.value != 1f) skipContentAlpha.snapTo(1f)
         if (collapsedDismissOffsetY.value != 0f) collapsedDismissOffsetY.snapTo(0f)
         if (offsetAnimatable.value != 0f) offsetAnimatable.snapTo(0f)
     }
@@ -609,11 +597,11 @@ fun UnifiedPlayerSheetV2(
                         modifier = Modifier
                             .fillMaxWidth()
                             .graphicsLayer {
-                                translationX = offsetAnimatable.value + skipOffsetX.value
+                                translationX = offsetAnimatable.value
                                 translationY = collapsedDismissOffsetY.value
                                 scaleX = miniAppearScale
                                 scaleY = visualOvershootScaleY.value * miniAppearScale
-                                alpha = miniReadyAlpha * skipContentAlpha.value
+                                alpha = miniReadyAlpha
                                 transformOrigin = TransformOrigin(0.5f, 1f)
                             }
                             .layout { measurable, constraints ->
@@ -660,11 +648,9 @@ fun UnifiedPlayerSheetV2(
                                     placeable.placeRelative(0, 0)
                                 }
                             }
-                            .miniPlayerHorizontalGesture(
+                            .miniPlayerDismissHorizontalGesture(
                                 enabled = currentSheetContentState == PlayerSheetState.COLLAPSED,
-                                skipMode = miniPlayerSwipeToSkip,
-                                dismissHandler = miniDismissGestureHandler,
-                                skipHandler = miniSkipGestureHandler
+                                handler = miniDismissGestureHandler
                             )
                             .playerSheetVerticalDragGesture(
                                 enabled = sheetInteractionState.canDragSheet,
