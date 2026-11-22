@@ -202,7 +202,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ```
 
-PixelPlayerOLX 派生自 PixelPlayerOSS（GPL-3.0，版权所有 © 2026 Duhan（lostf1sh））。部分在线音源功能在实现时参考了 lx-music-mobile（Apache-2.0，版权所有 © lyswhut）和 lx-lxwalnut-music-mobile（Apache-2.0，版权所有 © WalnutBai），并在各自许可证下使用。
+PixelPlayerOLX 派生自 PixelPlayerOSS（GPL-3.0，版权所有 © 2026 Duhan（lostf1sh））。部分在线音源功能在实现时参考了 lx-music-mobile（Apache-2.0，版权所有 © lyswhut），部分功能实现灵感来自 lx-lxwalnut-music-mobile（Apache-2.0，版权所有 © WalnutBai），并在各自许可证下使用。
 
 分发的 APK 包含以各自许可证授权的第三方组件。特别地，可选的 FFmpeg 解码依赖 `org.jellyfin.media3:media3-ffmpeg-decoder` 为 GPL-3.0；详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
