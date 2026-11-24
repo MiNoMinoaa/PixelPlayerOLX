@@ -134,6 +134,8 @@ main { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
 
 .hero-brand em { font-style: normal; color: var(--accent); }
 
+.hero-text h1 em { font-style: normal; color: var(--accent); }
+
 .hero-text h1 {
   font-size: clamp(30px, 4.4vw, 44px);
   line-height: 1.2;

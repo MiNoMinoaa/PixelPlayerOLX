@@ -24,6 +24,7 @@
 > **注意：** PixelPlayerOLX 是一个独立的派生项目。它**不是** PixelPlayerOSS、lx-music-mobile或任何音乐平台的官方版本，也未获得上述原作者的背书。
 
 <p align="center">本软件实现了lx音源导入播放平台在线功能仅用于满足个人需求自用，且只有在导入并启用音源脚本时平台在线功能方可生效，本软件不托管、不存储、不拥有任何受版权保护的音频内容</p>
+<p align="center">官网: https://minominoaa.github.io/PixelPlayerOLX</p>
 
 ## 软件截图
 

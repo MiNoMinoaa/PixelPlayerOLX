@@ -24,6 +24,7 @@
 > **Note:** PixelPlayerOLX is an independent fork. It is **not** an official version of PixelPlayerOSS, lx-music-mobile, or any music platform, and it is not endorsed by their original authors.
 
 <p align="center">This software implements lx source import and playback online features solely for personal use. Platform online features only take effect after a source script is imported and enabled. This software does not host, store, or own any copyrighted audio content.</p>
+<p align="center">Website: <a href="https://minominoaa.github.io/PixelPlayerOLX">https://minominoaa.github.io/PixelPlayerOLX</a></p>
 
 ## Screenshots
 
