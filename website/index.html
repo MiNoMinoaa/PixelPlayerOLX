@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PixelPlayerOLX — 本地优先的安卓音乐播放器</title>
+<meta name="description" content="PixelPlayerOLX 是一款派生自 PixelPlayerOSS 的安卓音乐播放器，以本地播放与自托管为核心，并可选接入兼容 lx-music 的在线音源。">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="nav">
+  <a class="brand" href="./">
+    <img src="assets/icon.png" alt="PixelPlayerOLX 图标">
+    <span>PixelPlayer<em>OLX</em></span>
+  </a>
+  <nav>
+    <a href="#features">功能</a>
+    <a href="#screenshots">截图</a>
+    <a href="#download">下载</a>
+    <a href="https://github.com/MiNoMinoaa/PixelPlayerOLX" target="_blank" rel="noopener">GitHub</a>
+    <button id="themeToggle" aria-label="切换明暗主题">
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+    <a class="cta" href="https://github.com/MiNoMinoaa/PixelPlayerOLX/releases/latest" target="_blank" rel="noopener">立即获取</a>
+  </nav>
+</header>
+
+<main>
+<section class="hero">
+  <div class="hero-text">
+    <div class="hero-brand">PixelPlayer<em>OLX</em></div>
+    <h1>多源聚合的安卓音乐播放器</h1>
+    <p>扫描并整理你设备上的音乐，串流你在线媒体库，可选接入兼容 lx-music 的在线音源。支持母带、全景声、24bit FLAC 等内容。</p>
+    <div class="hero-actions">
+      <a class="btn primary" href="https://github.com/MiNoMinoaa/PixelPlayerOLX/releases/latest" target="_blank" rel="noopener">下载最新版</a>
+      <a class="btn quiet" href="https://github.com/MiNoMinoaa/PixelPlayerOLX" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <p class="meta">Android 11+ · Media3 / FFmpeg · GPL-3.0</p>
+  </div>
+  <div class="hero-visual" id="heroVisual">
+    <img class="shot-a" src="assets/screenshot1.webp" alt="PixelPlayerOLX 播放页">
+    <img class="shot-b" src="assets/screenshot2.webp" alt="PixelPlayerOLX 资料页">
+  </div>
+</section>
+
+<section id="features" class="section">
+  <h2>一切围绕你的音乐</h2>
+  <p class="sec-sub">本地播放、自托管与离线使用默认可用；在线能力完全可选、由你掌控。</p>
+  <div class="grid">
+    <div class="card">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+      <h3>本地媒体库</h3>
+      <p>扫描 MP3、FLAC、AAC、OGG、WAV、M4A，按专辑、艺术家、流派、文件夹整理，支持歌单、收藏与统计。</p>
+    </div>
+    <div class="card">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h12M6 12h12M6 16h8"/></svg>
+      <h3>自托管串流</h3>
+      <p>部分平台的登录，同步、串流并离线下载你的音乐库。</p>
+    </div>
+    <div class="card">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M10 8l6 4-6 4V8z"/></svg>
+      <h3>高音质播放</h3>
+      <p>Media3 播放引擎与 FFmpeg 解码，无缝播放、淡入淡出，在线音源最高到母带与全景声。</p>
+    </div>
+    <div class="card">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      <h3>歌词全覆盖</h3>
+      <p>内嵌歌词、本地 .lrc、导入编辑，可选 LRCLIB与各大平台的歌词联网补全，支持逐字歌词显示。</p>
+    </div>
+    <div class="card">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v7M9 6l3-3 3 3M12 21c-4.4 0-8-3.1-8-7 0-2 1-3.9 2.6-5.2M18 18c2.4-1.4 4-3.8 4-6.5"/></svg>
+      <h3>Lx 音源</h3>
+      <p>沙箱化 QuickJS 引擎运行兼容 lx-music 的音源脚本，多脚本择优、自动降档回退，导入前默认关闭。</p>
+    </div>
+    <div class="card">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V3h13l5 5zM8 21v-5h8v5"/></svg>
+      <h3>歌单互通</h3>
+      <p>导入 / 导出 .lxmc 歌单，可与 lx-music-mobile 互通；偏好、歌单、歌词与统计等可完整备份恢复。</p>
+    </div>
+  </div>
+</section>
+
+<section id="screenshots" class="section">
+  <h2>应用界面</h2>
+  <p class="sec-sub">Jetpack Compose · Material 3 · 动态取色 · 深浅主题</p>
+  <div class="shot-row">
+    <img src="assets/screenshot1.webp" alt="主页">
+    <img src="assets/screenshot2.webp" alt="播放页">
+    <img src="assets/screenshot3.webp" alt="媒体库">
+    <img src="assets/screenshot4.webp" alt="更多界面">
+  </div>
+</section>
+
+<section id="download" class="section">
+  <h2>获取应用</h2>
+  <p class="sec-sub">版本发布在 GitHub Releases，选择适合你设备的 APK：</p>
+  <div class="dl-grid">
+    <a class="dl" href="https://github.com/MiNoMinoaa/PixelPlayerOLX/releases/latest" target="_blank" rel="noopener">
+      <div class="dl-arch">arm64-v8a</div>
+      <div class="dl-desc">绝大多数现代 64 位设备</div>
+      <div class="dl-go">前往下载</div>
+    </a>
+    <a class="dl" href="https://github.com/MiNoMinoaa/PixelPlayerOLX/releases/latest" target="_blank" rel="noopener">
+      <div class="dl-arch">armeabi-v7a</div>
+      <div class="dl-desc">较老的 32 位设备</div>
+      <div class="dl-go">前往下载</div>
+    </a>
+  </div>
+  <p class="fine">本软件不托管、不存储、不拥有任何受版权保护的音频内容；在线功能仅在导入并启用音源脚本后生效，且仅供个人使用。</p>
+</section>
+</main>
+
+<footer>
+  <div class="foot-links">
+    <a>友情链接:</a>
+    <a href="https://github.com/MiNoMinoaa/PixelPlayerOLX" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://github.com/PixelPlayerHQ/PixelPlayerOSS" target="_blank" rel="noopener">PixelPlayerOSS</a>
+    <a href="https://github.com/lyswhut/lx-music-mobile" target="_blank" rel="noopener">lx-music-mobile</a>
+    <a href="https://github.com/WalnutBai/lx-lxwalnut-music-mobile" target="_blank" rel="noopener">Lx-x Music-mobile</a>
+  </div>
+  <p>PixelPlayerOLX · 派生自 PixelPlayerOSS（GPL-3.0 © 2026 Duhan）· 参考 lx-music-mobile（Apache-2.0 © lyswhut），多平台灵感来自 lx-lxwalnut-music-mobile（Apache-2.0 © WalnutBai）</p>
+  <p class="fine">本项目与上述原作者无关，亦非其官方版本。基于 GPL-3.0 许可发布。</p>
+</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var saved = null;
+  try { saved = localStorage.getItem('pp-theme'); } catch (e) {}
+  if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
+  var btn = document.getElementById('themeToggle');
+  btn.addEventListener('click', function () {
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('pp-theme', next); } catch (e) {}
+  });
+})();
+(function () {
+  var v = document.getElementById('heroVisual');
+  if (!v) return;
+  v.addEventListener('click', function () {
+    v.classList.toggle('swapped');
+  });
+})();
+</script>
+</body>
+</html>
