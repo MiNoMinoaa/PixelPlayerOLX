@@ -58,6 +58,11 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
         .readTimeout(5, TimeUnit.MINUTES)
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
+    private val lxClient = baseOkHttpClient.newBuilder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .build()
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val downloadId = inputData.getString(KEY_DOWNLOAD_ID)
@@ -293,15 +298,27 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
         val qualityChain = LxQualities.ALL.drop(startIndex)
         for (quality in qualityChain) {
             if (!dao.isCurrentAttempt(downloadId, attemptId)) return Result.success()
-            val resolved = runCatching {
+            var resolved = runCatching {
                 withTimeoutOrNull(RESOLVE_TIMEOUT_MS) {
                     lxMusicRepository.resolveMusicUrlWithFallbackMeta(lxSong, quality)
                 }
-            }.getOrNull() ?: continue
+            }.getOrNull()
+            if (resolved == null && quality == requestedQuality) {
+                resolved = runCatching {
+                    withTimeoutOrNull(RESOLVE_TIMEOUT_MS) {
+                        lxMusicRepository.resolveMusicUrlWithFallbackMeta(
+                            lxSong, quality, forceCrossSourceOnly = true
+                        )
+                    }
+                }.getOrNull()
+            }
+            if (resolved == null) continue
             if (!triedUrls.add(resolved.url)) continue
             val actualQuality = resolved.quality ?: quality
-            when (val attempt =
-                downloadAndVerifyLxUrl(downloadId, attemptId, lxSong, actualQuality, resolved.url)) {
+            when (val attempt = withTimeoutOrNull(LX_ATTEMPT_TIMEOUT_MS) {
+                downloadAndVerifyLxUrl(downloadId, attemptId, lxSong, actualQuality, resolved.url)
+            }) {
+                null -> sawNetworkError = true
                 is LxAttempt.Ok ->
                     return finalizeLxDownload(downloadId, attemptId, lxSong, attempt.audio.actualQuality, attempt)
                 LxAttempt.Fake -> {
@@ -352,7 +369,7 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
         try {
             var copied = 0L
             var lastPublished = 0L
-            client.newCall(Request.Builder().url(url).get().build()).execute().use { response ->
+            lxClient.newCall(Request.Builder().url(url).get().build()).execute().use { response ->
                 if (!response.isSuccessful) return LxAttempt.Unavailable
                 val body = response.body
                 val total = body.contentLength().takeIf { it >= 0L }
@@ -460,7 +477,7 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
                 mime.contains("flac") ->
                     if ((flacBits ?: 16) >= 24) LxQualities.FLAC24 else LxQualities.FLAC
                 isDolby -> LxQualities.ATMOS
-                else -> if (avgBps >= LxAudioHeadInspector.minPlausibleBitrateBps(LxQualities.Q320)) {
+                else -> if (avgBps >= 160_000L) {
                     LxQualities.Q320
                 } else {
                     LxQualities.Q128
@@ -548,14 +565,24 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
     }
 
     private suspend fun embedTags(lxSong: LxSong, file: File) {
-        val coverBytes = lxSong.pic?.takeIf { it.isNotBlank() }?.let { url ->
-            runCatching {
-                client.newCall(Request.Builder().url(url).build()).execute().use { resp ->
+        val candidates = runCatching {
+            withTimeoutOrNull(EMBEDDING_FALLBACK_TIMEOUT_MS) {
+                lxMusicRepository.resolveEmbeddingSources(lxSong)
+            }
+        }.getOrNull() ?: listOf(lxSong)
+        var coverBytes: ByteArray? = null
+        for (candidate in candidates.take(EMBED_CANDIDATE_LIMIT)) {
+            val url = candidate.pic
+                ?.takeIf { it.startsWith("http://", true) || it.startsWith("https://", true) }
+                ?: continue
+            coverBytes = runCatching {
+                lxClient.newCall(Request.Builder().url(url).build()).execute().use { resp ->
                     if (resp.isSuccessful) resp.body?.bytes()?.takeIf { it.isNotEmpty() } else null
                 }
             }.getOrNull()
+            if (coverBytes != null) break
         }
-        val lyricResult = runCatching { lxMusicRepository.fetchLyric(lxSong) }.getOrNull()
+        val lyricResult = fetchLyricWithFallback(candidates)
         val wordLyrics = lyricResult?.lxlyric?.takeIf { it.isNotBlank() }
         val translation = lyricResult?.tlyric?.takeIf { it.isNotBlank() }
         val lyrics = wordLyrics
@@ -570,6 +597,18 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
             coverBytes = coverBytes,
             lyrics = lyrics,
         )
+    }
+
+    private fun hasLyricContent(result: com.minoppol.music.data.lxmusic.LxLyricResult?): Boolean {
+        return !result?.lxlyric.isNullOrBlank() || !result?.lyric.isNullOrBlank()
+    }
+
+    private suspend fun fetchLyricWithFallback(candidates: List<LxSong>): com.minoppol.music.data.lxmusic.LxLyricResult? {
+        for (candidate in candidates.take(EMBED_CANDIDATE_LIMIT)) {
+            val result = runCatching { lxMusicRepository.fetchLyric(candidate) }.getOrNull()
+            if (hasLyricContent(result)) return result
+        }
+        return null
     }
 
     private fun publishToMediaStore(
@@ -708,6 +747,9 @@ class CloudTrackDownloadWorker @AssistedInject constructor(
         private const val PROGRESS_STEP_BYTES = 512L * 1024L
         private const val MAX_RETRIES = 3
         private const val RESOLVE_TIMEOUT_MS = 25_000L
+        private const val LX_ATTEMPT_TIMEOUT_MS = 10L * 60_000L
+        private const val EMBED_CANDIDATE_LIMIT = 4
+        private const val EMBEDDING_FALLBACK_TIMEOUT_MS = 20_000L
         private const val UNKNOWN_ARTIST = "未知艺术家"
         private const val UNKNOWN_ALBUM = "未知专辑"
         private val ILLEGAL_FILE_CHARS = Regex("[/\\\\:*?\"<>|\\r\\n\\t]")

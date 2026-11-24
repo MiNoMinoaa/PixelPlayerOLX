@@ -5566,6 +5566,11 @@ class LxMusicRepository @Inject constructor(
         return extraInfo
     }
 
+    suspend fun resolveEmbeddingSources(song: LxSong): List<LxSong> {
+        val matched = runCatching { findOtherSourceSongs(song) }.getOrDefault(emptyList())
+        return listOf(song) + matched
+    }
+
     suspend fun fetchLyric(song: LxSong): LxLyricResult? = withContext(Dispatchers.IO) {
         Timber.i("fetchLyric songmid=${song.songmid} source=${song.source} title=${song.name}")
         val result = when (song.source) {

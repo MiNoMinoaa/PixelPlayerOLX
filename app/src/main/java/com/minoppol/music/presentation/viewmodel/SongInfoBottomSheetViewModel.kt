@@ -44,6 +44,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
@@ -101,27 +102,53 @@ class SongInfoBottomSheetViewModel @Inject constructor(
         offlineObservationJob = viewModelScope.launch {
             cloudOfflineRepository.observe(song).collect { download ->
                 _offlineDownload.value = download
-                val pending = pendingLxRequest
-                if (download != null && pending != null && pending.first == song.contentUriString) {
-                    when (download.status) {
-                        OfflineDownloadStatus.COMPLETE -> {
-                            val actual = download.quality
-                            pendingLxRequest = null
-                            if (actual != null && actual != pending.second) {
-                                _toastEvents.tryEmit(
-                                    appContext.getString(
-                                        R.string.lx_msg_download_downgraded,
-                                        appContext.getString(qualityLabelRes(pending.second)),
-                                        appContext.getString(qualityLabelRes(actual)),
-                                    )
+            }
+        }
+    }
+
+    private fun watchPendingLxRequest() {
+        val pending = pendingLxRequest ?: return
+        pendingWatchJob?.cancel()
+        pendingWatchJob = viewModelScope.launch {
+            cloudOfflineRepository.observe(pending.first).collect { download ->
+                when (download?.status) {
+                    OfflineDownloadStatus.COMPLETE -> {
+                        val actual = download.quality
+                        pendingLxRequest = null
+                        if (actual != null && isQualityDowngrade(pending.second, actual)) {
+                            _toastEvents.tryEmit(
+                                appContext.getString(
+                                    R.string.lx_msg_download_downgraded,
+                                    appContext.getString(qualityLabelRes(pending.second)),
+                                    appContext.getString(qualityLabelRes(actual)),
                                 )
-                            }
+                            )
                         }
-                        OfflineDownloadStatus.FAILED -> pendingLxRequest = null
-                        else -> Unit
+                        this@launch.cancel()
                     }
+                    OfflineDownloadStatus.FAILED -> {
+                        pendingLxRequest = null
+                        this@launch.cancel()
+                    }
+                    else -> Unit
                 }
             }
+        }
+    }
+
+    private fun isQualityDowngrade(requested: String, actual: String): Boolean {
+        if (requested == actual) return false
+        val order = LxQualities.ALL
+        val reqIdx = order.indexOf(requested)
+        val actIdx = order.indexOf(actual)
+        if (reqIdx < 0 || actIdx < 0) return actIdx > reqIdx
+        if (actIdx <= reqIdx) return false
+        return when (requested) {
+            LxQualities.MASTER ->
+                actual != LxQualities.FLAC24 && actual != LxQualities.FLAC
+            LxQualities.ATMOS_PLUS ->
+                actual != LxQualities.ATMOS
+            else -> true
         }
     }
 
@@ -170,6 +197,7 @@ class SongInfoBottomSheetViewModel @Inject constructor(
     private var probeJob: Job? = null
 
     private var pendingLxRequest: Pair<String, String>? = null
+    private var pendingWatchJob: Job? = null
 
     private fun qualityLabelRes(quality: String): Int = when (quality) {
         LxQualities.MASTER -> R.string.lxmusic_quality_master
@@ -267,6 +295,7 @@ class SongInfoBottomSheetViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching { lxMusicRepository.persistLxSong(lxSong) }
             pendingLxRequest = song.contentUriString to quality
+            watchPendingLxRequest()
             val scripts = lxMusicRepository.activeRuntimeScriptPathsOrdered(lxSong.source)
             cloudOfflineRepository.enqueue(song, quality, assetPath, scripts)
         }
